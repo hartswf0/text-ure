@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>TEXT-URE NEXUS</title>
+<style>
+:root{--bg:#000;--panel:rgba(0,0,0,0.85);--fg:#fff;--dim:rgba(255,255,255,0.5);--accent:#0f8;--glow:rgba(0,255,136,0.3);--mono:'SF Mono','Fira Code','Consolas',monospace}
+[data-theme="amber"]{--accent:#ffa500;--glow:rgba(255,165,0,0.3)}
+[data-theme="cyan"]{--accent:#0ff;--glow:rgba(0,255,255,0.3)}
+[data-theme="white"]{--accent:#fff;--glow:rgba(255,255,255,0.2)}
+[data-theme="rose"]{--accent:#ff6b9d;--glow:rgba(255,107,157,0.3)}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{font:14px/1.6 var(--mono);background:var(--bg);color:var(--fg);display:flex;flex-direction:column}
+
+#matrix-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:0.15}
+.container{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;overflow:hidden}
+
+.header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.1);background:var(--panel);backdrop-filter:blur(10px)}
+.logo{font-size:18px;font-weight:900;color:var(--accent);letter-spacing:0.15em;text-shadow:0 0 20px var(--glow)}
+.header-controls{display:flex;gap:8px}
+.theme-btn{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,0.2);cursor:pointer;transition:all .2s}
+.theme-btn:hover{transform:scale(1.1)}
+.theme-btn[data-t="green"]{background:#0f8}
+.theme-btn[data-t="amber"]{background:#ffa500}
+.theme-btn[data-t="cyan"]{background:#0ff}
+.theme-btn[data-t="white"]{background:#fff}
+.theme-btn[data-t="rose"]{background:#ff6b9d}
+
+.main{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
+.main::-webkit-scrollbar{width:4px}
+.main::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px}
+
+.card{background:var(--panel);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);padding:20px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px}
+.card:hover{border-color:var(--accent);box-shadow:0 0 30px var(--glow)}
+.card:active{transform:scale(0.98)}
+.card-icon{font-size:28px;font-weight:900;color:var(--accent);min-width:60px;text-align:center;text-shadow:0 0 15px var(--glow)}
+.card-info{flex:1}
+.card-name{font-size:16px;font-weight:700;margin-bottom:4px}
+.card-desc{font-size:12px;color:var(--dim);line-height:1.5}
+.card-arrow{font-size:20px;color:var(--accent);opacity:0.5}
+.card:hover .card-arrow{opacity:1}
+
+.input-section{background:var(--panel);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);padding:16px;margin-top:auto}
+.input-label{font-size:11px;color:var(--dim);letter-spacing:0.1em;margin-bottom:8px;display:block}
+.input-row{display:flex;gap:8px}
+.input-row input{flex:1;padding:14px 16px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.2);color:var(--fg);font:inherit;font-size:14px}
+.input-row input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 20px var(--glow)}
+.input-row input::placeholder{color:var(--dim)}
+.input-row button{padding:14px 24px;background:var(--accent);border:none;color:#000;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.input-row button:hover{opacity:0.9}
+.input-row button:active{transform:scale(0.95)}
+
+.file-btn{width:100%;padding:14px;background:transparent;border:1px dashed rgba(255,255,255,0.3);color:var(--dim);font:inherit;font-size:12px;cursor:pointer;margin-top:8px}
+.file-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+@media(min-width:600px){
+  .main{padding:30px 40px}
+  .card{padding:24px 28px}
+  .card-icon{font-size:32px;min-width:80px}
+  .card-name{font-size:18px}
+}
+@media(min-width:900px){
+  .main{max-width:800px;margin:0 auto;width:100%}
+}
+</style>
+</head>
+<body>
+<canvas id="matrix-bg"></canvas>
+<div class="container">
+<div class="header">
+  <span class="logo">TEXT-URE</span>
+  <div class="header-controls">
+    <div class="theme-btn" data-t="green" onclick="setTheme('')"></div>
+    <div class="theme-btn" data-t="amber" onclick="setTheme('amber')"></div>
+    <div class="theme-btn" data-t="cyan" onclick="setTheme('cyan')"></div>
+    <div class="theme-btn" data-t="rose" onclick="setTheme('rose')"></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="card" onclick="launch('text-ure-03.html')">
+    <div class="card-icon">▶</div>
+    <div class="card-info">
+      <div class="card-name">LATEST (v16.6)</div>
+      <div class="card-desc">Full featured · Mouse look · Custom text · POML injection · Dataset export</div>
+    </div>
+    <div class="card-arrow">→</div>
+  </div>
+
+  <div class="card" onclick="launch('text-ure-cascade.html')">
+    <div class="card-icon">◈</div>
+    <div class="card-info">
+      <div class="card-name">CASCADE</div>
+      <div class="card-desc">Infinite text stream · Load books/chapters · Animated cycling walls</div>
+    </div>
+    <div class="card-arrow">→</div>
+  </div>
+
+  <div class="card" onclick="launch('text-ure-02.html')">
+    <div class="card-icon">◎</div>
+    <div class="card-info">
+      <div class="card-name">TRIAD (v16)</div>
+      <div class="card-desc">Vision generation · Depth maps · Spectral mixer</div>
+    </div>
+    <div class="card-arrow">→</div>
+  </div>
+
+  <div class="card" onclick="launch('text-ure-01.html')">
+    <div class="card-icon">◇</div>
+    <div class="card-info">
+      <div class="card-name">POLISHED (v12)</div>
+      <div class="card-desc">Minimap · TTS · Haptics · Keyword coloring</div>
+    </div>
+    <div class="card-arrow">→</div>
+  </div>
+
+  <div class="card" onclick="launch('text-ure-00.html')">
+    <div class="card-icon">○</div>
+    <div class="card-info">
+      <div class="card-name">FOUNDATION (v11)</div>
+      <div class="card-desc">Core raycaster · Text walls · Scanner beam</div>
+    </div>
+    <div class="card-arrow">→</div>
+  </div>
+
+  <div class="card" onclick="launch('poml-scroll.html')">
+    <div class="card-icon">◆</div>
+    <div class="card-info">
+      <div class="card-name">POML SCROLL</div>
+      <div class="card-desc">Horizontal columns · Chain builder · Notes · Mobile-first</div>
+    </div>
+    <div class="card-arrow">→</div>
+  </div>
+
+  <div class="input-section">
+    <label class="input-label">QUICK LAUNCH</label>
+    <div class="input-row">
+      <input type="text" id="quick-text" placeholder="Enter any text to explore...">
+      <button onclick="quickLaunch()">GO</button>
+    </div>
+    <input type="file" id="file-input" accept=".txt,.md" style="display:none" onchange="loadFile(event)">
+    <button class="file-btn" onclick="document.getElementById('file-input').click()">Or load .txt / .md file</button>
+  </div>
+</div>
+</div>
+
+<script>
+// Matrix background
+const matrixCanvas = document.getElementById('matrix-bg');
+const mCtx = matrixCanvas.getContext('2d');
+let cols, drops;
+const chars = 'TEXTURESEMANTICSRAYCASTERCAREYAPOLLINAREKITTLERBAJOHRGRID'.split('');
+
+function initMatrix() {
+  matrixCanvas.width = window.innerWidth;
+  matrixCanvas.height = window.innerHeight;
+  cols = Math.floor(matrixCanvas.width / 14);
+  drops = Array(cols).fill(1);
+}
+
+function drawMatrix() {
+  mCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+  mCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+  
+  const accent = getComputedStyle(document.body).getPropertyValue('--accent').trim();
+  mCtx.fillStyle = accent;
+  mCtx.font = '12px monospace';
+  
+  for (let i = 0; i < drops.length; i++) {
+    const char = chars[Math.floor(Math.random() * chars.length)];
+    mCtx.fillText(char, i * 14, drops[i] * 14);
+    if (drops[i] * 14 > matrixCanvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  }
+}
+
+initMatrix();
+window.addEventListener('resize', initMatrix);
+setInterval(drawMatrix, 50);
+
+// Theme switching
+function setTheme(theme) {
+  document.body.setAttribute('data-theme', theme);
+  localStorage.setItem('texture-theme', theme);
+}
+
+// Load saved theme
+const savedTheme = localStorage.getItem('texture-theme');
+if (savedTheme) setTheme(savedTheme);
+
+// Navigation
+function launch(file) {
+  window.location.href = file;
+}
+
+function quickLaunch() {
+  const txt = document.getElementById('quick-text').value.trim();
+  if (!txt) { alert('Enter text first'); return; }
+  const accent = getComputedStyle(document.body).getPropertyValue('--accent').trim();
+  const w = {
+    id: 'QUICK',
+    text: txt.toUpperCase().replace(/[^A-Z0-9\s]/g, ''),
+    palette: { text: accent },
+    mapType: 'RINGS',
+    theorist: 'grid'
+  };
+  sessionStorage.setItem('poml_custom_world', JSON.stringify(w));
+  window.location.href = 'text-ure-03.html';
+}
+
+function loadFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const txt = ev.target.result;
+    const accent = getComputedStyle(document.body).getPropertyValue('--accent').trim();
+    const w = {
+      id: file.name.replace(/\.[^.]+$/, '').toUpperCase(),
+      text: txt.toUpperCase().replace(/[^A-Z0-9\s]/g, '').slice(0, 10000),
+      palette: { text: accent },
+      mapType: 'RINGS',
+      theorist: 'apollinaire',
+      isLarge: txt.length > 2000
+    };
+    sessionStorage.setItem('poml_custom_world', JSON.stringify(w));
+    window.location.href = txt.length > 2000 ? 'text-ure-cascade.html' : 'text-ure-03.html';
+  };
+  reader.readAsText(file);
+}
+
+// Enter key for quick launch
+document.getElementById('quick-text').addEventListener('keypress', e => {
+  if (e.key === 'Enter') quickLaunch();
+});
+</script>
+</body>
+</html>

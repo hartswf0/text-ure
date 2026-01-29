@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>POML Scroll</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #000; --panel: #080808; --fg: #ccc; --dim: #444; --accent: #0f8; --glow: rgba(0,255,136,0.2); }
+.theme-bar { position: fixed; top: 8px; right: 8px; display: flex; gap: 6px; z-index: 100; }
+.theme-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); cursor: pointer; }
+.theme-dot:hover { transform: scale(1.1); }
+.theme-dot[data-t="green"] { background: #0f8; }
+.theme-dot[data-t="amber"] { background: #ffa500; }
+.theme-dot[data-t="cyan"] { background: #0ff; }
+.theme-dot[data-t="rose"] { background: #ff6b9d; }
+[data-theme="amber"] { --accent: #ffa500; --glow: rgba(255,165,0,0.2); }
+[data-theme="cyan"] { --accent: #0ff; --glow: rgba(0,255,255,0.2); }
+[data-theme="rose"] { --accent: #ff6b9d; --glow: rgba(255,107,157,0.2); }
+[data-theme="white"] { --accent: #fff; --glow: rgba(255,255,255,0.15); }
+body { font-family: 'Courier New', monospace; background: var(--bg); color: var(--fg); overflow: hidden; font-size: 13px; line-height: 1.7; }
+
+.scroll-container { display: flex; height: 100vh; overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; scroll-snap-type: x mandatory; }
+
+.column { min-width: 340px; width: 340px; height: 100vh; border-right: 1px solid #1a1a1a; background: var(--panel); display: flex; flex-direction: column; flex-shrink: 0; transition: all 0.3s ease; position: relative; scroll-snap-align: start; }
+@media (max-width: 500px) { .column { min-width: 100vw; width: 100vw; } }
+
+.column.collapsed { min-width: 44px; width: 44px; }
+@media (max-width: 500px) { .column.collapsed { min-width: 44px; width: 44px; } }
+
+.column-tab { writing-mode: vertical-rl; text-orientation: mixed; padding: 16px 0; background: #080808; cursor: pointer; text-align: center; font-size: 10px; letter-spacing: 0.15em; color: #444; position: absolute; top: 0; left: 0; width: 44px; height: 100%; z-index: 10; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.column.collapsed .column-tab { opacity: 1; pointer-events: auto; }
+.column-tab:hover { background: #111; color: #888; }
+
+.column-header { height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid #1a1a1a; background: #080808; flex-shrink: 0; }
+.column.collapsed .column-header { opacity: 0; pointer-events: none; }
+
+.column-title { font-size: 10px; letter-spacing: 0.12em; color: #555; display: flex; align-items: center; gap: 8px; }
+.column-marker { width: 6px; height: 6px; border-radius: 50%; }
+.column[data-type="source"] .column-marker { background: #0f8; }
+.column[data-type="poml"] .column-marker { background: #f6a; }
+.column[data-type="prompt"] .column-marker { background: #6af; }
+.column[data-type="chain"] .column-marker { background: #fa6; }
+.column[data-type="notes"] .column-marker { background: #aaa; }
+
+.header-actions { display: flex; gap: 6px; }
+.header-btn { background: none; border: 1px solid #222; color: #444; padding: 4px 8px; font: 9px 'Courier New', monospace; cursor: pointer; }
+.header-btn:hover { border-color: #555; color: #888; }
+
+.collapse-btn { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); font-size: 14px; color: #333; cursor: pointer; z-index: 5; }
+.collapse-btn:hover { color: #666; }
+.column.collapsed .collapse-btn { display: none; }
+
+.column-content { flex: 1; overflow-y: auto; padding: 16px; }
+.column.collapsed .column-content { opacity: 0; pointer-events: none; }
+
+.unit { margin-bottom: 12px; padding: 14px; background: #080808; border-left: 2px solid transparent; cursor: pointer; transition: all 0.15s; position: relative; }
+.unit:hover { background: #111; }
+.unit:active { background: #181818; }
+.unit.active { background: #111; border-left-color: #fff; }
+.column[data-type="source"] .unit.active { border-left-color: #0f8; }
+.column[data-type="poml"] .unit.active { border-left-color: #f6a; }
+.column[data-type="prompt"] .unit.active { border-left-color: #6af; }
+.column[data-type="chain"] .unit.active { border-left-color: #fa6; }
+
+.unit-id { font-size: 9px; color: #333; margin-bottom: 8px; letter-spacing: 0.08em; }
+.unit-text { color: #777; line-height: 1.6; font-size: 12px; }
+.unit.active .unit-text { color: #aaa; }
+.unit-origin { position: absolute; top: 8px; right: 8px; font-size: 8px; color: #2a2a2a; background: #000; padding: 2px 6px; border: 1px solid #1a1a1a; }
+
+.input-area { background: #080808; border-top: 1px solid #1a1a1a; padding: 12px; flex-shrink: 0; }
+.input-area textarea { width: 100%; height: 80px; background: #000; border: 1px solid #1a1a1a; color: #888; font: 11px 'Courier New', monospace; padding: 10px; resize: none; }
+.input-area textarea:focus { outline: none; border-color: #333; color: #ccc; }
+.input-area textarea::placeholder { color: #333; }
+.input-actions { display: flex; gap: 6px; margin-top: 8px; }
+.input-btn { flex: 1; padding: 10px; background: #111; border: 1px solid #222; color: #666; font: 10px 'Courier New', monospace; cursor: pointer; }
+.input-btn:hover { background: #181818; border-color: #333; color: #999; }
+.input-btn.primary { border-color: #0f8; color: #0f8; }
+.input-btn.primary:hover { background: #0f8; color: #000; }
+
+/* Context Menu */
+.context-menu { position: fixed; background: #0a0a0a; border: 1px solid #222; padding: 4px 0; min-width: 160px; z-index: 1000; display: none; }
+.context-menu.active { display: block; }
+.context-item { padding: 10px 16px; font-size: 11px; color: #888; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+.context-item:hover { background: #111; color: #ccc; }
+.context-item .icon { color: #444; font-size: 12px; }
+.context-divider { height: 1px; background: #1a1a1a; margin: 4px 0; }
+
+/* Toast */
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #111; border: 1px solid #333; padding: 12px 24px; font-size: 11px; color: #888; z-index: 1000; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+.toast.active { opacity: 1; }
+
+/* Filter tabs */
+.filter-bar { display: flex; gap: 1px; background: #1a1a1a; flex-shrink: 0; }
+.filter-btn { flex: 1; padding: 10px; background: #080808; border: none; color: #444; font: 9px 'Courier New', monospace; cursor: pointer; letter-spacing: 0.1em; }
+.filter-btn:hover { color: #888; }
+.filter-btn.active { color: #0f8; background: #000; }
+
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #1a1a1a; }
+::-webkit-scrollbar-thumb:hover { background: #333; }
+</style>
+</head>
+<body>
+<div class="scroll-container" id="scrollContainer">
+  <!-- SOURCE column -->
+  <div class="column" data-type="source" data-index="0">
+    <div class="column-tab">SOURCE</div>
+    <div class="column-header">
+      <div class="column-title"><div class="column-marker"></div>SOURCE</div>
+      <div class="header-actions">
+        <button class="header-btn" onclick="loadFile()">LOAD</button>
+      </div>
+    </div>
+    <div class="collapse-btn" onclick="toggleCollapse(this.parentElement)">‹</div>
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all" onclick="filterSource('all')">ALL</button>
+      <button class="filter-btn" data-filter="carey" onclick="filterSource('carey')">CAR</button>
+      <button class="filter-btn" data-filter="kittler" onclick="filterSource('kittler')">KIT</button>
+      <button class="filter-btn" data-filter="apollinaire" onclick="filterSource('apollinaire')">APO</button>
+      <button class="filter-btn" data-filter="bajohr" onclick="filterSource('bajohr')">BAJ</button>
+    </div>
+    <div class="column-content" id="source-content"></div>
+    <div class="input-area">
+      <textarea id="paste-input" placeholder="Paste text here..."></textarea>
+      <div class="input-actions">
+        <button class="input-btn" onclick="clearPaste()">CLEAR</button>
+        <button class="input-btn primary" onclick="addPastedSource()">+ ADD SOURCE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="theme-bar">
+  <div class="theme-dot" data-t="green" onclick="setTheme('')"></div>
+  <div class="theme-dot" data-t="amber" onclick="setTheme('amber')"></div>
+  <div class="theme-dot" data-t="cyan" onclick="setTheme('cyan')"></div>
+  <div class="theme-dot" data-t="rose" onclick="setTheme('rose')"></div>
+</div>
+
+<div class="context-menu" id="contextMenu">
+  <div class="context-item" onclick="contextCopy()"><span class="icon">◇</span> Copy</div>
+  <div class="context-item" onclick="contextBranch()"><span class="icon">◈</span> Branch</div>
+  <div class="context-divider"></div>
+  <div class="context-item" onclick="contextAddToChain()"><span class="icon">→</span> Add to Chain</div>
+  <div class="context-item" onclick="contextSendToTexture()"><span class="icon">▶</span> Send to TEXT-URE</div>
+  <div class="context-divider"></div>
+  <div class="context-item" onclick="contextAddNote()"><span class="icon">✎</span> Add Note</div>
+  <div class="context-item" onclick="contextDelete()"><span class="icon">×</span> Delete</div>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="fileInput" accept=".txt,.md,.json" style="display:none" onchange="handleFile(event)">
+
+<script>
+const state = {
+  columns: ['source'],
+  blocks: [],
+  chain: [],
+  notes: {},
+  activeUnit: null,
+  columnIndex: 0,
+  filter: 'all'
+};
+
+// Load POML blocks from data.json
+async function loadBlocks() {
+  try {
+    const r = await fetch('data.json');
+    const d = await r.json();
+    d.messages.forEach((m, i) => {
+      if (m.role === 'Response' && m.say) {
+        const content = m.say;
+        // Look for POML-like structures, code blocks, and panel definitions
+        const pomlMatches = content.match(/&lt;poml[\s\S]*?&lt;\/poml&gt;/gi) || [];
+        const promptMatches = content.match(/&lt;prompt[\s\S]*?&lt;\/prompt&gt;/gi) || [];
+        const codeMatches = content.match(/```[\s\S]*?```/g) || [];
+        const panelMatches = content.match(/PANELS\s*=\s*\[[\s\S]*?\];/g) || [];
+        
+        // Process POML/prompt tags
+        [...pomlMatches, ...promptMatches].forEach((match, j) => {
+          const decoded = match.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+          let theorist = detectTheorist(decoded);
+          state.blocks.push({ id: `P${i}-${j}`, content: decoded, theorist, type: 'poml' });
+        });
+        
+        // Process code blocks as potential prompts
+        codeMatches.forEach((match, j) => {
+          if (match.length > 100 && match.length < 3000) {
+            let theorist = detectTheorist(match);
+            state.blocks.push({ id: `C${i}-${j}`, content: match.replace(/```/g, ''), theorist, type: 'code' });
+          }
+        });
+        
+        // Also extract meaningful paragraphs about theory
+        const paragraphs = content.split(/\n\n+/).filter(p => p.length > 150 && p.length < 1500);
+        paragraphs.forEach((p, j) => {
+          if (/ekphrasis|ritual|inscription|calligram|operative|medium|spatial|grid/i.test(p)) {
+            let theorist = detectTheorist(p);
+            state.blocks.push({ id: `T${i}-${j}`, content: p.replace(/\*\*/g, '').substring(0, 800), theorist, type: 'theory' });
+          }
+        });
+      }
+    });
+    if (state.blocks.length === 0) {
+      addSampleBlocks();
+    }
+    renderSource();
+    showToast(`Loaded ${state.blocks.length} blocks`);
+  } catch (e) {
+    console.error('Failed to load data.json:', e);
+    addSampleBlocks();
+    renderSource();
+  }
+}
+
+function detectTheorist(text) {
+  if (/carey|ritual|transmission|ceremony|mass|communion/i.test(text)) return 'carey';
+  if (/kittler|inscription|gramophone|typewriter|discourse network/i.test(text)) return 'kittler';
+  if (/apollinaire|calligram|spatial|lettre.ocean|ideogram/i.test(text)) return 'apollinaire';
+  if (/bajohr|ekphrasis|operative|connectionist|multimodal/i.test(text)) return 'bajohr';
+  return 'grid';
+}
+
+function addSampleBlocks() {
+  state.blocks = [
+    { id: 'S1', content: '<poml type="ritual" theorist="carey">\n  <zone function="PRODUCE">\n    <text>The grid is a world, not a page. Users enter, traverse, and rehearse meaning through spatial navigation.</text>\n  </zone>\n</poml>', theorist: 'carey', type: 'sample' },
+    { id: 'S2', content: '<poml type="inscription" theorist="kittler">\n  <address>12,12</address>\n  <payload>Movement is a scan-head. The beam is a read operation. Semantics are not primitives.</payload>\n</poml>', theorist: 'kittler', type: 'sample' },
+    { id: 'S3', content: '<poml type="calligram" theorist="apollinaire">\n  <glyphFlow>SPIRAL</glyphFlow>\n  <density>7</density>\n  <text>Geometry precedes reading. Topology encodes meaning. The shape speaks before the word.</text>\n</poml>', theorist: 'apollinaire', type: 'sample' },
+    { id: 'S4', content: '<poml type="operative" theorist="bajohr">\n  <modality>text-to-image</modality>\n  <prompt>The operative text causally produces the surface constellation through neural weight activation.</prompt>\n</poml>', theorist: 'bajohr', type: 'sample' }
+  ];
+}
+
+function renderSource() {
+  const container = document.getElementById('source-content');
+  container.innerHTML = '';
+  const filtered = state.filter === 'all' ? state.blocks : state.blocks.filter(b => b.theorist === state.filter);
+  filtered.forEach(block => {
+    const preview = block.content.substring(0, 120).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const unit = document.createElement('div');
+    unit.className = 'unit';
+    unit.dataset.id = block.id;
+    unit.innerHTML = `
+      <div class="unit-id">${block.id} · ${block.theorist.toUpperCase()}</div>
+      <div class="unit-text">${preview}...</div>
+    `;
+    unit.onclick = () => selectSource(block);
+    unit.oncontextmenu = (e) => showContext(e, block);
+    unit.ontouchstart = (e) => handleTouchStart(e, block);
+    unit.ontouchend = handleTouchEnd;
+    container.appendChild(unit);
+  });
+}
+
+function filterSource(filter) {
+  state.filter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+  renderSource();
+}
+
+function selectSource(block) {
+  setActive('source', block.id);
+  state.activeUnit = block;
+  
+  // Remove columns after source
+  removeColumnsAfter('source');
+  
+  // Add POML detail column
+  addColumn('poml', 'POML', [{
+    id: block.id,
+    content: `
+      <div class="unit-id">${block.id} · ${block.theorist.toUpperCase()}</div>
+      <div class="unit-text" style="white-space:pre-wrap;font-size:11px;color:#888">${escapeHtml(block.content)}</div>
+    `,
+    data: block
+  }], true);
+}
+
+function addColumn(type, title, units, isDetail = false) {
+  state.columnIndex++;
+  state.columns.push(type);
+  
+  const col = document.createElement('div');
+  col.className = 'column';
+  col.dataset.type = type;
+  col.dataset.index = state.columnIndex;
+  
+  col.innerHTML = `
+    <div class="column-tab">${title}</div>
+    <div class="column-header">
+      <div class="column-title"><div class="column-marker"></div>${title}</div>
+      <div class="header-actions">
+        ${type === 'chain' ? '<button class="header-btn" onclick="exportChain()">EXPORT</button>' : ''}
+        ${type === 'notes' ? '<button class="header-btn" onclick="saveNotes()">SAVE</button>' : ''}
+      </div>
+    </div>
+    <div class="collapse-btn" onclick="toggleCollapse(this.parentElement)">‹</div>
+    <div class="column-content"></div>
+    ${type === 'notes' ? `
+      <div class="input-area">
+        <textarea id="note-input" placeholder="Add a note..."></textarea>
+        <div class="input-actions">
+          <button class="input-btn primary" onclick="saveCurrentNote()">+ SAVE NOTE</button>
+        </div>
+      </div>
+    ` : ''}
+  `;
+  
+  const content = col.querySelector('.column-content');
+  units.forEach(u => {
+    const unit = document.createElement('div');
+    unit.className = 'unit' + (isDetail ? ' active' : '');
+    unit.dataset.id = u.id;
+    unit.innerHTML = u.content;
+    if (u.data) {
+      unit.onclick = () => {
+        setActive(type, u.id);
+        state.activeUnit = u.data;
+      };
+      unit.oncontextmenu = (e) => showContext(e, u.data);
+      unit.ontouchstart = (e) => handleTouchStart(e, u.data);
+      unit.ontouchend = handleTouchEnd;
+    }
+    content.appendChild(unit);
+  });
+  
+  const tab = col.querySelector('.column-tab');
+  tab.onclick = () => toggleCollapse(col);
+  
+  document.getElementById('scrollContainer').appendChild(col);
+  
+  setTimeout(() => {
+    document.getElementById('scrollContainer').scrollLeft = document.getElementById('scrollContainer').scrollWidth;
+  }, 50);
+}
+
+function toggleCollapse(col) {
+  col.classList.toggle('collapsed');
+}
+
+function removeColumnsAfter(type) {
+  const idx = state.columns.indexOf(type);
+  state.columns.slice(idx + 1).forEach(t => {
+    const col = document.querySelector(`[data-type="${t}"]`);
+    if (col) col.remove();
+  });
+  state.columns = state.columns.slice(0, idx + 1);
+}
+
+function setActive(type, id) {
+  document.querySelectorAll(`[data-type="${type}"] .unit`).forEach(u => u.classList.remove('active'));
+  const unit = document.querySelector(`[data-type="${type}"] [data-id="${id}"]`);
+  if (unit) unit.classList.add('active');
+}
+
+// Context menu
+let touchTimer = null;
+function handleTouchStart(e, block) {
+  touchTimer = setTimeout(() => showContext(e.touches[0], block), 500);
+}
+function handleTouchEnd() {
+  clearTimeout(touchTimer);
+}
+
+function showContext(e, block) {
+  e.preventDefault();
+  state.activeUnit = block;
+  const menu = document.getElementById('contextMenu');
+  const x = e.clientX || e.pageX;
+  const y = e.clientY || e.pageY;
+  menu.style.left = Math.min(x, window.innerWidth - 180) + 'px';
+  menu.style.top = Math.min(y, window.innerHeight - 200) + 'px';
+  menu.classList.add('active');
+}
+
+document.addEventListener('click', () => {
+  document.getElementById('contextMenu').classList.remove('active');
+});
+
+function contextCopy() {
+  if (state.activeUnit) {
+    navigator.clipboard.writeText(state.activeUnit.content);
+    showToast('Copied to clipboard');
+  }
+}
+
+function contextBranch() {
+  if (!state.activeUnit) return;
+  removeColumnsAfter('poml');
+  addColumn('prompt', 'BRANCH', [{
+    id: 'BRANCH-' + Date.now(),
+    content: `
+      <div class="unit-id">BRANCHED FROM ${state.activeUnit.id}</div>
+      <div class="unit-text">Create variations or continuations...</div>
+    `,
+    data: state.activeUnit
+  }]);
+  showToast('Branch created');
+}
+
+function contextAddToChain() {
+  if (!state.activeUnit) return;
+  state.chain.push({ ...state.activeUnit, chainId: 'C' + state.chain.length });
+  showToast(`Added to chain (${state.chain.length} items)`);
+  
+  if (!state.columns.includes('chain')) {
+    addColumn('chain', 'CHAIN', state.chain.map(c => ({
+      id: c.chainId,
+      content: `
+        <div class="unit-id">${c.chainId} ← ${c.id}</div>
+        <div class="unit-text">${c.content.substring(0, 80)}...</div>
+      `,
+      data: c
+    })));
+  } else {
+    const content = document.querySelector('[data-type="chain"] .column-content');
+    const c = state.chain[state.chain.length - 1];
+    const unit = document.createElement('div');
+    unit.className = 'unit';
+    unit.dataset.id = c.chainId;
+    unit.innerHTML = `
+      <div class="unit-id">${c.chainId} ← ${c.id}</div>
+      <div class="unit-text">${c.content.substring(0, 80)}...</div>
+    `;
+    content.appendChild(unit);
+  }
+}
+
+function contextSendToTexture() {
+  if (!state.activeUnit) return;
+  const txt = state.activeUnit.content.replace(/<[^>]+>/g, ' ').toUpperCase().replace(/[^A-Z\s]/g, '').slice(0, 800);
+  const w = {
+    id: state.activeUnit.id,
+    text: txt,
+    palette: { text: state.activeUnit.theorist === 'carey' ? '#f6a' : state.activeUnit.theorist === 'kittler' ? '#a6f' : '#0f8' },
+    mapType: 'RINGS',
+    theorist: state.activeUnit.theorist
+  };
+  sessionStorage.setItem('poml_custom_world', JSON.stringify(w));
+  window.open('text-ure-03.html', '_blank');
+}
+
+function contextAddNote() {
+  if (!state.columns.includes('notes')) {
+    addColumn('notes', 'NOTES', []);
+  }
+  showToast('Add your note in the NOTES column');
+}
+
+function contextDelete() {
+  if (!state.activeUnit) return;
+  state.blocks = state.blocks.filter(b => b.id !== state.activeUnit.id);
+  renderSource();
+  showToast('Deleted');
+}
+
+// Chain export
+function exportChain() {
+  const data = JSON.stringify(state.chain, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `chain-${Date.now()}.json`;
+  a.click();
+  showToast('Chain exported');
+}
+
+// Notes
+function saveCurrentNote() {
+  const input = document.getElementById('note-input');
+  if (!input || !input.value.trim()) return;
+  const note = { id: 'N' + Date.now(), text: input.value.trim(), time: new Date().toISOString() };
+  const content = document.querySelector('[data-type="notes"] .column-content');
+  const unit = document.createElement('div');
+  unit.className = 'unit';
+  unit.dataset.id = note.id;
+  unit.innerHTML = `
+    <div class="unit-id">${note.id}</div>
+    <div class="unit-text">${note.text}</div>
+  `;
+  content.appendChild(unit);
+  input.value = '';
+  showToast('Note saved');
+}
+
+// Paste source
+function addPastedSource() {
+  const input = document.getElementById('paste-input');
+  if (!input.value.trim()) return;
+  const block = {
+    id: 'PASTE-' + Date.now(),
+    content: input.value.trim(),
+    theorist: 'grid',
+    type: 'pasted'
+  };
+  state.blocks.unshift(block);
+  renderSource();
+  input.value = '';
+  showToast('Source added');
+}
+
+function clearPaste() {
+  document.getElementById('paste-input').value = '';
+}
+
+// File loading
+function loadFile() {
+  document.getElementById('fileInput').click();
+}
+
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const block = {
+      id: file.name.replace(/\.[^.]+$/, '').toUpperCase(),
+      content: ev.target.result,
+      theorist: 'grid',
+      type: 'file'
+    };
+    state.blocks.unshift(block);
+    renderSource();
+    showToast(`Loaded: ${file.name}`);
+  };
+  reader.readAsText(file);
+}
+
+// Utils
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('active');
+  setTimeout(() => toast.classList.remove('active'), 2000);
+}
+
+// Theme switching
+function setTheme(theme) {
+  document.body.setAttribute('data-theme', theme);
+  localStorage.setItem('poml-theme', theme);
+}
+const savedTheme = localStorage.getItem('poml-theme');
+if (savedTheme) setTheme(savedTheme);
+
+// Init
+loadBlocks();
+</script>
+</body>
+</html>

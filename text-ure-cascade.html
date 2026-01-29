@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TEXT-URE CASCADE — Infinite Text Stream</title>
+<style>
+:root { --bg: #050508; --ui-text: #0f8; --ui-dim: rgba(0,255,136,0.3); --font-mono: 'Courier New', monospace; }
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+body { background: var(--bg); color: var(--ui-text); font-family: var(--font-mono); height: 100vh; overflow: hidden; }
+#game-container { position: relative; width: 100%; height: 100%; }
+canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+#matrix-rain { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; opacity: 0.08; }
+body.cinematic .hud, body.cinematic .scanner, body.cinematic .touch-controls { display: none !important; }
+
+.hud { position: absolute; top: 0; left: 0; width: 100%; padding: 12px; pointer-events: none; display: flex; justify-content: space-between; z-index: 10; }
+.hud-left { background: rgba(0,0,0,0.7); padding: 8px 12px; border-left: 2px solid var(--ui-text); }
+.hud-left h1 { font-size: 11px; color: #fff; letter-spacing: 1px; margin: 0; }
+.hud-left .stats { font-size: 9px; color: var(--ui-text); opacity: 0.7; }
+.source-selector { pointer-events: auto; display: flex; gap: 6px; }
+.btn-source { background: rgba(0,0,0,0.8); border: 1px solid #333; color: #666; padding: 6px 12px; font: 9px var(--font-mono); cursor: pointer; }
+.btn-source:hover, .btn-source.active { border-color: var(--ui-text); color: var(--ui-text); }
+.config-btn { background: rgba(0,0,0,0.8); border: 1px solid #333; color: #666; padding: 6px 10px; font: 14px var(--font-mono); cursor: pointer; }
+.config-btn:hover { border-color: var(--ui-text); color: var(--ui-text); }
+
+.scanner { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; z-index: 15; }
+.scanner-output { background: rgba(0,0,0,0.85); border: 1px solid var(--ui-text); padding: 10px 14px; font-size: 11px; color: #fff; min-height: 40px; text-align: center; }
+.scanner-label { font-size: 8px; color: var(--ui-dim); letter-spacing: 1px; margin-bottom: 4px; text-align: center; }
+
+.minimap { position: absolute; top: 60px; right: 12px; width: 80px; height: 80px; background: rgba(0,0,0,0.6); border: 1px solid #222; z-index: 12; }
+
+#tui-overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 320px; background: rgba(0,0,0,0.95); border: 1px solid var(--ui-text); padding: 20px; z-index: 200; display: none; max-height: 80vh; overflow-y: auto; }
+#tui-overlay.active { display: block; }
+.tui-section { margin-bottom: 15px; }
+.tui-label { font-size: 9px; color: var(--ui-dim); letter-spacing: 1px; margin-bottom: 6px; display: block; }
+.tui-btn { background: transparent; border: 1px solid #333; color: #888; padding: 8px 12px; font: 10px var(--font-mono); cursor: pointer; }
+.tui-btn:hover { border-color: var(--ui-text); color: var(--ui-text); }
+.tui-btn.accent { border-color: var(--ui-text); color: var(--ui-text); }
+
+.touch-controls { position: absolute; bottom: 20px; left: 0; width: 100%; height: 80px; pointer-events: none; display: flex; justify-content: space-between; padding: 0 25px; z-index: 20; }
+.control-zone { width: 70px; height: 70px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; touch-action: none; }
+.d-pad-label { font-size: 14px; opacity: 0.4; }
+
+.key-hint { position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 9px; color: var(--ui-dim); background: rgba(0,0,0,.8); padding: 4px 12px; border-radius: 3px; z-index: 50; }
+@media(max-width:600px) { .key-hint { display: none; } }
+
+#loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; justify-content: center; align-items: center; z-index: 300; }
+#msg-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.9); border: 1px solid var(--ui-text); padding: 20px 40px; font-size: 12px; z-index: 250; display: none; }
+
+.cascade-indicator { position: absolute; top: 60px; left: 12px; background: rgba(0,0,0,0.7); padding: 8px 12px; border-left: 2px solid var(--ui-text); z-index: 12; }
+.cascade-indicator .label { font-size: 8px; color: var(--ui-dim); letter-spacing: 1px; }
+.cascade-indicator .value { font-size: 11px; color: var(--ui-text); }
+</style>
+</head>
+<body>
+<div id="game-container">
+    <canvas id="raycaster"></canvas>
+    
+    <div class="hud">
+        <div class="hud-left">
+            <h1>CASCADE</h1>
+            <div class="stats"><span id="debug-pos">12.5, 12.5</span> | <span id="text-progress">0%</span></div>
+        </div>
+        <div class="source-selector">
+            <button class="btn-source active" onclick="setSpeed(0.3)">SLOW</button>
+            <button class="btn-source" onclick="setSpeed(1)">MED</button>
+            <button class="btn-source" onclick="setSpeed(3)">FAST</button>
+            <button class="config-btn" onclick="toggleTUI()">≡</button>
+        </div>
+    </div>
+    
+    <div class="cascade-indicator">
+        <div class="label">WORD OFFSET</div>
+        <div class="value" id="word-offset">0</div>
+    </div>
+    
+    <div class="minimap"><canvas id="minimap-canvas" width="80" height="80"></canvas></div>
+    
+    <div class="scanner">
+        <div class="scanner-label">◇ CASCADE SAMPLER</div>
+        <div class="scanner-output" id="scanner-output">...</div>
+    </div>
+    
+    <div id="tui-overlay">
+        <div style="border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:15px; display:flex; justify-content:space-between;">
+            <span style="font-weight:900; font-size:11px;">CASCADE CONFIG</span>
+            <span style="cursor:pointer" onclick="toggleTUI()">[X]</span>
+        </div>
+        <div class="tui-section">
+            <label class="tui-label">Cascade Speed: <span id="val-speed">1</span>x</label>
+            <input type="range" min="0.5" max="8" step="0.5" value="1" style="width:100%" oninput="setCascadeSpeed(this.value)">
+        </div>
+        <div class="tui-section">
+            <label class="tui-label">Load Large Text</label>
+            <textarea id="large-text" placeholder="Paste entire book, chapter, or large text here..." style="width:100%;height:120px;background:#000;border:1px solid #333;color:#ff6b9d;font:10px var(--font-mono);padding:8px;resize:none"></textarea>
+            <button class="tui-btn accent" style="width:100%;margin-top:8px" onclick="loadLargeText()">LOAD TEXT INTO CASCADE</button>
+        </div>
+        <div class="tui-section">
+            <label class="tui-label">Or Load File</label>
+            <input type="file" id="file-input" accept=".txt,.md" style="width:100%;font-size:10px;color:#666" onchange="loadFile(event)">
+        </div>
+        <div class="tui-section">
+            <label class="tui-label">Text Stats</label>
+            <div style="font-size:10px;color:#666">
+                <div>Total words: <span id="stat-words">0</span></div>
+                <div>Window size: <span id="stat-window">200</span> words</div>
+                <div>Cycle time: <span id="stat-cycle">~5s</span></div>
+            </div>
+        </div>
+        <button class="tui-btn" style="width:100%" onclick="toggleCinematic()">Toggle Cinematic (H)</button>
+    </div>
+    
+    <div class="touch-controls">
+        <div class="control-zone" id="stick-move"><div class="d-pad-label">↑↓</div></div>
+        <div class="control-zone" id="stick-look"><div class="d-pad-label">←→</div></div>
+    </div>
+    <div class="key-hint">WASD move · A/D turn · H hide · Click for mouse look</div>
+    
+    <div id="msg-popup"></div>
+    <div id="loader"><div style="font-size:11px;color:#ff6b9d;letter-spacing:2px;animation:pulse 1s infinite">INITIALIZING CASCADE...</div></div>
+</div>
+
+<script>
+const CONFIG = { res: 1, scannerWidth: 120, cascadeSpeed: 0.3, windowSize: 400, charSize: 28 };
+
+const State = {
+    fullText: [],
+    textOffset: 0,
+    textStrips: [],
+    textures: [],
+    map: [],
+    player: { x: 12.5, y: 12.5, dirX: -1, dirY: 0, planeX: 0, planeY: 0.66 },
+    keys: { w: false, a: false, s: false, d: false, rotLeft: false, rotRight: false },
+    touch: { move: 0, turn: 0 },
+    mouse: { turn: 0 },
+    lastTime: 0,
+    visibleStrips: new Set(),
+    history: [],
+    lastScannerText: "",
+    scannerVisible: true,
+    cascadeTimer: 0,
+    palette: { text: '#0f8', bg: '#050508', floorStart: '#0a120a', map: '#0f8' }
+};
+
+const canvas = document.getElementById('raycaster'), ctx = canvas.getContext('2d', { alpha: false });
+const mmCanvas = document.getElementById('minimap-canvas'), mmCtx = mmCanvas.getContext('2d');
+const scannerOut = document.getElementById('scanner-output');
+
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+window.addEventListener('resize', resize);
+
+function showMessage(txt) { const p = document.getElementById('msg-popup'); p.innerText = txt; p.style.display = 'block'; setTimeout(() => p.style.display = 'none', 1500); }
+
+// Default sample text
+const DEFAULT_TEXT = "THE CASCADE RENDERS TEXT AS AN INFINITE STREAM WORDS FLOW THROUGH THE WALLS OF THIS SPACE LIKE WATER THROUGH A CANYON EACH MOMENT BRINGS NEW FRAGMENTS OF MEANING AS YOU NAVIGATE THIS SEMANTIC ARCHITECTURE THE TEXT CYCLES AND SHIFTS CREATING AN EVER CHANGING LANDSCAPE OF LANGUAGE LOAD YOUR OWN TEXT TO EXPLORE ENTIRE BOOKS CHAPTERS OR ANY LARGE BODY OF TEXT THE WALLS WILL CONTINUOUSLY CYCLE THROUGH YOUR CONTENT CREATING AN IMMERSIVE READING EXPERIENCE UNLIKE ANY OTHER THIS IS THE CASCADE WHERE WORDS RAIN DOWN AND MEANING EMERGES FROM TRAVERSAL";
+
+function initText(text) {
+    const clean = text.toUpperCase().replace(/[^A-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+    State.fullText = clean.split(' ').filter(w => w.length > 0);
+    document.getElementById('stat-words').textContent = State.fullText.length;
+    State.textOffset = 0;
+    updateTextWindow();
+}
+
+function updateTextWindow() {
+    const words = [];
+    for (let i = 0; i < CONFIG.windowSize; i++) {
+        const idx = (State.textOffset + i) % State.fullText.length;
+        words.push(State.fullText[idx]);
+    }
+    const windowText = words.join(' ');
+    
+    // Create strips
+    State.textStrips = [];
+    for (let i = 0; i < windowText.length; i += 16) {
+        State.textStrips.push(windowText.substring(i, i + 16).padEnd(16));
+    }
+    
+    // Regenerate textures with organic rain effect
+    State.textures = [];
+    const time = Date.now() * 0.001;
+    State.textStrips.forEach((s, idx) => {
+        const c = document.createElement('canvas');
+        c.width = 48; c.height = 1024;
+        const x = c.getContext('2d');
+        
+        // Soft, muted color palette - less saturated, more soothing
+        const baseHue = State.palette.text === '#ff6b9d' ? 340 : 160;
+        const hueShift = Math.sin(time * 0.1 + idx * 0.05) * 20;
+        const alpha = 0.4 + Math.sin(time * 0.3 + idx * 0.1) * 0.2;
+        x.fillStyle = `hsla(${baseHue + hueShift}, 50%, 60%, ${alpha})`;
+        x.font = `600 ${CONFIG.charSize}px Courier New`;
+        x.textAlign = 'center';
+        
+        // More characters per strip, smaller spacing
+        const charsPerStrip = 24;
+        const charSpacing = 1024 / charsPerStrip;
+        for (let i = 0; i < s.length && i < charsPerStrip; i++) {
+            if (s[i] !== ' ') {
+                // Gentle organic wave - slower, smaller amplitude
+                const wave = Math.sin(time * 0.5 + idx * 0.15 + i * 0.3) * 3;
+                const fade = 0.3 + Math.sin(time * 0.2 + i * 0.4) * 0.3;
+                x.globalAlpha = fade;
+                x.fillText(s[i], 24, i * charSpacing + 30 + wave);
+            }
+        }
+        x.globalAlpha = 1;
+        State.textures.push(c);
+    });
+    
+    document.getElementById('word-offset').textContent = State.textOffset;
+    document.getElementById('text-progress').textContent = Math.round((State.textOffset / State.fullText.length) * 100) + '%';
+}
+
+function generateMap() {
+    State.map = [];
+    for (let x = 0; x < 24; x++) {
+        State.map[x] = [];
+        for (let y = 0; y < 24; y++) {
+            State.map[x][y] = { type: 0, idx: -1 };
+        }
+    }
+    // Spiral pattern for cascade
+    const cx = 12, cy = 12;
+    for (let r = 3; r < 11; r += 2) {
+        for (let a = 0; a < Math.PI * 2; a += 0.3) {
+            const x = Math.floor(cx + Math.cos(a) * r);
+            const y = Math.floor(cy + Math.sin(a) * r);
+            if (x >= 0 && x < 24 && y >= 0 && y < 24) {
+                State.map[x][y].type = 1;
+            }
+        }
+    }
+    // Assign strip indices
+    let sIdx = 0;
+    for (let x = 0; x < 24; x++) {
+        for (let y = 0; y < 24; y++) {
+            if (State.map[x][y].type === 1) {
+                State.map[x][y].idx = sIdx % State.textures.length;
+                sIdx++;
+            }
+        }
+    }
+}
+
+function loadLargeText() {
+    const txt = document.getElementById('large-text').value.trim();
+    if (!txt) { showMessage("Paste text first"); return; }
+    initText(txt);
+    generateMap();
+    toggleTUI();
+    showMessage("LOADED " + State.fullText.length + " WORDS");
+}
+
+function loadFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        document.getElementById('large-text').value = ev.target.result;
+        loadLargeText();
+    };
+    reader.readAsText(file);
+}
+
+function setCascadeSpeed(v) {
+    CONFIG.cascadeSpeed = parseFloat(v);
+    document.getElementById('val-speed').textContent = v;
+    document.getElementById('stat-cycle').textContent = '~' + Math.round(5 / CONFIG.cascadeSpeed) + 's';
+}
+
+function setSpeed(v) {
+    setCascadeSpeed(v);
+    document.querySelectorAll('.btn-source').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function update(dt) {
+    const ms = 4 * dt, rs = 2 * dt;
+    
+    // Cascade timer - advance text slowly and organically
+    State.cascadeTimer += dt * CONFIG.cascadeSpeed;
+    if (State.cascadeTimer > 0.8) {
+        State.cascadeTimer = 0;
+        State.textOffset = (State.textOffset + 1) % State.fullText.length;
+        updateTextWindow();
+    }
+    // Continuous gentle texture refresh for animation
+    if (Math.random() < 0.05) updateTextWindow();
+    
+    let fwd = (State.keys.w ? 1 : 0) - (State.keys.s ? 1 : 0) + State.touch.move;
+    let trn = (State.keys.rotRight || State.keys.d ? 1 : 0) - (State.keys.rotLeft || State.keys.a ? 1 : 0) + State.touch.turn + State.mouse.turn;
+    
+    if (trn !== 0) {
+        const c = Math.cos(trn * rs), s = Math.sin(trn * rs);
+        const oDX = State.player.dirX, oPX = State.player.planeX;
+        State.player.dirX = State.player.dirX * c - State.player.dirY * s;
+        State.player.dirY = oDX * s + State.player.dirY * c;
+        State.player.planeX = State.player.planeX * c - State.player.planeY * s;
+        State.player.planeY = oPX * s + State.player.planeY * c;
+    }
+    
+    if (fwd !== 0) {
+        const nX = State.player.x + State.player.dirX * fwd * ms;
+        const nY = State.player.y + State.player.dirY * fwd * ms;
+        if (nX >= 0 && nX < 24 && State.map[Math.floor(nX)][Math.floor(State.player.y)].type === 0) State.player.x = nX;
+        if (nY >= 0 && nY < 24 && State.map[Math.floor(State.player.x)][Math.floor(nY)].type === 0) State.player.y = nY;
+    }
+    
+    document.getElementById('debug-pos').textContent = `${State.player.x.toFixed(1)},${State.player.y.toFixed(1)}`;
+}
+
+function draw() {
+    ctx.fillStyle = State.palette.bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Animated floor gradient
+    const time = Date.now() * 0.001;
+    const g = ctx.createLinearGradient(0, canvas.height / 2, 0, canvas.height);
+    g.addColorStop(0, State.palette.floorStart);
+    g.addColorStop(1, '#000');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+    
+    State.visibleStrips.clear();
+    const w = canvas.width, h = canvas.height, bH = CONFIG.scannerWidth / 2;
+    
+    for (let x = 0; x < w; x += CONFIG.res) {
+        const camX = 2 * x / w - 1;
+        const rDX = State.player.dirX + State.player.planeX * camX;
+        const rDY = State.player.dirY + State.player.planeY * camX;
+        
+        let mX = Math.floor(State.player.x), mY = Math.floor(State.player.y);
+        let sDX, sDY, stX = rDX < 0 ? -1 : 1, stY = rDY < 0 ? -1 : 1, hit = 0, side, pD;
+        const dDX = Math.abs(1 / rDX), dDY = Math.abs(1 / rDY);
+        sDX = rDX < 0 ? (State.player.x - mX) * dDX : (mX + 1 - State.player.x) * dDX;
+        sDY = rDY < 0 ? (State.player.y - mY) * dDY : (mY + 1 - State.player.y) * dDY;
+        
+        while (hit === 0) {
+            if (sDX < sDY) { sDX += dDX; mX += stX; side = 0; }
+            else { sDY += dDY; mY += stY; side = 1; }
+            if (mX < 0 || mX >= 24 || mY < 0 || mY >= 24) { hit = 1; pD = 100; }
+            else if (State.map[mX][mY].type > 0) hit = 1;
+        }
+        
+        pD = side === 0 ? (mX - State.player.x + (1 - stX) / 2) / rDX : (mY - State.player.y + (1 - stY) / 2) / rDY;
+        
+        if (pD < 30 && mX >= 0 && mX < 24 && mY >= 0 && mY < 24) {
+            const lH = Math.floor(h / pD);
+            let wX = side === 0 ? State.player.y + pD * rDY : State.player.x + pD * rDX;
+            wX -= Math.floor(wX);
+            
+            const cell = State.map[mX][mY];
+            if (cell.idx >= 0 && cell.idx < State.textures.length) {
+                const tIdx = cell.idx;
+                
+                if (State.scannerVisible && Math.abs(x - w / 2) < bH) {
+                    State.visibleStrips.add(tIdx);
+                }
+                
+                let b = 1 / (pD * 0.4);
+                if (side === 1) b *= 0.7;
+                
+                ctx.globalAlpha = Math.min(1, b);
+                ctx.drawImage(State.textures[tIdx], Math.floor(wX * 64), 0, 1, 1024, x, -lH / 2 + h / 2, CONFIG.res, lH);
+                ctx.globalAlpha = 1;
+            }
+        }
+    }
+    
+    // Scanner output
+    if (State.scannerVisible) {
+        const idxs = Array.from(State.visibleStrips).sort((a, b) => a - b);
+        let txt = "";
+        idxs.forEach(i => txt += State.textStrips[i]);
+        txt = txt.replace(/\s+/g, ' ').trim();
+        if (txt && txt !== State.lastScannerText) {
+            scannerOut.innerText = txt;
+            State.lastScannerText = txt;
+            if (txt.length > 5) State.history.push(txt);
+        }
+    }
+    
+    // Minimap
+    mmCtx.fillStyle = '#000';
+    mmCtx.fillRect(0, 0, 80, 80);
+    for (let x = 0; x < 24; x++) {
+        for (let y = 0; y < 24; y++) {
+            if (State.map[x][y].type > 0) {
+                mmCtx.fillStyle = State.palette.map;
+                mmCtx.fillRect(x * 3.3, y * 3.3, 2.5, 2.5);
+            }
+        }
+    }
+    mmCtx.fillStyle = '#fff';
+    mmCtx.beginPath();
+    mmCtx.arc(State.player.x * 3.3, State.player.y * 3.3, 2, 0, 7);
+    mmCtx.fill();
+}
+
+// Input handling
+canvas.addEventListener('click', () => canvas.requestPointerLock?.());
+document.addEventListener('mousemove', e => { if (document.pointerLockElement === canvas) State.mouse.turn = e.movementX * 0.002; });
+document.addEventListener('pointerlockchange', () => { if (document.pointerLockElement !== canvas) State.mouse.turn = 0; });
+setInterval(() => State.mouse.turn *= 0.8, 16);
+
+window.addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    if (k === 'w') State.keys.w = true;
+    if (k === 's') State.keys.s = true;
+    if (k === 'a') State.keys.a = true;
+    if (k === 'd') State.keys.d = true;
+    if (e.key === 'ArrowLeft') State.keys.rotLeft = true;
+    if (e.key === 'ArrowRight') State.keys.rotRight = true;
+    if (e.key === 'ArrowUp') State.keys.w = true;
+    if (e.key === 'ArrowDown') State.keys.s = true;
+    if (k === 'h') toggleCinematic();
+    if (k === 'escape') document.exitPointerLock?.();
+});
+
+window.addEventListener('keyup', e => {
+    const k = e.key.toLowerCase();
+    if (k === 'w') State.keys.w = false;
+    if (k === 's') State.keys.s = false;
+    if (k === 'a') State.keys.a = false;
+    if (k === 'd') State.keys.d = false;
+    if (e.key === 'ArrowLeft') State.keys.rotLeft = false;
+    if (e.key === 'ArrowRight') State.keys.rotRight = false;
+    if (e.key === 'ArrowUp') State.keys.w = false;
+    if (e.key === 'ArrowDown') State.keys.s = false;
+});
+
+// Touch controls
+function hT(e, a) {
+    e.preventDefault();
+    const r = e.currentTarget.getBoundingClientRect(), t = e.targetTouches[0];
+    if (!t) { State.touch[a] = 0; return; }
+    if (a === 'move') State.touch.move = -Math.max(-1, Math.min(1, (t.clientY - (r.top + r.height / 2)) / (r.height / 2)));
+    else State.touch.turn = Math.max(-1, Math.min(1, (t.clientX - (r.left + r.width / 2)) / (r.width / 2)));
+}
+document.getElementById('stick-move').addEventListener('touchstart', e => hT(e, 'move'), { passive: false });
+document.getElementById('stick-move').addEventListener('touchmove', e => hT(e, 'move'), { passive: false });
+document.getElementById('stick-move').addEventListener('touchend', () => State.touch.move = 0);
+document.getElementById('stick-look').addEventListener('touchstart', e => hT(e, 'turn'), { passive: false });
+document.getElementById('stick-look').addEventListener('touchmove', e => hT(e, 'turn'), { passive: false });
+document.getElementById('stick-look').addEventListener('touchend', () => State.touch.turn = 0);
+
+function toggleTUI() { document.getElementById('tui-overlay').classList.toggle('active'); }
+function toggleCinematic() { document.body.classList.toggle('cinematic'); }
+
+function checkInjection() {
+    const custom = sessionStorage.getItem('poml_custom_world');
+    if (custom) {
+        try {
+            const w = JSON.parse(custom);
+            if (w.text) {
+                initText(w.text);
+                generateMap();
+                if (w.palette?.text) State.palette.text = w.palette.text;
+                sessionStorage.removeItem('poml_custom_world');
+                showMessage('LOADED: ' + (w.id || 'CUSTOM'));
+            }
+        } catch (e) { console.error(e); }
+    }
+}
+
+function gameLoop(t) {
+    const dt = (t - State.lastTime) / 1000;
+    State.lastTime = t;
+    update(dt);
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+// Init
+resize();
+initText(DEFAULT_TEXT);
+generateMap();
+checkInjection();
+setTimeout(() => {
+    document.getElementById('loader').style.opacity = 0;
+    setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+    requestAnimationFrame(gameLoop);
+}, 800);
+</script>
+</body>
+</html>

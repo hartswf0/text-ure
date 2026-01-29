@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>POML IDE — Medium as Operator</title>
+<style>
+:root{--bg:#08080c;--bg2:#0f0f16;--panel:#12121a;--fg:#e0e0e8;--dim:#8888aa;--muted:#555;--accent:#00ffa3;--accent2:#ff5f87;--accent3:#8787ff;--carey:#ff6b9d;--kittler:#7c5cff;--apollinaire:#00d4aa;--bajohr:#ffc864;--grid:#64b4ff;--border:#1e1e2e;--mono:'SF Mono',monospace;--sans:system-ui,sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--bg);color:var(--fg);overflow:hidden;font-size:13px}
+.header{position:fixed;top:0;left:0;right:0;height:48px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;z-index:100;gap:16px}
+.logo{font-weight:700;font-size:12px;color:var(--accent);display:flex;align-items:center;gap:8px}
+.logo svg{width:18px;height:18px}
+.title{font-size:10px;color:var(--dim);letter-spacing:.08em}
+.search-bar{flex:1;max-width:260px;position:relative}
+.search-bar input{width:100%;padding:8px 12px 8px 32px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--fg);font:inherit;font-size:11px}
+.search-bar input:focus{outline:none;border-color:var(--accent)}
+.search-bar svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--muted)}
+.header-actions{margin-left:auto;display:flex;gap:6px}
+.icon-btn{width:34px;height:34px;background:var(--bg);border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+.icon-btn.active{background:var(--accent);color:var(--bg)}
+.icon-btn svg{width:16px;height:16px}
+.scroll-container{display:flex;height:calc(100vh - 48px);margin-top:48px;overflow-x:auto}
+.scroll-container::-webkit-scrollbar{height:8px}
+.scroll-container::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.column{min-width:380px;width:380px;height:100%;border-right:1px solid var(--border);background:var(--bg);display:flex;flex-direction:column;flex-shrink:0}
+.column.wide{min-width:520px;width:520px}
+.column.collapsed{min-width:40px;width:40px}
+.column-tab{writing-mode:vertical-rl;padding:16px 0;background:var(--bg2);cursor:pointer;font-size:9px;color:var(--muted);position:absolute;top:0;left:0;width:40px;height:100%;z-index:10;opacity:0;display:flex;align-items:center;justify-content:center}
+.column.collapsed .column-tab{opacity:1}
+.column-header{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--border);background:var(--panel);flex-shrink:0}
+.column.collapsed .column-header{opacity:0;pointer-events:none}
+.column-info{display:flex;align-items:center;gap:10px;overflow:hidden}
+.column-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.column-title{font-size:11px;color:var(--fg);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.column-badge{font-size:9px;color:var(--muted);background:var(--bg);padding:3px 8px;border-radius:4px}
+.column-actions{display:flex;gap:4px}
+.col-btn{width:28px;height:28px;background:transparent;border:1px solid transparent;color:var(--muted);cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center}
+.col-btn:hover{border-color:var(--border);color:var(--accent);background:var(--bg)}
+.col-btn svg{width:14px;height:14px}
+.column-content{flex:1;overflow-y:auto;padding:16px}
+.column-content::-webkit-scrollbar{width:6px}
+.column-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.section-list{display:flex;flex-direction:column;gap:8px}
+.section-item{padding:12px 14px;background:var(--panel);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s}
+.section-item:hover{border-color:var(--accent);transform:translateX(2px)}
+.section-item.active{border-color:var(--accent);background:rgba(0,255,163,.08)}
+.section-title{font-size:11px;font-weight:600;color:var(--fg);margin-bottom:4px}
+.section-preview{font-size:10px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.section-badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.badge{font-size:8px;padding:3px 7px;border-radius:4px;font-weight:600}
+.badge-poml{background:rgba(0,255,163,.15);color:var(--apollinaire)}
+.badge-prompt{background:rgba(135,135,255,.15);color:var(--accent3)}
+.badge-carey{background:rgba(255,107,157,.15);color:var(--carey)}
+.badge-kittler{background:rgba(124,92,255,.15);color:var(--kittler)}
+.badge-apollinaire{background:rgba(0,212,170,.15);color:var(--apollinaire)}
+.badge-bajohr{background:rgba(255,200,100,.15);color:var(--bajohr)}
+.badge-grid{background:rgba(100,180,255,.15);color:var(--grid)}
+.poml-container{background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.poml-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.2)}
+.poml-id{font-size:10px;font-weight:600;color:var(--accent);letter-spacing:.05em}
+.poml-meta{font-size:9px;color:var(--muted)}
+.poml-toolbar{display:flex;gap:6px}
+.poml-btn{padding:5px 10px;background:var(--bg);border:1px solid var(--border);color:var(--dim);font:inherit;font-size:9px;cursor:pointer;border-radius:4px;font-family:var(--mono)}
+.poml-btn:hover{border-color:var(--accent);color:var(--accent)}
+.poml-source{padding:16px;font-family:var(--mono);font-size:11px;line-height:1.7;white-space:pre-wrap;word-break:break-word;color:var(--dim);max-height:calc(100vh - 200px);overflow-y:auto;background:#050508}
+.filter-tabs{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.filter-tab{padding:6px 12px;background:var(--bg);border:1px solid var(--border);border-radius:20px;font-size:9px;cursor:pointer;color:var(--dim);font-weight:600}
+.filter-tab:hover{border-color:var(--accent)}
+.filter-tab.active{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.core-question{background:linear-gradient(135deg,rgba(0,255,163,.08),rgba(135,135,255,.08));border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px}
+.core-question h3{font-size:9px;color:var(--accent);letter-spacing:.1em;margin-bottom:8px}
+.core-question p{font-size:12px;color:var(--fg);line-height:1.6}
+.highlight{color:var(--accent);font-weight:600}
+.notes-panel{position:fixed;top:48px;right:0;width:340px;height:calc(100vh - 48px);background:var(--panel);border-left:1px solid var(--border);z-index:150;transform:translateX(100%);transition:transform .3s;display:flex;flex-direction:column}
+.notes-panel.open{transform:translateX(0)}
+.notes-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.notes-title{font-size:12px;font-weight:600;color:var(--accent)}
+.notes-count{font-size:9px;color:var(--muted);background:var(--bg);padding:3px 10px;border-radius:12px}
+.notes-list{flex:1;overflow-y:auto;padding:14px}
+.note-item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;cursor:pointer}
+.note-item:hover{border-color:var(--accent)}
+.note-source{font-size:9px;color:var(--accent);margin-bottom:6px}
+.note-text{font-size:11px;color:var(--fg);line-height:1.5}
+.note-meta{font-size:9px;color:var(--muted);margin-top:8px}
+.notes-add{padding:14px 18px;border-top:1px solid var(--border)}
+.notes-add textarea{width:100%;height:70px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--fg);font:inherit;font-size:11px;resize:none}
+.notes-add textarea:focus{outline:none;border-color:var(--accent)}
+.notes-add-btn{width:100%;padding:10px;background:var(--accent);border:none;color:var(--bg);font:inherit;font-size:11px;cursor:pointer;border-radius:6px;font-weight:600;margin-top:10px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--panel);border:1px solid var(--border);padding:14px 20px;border-radius:8px;font-size:12px;z-index:400;transform:translateY(100px);opacity:0;transition:all .3s}
+.toast.visible{transform:translateY(0);opacity:1}
+.toast.success{border-color:#22c55e}
+
+/* Text-ure Integration */
+.texture-panel{position:fixed;top:48px;left:0;width:320px;height:calc(100vh - 48px);background:var(--panel);border-right:1px solid var(--border);z-index:150;transform:translateX(-100%);transition:transform .3s;display:flex;flex-direction:column}
+.texture-panel.open{transform:translateX(0)}
+.texture-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.texture-title{font-size:12px;font-weight:600;color:var(--grid)}
+.texture-worlds{padding:14px;display:flex;flex-direction:column;gap:10px}
+.texture-world{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all .15s}
+.texture-world:hover{border-color:var(--grid)}
+.texture-world.active{border-color:var(--accent);background:rgba(0,255,163,.05)}
+.texture-world-name{font-size:11px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.texture-world-name span{width:8px;height:8px;border-radius:50%}
+.texture-world-text{font-size:9px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.texture-world-meta{font-size:8px;color:var(--dim);margin-top:8px;display:flex;gap:10px}
+.texture-bridge{padding:14px;border-top:1px solid var(--border);margin-top:auto}
+.texture-bridge-title{font-size:9px;color:var(--dim);letter-spacing:.1em;margin-bottom:10px}
+.bridge-btn{width:100%;padding:10px;background:var(--grid);border:none;color:var(--bg);font:inherit;font-size:10px;cursor:pointer;border-radius:6px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px}
+.bridge-btn:hover{opacity:.9}
+.bridge-btn.secondary{background:var(--bg);border:1px solid var(--border);color:var(--fg)}
+.bridge-btn svg{width:14px;height:14px}
+.mapping-table{font-size:9px;color:var(--dim);margin-top:12px}
+.mapping-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)}
+.mapping-row:last-child{border:none}
+.mapping-poml{color:var(--accent)}
+.mapping-texture{color:var(--grid)}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg>POML IDE</div>
+  <div class="title">The Medium as Operator</div>
+  <div class="search-bar"><input type="text" id="search" placeholder="Search prompts..."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
+  <div class="header-actions">
+    <button class="icon-btn" id="texture-toggle" title="Text-ure Worlds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></button>
+    <button class="icon-btn" id="notes-toggle" title="Notes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg></button>
+    <button class="icon-btn" id="theme-toggle" title="Theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
+  </div>
+</div>
+<div class="scroll-container" id="scroll">
+  <div class="column" data-type="index">
+    <div class="column-header">
+      <div class="column-info"><div class="column-dot" style="background:var(--accent)"></div><div class="column-title">PROMPT CODEX</div><div class="column-badge" id="block-count">13 blocks</div></div>
+    </div>
+    <div class="filter-tabs">
+      <div class="filter-tab active" data-filter="all">ALL</div>
+      <div class="filter-tab" data-filter="poml">POML</div>
+      <div class="filter-tab" data-filter="carey">CAREY</div>
+      <div class="filter-tab" data-filter="kittler">KITTLER</div>
+      <div class="filter-tab" data-filter="apollinaire">APOLLINAIRE</div>
+      <div class="filter-tab" data-filter="bajohr">BAJOHR</div>
+      <div class="filter-tab" data-filter="grid">GRID</div>
+    </div>
+    <div class="column-content">
+      <div class="core-question">
+        <h3>Core Question</h3>
+        <p>Are media <span class="highlight">cultural rituals</span> (Carey) or <span class="highlight">deterministic systems</span> (Kittler)?</p>
+        <p style="margin-top:8px;font-size:11px;color:var(--dim)">Apply to "operative ekphrasis" in AI text–image.</p>
+      </div>
+      <div class="section-list" id="section-list"></div>
+    </div>
+  </div>
+</div>
+<div class="notes-panel" id="notes-panel">
+  <div class="notes-header"><span class="notes-title">★ WORKING NOTES</span><span class="notes-count" id="notes-count">0</span></div>
+  <div class="notes-list" id="notes-list"><div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:11px"><div style="font-size:28px;margin-bottom:10px">📝</div>No notes yet.</div></div>
+  <div class="notes-add"><textarea id="note-input" placeholder="Add working note..."></textarea><button class="notes-add-btn" id="add-note-btn">Add Note</button></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- Text-ure Integration Panel -->
+<div class="texture-panel" id="texture-panel">
+  <div class="texture-header">
+    <span class="texture-title">◆ TEXT-URE WORLDS</span>
+    <span style="font-size:9px;color:var(--muted)">24×24 Grid Runtime</span>
+  </div>
+  <div class="texture-worlds" id="texture-worlds"></div>
+  <div class="texture-bridge">
+    <div class="texture-bridge-title">POML → TEXT-URE BRIDGE</div>
+    <button class="bridge-btn" onclick="openTextureWithPoml()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      LAUNCH IN TEXT-URE
+    </button>
+    <button class="bridge-btn secondary" onclick="injectPomlWorld()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      INJECT CUSTOM WORLD
+    </button>
+    <div class="mapping-table">
+      <div style="font-size:8px;color:var(--accent);margin-bottom:6px;letter-spacing:.1em">THEORY → IMPLEMENTATION</div>
+      <div class="mapping-row"><span class="mapping-poml">24×24 Grid Axiom</span><span class="mapping-texture">CONFIG.mapWidth=24</span></div>
+      <div class="mapping-row"><span class="mapping-poml">Kittler Inscription</span><span class="mapping-texture">State.map[x][y]</span></div>
+      <div class="mapping-row"><span class="mapping-poml">Apollinaire Topology</span><span class="mapping-texture">mapType: RINGS</span></div>
+      <div class="mapping-row"><span class="mapping-poml">Carey Ritual</span><span class="mapping-texture">Player Traversal</span></div>
+      <div class="mapping-row"><span class="mapping-poml">Bajohr Ekphrasis</span><span class="mapping-texture">VISION Button</span></div>
+    </div>
+  </div>
+</div>
+<script>
+const $=s=>document.querySelector(s);const $$=s=>document.querySelectorAll(s);
+
+// Load POML blocks from data.json
+let pomlBlocks = [];
+async function loadDataJson() {
+  try {
+    const res = await fetch('data.json');
+    const data = await res.json();
+    pomlBlocks = [];
+    data.messages.forEach((msg, i) => {
+      if (msg.role === 'Response') {
+        const text = msg.say;
+        // Extract <poml>...</poml> blocks
+        const pomls = text.match(/<poml>[\s\S]*?<\/poml>/g) || [];
+        pomls.forEach(p => {
+          pomlBlocks.push({
+            id: 'POML_' + pomlBlocks.length,
+            type: 'poml',
+            title: extractTitle(p) || 'POML Block',
+            theorist: detectTheorist(p),
+            response: i,
+            content: p
+          });
+        });
+        // Extract <prompt...>...</prompt> blocks
+        const prompts = text.match(/<prompt[^>]*>[\s\S]*?<\/prompt>/g) || [];
+        prompts.forEach(p => {
+          const idMatch = p.match(/id="([^"]+)"/);
+          const titleMatch = p.match(/title="([^"]+)"/);
+          pomlBlocks.push({
+            id: idMatch ? idMatch[1] : 'PROMPT_' + pomlBlocks.length,
+            type: 'prompt',
+            title: titleMatch ? titleMatch[1] : extractTitle(p) || 'Prompt Block',
+            theorist: detectTheorist(p),
+            response: i,
+            content: p
+          });
+        });
+      }
+    });
+    renderSections();
+    $('#block-count').textContent = pomlBlocks.length + ' blocks';
+    toast('Loaded ' + pomlBlocks.length + ' blocks from data.json', 'success');
+  } catch(e) {
+    console.error(e);
+    toast('Could not load data.json', 'error');
+  }
+}
+
+function extractTitle(content) {
+  const nameMatch = content.match(/<name>([^<]+)<\/name>/);
+  if (nameMatch) return nameMatch[1];
+  const intentMatch = content.match(/<intent>\s*([^\n<]+)/);
+  if (intentMatch) return intentMatch[1].slice(0, 60) + '...';
+  return null;
+}
+
+function detectTheorist(content) {
+  const c = content.toLowerCase();
+  if (c.includes('carey') || c.includes('ritual')) return 'carey';
+  if (c.includes('kittler') || c.includes('inscription') || c.includes('apparatus')) return 'kittler';
+  if (c.includes('apollinaire') || c.includes('calligram')) return 'apollinaire';
+  if (c.includes('bajohr') || c.includes('operative')) return 'bajohr';
+  if (c.includes('24x24') || c.includes('grid')) return 'grid';
+  return 'grid';
+}
+
+function renderSections() {
+  const list = $('#section-list');
+  const filter = document.querySelector('.filter-tab.active')?.dataset.filter || 'all';
+  
+  const filtered = filter === 'all' ? pomlBlocks : pomlBlocks.filter(b => {
+    if (filter === 'poml') return b.type === 'poml';
+    return b.theorist === filter || b.content.toLowerCase().includes(filter);
+  });
+  
+  list.innerHTML = filtered.map((b, i) => `
+    <div class="section-item" data-idx="${pomlBlocks.indexOf(b)}">
+      <div class="section-title">${escapeHtml(b.title)}</div>
+      <div class="section-preview">${escapeHtml(b.content.slice(0, 120))}...</div>
+      <div class="section-badges">
+        <span class="badge badge-${b.type}">${b.type.toUpperCase()}</span>
+        <span class="badge badge-${b.theorist}">${b.theorist.toUpperCase()}</span>
+        <span class="badge" style="background:var(--bg);color:var(--muted)">R#${b.response}</span>
+      </div>
+    </div>
+  `).join('');
+  
+  list.querySelectorAll('.section-item').forEach(item => {
+    item.onclick = () => openBlock(parseInt(item.dataset.idx));
+  });
+}
+
+let activeBlocks = [];
+function openBlock(idx) {
+  const block = pomlBlocks[idx];
+  if (!block || activeBlocks.includes(idx)) return;
+  activeBlocks.push(idx);
+  
+  const col = document.createElement('div');
+  col.className = 'column wide';
+  col.dataset.idx = idx;
+  
+  const theoristColors = {carey:'var(--carey)',kittler:'var(--kittler)',apollinaire:'var(--apollinaire)',bajohr:'var(--bajohr)',grid:'var(--grid)'};
+  const color = theoristColors[block.theorist] || 'var(--accent)';
+  
+  col.innerHTML = `
+    <div class="column-tab" style="color:${color}" onclick="this.parentElement.classList.remove('collapsed')">${block.id}</div>
+    <div class="column-header">
+      <div class="column-info">
+        <div class="column-dot" style="background:${color}"></div>
+        <div class="column-title">${escapeHtml(block.title)}</div>
+        <div class="column-badge">${block.type.toUpperCase()}</div>
+      </div>
+      <div class="column-actions">
+        <button class="col-btn copy" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+        <button class="col-btn collapse" title="Collapse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/></svg></button>
+        <button class="col-btn close" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>
+    </div>
+    <div class="column-content">
+      <div class="poml-container">
+        <div class="poml-header">
+          <div><div class="poml-id">${block.id}</div><div class="poml-meta">Response #${block.response} | ${block.theorist.toUpperCase()}</div></div>
+          <div class="poml-toolbar">
+            <button class="poml-btn" onclick="downloadBlock(${idx})">SAVE</button>
+            <button class="poml-btn" onclick="copyBlock(${idx})">COPY</button>
+          </div>
+        </div>
+        <pre class="poml-source">${highlightSyntax(escapeHtml(block.content))}</pre>
+      </div>
+    </div>
+  `;
+  
+  $('#scroll').appendChild(col);
+  
+  col.querySelector('.col-btn.close').onclick = () => closeColumn(col, idx);
+  col.querySelector('.col-btn.collapse').onclick = () => col.classList.toggle('collapsed');
+  col.querySelector('.col-btn.copy').onclick = () => copyBlock(idx);
+  
+  document.querySelector(`.section-item[data-idx="${idx}"]`)?.classList.add('active');
+  setTimeout(() => { $('#scroll').scrollLeft = $('#scroll').scrollWidth; }, 50);
+}
+
+function closeColumn(col, idx) {
+  activeBlocks = activeBlocks.filter(i => i !== idx);
+  col.remove();
+  document.querySelector(`.section-item[data-idx="${idx}"]`)?.classList.remove('active');
+}
+
+function copyBlock(idx) {
+  const block = pomlBlocks[idx];
+  navigator.clipboard.writeText(block.content);
+  toast('Copied to clipboard!', 'success');
+}
+
+function downloadBlock(idx) {
+  const block = pomlBlocks[idx];
+  const blob = new Blob([block.content], {type: 'text/xml'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = block.id + '.poml';
+  a.click();
+}
+
+function highlightSyntax(html) {
+  return html
+    .replace(/&lt;(\/?[\w_-]+)/g, '&lt;<span style="color:var(--accent3)">$1</span>')
+    .replace(/(\w+)=&quot;/g, '<span style="color:var(--carey)">$1</span>=&quot;')
+    .replace(/&quot;([^&]*)&quot;/g, '&quot;<span style="color:var(--accent)">$1</span>&quot;')
+    .replace(/&lt;!--([^-]*?)--&gt;/g, '<span style="color:var(--muted);font-style:italic">&lt;!--$1--&gt;</span>');
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg, type) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast visible ' + (type || '');
+  setTimeout(() => t.classList.remove('visible'), 2500);
+}
+
+// Filter tabs
+$$('.filter-tab').forEach(tab => {
+  tab.onclick = () => {
+    $$('.filter-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderSections();
+  };
+});
+
+// Search
+$('#search').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+  $$('.section-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = text.includes(q) ? '' : 'none';
+  });
+});
+
+// Notes
+let notes = JSON.parse(localStorage.getItem('poml_ide_notes') || '[]');
+function renderNotes() {
+  const list = $('#notes-list');
+  $('#notes-count').textContent = notes.length;
+  if (notes.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:11px"><div style="font-size:28px;margin-bottom:10px">📝</div>No notes yet.</div>';
+    return;
+  }
+  list.innerHTML = notes.map((n, i) => `
+    <div class="note-item" onclick="deleteNote(${i})">
+      <div class="note-source">💡 ${n.type || 'Note'}</div>
+      <div class="note-text">${escapeHtml(n.text)}</div>
+      <div class="note-meta">${new Date(n.ts).toLocaleDateString()} • Click to delete</div>
+    </div>
+  `).join('');
+}
+function addNote() {
+  const input = $('#note-input');
+  if (!input.value.trim()) return;
+  notes.unshift({ text: input.value.trim(), ts: Date.now(), type: 'Insight' });
+  localStorage.setItem('poml_ide_notes', JSON.stringify(notes));
+  input.value = '';
+  renderNotes();
+  toast('Note added!', 'success');
+}
+function deleteNote(i) {
+  if (confirm('Delete this note?')) {
+    notes.splice(i, 1);
+    localStorage.setItem('poml_ide_notes', JSON.stringify(notes));
+    renderNotes();
+  }
+}
+$('#add-note-btn').onclick = addNote;
+$('#note-input').onkeydown = e => { if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); addNote(); } };
+$('#notes-toggle').onclick = () => { $('#notes-panel').classList.toggle('open'); $('#notes-toggle').classList.toggle('active'); };
+renderNotes();
+
+// Theme
+$('#theme-toggle').onclick = () => {
+  document.body.dataset.theme = document.body.dataset.theme === 'light' ? '' : 'light';
+};
+
+// Text-ure Worlds
+const textureWorlds = [
+  { file: 'text-ure-00.html', name: 'Semantic Raycaster v11', version: 'Base', features: ['Raycaster core', 'Text walls', 'Scanner beam'], color: '#00ff41' },
+  { file: 'text-ure-01.html', name: 'Semantic Raycaster v12.1', version: 'UI Polish', features: ['Minimap', 'TTS', 'Haptics'], color: '#00d4ff' },
+  { file: 'text-ure-02.html', name: 'Semantic Raycaster v16', version: 'Triad', features: ['Vision generation', 'Depth maps', 'Spectral mixer'], color: '#ff6b9d' },
+  { file: 'text-ure-03.html', name: 'Semantic Raycaster v16.6', version: 'Latest', features: ['Dataset export', 'Memory system', 'Refined UI'], color: '#ffc864' }
+];
+
+function renderTextureWorlds() {
+  const container = $('#texture-worlds');
+  container.innerHTML = textureWorlds.map((w, i) => `
+    <div class="texture-world" data-file="${w.file}" onclick="selectTextureWorld(${i})">
+      <div class="texture-world-name"><span style="background:${w.color}"></span>${w.name}</div>
+      <div class="texture-world-text">${w.features.join(' • ')}</div>
+      <div class="texture-world-meta"><span>${w.version}</span><span>${w.file}</span></div>
+    </div>
+  `).join('');
+}
+
+let selectedTextureWorld = 3;
+function selectTextureWorld(i) {
+  selectedTextureWorld = i;
+  $$('.texture-world').forEach((el, idx) => el.classList.toggle('active', idx === i));
+  toast(`Selected: ${textureWorlds[i].name}`, 'success');
+}
+
+function openTextureWithPoml() {
+  const world = textureWorlds[selectedTextureWorld];
+  // Get active POML block content if any
+  const activeIdx = activeBlocks[activeBlocks.length - 1];
+  if (activeIdx !== undefined) {
+    const block = pomlBlocks[activeIdx];
+    // Store in sessionStorage for text-ure to pick up
+    sessionStorage.setItem('poml_inject', JSON.stringify({
+      id: block.id,
+      theorist: block.theorist,
+      content: block.content
+    }));
+    toast('POML data staged for injection', 'success');
+  }
+  window.open(world.file, '_blank');
+}
+
+function injectPomlWorld() {
+  const activeIdx = activeBlocks[activeBlocks.length - 1];
+  if (activeIdx === undefined) {
+    toast('Select a POML block first', 'error');
+    return;
+  }
+  const block = pomlBlocks[activeIdx];
+  // Extract text content from POML for world injection
+  const textMatch = block.content.match(/<text>([\s\S]*?)<\/text>/);
+  const worldText = textMatch ? textMatch[1].trim() : block.content.slice(0, 500);
+  
+  const customWorld = {
+    id: block.id,
+    text: worldText.toUpperCase().replace(/[^A-Z\s]/g, '').slice(0, 800),
+    palette: { text: block.theorist === 'carey' ? '#ff6b9d' : block.theorist === 'kittler' ? '#7c5cff' : '#00ffa3' },
+    mapType: block.theorist === 'apollinaire' ? 'RINGS' : block.theorist === 'kittler' ? 'ROWS' : 'SNAKE',
+    theorist: block.theorist
+  };
+  
+  sessionStorage.setItem('poml_custom_world', JSON.stringify(customWorld));
+  toast('Custom world ready! Launch text-ure to load.', 'success');
+  window.open(textureWorlds[selectedTextureWorld].file, '_blank');
+}
+
+$('#texture-toggle').onclick = () => {
+  $('#texture-panel').classList.toggle('open');
+  $('#texture-toggle').classList.toggle('active');
+};
+
+renderTextureWorlds();
+setTimeout(() => selectTextureWorld(3), 100);
+
+// Init
+loadDataJson();
+</script>
+</body>
+</html>

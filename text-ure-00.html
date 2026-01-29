@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TEXT-URE v11 — Semantic Raycaster</title>
+    <style>
+        :root {
+            --bg: #050505;
+            --ui-text: #00ff41; 
+            --ui-dim: rgba(0, 255, 65, 0.2);
+            --font-mono: 'Courier New', Courier, monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--ui-text);
+            font-family: var(--font-mono);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #game-container { position: relative; flex: 1; width: 100%; height: 100%; background: #000; }
+        canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+
+        /* MODES */
+        body.cinematic .hud, body.cinematic .scanner, body.cinematic .touch-controls, body.cinematic .crosshair, body.cinematic .beam-guide { display: none !important; }
+        body.hide-scanner .scanner { display: none !important; }
+
+        /* UI ELEMENTS */
+        .hud {
+            position: absolute; top: 0; left: 0; width: 100%; padding: 1rem;
+            pointer-events: none; display: flex; justify-content: space-between; align-items: flex-start; z-index: 10;
+        }
+        .hud-left { background: rgba(0,0,0,0.6); padding: 8px; border-left: 2px solid var(--ui-text); backdrop-filter: blur(2px); }
+        .hud-left h1 { font-size: 0.8rem; margin: 0; color: #fff; letter-spacing: 1px; }
+        .stats { font-size: 0.6rem; color: var(--ui-text); opacity: 0.8; }
+
+        .source-selector { pointer-events: auto; display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+        .btn-source {
+            background: rgba(0,0,0,0.8); border: 1px solid #444; color: #888;
+            padding: 6px 12px; font-family: var(--font-mono); font-size: 0.65rem;
+            cursor: pointer; text-transform: uppercase; width: 90px; text-align: right;
+        }
+        .btn-source.active { border-color: var(--ui-text); color: var(--ui-text); }
+        .config-btn { margin-top: 10px; border-color: #fff; color: #fff; }
+
+        /* SCANNER */
+        .scanner {
+            position: absolute; bottom: 25%; left: 50%; transform: translateX(-50%);
+            width: 80%; max-width: 500px; text-align: center; pointer-events: none; z-index: 15;
+        }
+        .scanner-label { font-size: 0.5rem; background: var(--ui-text); color: #000; padding: 2px 5px; display: inline-block; font-weight: bold; }
+        .scanner-text {
+            background: rgba(0,0,0,0.9); padding: 10px; border: 1px solid var(--ui-text);
+            color: #fff; font-size: 0.9rem; line-height: 1.4; min-height: 3em;
+            white-space: pre-wrap; box-shadow: 0 0 15px var(--ui-dim);
+        }
+
+        /* TUI OVERLAY */
+        #tui-overlay {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 90%; max-width: 450px; background: rgba(5, 15, 5, 0.98); border: 1px solid var(--ui-text);
+            box-shadow: 0 0 40px #000; padding: 20px; z-index: 100; pointer-events: auto; max-height: 80vh; overflow-y: auto;
+        }
+        #tui-overlay.active { display: block; }
+        .tui-header { border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; }
+        .tui-section { margin-bottom: 20px; }
+        .tui-label { font-size: 0.6rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 5px; }
+        
+        .buffer-box { 
+            width: 100%; height: 100px; background: #000; border: 1px solid #333; 
+            padding: 8px; font-size: 0.7rem; overflow-y: auto; color: #aaa; margin-bottom: 5px; user-select: text; 
+        }
+        
+        .tui-btn { 
+            background: transparent; border: 1px solid var(--ui-text); color: var(--ui-text); 
+            padding: 8px 12px; font-family: var(--font-mono); font-size: 0.7rem; cursor: pointer; margin-right: 5px; 
+        }
+        .tui-btn:hover { background: var(--ui-text); color: #000; }
+        .tui-btn.secondary { border-color: #666; color: #888; }
+        .tui-btn.secondary:hover { background: #666; color: #fff; }
+
+        input[type=range] { width: 100%; background: transparent; -webkit-appearance: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; background: var(--ui-text); margin-top: -4px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #333; }
+
+        /* TOUCH CONTROLS */
+        .touch-controls {
+            position: absolute; bottom: 20px; left: 0; width: 100%; height: 120px;
+            pointer-events: none; display: flex; justify-content: space-between; padding: 0 20px; z-index: 20;
+        }
+        .control-zone {
+            width: 90px; height: 90px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center;
+            touch-action: none;
+        }
+        .d-pad-label { font-size: 0.5rem; opacity: 0.5; color: #fff; }
+
+        /* MISC */
+        .crosshair {
+            position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; transform: translate(-50%, -50%);
+            border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; pointer-events: none; z-index: 12;
+        }
+        .beam-guide { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--ui-text); opacity: 0.05; pointer-events: none; transition: left 0.1s; }
+        .vignette { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, transparent 60%, #000 130%); pointer-events: none; z-index: 5; }
+        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; justify-content: center; align-items: center; z-index: 200; transition: opacity 0.5s; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="raycaster"></canvas>
+        <div class="vignette"></div>
+        <div class="crosshair"></div>
+        <div class="beam-guide" id="guide-left"></div>
+        <div class="beam-guide" id="guide-right"></div>
+
+        <div class="hud">
+            <div class="hud-left">
+                <h1>Semantic Engine v11</h1>
+                <div class="stats">POS: <span id="debug-pos">0,0</span></div>
+            </div>
+            <div class="source-selector">
+                <button class="btn-source active" onclick="loadWorld('ILIAD')">Iliad</button>
+                <button class="btn-source" onclick="loadWorld('INFERNO')">Inferno</button>
+                <button class="btn-source" onclick="loadWorld('NEURO')">Neuro</button>
+                <button class="btn-source config-btn" onclick="toggleTUI()">SYSTEM</button>
+            </div>
+        </div>
+
+        <div class="scanner">
+            <div class="scanner-label">OPTICAL SAMPLER</div>
+            <div class="scanner-text" id="scanner-output">...</div>
+        </div>
+
+        <div id="tui-overlay">
+            <div class="tui-header"><span>SYSTEM CONFIG</span><span style="cursor:pointer" onclick="toggleTUI()">[X]</span></div>
+            
+            <div class="tui-section">
+                <label class="tui-label">Sampler Beam Width: <span id="val-beam">100</span>px</label>
+                <input type="range" min="20" max="300" value="100" oninput="updateBeam(this.value)">
+            </div>
+
+            <div class="tui-section">
+                <label class="tui-label">Sample Buffer</label>
+                <div class="buffer-box" id="buffer-history">// Buffer ready.</div>
+                <button class="tui-btn" onclick="copyBuffer()">Copy All</button>
+                <button class="tui-btn secondary" onclick="clearBuffer()">Clear</button>
+            </div>
+
+            <div class="tui-section">
+                <label class="tui-label">Modes</label>
+                <button class="tui-btn" onclick="toggleScannerUI()">Toggle Scanner Text</button>
+                <button class="tui-btn" onclick="toggleCinematic()">Hide UI (H)</button>
+            </div>
+        </div>
+
+        <div class="touch-controls">
+            <div class="control-zone" id="stick-move"><div class="d-pad-label">MOVE</div></div>
+            <div class="control-zone" id="stick-look"><div class="d-pad-label">LOOK</div></div>
+        </div>
+
+        <div id="loader"><div style="animation: pulse 1s infinite; font-size:0.8rem;">INITIALIZING SYSTEM...</div></div>
+    </div>
+
+    <script>
+        // --- CONFIG & STATE ---
+        const CONFIG = {
+            fov: 0.66,
+            res: 1, 
+            speed: { move: 4.0, rot: 2.0 },
+            mapWidth: 24, mapHeight: 24,
+            charResolution: 64, charsPerStrip: 16, strandsPerBlock: 4, 
+            scannerWidth: 100,
+        };
+
+        const WORLDS = {
+            ILIAD: {
+                palette: { text: '#FFD700', bg: '#080600', floorStart: '#1a1500', floorEnd: '#000000' },
+                text: "SING GODDESS THE WRATH OF ACHILLES PELEUS SON THE DESTRUCTIVE WRATH WHICH BROUGHT COUNTLESS WOES UPON THE ACHAEANS AND SENT FORTH TO HADES MANY VALIANT SOULS OF HEROES AND MADE THEM THEMSELVES SPOIL FOR DOGS AND EVERY BIRD THUS THE PLAN OF ZEUS CAME TO FULFILLMENT FROM THE TIME WHEN FIRST THEY PARTED IN STRIFE ATREUS SON KING OF MEN AND BRILLIANT ACHILLES WHO THEN OF THE GODS WAS IT THAT BROUGHT THESE TWO TOGETHER TO CONTEND THE SON OF LETO AND ZEUS FOR HE ENRAGED AT THE KING STIRRED UP THROUGHOUT THE ARMY AN EVIL PESTILENCE AND THE MEN WERE PERISHING BECAUSE THE SON OF ATREUS HAD DISHONOURED CHRYSES THE PRIEST FOR HE CAME TO THE SWIFT SHIPS OF THE ACHAEANS TO FREE HIS DAUGHTER AND CARRYING RANSOM PAST COUNTING AND IN HIS HANDS HE HELD THE WREATHS OF APOLLO WHO STRIKES FROM AFAR ON A STAFF OF GOLD AND HE IMPLORED ALL THE ACHAEANS BUT MOST OF ALL THE TWO SONS OF ATREUS THE MARSHALLERS OF THE PEOPLE SONS OF ATREUS AND OTHER WELL-GREAVED ACHAEANS TO YOU MAY THE GODS WHO HAVE HOMES ON OLYMPUS GRANT THAT YOU SACK THE CITY OF PRIAM AND RETURN HOME WELL BUT RELEASE MY DAUGHTER TO ME AND ACCEPT THE RANSOM REVERENCING THE SON OF ZEUS APOLLO WHO STRIKES FROM AFAR",
+                mapType: "RINGS"
+            },
+            INFERNO: {
+                palette: { text: '#ff3333', bg: '#080000', floorStart: '#200000', floorEnd: '#000000' },
+                text: "MIDWAY UPON THE JOURNEY OF OUR LIFE I FOUND MYSELF WITHIN A FOREST DARK FOR THE STRAIGHTFORWARD PATHWAY HAD BEEN LOST AH ME HOW HARD A THING IT IS TO SAY WHAT WAS THIS FOREST SAVAGE ROUGH AND STERN WHICH IN THE VERY THOUGHT RENEWS THE FEAR SO BITTER IS IT DEATH IS LITTLE MORE BUT OF THE GOOD TO TREAT WHICH THERE I FOUND SPEAK WILL I OF THE OTHER THINGS I SAW I CANNOT WELL REPEAT HOW THERE I ENTERED SO FULL WAS I OF SLUMBER AT THE MOMENT IN WHICH I HAD ABANDONED THE TRUE WAY BUT AFTER I HAD REACHED A MOUNTAIN'S FOOT AT THAT POINT WHERE THE VALLEY TERMINATED WHICH HAD WITH CONSTERNATION PIERCED MY HEART UPWARD I LOOKED AND I BEHELD ITS SHOULDERS VESTED ALREADY WITH THAT PLANET'S RAYS WHICH LEADETH OTHERS RIGHT BY EVERY ROAD THEN WAS THE FEAR A LITTLE QUIETED THAT IN MY HEART'S LAKE HAD ENDURED THROUGHOUT THE NIGHT WHICH I HAD PASSED SO PITEOUSLY",
+                mapType: "SNAKE"
+            },
+            NEURO: {
+                palette: { text: '#00ff41', bg: '#000500', floorStart: '#001a05', floorEnd: '#000000' },
+                text: "THE SKY ABOVE THE PORT WAS THE COLOR OF TELEVISION TUNED TO A DEAD CHANNEL IT WAS NOT LIKE HE EXPECTED THE BODILESS EXULTATION OF CYBERSPACE BUT A GRAY DISCONTINUITY A STATIC FIELD OF BROKEN DATA FRAGMENTS SHARDS OF MEANING FLOATING IN THE VOID CASE SAT IN THE LOFT WATCHING THE SUN RISE OVER THE GEODESICS OF THE PORT THE AIR SMELLED OF CHEAP SOY AND OZONE THE GHOSTS OF THE SPREUL WERE RESTLESS TONIGHT FLICKERING THROUGH THE NEON HAZE OF NIGHT CITY HE REMEMBERED THE MATRIX THE CONSENSUAL HALLUCINATION EXPERIENCED DAILY BY BILLIONS OF LEGITIMATE OPERATORS IN EVERY NATION BY CHILDREN BEING TAUGHT MATHEMATICAL CONCEPTS A GRAPHIC REPRESENTATION OF DATA ABSTRACTED FROM THE BANKS OF EVERY COMPUTER IN THE HUMAN SYSTEM UNTHINKABLE COMPLEXITY LINES OF LIGHT RANGED IN THE NONSPACE OF THE MIND",
+                mapType: "ROWS"
+            }
+        };
+
+        const State = {
+            world: null, map: [], textStrips: [], textures: [],
+            player: { x: 12.5, y: 12.5, dirX: -1, dirY: 0, planeX: 0, planeY: 0.66 },
+            keys: { w: false, a: false, s: false, d: false, rotLeft: false, rotRight: false },
+            touch: { move: 0, turn: 0 },
+            lastTime: 0,
+            visibleStrips: new Set(),
+            history: [],
+            lastScannerText: "",
+            scannerVisible: true
+        };
+
+        // --- DOM ---
+        const canvas = document.getElementById('raycaster');
+        const ctx = canvas.getContext('2d', { alpha: false }); 
+        const debugPos = document.getElementById('debug-pos');
+        const scannerOut = document.getElementById('scanner-output');
+        const guideLeft = document.getElementById('guide-left');
+        const guideRight = document.getElementById('guide-right');
+        const bufferBox = document.getElementById('buffer-history');
+
+        // --- RESIZE ---
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ctx.imageSmoothingEnabled = false; 
+            updateBeamVisuals();
+        }
+        window.addEventListener('resize', resize);
+
+        // --- INPUT HANDLING ---
+        function handleKey(e, down) {
+            const k = e.key.toLowerCase();
+            if(k==='w' || k==='arrowup') State.keys.w = down;
+            if(k==='s' || k==='arrowdown') State.keys.s = down;
+            if(k==='a') State.keys.a = down;
+            if(k==='d') State.keys.d = down;
+            if(k==='arrowleft') State.keys.rotLeft = down;
+            if(k==='arrowright') State.keys.rotRight = down;
+            if(down && k==='h') toggleCinematic();
+            if(down && k===' ') { e.preventDefault(); State.scannerVisible=true; document.body.classList.remove('hide-scanner'); }
+        }
+        window.addEventListener('keydown', e => handleKey(e, true));
+        window.addEventListener('keyup', e => handleKey(e, false));
+
+        const stickMove = document.getElementById('stick-move');
+        const stickLook = document.getElementById('stick-look');
+
+        const handleTouch = (e, axis) => {
+            e.preventDefault();
+            const el = e.currentTarget;
+            const rect = el.getBoundingClientRect();
+            const t = e.targetTouches[0];
+            if(!t) { State.touch[axis] = 0; return; }
+            
+            if(axis === 'move') {
+                const val = (t.clientY - (rect.top + rect.height/2)) / (rect.height/2);
+                State.touch.move = -Math.max(-1, Math.min(1, val));
+            } else {
+                const val = (t.clientX - (rect.left + rect.width/2)) / (rect.width/2);
+                State.touch.turn = Math.max(-1, Math.min(1, val));
+            }
+        };
+        const resetTouch = (e, axis) => { e.preventDefault(); State.touch[axis] = 0; };
+
+        stickMove.addEventListener('touchstart', e => handleTouch(e, 'move'), {passive:false});
+        stickMove.addEventListener('touchmove', e => handleTouch(e, 'move'), {passive:false});
+        stickMove.addEventListener('touchend', e => resetTouch(e, 'move'));
+
+        stickLook.addEventListener('touchstart', e => handleTouch(e, 'turn'), {passive:false});
+        stickLook.addEventListener('touchmove', e => handleTouch(e, 'turn'), {passive:false});
+        stickLook.addEventListener('touchend', e => resetTouch(e, 'turn'));
+
+        // --- UI LOGIC ---
+        function toggleTUI() { document.getElementById('tui-overlay').classList.toggle('active'); }
+        function toggleCinematic() { 
+            document.body.classList.toggle('cinematic'); 
+            document.getElementById('tui-overlay').classList.remove('active');
+        }
+        function toggleScannerUI() {
+            State.scannerVisible = !State.scannerVisible;
+            document.body.classList.toggle('hide-scanner', !State.scannerVisible);
+        }
+        function updateBeam(val) {
+            CONFIG.scannerWidth = parseInt(val);
+            document.getElementById('val-beam').innerText = val;
+            updateBeamVisuals();
+        }
+        function updateBeamVisuals() {
+            const cx = window.innerWidth/2;
+            const w = CONFIG.scannerWidth/2;
+            guideLeft.style.left = (cx - w)+'px';
+            guideRight.style.left = (cx + w)+'px';
+        }
+        function copyBuffer() {
+            navigator.clipboard.writeText(State.history.join('\n'));
+            alert('Copied to clipboard');
+        }
+        function clearBuffer() {
+            State.history = [];
+            bufferBox.innerText = "// Buffer cleared.";
+        }
+        function addToBuffer(txt) {
+            if(!txt || txt.length < 3) return;
+            if(State.history.length > 50) State.history.shift();
+            State.history.push(txt);
+            const d = document.createElement('div');
+            d.innerText = `> ${txt}`;
+            d.style.borderBottom = "1px solid #333";
+            d.style.marginBottom = "5px";
+            if(bufferBox.innerText.startsWith("//")) bufferBox.innerHTML = "";
+            bufferBox.appendChild(d);
+            bufferBox.scrollTop = bufferBox.scrollHeight;
+        }
+
+        // --- MAP & TEXTURE ---
+        function processTextStrips(txt) {
+            const clean = txt.toUpperCase().replace(/\s+/g, ' ');
+            const strips = [];
+            for(let i=0; i<clean.length; i+=CONFIG.charsPerStrip) {
+                let s = clean.substring(i, i+CONFIG.charsPerStrip);
+                while(s.length < CONFIG.charsPerStrip) s += " ";
+                strips.push(s);
+            }
+            return strips;
+        }
+
+        function generateTextures(strips, color) {
+            State.textures = [];
+            const size = CONFIG.charResolution;
+            const h = size * CONFIG.charsPerStrip;
+            strips.forEach(s => {
+                const c = document.createElement('canvas');
+                c.width = size; c.height = h;
+                const ctx = c.getContext('2d');
+                ctx.fillStyle = color;
+                ctx.font = `900 ${size*0.8}px 'Courier New'`;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                for(let i=0; i<s.length; i++) {
+                    if(s[i] !== ' ') ctx.fillText(s[i], size/2, i*size + size/2);
+                }
+                State.textures.push(c);
+            });
+        }
+
+        function generateMap(type) {
+            const s = CONFIG.mapWidth;
+            const map = [];
+            let stripIdx = 0;
+            const total = State.textStrips.length;
+            for(let x=0; x<s; x++) {
+                map[x] = [];
+                for(let y=0; y<s; y++) map[x][y] = { type: 0, idx: -1 };
+            }
+            
+            // Layout Logic
+            const setWall = (x,y) => { if(x>=0 && x<s && y>=0 && y<s) map[x][y].type = 1; };
+            if(type === 'RINGS') {
+                const cx=s/2, cy=s/2;
+                for(let x=0; x<s; x++) for(let y=0; y<s; y++) {
+                    const d = Math.sqrt((x-cx)**2 + (y-cy)**2);
+                    if((Math.abs(d-5)<0.8 || Math.abs(d-9)<0.8) && (x!==12 && y!==12)) setWall(x,y);
+                }
+            } else if(type === 'SNAKE') {
+                let x=2,y=2,dx=1,dy=0,steps=0;
+                while(steps<150) {
+                    setWall(x,y);
+                    if(Math.random()>0.8) { if(dx!==0){dx=0;dy=1;}else{dx=1;dy=0;} }
+                    x+=dx; y+=dy;
+                    if(x>=s-2) {x=2;y+=2;} if(y>=s-2) {y=2;x+=2;}
+                    steps++;
+                }
+            } else {
+                for(let x=4; x<s-4; x+=4) for(let y=3; y<s-3; y++) setWall(x,y);
+            }
+
+            // Assign Textures
+            for(let x=0; x<s; x++) for(let y=0; y<s; y++) {
+                if(map[x][y].type === 1) {
+                    map[x][y].idx = stripIdx;
+                    stripIdx = (stripIdx + CONFIG.strandsPerBlock) % total;
+                }
+            }
+            return map;
+        }
+
+        function loadWorld(key) {
+            document.querySelectorAll('.btn-source').forEach(b => b.classList.remove('active'));
+            const btn = document.querySelector(`.btn-source[onclick="loadWorld('${key}')"]`);
+            if(btn) btn.classList.add('active');
+
+            const d = WORLDS[key];
+            State.world = d;
+            document.documentElement.style.setProperty('--ui-text', d.palette.text);
+            document.documentElement.style.setProperty('--ui-dim', d.palette.text + '44');
+            
+            clearBuffer();
+            State.textStrips = processTextStrips(d.text);
+            generateTextures(State.textStrips, d.palette.text);
+            State.map = generateMap(d.mapType);
+            
+            State.player.x = 12.5; State.player.y = 12.5;
+            State.player.dirX = -1; State.player.dirY = 0;
+            State.player.planeX = 0; State.player.planeY = 0.66;
+        }
+
+        // --- GAME LOOP ---
+        function update(dt) {
+            const ms = CONFIG.speed.move * dt;
+            const rs = CONFIG.speed.rot * dt;
+            
+            let fwd = 0; if(State.keys.w) fwd += 1; if(State.keys.s) fwd -= 1; fwd += State.touch.move;
+            let trn = 0; if(State.keys.rotRight || State.keys.d) trn += 1; if(State.keys.rotLeft || State.keys.a) trn -= 1; trn += State.touch.turn;
+
+            if(trn !== 0) {
+                const oldDir = State.player.dirX;
+                const oldPlane = State.player.planeX;
+                const c = Math.cos(trn * rs), s = Math.sin(trn * rs);
+                State.player.dirX = State.player.dirX * c - State.player.dirY * s;
+                State.player.dirY = oldDir * s + State.player.dirY * c;
+                State.player.planeX = State.player.planeX * c - State.player.planeY * s;
+                State.player.planeY = oldPlane * s + State.player.planeY * c;
+            }
+
+            if(fwd !== 0 || str !== 0) {
+                const dx = State.player.dirX * fwd + (-State.player.dirY) * str;
+                const dy = State.player.dirY * fwd + (State.player.dirX) * str;
+                const nx = State.player.x + dx * ms;
+                const ny = State.player.y + dy * ms;
+                
+                // Collision
+                const mapW = CONFIG.mapWidth, mapH = CONFIG.mapHeight;
+                if(nx >= 0 && nx < mapW && ny >= 0 && ny < mapH) {
+                    if(State.map[Math.floor(nx)][Math.floor(State.player.y)].type === 0) State.player.x = nx;
+                    if(State.map[Math.floor(State.player.x)][Math.floor(ny)].type === 0) State.player.y = ny;
+                }
+            }
+            debugPos.innerText = `${State.player.x.toFixed(1)}, ${State.player.y.toFixed(1)}`;
+        }
+
+        function draw() {
+            // Bg & Floor
+            ctx.fillStyle = State.world.palette.bg;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const grad = ctx.createLinearGradient(0, canvas.height/2, 0, canvas.height);
+            grad.addColorStop(0, State.world.palette.floorStart);
+            grad.addColorStop(1, State.world.palette.floorEnd);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, canvas.height/2, canvas.width, canvas.height/2);
+
+            const w = canvas.width, h = canvas.height;
+            const cx = w/2;
+            const beamHalf = CONFIG.scannerWidth/2;
+            State.visibleStrips.clear();
+
+            for(let x=0; x<w; x+=CONFIG.res) {
+                const camX = 2 * x / w - 1;
+                const rayDirX = State.player.dirX + State.player.planeX * camX;
+                const rayDirY = State.player.dirY + State.player.planeY * camX;
+                
+                let mapX = Math.floor(State.player.x), mapY = Math.floor(State.player.y);
+                let sideDistX, sideDistY, perpDist;
+                let stepX, stepY, hit = 0, side;
+                
+                const deltaDistX = (rayDirX === 0) ? 1e30 : Math.abs(1/rayDirX);
+                const deltaDistY = (rayDirY === 0) ? 1e30 : Math.abs(1/rayDirY);
+
+                if(rayDirX < 0) { stepX = -1; sideDistX = (State.player.x - mapX) * deltaDistX; }
+                else { stepX = 1; sideDistX = (mapX + 1.0 - State.player.x) * deltaDistX; }
+                if(rayDirY < 0) { stepY = -1; sideDistY = (State.player.y - mapY) * deltaDistY; }
+                else { stepY = 1; sideDistY = (mapY + 1.0 - State.player.y) * deltaDistY; }
+
+                while(hit === 0) {
+                    if(sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; }
+                    else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
+                    
+                    // BOUNDARY CHECK (CRITICAL FIX)
+                    if(mapX < 0 || mapX >= CONFIG.mapWidth || mapY < 0 || mapY >= CONFIG.mapHeight) {
+                        hit = 1; perpDist = 100; // Force void
+                    } else if(State.map[mapX][mapY].type > 0) {
+                        hit = 1;
+                    }
+                }
+
+                // DRAW WALL
+                if(mapX >= 0 && mapX < CONFIG.mapWidth && mapY >= 0 && mapY < CONFIG.mapHeight) {
+                    if(side === 0) perpDist = (mapX - State.player.x + (1 - stepX) / 2) / rayDirX;
+                    else           perpDist = (mapY - State.player.y + (1 - stepY) / 2) / rayDirY;
+
+                    if(perpDist < 30) {
+                        const lineH = Math.floor(h / perpDist);
+                        const drawStart = -lineH / 2 + h / 2;
+                        
+                        let wallX;
+                        if(side === 0) wallX = State.player.y + perpDist * rayDirY;
+                        else           wallX = State.player.x + perpDist * rayDirX;
+                        wallX -= Math.floor(wallX);
+
+                        const tiledX = wallX * CONFIG.strandsPerBlock;
+                        const strandOffset = Math.floor(tiledX);
+                        const texU = tiledX - strandOffset;
+
+                        const cell = State.map[mapX][mapY];
+                        if(cell.type > 0 && cell.idx !== -1) {
+                            const texIdx = (cell.idx + strandOffset) % State.textures.length;
+                            const texture = State.textures[texIdx];
+                            
+                            // Scanner Logic
+                            let isSampled = false;
+                            if(State.scannerVisible && Math.abs(x - cx) < beamHalf) {
+                                State.visibleStrips.add(texIdx);
+                                isSampled = true;
+                            }
+
+                            // Render
+                            const texX = Math.floor(texU * CONFIG.charResolution);
+                            let bright = 1.0 / (perpDist * 0.4);
+                            if(side === 1) bright *= 0.7;
+                            if(isSampled) { bright = Math.min(1.5, bright*2); ctx.filter = 'brightness(1.5)'; }
+                            else { if(bright > 1) bright = 1; }
+
+                            ctx.globalAlpha = bright;
+                            ctx.drawImage(texture, texX, 0, 1, texture.height, x, drawStart, CONFIG.res, lineH);
+                            ctx.globalAlpha = 1.0;
+                            ctx.filter = 'none';
+                        }
+                    }
+                }
+            }
+
+            // Update Scanner Text (Throttled)
+            if(State.scannerVisible) {
+                if(State.visibleStrips.size > 0) {
+                    const idxs = Array.from(State.visibleStrips).sort((a,b)=>a-b);
+                    let txt = "";
+                    idxs.forEach(i => txt += State.textStrips[i].trim() + " ");
+                    
+                    if(txt !== State.lastScannerText) {
+                        scannerOut.innerText = txt;
+                        scannerOut.style.borderColor = State.world.palette.text;
+                        State.lastScannerText = txt;
+                        if(txt.length > 5) addToBuffer(txt); // Auto-log
+                    }
+                } else if(State.lastScannerText !== "...") {
+                    scannerOut.innerText = "...";
+                    scannerOut.style.borderColor = "#333";
+                    State.lastScannerText = "...";
+                }
+            }
+        }
+
+        function gameLoop(time) {
+            const dt = (time - State.lastTime) / 1000;
+            State.lastTime = time;
+            update(dt);
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Init
+        resize();
+        loadWorld('ILIAD');
+        setTimeout(() => {
+            document.getElementById('loader').style.opacity = 0;
+            setTimeout(()=> document.getElementById('loader').style.display='none', 500);
+            requestAnimationFrame(gameLoop);
+        }, 1000);
+
+    </script>
+</body>
+</html>

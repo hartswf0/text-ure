@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>POML</title>
+<style>
+:root{--bg:#0a0a0e;--panel:#101014;--fg:#c8c8d0;--dim:#707088;--accent:#0f8;--border:#1a1a22;--mono:'SF Mono','Consolas',monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font:11px/1.5 var(--mono);background:var(--bg);color:var(--fg);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.bar{height:28px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 8px;gap:8px;flex-shrink:0}
+.bar-title{color:var(--accent);font-weight:700;font-size:10px;letter-spacing:.05em}
+.bar-info{color:var(--dim);font-size:9px;margin-left:auto}
+.main{flex:1;display:flex;overflow:hidden}
+.sidebar{width:200px;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-head{padding:6px 8px;background:var(--panel);border-bottom:1px solid var(--border);font-size:9px;color:var(--dim);display:flex;justify-content:space-between}
+.sidebar-list{flex:1;overflow-y:auto}
+.sidebar-list::-webkit-scrollbar{width:4px}
+.sidebar-list::-webkit-scrollbar-thumb{background:var(--border)}
+.item{padding:6px 8px;border-bottom:1px solid var(--border);cursor:pointer;font-size:10px}
+.item:hover{background:var(--panel)}
+.item.active{background:rgba(0,255,136,.1);border-left:2px solid var(--accent)}
+.item-id{color:var(--accent);font-size:9px}
+.item-title{color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-meta{color:var(--dim);font-size:8px;margin-top:2px}
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.content-head{padding:6px 8px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.content-title{font-size:10px;color:var(--accent)}
+.btn{padding:3px 8px;background:var(--bg);border:1px solid var(--border);color:var(--dim);font:inherit;font-size:9px;cursor:pointer;border-radius:2px}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.content-body{flex:1;overflow:auto;padding:8px}
+.content-body::-webkit-scrollbar{width:4px}
+.content-body::-webkit-scrollbar-thumb{background:var(--border)}
+pre{font:10px/1.6 var(--mono);color:var(--dim);white-space:pre-wrap;word-break:break-word}
+pre .t{color:#88f}pre .a{color:#f88}pre .v{color:var(--accent)}
+.right-panel{width:180px;border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.rp-head{padding:6px 8px;background:var(--panel);border-bottom:1px solid var(--border);font-size:9px;color:var(--dim)}
+.rp-section{padding:8px;border-bottom:1px solid var(--border)}
+.rp-label{font-size:8px;color:var(--dim);margin-bottom:4px;letter-spacing:.05em}
+.texture-btn{display:block;width:100%;padding:5px;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;font-size:9px;cursor:pointer;margin-bottom:4px;text-align:left}
+.texture-btn:hover{border-color:var(--accent)}
+.texture-btn.active{border-color:var(--accent);background:rgba(0,255,136,.05)}
+.texture-btn span{color:var(--dim);font-size:8px}
+.send-btn{width:100%;padding:6px;background:var(--accent);border:none;color:var(--bg);font:inherit;font-size:9px;font-weight:700;cursor:pointer;margin-top:4px}
+.send-btn:hover{opacity:.9}
+.filter-row{display:flex;gap:4px;padding:6px 8px;background:var(--panel);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.filter-btn{padding:2px 6px;background:var(--bg);border:1px solid var(--border);color:var(--dim);font:inherit;font-size:8px;cursor:pointer;border-radius:2px}
+.filter-btn:hover,.filter-btn.active{border-color:var(--accent);color:var(--accent)}
+.status{padding:4px 8px;background:var(--panel);border-top:1px solid var(--border);font-size:9px;color:var(--dim)}
+@media(max-width:600px){.sidebar{width:140px}.right-panel{width:140px}}
+</style>
+</head>
+<body>
+<div class="bar">
+  <span class="bar-title">◆ POML</span>
+  <span class="bar-info" id="status">Loading...</span>
+</div>
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-head"><span>BLOCKS</span><span id="count">0</span></div>
+    <div class="filter-row">
+      <button class="filter-btn active" data-f="all">ALL</button>
+      <button class="filter-btn" data-f="carey">CAR</button>
+      <button class="filter-btn" data-f="kittler">KIT</button>
+      <button class="filter-btn" data-f="apollinaire">APO</button>
+      <button class="filter-btn" data-f="bajohr">BAJ</button>
+    </div>
+    <div class="sidebar-list" id="list"></div>
+  </div>
+  <div class="content">
+    <div class="content-head">
+      <span class="content-title" id="c-title">Select a block</span>
+      <button class="btn" id="copy-btn">COPY</button>
+      <button class="btn" id="save-btn">SAVE</button>
+    </div>
+    <div class="content-body"><pre id="source">// Select a POML block from the sidebar</pre></div>
+  </div>
+  <div class="right-panel">
+    <div class="rp-head">SEND TO TEXT-URE</div>
+    <div class="rp-section">
+      <div class="rp-label">SELECT VERSION</div>
+      <button class="texture-btn" data-v="0">v11 <span>base</span></button>
+      <button class="texture-btn" data-v="1">v12.1 <span>minimap</span></button>
+      <button class="texture-btn" data-v="2">v16 <span>vision</span></button>
+      <button class="texture-btn active" data-v="3">v16.6 <span>latest</span></button>
+    </div>
+    <div class="rp-section">
+      <div class="rp-label">ACTION</div>
+      <button class="send-btn" id="send-btn">→ INJECT & LAUNCH</button>
+    </div>
+    <div class="rp-section">
+      <div class="rp-label">QUICK TEXT</div>
+      <textarea id="quick-text" style="width:100%;height:60px;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:9px var(--mono);padding:4px;resize:none" placeholder="Paste any text..."></textarea>
+      <button class="send-btn" style="background:var(--dim)" id="quick-send">→ SEND TEXT</button>
+    </div>
+    <div class="rp-section">
+      <div class="rp-label">CALLIGRAM TOPOLOGY</div>
+      <select id="map-type" style="width:100%;padding:4px;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:9px var(--mono)">
+        <option value="RINGS">RINGS (Apollinaire)</option>
+        <option value="SNAKE">SNAKE (Kittler)</option>
+        <option value="ROWS">ROWS (Grid)</option>
+        <option value="SPIRAL">SPIRAL (Carey)</option>
+      </select>
+    </div>
+    <div class="rp-section">
+      <div class="rp-label">MD → POML PIPELINE</div>
+      <button class="send-btn" style="background:#a6f" id="load-md">Load MD File</button>
+      <button class="send-btn" style="background:#f6a;margin-top:4px" id="run-pipeline">→ FEED MD THRU POML</button>
+      <div id="md-status" style="font-size:8px;color:var(--dim);margin-top:4px"></div>
+    </div>
+  </div>
+</div>
+<input type="file" id="md-file" accept=".md,.txt" style="display:none">
+<div class="status">WASD/Arrows: move | Mouse: look | H: hide UI | Space: sample</div>
+<script>
+const files=['text-ure-00.html','text-ure-01.html','text-ure-02.html','text-ure-03.html'];
+let blocks=[],active=null,selV=3;
+
+async function load(){
+  try{
+    const r=await fetch('data.json'),d=await r.json();
+    d.messages.forEach((m,i)=>{
+      if(m.role==='Response'){
+        const t=m.say;
+        (t.match(/<poml>[\s\S]*?<\/poml>/g)||[]).forEach(p=>{
+          blocks.push({id:'POML_'+blocks.length,type:'poml',title:ext(p),th:det(p),resp:i,content:p});
+        });
+        (t.match(/<prompt[^>]*>[\s\S]*?<\/prompt>/g)||[]).forEach(p=>{
+          const id=(p.match(/id="([^"]+)"/)||[])[1]||'PROMPT_'+blocks.length;
+          const ti=(p.match(/title="([^"]+)"/)||[])[1]||ext(p);
+          blocks.push({id,type:'prompt',title:ti,th:det(p),resp:i,content:p});
+        });
+      }
+    });
+    document.getElementById('status').textContent=blocks.length+' blocks loaded';
+    render();
+  }catch(e){document.getElementById('status').textContent='Error: '+e.message}
+}
+
+function ext(c){return(c.match(/<name>([^<]+)/)||c.match(/<intent>\s*([^\n<]{1,50})/)||['','Block'])[1]}
+function det(c){const l=c.toLowerCase();return l.includes('carey')||l.includes('ritual')?'carey':l.includes('kittler')||l.includes('inscription')?'kittler':l.includes('apollinaire')||l.includes('calligram')?'apollinaire':l.includes('bajohr')||l.includes('operative')?'bajohr':'grid'}
+
+function render(){
+  const f=document.querySelector('.filter-btn.active').dataset.f;
+  const fl=f==='all'?blocks:blocks.filter(b=>b.th===f||b.type===f);
+  document.getElementById('count').textContent=fl.length;
+  document.getElementById('list').innerHTML=fl.map((b,i)=>`<div class="item${active===blocks.indexOf(b)?' active':''}" data-i="${blocks.indexOf(b)}"><div class="item-id">${b.id}</div><div class="item-title">${esc(b.title)}</div><div class="item-meta">${b.th} · R${b.resp}</div></div>`).join('');
+  document.querySelectorAll('.item').forEach(el=>el.onclick=()=>sel(+el.dataset.i));
+}
+
+function sel(i){
+  active=i;const b=blocks[i];
+  document.getElementById('c-title').textContent=b.id+' — '+b.title;
+  document.getElementById('source').innerHTML=hi(esc(b.content));
+  render();
+}
+
+function hi(h){return h.replace(/&lt;(\/?[\w_-]+)/g,'&lt;<span class="t">$1</span>').replace(/(\w+)=&quot;/g,'<span class="a">$1</span>=&quot;').replace(/&quot;([^&]*)&quot;/g,'&quot;<span class="v">$1</span>&quot;')}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+document.querySelectorAll('.filter-btn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');render()});
+document.querySelectorAll('.texture-btn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.texture-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');selV=+b.dataset.v});
+
+document.getElementById('copy-btn').onclick=()=>{if(active!==null){navigator.clipboard.writeText(blocks[active].content);document.getElementById('status').textContent='Copied!';}};
+document.getElementById('save-btn').onclick=()=>{if(active!==null){const b=blocks[active],a=document.createElement('a');a.href=URL.createObjectURL(new Blob([b.content]));a.download=b.id+'.poml';a.click();}};
+
+document.getElementById('send-btn').onclick=()=>{
+  if(active===null){alert('Select a block first');return;}
+  const b=blocks[active];
+  const txt=(b.content.match(/<text>([\s\S]*?)<\/text>/)||['',b.content.slice(0,500)])[1];
+  const w={id:b.id,text:txt.toUpperCase().replace(/[^A-Z\s]/g,'').slice(0,800),palette:{text:b.th==='carey'?'#f6a':b.th==='kittler'?'#a6f':'#0f8'},mapType:b.th==='apollinaire'?'RINGS':'SNAKE',theorist:b.th};
+  sessionStorage.setItem('poml_custom_world',JSON.stringify(w));
+  window.open(files[selV],'_blank');
+};
+
+document.getElementById('quick-send').onclick=()=>{
+  const t=document.getElementById('quick-text').value;
+  if(!t.trim()){alert('Enter text');return;}
+  const mapType=document.getElementById('map-type').value;
+  const w={id:'CUSTOM',text:t.toUpperCase().replace(/[^A-Z\s]/g,'').slice(0,800),palette:{text:'#0f8'},mapType,theorist:'grid'};
+  sessionStorage.setItem('poml_custom_world',JSON.stringify(w));
+  window.open(files[selV],'_blank');
+};
+
+// MD File Pipeline
+let mdContent='';
+document.getElementById('load-md').onclick=()=>document.getElementById('md-file').click();
+document.getElementById('md-file').onchange=async(e)=>{
+  const f=e.target.files[0];if(!f)return;
+  mdContent=await f.text();
+  document.getElementById('md-status').textContent=`Loaded: ${f.name} (${mdContent.length} chars)`;
+  document.getElementById('quick-text').value=mdContent.slice(0,500);
+};
+
+// Pipeline: Feed MD through selected POML
+document.getElementById('run-pipeline').onclick=feedMdThroughPoml;
+function feedMdThroughPoml(){
+  if(!mdContent){alert('Load MD file first');return;}
+  if(active===null){alert('Select a POML block first');return;}
+  const b=blocks[active];
+  // Extract template from POML and apply to MD content
+  const sections=mdContent.split(/##\s+/).filter(s=>s.trim());
+  const mapType=document.getElementById('map-type').value;
+  const combinedText=sections.map(s=>s.split('\n')[0]).join(' ').toUpperCase().replace(/[^A-Z\s]/g,'').slice(0,1200);
+  const w={id:b.id+'_MD',text:combinedText,palette:{text:b.th==='carey'?'#f6a':b.th==='kittler'?'#a6f':'#0f8'},mapType,theorist:b.th,source:'MD_PIPELINE'};
+  sessionStorage.setItem('poml_custom_world',JSON.stringify(w));
+  window.open(files[selV],'_blank');
+}
+
+load();
+</script>
+</body>
+</html>

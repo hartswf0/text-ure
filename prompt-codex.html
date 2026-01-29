@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompt Codex: The Medium as Operator</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --border: #2a2a3a;
+      --text: #e0e0e8;
+      --dim: #8888aa;
+      --accent: #00d4aa;
+      --accent2: #ff6b9d;
+      --accent3: #7c5cff;
+      --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 1rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.5rem;
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .meta {
+      font-size: 0.75rem;
+      color: var(--dim);
+      margin-bottom: 1.5rem;
+    }
+    .key-question {
+      background: linear-gradient(135deg, rgba(0,212,170,0.1), rgba(124,92,255,0.1));
+      border-left: 3px solid var(--accent);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: 0 8px 8px 0;
+    }
+    .key-question h2 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 2rem;
+    }
+    .toc h2 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--dim);
+      margin-bottom: 0.75rem;
+    }
+    .toc ul { list-style: none; }
+    .toc li { margin-bottom: 0.5rem; }
+    .toc a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .toc a:hover { color: var(--accent); }
+    .toc .tag {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: var(--mono);
+    }
+    .tag-carey { background: rgba(255,107,157,0.2); color: var(--accent2); }
+    .tag-kittler { background: rgba(124,92,255,0.2); color: var(--accent3); }
+    .tag-apollinaire { background: rgba(0,212,170,0.2); color: var(--accent); }
+    .tag-bajohr { background: rgba(255,200,100,0.2); color: #ffc864; }
+    .tag-grid { background: rgba(100,180,255,0.2); color: #64b4ff; }
+
+    /* Prompt Cards */
+    .prompt-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .prompt-header {
+      background: rgba(0,0,0,0.3);
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+    }
+    .prompt-header:hover { background: rgba(0,212,170,0.05); }
+    .prompt-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .prompt-id {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--dim);
+    }
+    .prompt-body {
+      padding: 1rem;
+      display: none;
+    }
+    .prompt-card.open .prompt-body { display: block; }
+    .prompt-card.open .prompt-header { border-bottom-color: var(--accent); }
+
+    /* POML Blocks */
+    .poml {
+      background: #080810;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #aabbcc;
+      margin: 0.75rem 0;
+    }
+    .poml .tag { color: var(--accent3); }
+    .poml .attr { color: var(--accent2); }
+    .poml .val { color: var(--accent); }
+    .poml .comment { color: var(--dim); font-style: italic; }
+
+    /* Section Headers */
+    .section {
+      margin-top: 2.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+    .section h2 {
+      font-size: 1.1rem;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section-desc {
+      font-size: 0.85rem;
+      color: var(--dim);
+      margin-bottom: 1rem;
+    }
+
+    /* Axiom Lists */
+    .axioms {
+      list-style: none;
+      margin: 0.75rem 0;
+    }
+    .axioms li {
+      padding: 0.5rem 0.75rem;
+      border-left: 2px solid var(--border);
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+    .axioms li code {
+      font-family: var(--mono);
+      color: var(--accent3);
+      font-size: 0.75rem;
+    }
+
+    /* Expand/Collapse Toggle */
+    .toggle-icon {
+      font-size: 1.2rem;
+      color: var(--dim);
+      transition: transform 0.2s;
+    }
+    .prompt-card.open .toggle-icon { transform: rotate(90deg); }
+
+    /* Copy Button */
+    .copy-btn {
+      background: var(--border);
+      border: none;
+      color: var(--dim);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      cursor: pointer;
+      font-family: var(--mono);
+    }
+    .copy-btn:hover { background: var(--accent); color: var(--bg); }
+
+    /* Footer */
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--dim);
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 0.75rem; }
+      h1 { font-size: 1.25rem; }
+      .poml { font-size: 0.7rem; padding: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Prompt Codex: The Medium as Operator</h1>
+<p class="meta">From Ritual Belonging to Technical Systems | Thu 01/29</p>
+
+<div class="key-question">
+  <h2>Core Thesis</h2>
+  <p><strong>Media don't just transmit messages; they script social life.</strong></p>
+  <p style="margin-top:0.5rem; font-size:0.85rem; color:var(--dim)">
+    Are media cultural rituals (Carey) or deterministic systems (Kittler)? 
+    How does this inform AI text–image generation?
+  </p>
+</div>
+
+<div class="toc">
+  <h2>Operators Index</h2>
+  <ul>
+    <li><a href="#carey"><span class="tag tag-carey">CAREY</span> Ritual View of Communication</a></li>
+    <li><a href="#kittler"><span class="tag tag-kittler">KITTLER</span> Materialist Inscription Systems</a></li>
+    <li><a href="#apollinaire"><span class="tag tag-apollinaire">APOLLINAIRE</span> Calligram Grid Bridge</a></li>
+    <li><a href="#bajohr"><span class="tag tag-bajohr">BAJOHR</span> Operative Ekphrasis</a></li>
+    <li><a href="#grid"><span class="tag tag-grid">GRID</span> 24×24 Spatial Semantic Protocol</a></li>
+    <li><a href="#synthesis"><span class="tag tag-grid">SYNTH</span> Merged Calligram-Ritual System</a></li>
+  </ul>
+</div>
+
+<!-- ============================================ -->
+<!-- CAREY SECTION -->
+<!-- ============================================ -->
+<section class="section" id="carey">
+  <h2><span class="tag tag-carey">CAREY</span> Ritual View of Communication</h2>
+  <p class="section-desc">Communication as symbolic world-production, not message transfer.</p>
+
+  <div class="prompt-card open">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Cultural Approach Core Axioms</div>
+        <div class="prompt-id">CAREY-CULTURAL-APPROACH-POML-v1</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <ul class="axioms">
+        <li><code>A1</code> Society does not merely survive by communication. Society exists <em>in</em> communication.</li>
+        <li><code>A2</code> Communication is not secondary to reality. Communication <em>produces</em> reality.</li>
+        <li><code>A3</code> Symbols are simultaneously symbols-<em>of</em> reality and symbols-<em>for</em> reality.</li>
+        <li><code>A4</code> All communication models are ethical instruments. They create the worlds they claim to describe.</li>
+        <li><code>A5</code> Meaning is not transmitted. Meaning is <em>enacted</em>.</li>
+      </ul>
+      <div class="poml"><span class="tag">&lt;core_definition&gt;</span>
+  Communication is a symbolic process whereby reality is:
+    <span class="val">produced</span>,
+    <span class="val">maintained</span>,
+    <span class="val">repaired</span>,
+    <span class="val">transformed</span>.
+<span class="tag">&lt;/core_definition&gt;</span></div>
+      <button class="copy-btn" onclick="copyPoml(this)">COPY</button>
+    </div>
+  </div>
+
+  <div class="prompt-card">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Two Models: Transmission vs Ritual</div>
+        <div class="prompt-id">CAREY-TWO-MODELS</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <div class="poml"><span class="tag">&lt;model</span> <span class="attr">id=</span><span class="val">"TRANSMISSION"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;definition&gt;</span>
+    Communication = sending information across space for purposes of control.
+  <span class="tag">&lt;/definition&gt;</span>
+  <span class="tag">&lt;metaphor&gt;</span>Transportation / Signal Flow<span class="tag">&lt;/metaphor&gt;</span>
+  <span class="tag">&lt;primary_values&gt;</span>
+    Speed | Reach | Efficiency | Influence | Control
+  <span class="tag">&lt;/primary_values&gt;</span>
+  <span class="tag">&lt;question&gt;</span>
+    How can we move information faster and farther?
+  <span class="tag">&lt;/question&gt;</span>
+<span class="tag">&lt;/model&gt;</span>
+
+<span class="tag">&lt;model</span> <span class="attr">id=</span><span class="val">"RITUAL"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;definition&gt;</span>
+    Communication = participation in shared symbolic forms across time.
+  <span class="tag">&lt;/definition&gt;</span>
+  <span class="tag">&lt;metaphor&gt;</span>Ceremony / Mass / Dance<span class="tag">&lt;/metaphor&gt;</span>
+  <span class="tag">&lt;primary_values&gt;</span>
+    Participation | Continuity | Commonality | Repair
+  <span class="tag">&lt;/primary_values&gt;</span>
+  <span class="tag">&lt;question&gt;</span>
+    How do we maintain a world that makes sense to those who inhabit it?
+  <span class="tag">&lt;/question&gt;</span>
+<span class="tag">&lt;/model&gt;</span></div>
+      <button class="copy-btn" onclick="copyPoml(this)">COPY</button>
+    </div>
+  </div>
+
+  <div class="prompt-card">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Spatial-Semantic Grid (Carey Mode)</div>
+        <div class="prompt-id">CAREY-SPATIAL-SEMANTIC-GRID-v2</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <div class="poml"><span class="tag">&lt;reframing&gt;</span>
+  <span class="tag">&lt;claim&gt;</span>
+    Any "message" becomes a spatial-semantic grid when it is treated as:
+    <span class="val">a public model of reality that people enter, traverse, and rehearse.</span>
+  <span class="tag">&lt;/claim&gt;</span>
+  <span class="tag">&lt;corollary&gt;</span>
+    The question is not: "Where does this text go?"
+    but: "What world must exist for this text to be inhabitable?"
+  <span class="tag">&lt;/corollary&gt;</span>
+<span class="tag">&lt;/reframing&gt;</span>
+
+<span class="tag">&lt;transformation_pipeline&gt;</span>
+  TEXT → FIELD → SITES → ACTS → WORLD
+  
+  <span class="comment">&lt;!-- Not: TEXT → CELLS → DISPLAY --&gt;</span>
+<span class="tag">&lt;/transformation_pipeline&gt;</span></div>
+      <button class="copy-btn" onclick="copyPoml(this)">COPY</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- KITTLER SECTION -->
+<!-- ============================================ -->
+<section class="section" id="kittler">
+  <h2><span class="tag tag-kittler">KITTLER</span> Materialist Inscription Systems</h2>
+  <p class="section-desc">Media as technical conditions that determine what can be stored, processed, and retrieved.</p>
+
+  <div class="prompt-card">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Kittler Core Axioms</div>
+        <div class="prompt-id">KITT-URN-GRID-v1</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <ul class="axioms">
+        <li><code>A1</code> Begin with apparatus, not meaning: storage formats determine what a text can become.</li>
+        <li><code>A2</code> The grid is address space; movement is a scan-head; the beam is a read operation.</li>
+        <li><code>A3</code> Semantics are not primitives; only discrete symbols, allocation, redundancy, routing, and retrieval are primitives.</li>
+        <li><code>A4</code> The interface is a surface effect. The mapping is the medium.</li>
+        <li><code>A5</code> Noise/glitch is not failure; it is the Real that escapes the symbolic grid.</li>
+      </ul>
+      <div class="poml"><span class="tag">&lt;kittler_frame&gt;</span>
+  <span class="comment">&lt;!-- The apparatus produces the ontology --&gt;</span>
+  
+  <span class="tag">&lt;claim&gt;</span>
+    Media do not transmit meaning.
+    Media determine what can be <span class="val">stored</span>, <span class="val">processed</span>, and <span class="val">retrieved</span>.
+    Meaning appears afterward as a side-effect.
+  <span class="tag">&lt;/claim&gt;</span>
+
+  <span class="tag">&lt;historical_sequence&gt;</span>
+    Alphabet → reorganized speech
+    Phonograph → reorganized sound  
+    Film → reorganized vision
+    Typewriter → reorganized writing
+    Computer → reorganizes <span class="val">all of the above</span>
+  <span class="tag">&lt;/historical_sequence&gt;</span>
+
+  <span class="tag">&lt;your_grid&gt;</span>
+    Your 24×24 grid reorganizes literature into <span class="val">addressable memory space</span>.
+    This is already the entire project, in Kittler's sense.
+  <span class="tag">&lt;/your_grid&gt;</span>
+<span class="tag">&lt;/kittler_frame&gt;</span></div>
+      <button class="copy-btn" onclick="copyPoml(this)">COPY</button>
+    </div>
+  </div>
+
+  <div class="prompt-card">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Inscription System Protocol</div>
+        <div class="prompt-id">KITTLER-INSCRIPTION-v1</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <div class="poml"><span class="tag">&lt;forbidden&gt;</span>
+  <span class="tag">&lt;f&gt;</span>No "importance-based" placement.<span class="tag">&lt;/f&gt;</span>
+  <span class="tag">&lt;f&gt;</span>No "this line feels central" reasoning.<span class="tag">&lt;/f&gt;</span>
+  <span class="tag">&lt;f&gt;</span>No purely decorative geometry.<span class="tag">&lt;/f&gt;</span>
+<span class="tag">&lt;/forbidden&gt;</span>
+
+<span class="tag">&lt;deliverables&gt;</span>
+  <span class="tag">&lt;d</span> <span class="attr">id=</span><span class="val">"D1"</span><span class="tag">&gt;</span>
+    A 24×24 grid manifest: each cell has an <span class="val">address</span>, a <span class="val">payload</span>, 
+    and <span class="val">retrieval metadata</span>.
+  <span class="tag">&lt;/d&gt;</span>
+  <span class="tag">&lt;d</span> <span class="attr">id=</span><span class="val">"D2"</span><span class="tag">&gt;</span>
+    A segmentation + compilation pipeline that converts a poem 
+    into blocks suitable for addressing.
+  <span class="tag">&lt;/d&gt;</span>
+  <span class="tag">&lt;d</span> <span class="attr">id=</span><span class="val">"D3"</span><span class="tag">&gt;</span>
+    Three allocation regimes: 
+    (i) redundancy-spread, (ii) density-stack, (iii) hybrid.
+  <span class="tag">&lt;/d&gt;</span>
+  <span class="tag">&lt;d</span> <span class="attr">id=</span><span class="val">"D4"</span><span class="tag">&gt;</span>
+    A Kittlerian "discourse network" annotation layer: 
+    what is <span class="val">stored</span>, what is <span class="val">lost</span>, what becomes <span class="val">noise</span>.
+  <span class="tag">&lt;/d&gt;</span>
+<span class="tag">&lt;/deliverables&gt;</span></div>
+      <button class="copy-btn" onclick="copyPoml(this)">COPY</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- APOLLINAIRE SECTION -->
+<!-- ============================================ -->
+<section class="section" id="apollinaire">
+  <h2><span class="tag tag-apollinaire">APOLLINAIRE</span> Calligram Grid Bridge</h2>
+  <p class="section-desc">Text becomes space. Geometry precedes reading. Topology encodes meaning.</p>
+
+  <div class="prompt-card">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Calligram Bridge Axioms</div>
+        <div class="prompt-id">POML_CALLIGRAM_GRID_BRIDGE_v1</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <ul class="axioms">
+        <li><code>A1</code> Text may function as geometry.</li>
+        <li><code>A2</code> Geometry is a carrier of semantic force.</li>
+        <li><code>A3</code> Reading is an act of traversal.</li>
+        <li><code>A4</code> Layout is interpretation.</li>
+        <li><code>A5</code> No chunk is placed before its shape is declared.</li>
+      </ul>
+      <div class="poml"><span class="tag">&lt;intent&gt;</span>
+  Transform linear text into spatial-semantic structures
+  where <span class="val">geometry precedes reading</span> and <span class="val">topology encodes meaning</span>.
+<span class="tag">&lt;/intent&gt;</span>
+
+<span class="tag">&lt;entity</span> <span class="attr">id=</span><span class="val">"GEOMETRIC_INTENT"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;description&gt;</span>Abstract shape class derived from meaning.<span class="tag">&lt;/description&gt;</span>
+  <span class="tag">&lt;values&gt;</span>
+    LINE | COLUMN | RADIAL | SPIRAL | WAVE | GRID | CLUSTER | FRACTAL
+  <span class="tag">&lt;/values&gt;</span>
+<span class="tag">&lt;/entity&gt;</span>
+
+<span class="tag">&lt;entity</span> <span class="attr">id=</span><span class="val">"DENSITY"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;description&gt;</span>How much spatial territory a chunk occupies.<span class="tag">&lt;/description&gt;</span>
+  <span class="tag">&lt;scale&gt;</span>1..10<span class="tag">&lt;/scale&gt;</span>
+<span class="tag">&lt;/entity&gt;</span></div>
+      <button class="copy-btn" onclick="copyPoml(this)">COPY</button>
+    </div>
+  </div>
+
+  <div class="prompt-card">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Lettre-Océan Transmission Protocol</div>
+        <div class="prompt-id">POML_CALLIGRAM_GRID_BRIDGE_v2_LETTRE_OCEAN</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <div class="poml"><span class="tag">&lt;meta&gt;</span>
+  <span class="tag">&lt;name&gt;</span>Apollinaire Calligram Transmission Bridge<span class="tag">&lt;/name&gt;</span>
+  <span class="tag">&lt;intent&gt;</span>
+    Encode poetry as a spatial transmission system where
+    <span class="val">geography</span>, <span class="val">sound</span>, <span class="val">memory</span>, and <span class="val">technology</span> 
+    coexist inside a single navigable calligrammatic field.
+  <span class="tag">&lt;/intent&gt;</span>
+<span class="tag">&lt;/meta&gt;</span>
+
+<span class="tag">&lt;axioms&gt;</span>
+  <span class="tag">&lt;a</span> <span class="attr">id=</span><span class="val">"A1"</span><span class="tag">&gt;</span>Text may function as architecture.<span class="tag">&lt;/a&gt;</span>
+  <span class="tag">&lt;a</span> <span class="attr">id=</span><span class="val">"A2"</span><span class="tag">&gt;</span>Architecture may function as signal.<span class="tag">&lt;/a&gt;</span>
+  <span class="tag">&lt;a</span> <span class="attr">id=</span><span class="val">"A3"</span><span class="tag">&gt;</span>Distance is a layout problem, not a geographic fact.<span class="tag">&lt;/a&gt;</span>
+  <span class="tag">&lt;a</span> <span class="attr">id=</span><span class="val">"A4"</span><span class="tag">&gt;</span>Reading is traversal through a transmission field.<span class="tag">&lt;/a&gt;</span>
+  <span class="tag">&lt;a</span> <span class="attr">id=</span><span class="val">"A5"</span><span class="tag">&gt;</span>Meaning emerges from spatial relation, not sequence.<span class="tag">&lt;/a&gt;</span>
+  <span class="tag">&lt;a</span> <span class="attr">id=</span><span class="val">"A6"</span><span class="tag">&gt;</span>A poem may contain multiple simultaneous centers.<span class="tag">&lt;/a&gt;</span>
+<span class="tag">&lt;/axioms&gt;</span>
+
+<span class="tag">&lt;topology</span> <span class="attr">model=</span><span class="val">"TWO_HEMISPHERES"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;hemisphere</span> <span class="attr">id=</span><span class="val">"MEXICO"</span><span class="tag">&gt;</span>postcard / radio signal / memory<span class="tag">&lt;/hemisphere&gt;</span>
+  <span class="tag">&lt;hemisphere</span> <span class="attr">id=</span><span class="val">"PARIS"</span><span class="tag">&gt;</span>Eiffel Tower / ambient sound / presence<span class="tag">&lt;/hemisphere&gt;</span>
+  <span class="tag">&lt;spine&gt;</span>TSF (Télégraphie Sans Fil) — vertical transmission axis<span class="tag">&lt;/spine&gt;</span>
+<span class="tag">&lt;/topology&gt;</span></div>
+      <button class="copy-btn" onclick="copyPoml(this)">COPY</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- BAJOHR SECTION -->
+<!-- ============================================ -->
+<section class="section" id="bajohr">
+  <h2><span class="tag tag-bajohr">BAJOHR</span> Operative Ekphrasis</h2>
+  <p class="section-desc">Text that computationally produces images, not describes them. Performance over mimesis.</p>
+
+  <div class="prompt-card">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Operative Ekphrasis Protocol</div>
+        <div class="prompt-id">BAJOHR-OPERATIVE-EKPHRASIS-v1</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <div class="poml"><span class="tag">&lt;intent&gt;</span>
+  Build a 24×24 spatial-semantic grid where text is not a skin 
+  but a <span class="val">causal substrate</span>: the map is a readable poem-machine.
+  
+  Navigation is reading. Reading is traversal.
+  
+  The output must behave as <span class="val">OPERATIVE EKPHRASIS</span>: 
+  text that computationally brings about image-like constellations,
+  not a description pasted onto geometry.
+  
+  <span class="val">(Performance over mimesis.)</span>
+<span class="tag">&lt;/intent&gt;</span>
+
+<span class="tag">&lt;theory_anchors&gt;</span>
+  <span class="tag">&lt;anchor</span> <span class="attr">id=</span><span class="val">"A1"</span> <span class="attr">name=</span><span class="val">"Performative ekphrasis"</span><span class="tag">&gt;</span>
+    Ekphrasis is defined by what it DOES (causal sequencing between modalities),
+    not by faithful depiction. Each placement rule is a performative operation.
+  <span class="tag">&lt;/anchor&gt;</span>
+
+  <span class="tag">&lt;anchor</span> <span class="attr">id=</span><span class="val">"A2"</span> <span class="attr">name=</span><span class="val">"Operative ekphrasis (digital specificity)"</span><span class="tag">&gt;</span>
+    Separate: (1) authored text panels and (2) operational text that PRODUCES them.
+    This two-text duality is the core digital move.
+  <span class="tag">&lt;/anchor&gt;</span>
+
+  <span class="tag">&lt;anchor</span> <span class="attr">id=</span><span class="val">"A3"</span> <span class="attr">name=</span><span class="val">"Artificial semantics"</span><span class="tag">&gt;</span>
+    Meaning emerges from correlations across the grid,
+    not from any single line. The grid is a semantic field.
+  <span class="tag">&lt;/anchor&gt;</span>
+<span class="tag">&lt;/theory_anchors&gt;</span></div>
+      <button class="copy-btn" onclick="copyPoml(this)">COPY</button>
+    </div>
+  </div>
+
+  <div class="prompt-card">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Two-Text Duality</div>
+        <div class="prompt-id">BAJOHR-TWO-TEXT</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <div class="poml"><span class="tag">&lt;two_texts&gt;</span>
+  <span class="tag">&lt;surface_text&gt;</span>
+    What the reader sees in the grid.
+    The rendered chunks placed in cells.
+  <span class="tag">&lt;/surface_text&gt;</span>
+  
+  <span class="tag">&lt;operative_text&gt;</span>
+    The rules + manifest (the compiler output).
+    The code that causally produces the surface text.
+  <span class="tag">&lt;/operative_text&gt;</span>
+  
+  <span class="tag">&lt;principle&gt;</span>
+    The "meaning" lives in the <span class="val">mapping operation</span>, 
+    not only in the prose.
+  <span class="tag">&lt;/principle&gt;</span>
+<span class="tag">&lt;/two_texts&gt;</span></div>
+      <button class="copy-btn" onclick="copyPoml(this)">COPY</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- GRID SECTION -->
+<!-- ============================================ -->
+<section class="section" id="grid">
+  <h2><span class="tag tag-grid">GRID</span> 24×24 Spatial Semantic Protocol</h2>
+  <p class="section-desc">Operational schemas for cells, zones, and traversal.</p>
+
+  <div class="prompt-card">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Grid Axioms</div>
+        <div class="prompt-id">CAREY-24x24-RITUAL-GRID-v1</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <ul class="axioms">
+        <li><code>G1</code> The grid is a world, not a page.</li>
+        <li><code>G2</code> Spatial position performs meaning.</li>
+        <li><code>G3</code> Cells do not store content. Cells stage acts.</li>
+        <li><code>G4</code> Traversal produces understanding.</li>
+        <li><code>G5</code> Repetition manufactures reality.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="prompt-card">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Zone Topology</div>
+        <div class="prompt-id">GRID-ZONES-v1</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <div class="poml"><span class="tag">&lt;zones&gt;</span>
+  <span class="tag">&lt;zone</span> <span class="attr">id=</span><span class="val">"CENTER_CORE"</span>
+        <span class="attr">coords=</span><span class="val">"(10-13,10-13)"</span>
+        <span class="attr">function=</span><span class="val">"PRODUCE"</span><span class="tag">/&gt;</span>
+
+  <span class="tag">&lt;zone</span> <span class="attr">id=</span><span class="val">"INNER_RING"</span>
+        <span class="attr">coords=</span><span class="val">"(7-16,7-16) excluding CENTER_CORE"</span>
+        <span class="attr">function=</span><span class="val">"MAINTAIN"</span><span class="tag">/&gt;</span>
+
+  <span class="tag">&lt;zone</span> <span class="attr">id=</span><span class="val">"MIDDLE_RING"</span>
+        <span class="attr">coords=</span><span class="val">"(4-19,4-19) excluding INNER_RING"</span>
+        <span class="attr">function=</span><span class="val">"REPAIR"</span><span class="tag">/&gt;</span>
+
+  <span class="tag">&lt;zone</span> <span class="attr">id=</span><span class="val">"OUTER_RING"</span>
+        <span class="attr">coords=</span><span class="val">"(1-24,1-24) excluding MIDDLE_RING"</span>
+        <span class="attr">function=</span><span class="val">"TRANSFORM"</span><span class="tag">/&gt;</span>
+<span class="tag">&lt;/zones&gt;</span></div>
+      <button class="copy-btn" onclick="copyPoml(this)">COPY</button>
+    </div>
+  </div>
+
+  <div class="prompt-card">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Cell Schema</div>
+        <div class="prompt-id">OPS-SCHEMAS-CELL-v1</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <div class="poml"><span class="tag">&lt;schema</span> <span class="attr">id=</span><span class="val">"CellSchema"</span> <span class="attr">format=</span><span class="val">"json"</span><span class="tag">&gt;</span>
+{
+  "x": <span class="val">int</span>,
+  "y": <span class="val">int</span>,
+  "zone_id": <span class="val">"ZONE_ID"</span>,
+  "world_op": <span class="val">"PRODUCE | MAINTAIN | REPAIR | TRANSFORM"</span>,
+  
+  "content": {
+    "text": <span class="val">"string"</span>,
+    "ritual_act": <span class="val">"INVOCATION | CHANT | WITNESS | QUESTION | SEAL"</span>,
+    "role": <span class="val">"PILGRIM | WITNESS | CONGREGANT | ARCHIVIST"</span>,
+    "silence_kind": <span class="val">"BREATH | GAP | VEIL | VOID"</span>
+  },
+  
+  "adjacency": {
+    "N": <span class="val">"ASSOCIATION | DEVELOPMENT | TENSION"</span>,
+    "E": <span class="val">"..."</span>,
+    "S": <span class="val">"..."</span>,
+    "W": <span class="val">"..."</span>
+  },
+  
+  "state": <span class="val">"DORMANT | ACTIVE | SEALED | BROKEN"</span>
+}
+<span class="tag">&lt;/schema&gt;</span></div>
+      <button class="copy-btn" onclick="copyPoml(this)">COPY</button>
+    </div>
+  </div>
+
+  <div class="prompt-card">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Traversal Schema</div>
+        <div class="prompt-id">OPS-SCHEMAS-TRAVERSAL-v1</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <div class="poml"><span class="tag">&lt;schema</span> <span class="attr">id=</span><span class="val">"TraversalSchema"</span> <span class="attr">format=</span><span class="val">"json"</span><span class="tag">&gt;</span>
+{
+  "traversal_id": <span class="val">"string"</span>,
+  "start": <span class="val">"(x,y)"</span>,
+  "end": <span class="val">"(x,y) | null"</span>,
+  "path": <span class="val">["(x,y)", ...]</span>,
+  
+  "mode": <span class="val">"PROCESSION | SEARCH | WANDER | EXILE"</span>,
+  "purpose": <span class="val">"string"</span>,
+  
+  "visited_cells": <span class="val">["(x,y)", ...]</span>,
+  "acts_witnessed": <span class="val">["RitualAct", ...]</span>,
+  "zones_crossed": <span class="val">["ZONE_ID", ...]</span>,
+  
+  "transformation": {
+    "before": <span class="val">"state"</span>,
+    "after": <span class="val">"state"</span>
+  }
+}
+<span class="tag">&lt;/schema&gt;</span></div>
+      <button class="copy-btn" onclick="copyPoml(this)">COPY</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SYNTHESIS SECTION -->
+<!-- ============================================ -->
+<section class="section" id="synthesis">
+  <h2><span class="tag tag-grid">SYNTH</span> Merged Calligram-Ritual System</h2>
+  <p class="section-desc">Grid = ritual engine + calligram = typographic body.</p>
+
+  <div class="prompt-card">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Calligram Layer Schema</div>
+        <div class="prompt-id">OPS-SCHEMAS-24x24-CALLIGRAM-v2</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <div class="poml"><span class="tag">&lt;enums&gt;</span>
+  <span class="tag">&lt;enum</span> <span class="attr">id=</span><span class="val">"GlyphFlow"</span><span class="tag">&gt;</span>
+    LINEAR | SPIRAL | COLUMN | FRACTURE | RADIATE | CLUSTER | SCATTER | WAVE
+  <span class="tag">&lt;/enum&gt;</span>
+
+  <span class="tag">&lt;enum</span> <span class="attr">id=</span><span class="val">"StrokeWeight"</span><span class="tag">&gt;</span>
+    HAIRLINE | LIGHT | REGULAR | BOLD | BLACK
+  <span class="tag">&lt;/enum&gt;</span>
+
+  <span class="tag">&lt;enum</span> <span class="attr">id=</span><span class="val">"CalligramFunction"</span><span class="tag">&gt;</span>
+    IMAGE | CONTAINER | BARRIER | PATH | VOID
+  <span class="tag">&lt;/enum&gt;</span>
+
+  <span class="tag">&lt;enum</span> <span class="attr">id=</span><span class="val">"LetterMaterial"</span><span class="tag">&gt;</span>
+    INK | STONE | ASH | NEON | BONE | LIGHT | STATIC
+  <span class="tag">&lt;/enum&gt;</span>
+<span class="tag">&lt;/enums&gt;</span>
+
+<span class="tag">&lt;schema</span> <span class="attr">id=</span><span class="val">"CalligramLayer"</span><span class="tag">&gt;</span>
+{
+  "glyph_flow": <span class="val">"GlyphFlow"</span>,
+  "stroke_weight": <span class="val">"StrokeWeight"</span>,
+  "shape_outline": <span class="val">"urn | door | spiral_eye | tower | null"</span>,
+  "letter_material": <span class="val">"LetterMaterial"</span>,
+  "density": <span class="val">1..10</span>,
+  "rotation_deg": <span class="val">0..359</span>,
+  "animate": <span class="val">true | false</span>
+}
+<span class="tag">&lt;/schema&gt;</span></div>
+      <button class="copy-btn" onclick="copyPoml(this)">COPY</button>
+    </div>
+  </div>
+
+  <div class="prompt-card">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Spatial Mapping First Principles</div>
+        <div class="prompt-id">FIRST-PRINCIPLES-COMPILE-v1</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <ul class="axioms">
+        <li><code>P1</code> <strong>Space is an addressing system, not a stage.</strong> Each cell is an addressable register.</li>
+        <li><code>P2</code> <strong>Two texts: operative text produces surface text.</strong> The "meaning" lives in the mapping operation.</li>
+        <li><code>P3</code> <strong>Geometry is a constraint grammar.</strong> Rings = recursion, Spirals = descent, Friezes = time-as-loop.</li>
+        <li><code>P4</code> <strong>Semantics are functions, not topics.</strong> INVOKE | QUESTION | SHOW | LOOP | PIVOT | SEAL | VOID | META.</li>
+        <li><code>P5</code> <strong>Allocation must be unequal by design.</strong> Some lines deserve territory; some share cells.</li>
+        <li><code>P6</code> <strong>Repetition is architecture.</strong> Key phrases become distributed "ribs" that stitch the world.</li>
+        <li><code>P7</code> <strong>Voids are positive semantic regions.</strong> Silence has shape.</li>
+        <li><code>P8</code> <strong>Reproducibility is required.</strong> Given (TextHash, Seed, Version), same traversal → same structure.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="prompt-card">
+    <div class="prompt-header" onclick="toggleCard(this)">
+      <div>
+        <div class="prompt-title">Master Synthesis Prompt</div>
+        <div class="prompt-id">SYNTHESIS-PROMPT-v1</div>
+      </div>
+      <span class="toggle-icon">▸</span>
+    </div>
+    <div class="prompt-body">
+      <div class="poml"><span class="tag">&lt;prompt</span> <span class="attr">id=</span><span class="val">"MEDIUM-AS-OPERATOR-SYNTHESIS"</span><span class="tag">&gt;</span>
+
+<span class="tag">&lt;core_question&gt;</span>
+  Compare Carey's "ritual view" with Kittler's materialist view.
+  Apply to "operative ekphrasis" in AI text-image generation.
+<span class="tag">&lt;/core_question&gt;</span>
+
+<span class="tag">&lt;carey_lens&gt;</span>
+  Media are ceremonies. Reading is participation.
+  The grid is a world people enter, traverse, rehearse.
+  Communication <span class="val">produces</span> reality.
+<span class="tag">&lt;/carey_lens&gt;</span>
+
+<span class="tag">&lt;kittler_lens&gt;</span>
+  Media are technical systems. Reading is a scan operation.
+  The grid is address space with payloads and retrieval metadata.
+  Media <span class="val">determine</span> what can be stored, processed, retrieved.
+<span class="tag">&lt;/kittler_lens&gt;</span>
+
+<span class="tag">&lt;bajohr_bridge&gt;</span>
+  Operative ekphrasis: text that <span class="val">computationally produces</span> images.
+  Two texts: surface (what you see) + operative (rules that generate it).
+  The prompt IS the medium. The generation IS the reading.
+<span class="tag">&lt;/bajohr_bridge&gt;</span>
+
+<span class="tag">&lt;apollinaire_method&gt;</span>
+  Calligram: text becomes geometry.
+  Geometry precedes reading.
+  Layout is interpretation.
+<span class="tag">&lt;/apollinaire_method&gt;</span>
+
+<span class="tag">&lt;synthesis&gt;</span>
+  AI text-image = operative ekphrasis at scale.
+  The prompt scripts social-technical relations (Carey: ritual).
+  The model is an inscription apparatus (Kittler: storage/retrieval).
+  The output is a calligram: text-as-image-as-world.
+<span class="tag">&lt;/synthesis&gt;</span>
+
+<span class="tag">&lt;/prompt&gt;</span></div>
+      <button class="copy-btn" onclick="copyPoml(this)">COPY</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Prompt Codex v1.0 | Extracted from Ekphrasis Design Conversation</p>
+  <p>Carey × Kittler × Apollinaire × Bajohr</p>
+</footer>
+
+<script>
+function toggleCard(header) {
+  const card = header.closest('.prompt-card');
+  card.classList.toggle('open');
+}
+
+function copyPoml(btn) {
+  const poml = btn.previousElementSibling;
+  const text = poml.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'COPIED';
+    setTimeout(() => btn.textContent = 'COPY', 1500);
+  });
+}
+
+// Open first card by default
+document.querySelectorAll('.prompt-card').forEach((card, i) => {
+  if (i === 0) card.classList.add('open');
+});
+</script>
+
+</body>
+</html>

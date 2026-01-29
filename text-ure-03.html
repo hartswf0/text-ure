@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TEXT-URE v16.6 — Semantic Raycaster</title>
+    <style>
+        :root {
+            --bg: #010101;
+            --ui-text: #00ff41; 
+            --ui-accent: #00ffff; 
+            --ui-dim: rgba(0, 255, 65, 0.15);
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--ui-text);
+            font-family: var(--font-mono);
+            height: 100vh; width: 100vw;
+            overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+
+        #game-container { position: relative; flex: 1; width: 100%; height: 100%; background: #000; }
+        canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+
+        /* UI STATES */
+        body.cinematic .hud, body.cinematic .scanner, body.cinematic .touch-controls, 
+        body.cinematic .crosshair, body.cinematic .beam-guide, body.cinematic .minimap { display: none !important; }
+        body.hide-scanner .scanner { display: none !important; }
+
+        /* HUD */
+        .hud {
+            position: absolute; top: 0; left: 0; width: 100%; padding: 1rem;
+            pointer-events: none; display: flex; justify-content: space-between; align-items: flex-start; z-index: 10;
+        }
+        .hud-left { background: rgba(0,0,0,0.85); padding: 10px; border-left: 2px solid var(--ui-text); backdrop-filter: blur(10px); pointer-events: auto; }
+        .hud-left h1 { font-size: 0.7rem; margin: 0; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
+        .stats { font-size: 0.5rem; color: var(--ui-text); opacity: 0.7; margin-top: 4px; font-weight: 900; }
+
+        .source-selector { pointer-events: auto; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+        .btn-source {
+            background: rgba(0,0,0,0.8); border: 1px solid #222; color: #555;
+            padding: 5px 10px; font-family: var(--font-mono); font-size: 0.55rem;
+            cursor: pointer; text-transform: uppercase; width: 85px; text-align: right; transition: all 0.2s;
+        }
+        .btn-source:hover { border-color: #777; color: #eee; }
+        .btn-source.active { border-color: var(--ui-text); color: var(--ui-text); background: rgba(0, 255, 65, 0.05); }
+        .config-btn { margin-top: 10px; border-color: #fff !important; color: #fff !important; }
+
+        /* MINIMAP */
+        .minimap {
+            position: absolute; top: 85px; left: 1rem;
+            border: 1px solid var(--ui-dim); background: rgba(0,0,0,0.9);
+            pointer-events: none; z-index: 9;
+            width: 80px; height: 80px; backdrop-filter: blur(4px);
+        }
+        #minimap-canvas { width: 100%; height: 100%; display: block; }
+
+        /* SCANNER */
+        .scanner {
+            position: absolute; bottom: 18%; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 480px; text-align: center; pointer-events: none; z-index: 15;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .scanner-header { display: flex; justify-content: center; align-items: center; gap: 10px; pointer-events: auto; }
+        .scanner-label { font-size: 0.5rem; background: var(--ui-text); color: #000; padding: 2px 6px; font-weight: 900; letter-spacing: 1px; }
+        .scanner-text {
+            background: rgba(0,0,0,0.96); padding: 12px; border: 1px solid var(--ui-text);
+            color: #fff; font-size: 0.85rem; line-height: 1.4; 
+            height: 4.5em; overflow: hidden;
+            white-space: pre-wrap; box-shadow: 0 0 40px #000;
+            text-shadow: 0 0 8px rgba(0,255,65,0.4);
+            backdrop-filter: blur(12px);
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* VISION MODAL */
+        #img-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98); z-index: 200; flex-direction: column;
+            align-items: center; justify-content: center; padding: 15px;
+        }
+        #img-modal.active { display: flex; }
+        
+        #gen-image-container {
+            position: relative;
+            width: 100%; max-width: 480px; aspect-ratio: 16/9;
+            border: 1px solid #222; box-shadow: 0 0 60px #000;
+            margin-bottom: 12px; background: #000;
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden;
+        }
+        
+        #img-screenshot { position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: cover; z-index: 1; opacity: 1; transition: opacity 0.5s; }
+        #img-depth { position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: cover; z-index: 2; opacity: 0; }
+        #gen-image { position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: cover; z-index: 3; opacity: 0; } 
+        #effect-canvas { position: absolute; top:0; left:0; width: 100%; height: 100%; pointer-events: none; z-index: 4; }
+
+        .modal-controls { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 8px; }
+        .mixer-container { background: rgba(255,255,255,0.02); padding: 12px; border: 1px solid #1a1a1a; }
+        .mixer-row { display: flex; align-items: center; gap: 12px; font-size: 0.55rem; color: var(--ui-text); margin-bottom: 6px; }
+        .mixer-row label { width: 50px; text-align: right; font-weight: 900; opacity: 0.6; letter-spacing: 1px; }
+        .mixer-row input { flex: 1; }
+
+        .icon-deck { display: flex; justify-content: space-between; gap: 12px; width: 100%; margin: 4px 0; }
+        .icon-group { flex: 1; display: flex; flex-direction: column; gap: 5px; align-items: center; }
+        .group-label { font-size: 0.4rem; color: #444; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
+        .icon-btn-row { display: flex; gap: 5px; width: 100%; }
+        
+        .tui-btn { 
+            background: transparent; border: 1px solid var(--ui-text); color: var(--ui-text); 
+            padding: 6px 10px; font-family: var(--font-mono); font-size: 0.6rem; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .tui-btn:hover { background: var(--ui-text); color: #000; }
+        .tui-btn.secondary { border-color: #333; color: #555; }
+        .tui-btn.accent { border-color: var(--ui-accent); color: var(--ui-accent); }
+        .tui-btn.icon-btn { flex: 1; height: 32px; }
+        .tui-btn.icon-btn svg { width: 14px; height: 14px; stroke-width: 2.5; }
+
+        #tui-overlay {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 90%; max-width: 400px; background: rgba(0,0,0,0.98); border: 1px solid var(--ui-text);
+            padding: 20px; z-index: 100; box-shadow: 0 0 50px #000;
+        }
+        #tui-overlay.active { display: block; }
+        .tui-section { margin-bottom: 20px; }
+        .tui-label { font-size: 0.6rem; color: #666; text-transform: uppercase; margin-bottom: 5px; display: block; }
+
+        .modal-caption {
+            color: #fff; font-family: var(--font-mono); 
+            text-align: center; font-size: 0.75rem; opacity: 0.6;
+            min-height: 2em; display: flex; align-items: center; justify-content: center;
+        }
+
+        #msg-popup { 
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%); 
+            background: var(--ui-text); color: #000; padding: 6px 15px; 
+            font-size: 0.6rem; font-weight: 900; z-index: 300; display: none; 
+        }
+
+        .touch-controls {
+            position: absolute; bottom: 20px; left: 0; width: 100%; height: 100px;
+            pointer-events: none; display: flex; justify-content: space-between; padding: 0 25px; z-index: 20;
+        }
+        .control-zone {
+            width: 70px; height: 70px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 50%; pointer-events: auto; display: flex; justify-content: center; align-items: center; touch-action: none;
+        }
+        .d-pad-label { font-size: 0.7rem; opacity: 0.5; font-weight:700 }
+        .key-hint { position:fixed; bottom:8px; left:50%; transform:translateX(-50%); font-size:9px; color:var(--ui-dim); background:rgba(0,0,0,.8); padding:4px 12px; border-radius:3px; z-index:50; pointer-events:none }
+        @media(max-width:600px){ .key-hint{display:none} }
+
+        .crosshair { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; transform: translate(-50%, -50%); border: 1px solid rgba(0,255,65,0.2); border-radius: 50%; pointer-events: none; z-index: 12; }
+        .beam-guide { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--ui-text); opacity: 0.05; pointer-events: none; }
+        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; justify-content: center; align-items: center; z-index: 200; transition: opacity 0.5s; }
+        #depth-canvas { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="raycaster"></canvas>
+        <canvas id="depth-canvas"></canvas>
+        <div class="crosshair"></div>
+        <div class="beam-guide" id="guide-left"></div>
+        <div class="beam-guide" id="guide-right"></div>
+
+        <div class="hud">
+            <div class="hud-left">
+                <h1>Semantic Engine v16.6</h1>
+                <div class="stats">POS: <span id="debug-pos">0,0</span></div>
+            </div>
+            <div class="source-selector">
+                <button class="btn-source active" onclick="loadWorld('ILIAD')">Iliad</button>
+                <button class="btn-source" onclick="loadWorld('INFERNO')">Inferno</button>
+                <button class="btn-source" onclick="loadWorld('NEURO')">Neuro</button>
+                <button class="btn-source config-btn" onclick="toggleTUI()">SYSTEM</button>
+            </div>
+        </div>
+
+        <div class="minimap">
+            <canvas id="minimap-canvas" width="90" height="90"></canvas>
+        </div>
+
+        <div class="scanner">
+            <div class="scanner-text" id="scanner-output">...</div>
+            <div class="scanner-header">
+                <div class="scanner-label">SAMPLER</div>
+                <button class="tts-btn" onclick="speakBuffer()">SPEAK</button>
+                <button class="tts-btn" onclick="generateFromBuffer()">VISION</button>
+            </div>
+        </div>
+
+        <div id="msg-popup"></div>
+
+        <!-- VISION MODAL -->
+        <div id="img-modal">
+            <div id="gen-image-container">
+                <img id="img-screenshot" src="" alt="Reality">
+                <img id="img-depth" src="" alt="Depth">
+                <img id="gen-image" src="" alt="Vision">
+                <canvas id="effect-canvas"></canvas>
+            </div>
+            
+            <div class="modal-controls">
+                <div class="modal-caption" id="img-caption">WAITING FOR HANDSHAKE...</div>
+                
+                <div class="mixer-container" id="mixer-ui" style="display:none;">
+                    <div class="mixer-row" style="justify-content: space-between; margin-bottom:10px;">
+                        <button class="tui-btn icon-btn accent" style="flex:none; width: 40px; height: 26px;" onclick="downloadComposite()" title="Triad Dataset Export">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        </button>
+                        <select id="blend-mode-select" class="tui-select" style="background:#000; color:var(--ui-text); font-size:0.6rem; border:1px solid #333;" onchange="updateBlendMode(this.value)">
+                            <option value="normal">NORMAL</option>
+                            <option value="screen">SCREEN</option>
+                            <option value="overlay">OVERLAY</option>
+                            <option value="difference">DIFF</option>
+                        </select>
+                    </div>
+                    <div class="mixer-row"><label>VISION</label><input type="range" min="0" max="100" value="0" id="slider-vision" oninput="setOpacity('gen-image', this.value)"></div>
+                    <div class="mixer-row"><label>DEPTH</label><input type="range" min="0" max="100" value="0" id="slider-depth" oninput="setOpacity('img-depth', this.value)"></div>
+                </div>
+
+                <div id="action-buttons" class="icon-deck" style="display:none;">
+                    <div class="icon-group">
+                        <div class="group-label">Reality</div>
+                        <div class="icon-btn-row">
+                            <button class="tui-btn icon-btn secondary" onclick="downloadImage('img-screenshot', 'reality')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline></svg></button>
+                            <button class="tui-btn icon-btn secondary" onclick="copyImage('img-screenshot')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                        </div>
+                    </div>
+                    <div class="icon-group">
+                        <div class="group-label">Vision</div>
+                        <div class="icon-btn-row">
+                            <button class="tui-btn icon-btn secondary" onclick="downloadImage('gen-image', 'vision')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline></svg></button>
+                            <button class="tui-btn icon-btn secondary" onclick="copyImage('gen-image')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                        </div>
+                    </div>
+                    <div class="icon-group">
+                        <div class="group-label">Depth</div>
+                        <div class="icon-btn-row">
+                            <button class="tui-btn icon-btn secondary" onclick="downloadImage('img-depth', 'depth')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline></svg></button>
+                            <button class="tui-btn icon-btn secondary" onclick="copyImage('img-depth')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                        </div>
+                    </div>
+                </div>
+                <button class="tui-btn secondary" style="width:100%; border-style: dotted; opacity: 0.3;" onclick="closeImgModal()">DISCONNECT SIGNAL</button>
+            </div>
+        </div>
+
+        <!-- SYSTEM CONFIG -->
+        <div id="tui-overlay">
+            <div style="border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:900; font-size:0.7rem;">SYSTEM_ROOT</span>
+                <span style="cursor:pointer" onclick="toggleTUI()">[X]</span>
+            </div>
+            <div class="tui-section">
+                <label class="tui-label">Gemini API Key</label>
+                <input type="password" id="api-key" placeholder="Enter API key..." style="width:100%;padding:6px;background:#000;border:1px solid #333;color:#0f8;font:inherit;font-size:0.6rem;margin-bottom:8px" onchange="localStorage.setItem('gemini_api_key',this.value)">
+            </div>
+            <div class="tui-section">
+                <label class="tui-label">Sampler Beam: <span id="val-beam">100</span>px</label>
+                <input type="range" min="20" max="300" value="100" oninput="updateBeam(this.value)">
+            </div>
+            <div class="tui-section">
+                <label class="tui-label">Session Data</label>
+                <div class="buffer-box" id="buffer-history" style="height:100px; background:#000; border:1px solid #222; padding:8px; font-size:0.65rem; color:#666; margin-bottom:10px; overflow-y:auto;">// Empty.</div>
+                <button class="tui-btn accent" style="width:100%; margin-bottom:5px;" onclick="exportMemories()">Download Dataset</button>
+                <button class="tui-btn secondary" style="width:100%;" onclick="copyBuffer()">Copy All Buffer</button>
+            </div>
+            <button class="tui-btn secondary" style="width:100%;" onclick="toggleCinematic()">Toggle Cinematic Mode (H)</button>
+            <div class="tui-section" style="margin-top:10px">
+                <label class="tui-label">Custom Text World</label>
+                <textarea id="custom-text" placeholder="Enter any text to render as walls..." style="width:100%;height:60px;background:#000;border:1px solid #333;color:#0f8;font:inherit;font-size:0.6rem;padding:6px;resize:none"></textarea>
+                <button class="tui-btn accent" style="width:100%;margin-top:5px" onclick="loadCustomText()">Load Custom Text</button>
+            </div>
+        </div>
+
+        <div class="touch-controls">
+            <div class="control-zone" id="stick-move"><div class="d-pad-label">↑↓</div></div>
+            <div class="control-zone" id="stick-look"><div class="d-pad-label">←→</div></div>
+        </div>
+        <div class="key-hint" id="key-hint">WASD move · ←→ turn · H hide · SPACE sample</div>
+
+        <div id="loader"><div style="animation: pulse 1s infinite; font-size:0.7rem; color:#00ff41; letter-spacing: 2px;">RESOLVING DATA STRUCTURES...</div></div>
+    </div>
+
+    <script>
+        const CONFIG = { fov: 0.66, res: 1, speed: { move: 4.0, rot: 2.0 }, mapWidth: 24, mapHeight: 24, charResolution: 64, charsPerStrip: 16, strandsPerBlock: 4, scannerWidth: 100 };
+        const WORLDS = {
+            ILIAD: { id: 'ILIAD', stylePrompt: "Ancient Greek oil painting, mythological realism, golden light", palette: { text: '#FFD700', bg: '#080600', floorStart: '#1a1500', map: '#D4AF37' }, text: "SING GODDESS THE WRATH OF ACHILLES PELEUS SON THE DESTRUCTIVE WRATH WHICH BROUGHT COUNTLESS WOES UPON THE ACHAEANS THERE SHONE THE IMAGE OF THE MASTER MIND THERE EARTH THERE HEAVEN THERE OCEAN HE DESIGNED THE UNWEARIED SUN THE MOON COMPLETELY ROUND THE STARRY LIGHTS THAT HEAVENS HIGH CONVEX CROWNED" },
+            INFERNO: { id: 'INFERNO', stylePrompt: "Dark Renaissance etching, Dante hellscape", palette: { text: '#ff3333', bg: '#080000', floorStart: '#200000', map: '#ff3333' }, text: "MIDWAY UPON THE JOURNEY OF OUR LIFE I FOUND MYSELF WITHIN A FOREST DARK FOR THE STRAIGHTFORWARD PATHWAY HAD BEEN LOST AH ME HOW HARD A THING IT IS TO SAY WHAT WAS THIS FOREST SAVAGE ROUGH AND STERN WHICH IN THE VERY THOUGHT RENEWS THE FEAR" },
+            NEURO: { id: 'NEURO', stylePrompt: "Cyberpunk neon glitch art, digital rain", palette: { text: '#00ff41', bg: '#000500', floorStart: '#001a05', map: '#00ff41' }, text: "THE SKY ABOVE THE PORT WAS THE COLOR OF TELEVISION TUNED TO A DEAD CHANNEL IT WAS NOT LIKE HE EXPECTED THE BODILESS EXULTATION OF CYBERSPACE BUT A GRAY DISCONTINUITY A STATIC FIELD OF BROKEN DATA FRAGMENTS SHARDS OF MEANING" }
+        };
+        const KEYWORDS = { "GOLD": "#FFD700", "SUN": "#FFA500", "FIRE": "#FF4500", "BLOOD": "#8A0303", "WAR": "#B22222", "OCEAN": "#00BFFF", "MATRIX": "#00FF00", "DATA": "#00FF41" };
+
+        const State = { world: null, map: [], textStrips: [], textures: [], player: { x: 12.5, y: 12.5, dirX: -1, dirY: 0, planeX: 0, planeY: 0.66 }, keys: { w: false, a: false, s: false, d: false, rotLeft: false, rotRight: false }, touch: { move: 0, turn: 0 }, mouse: { turn: 0 }, lastTime: 0, visibleStrips: new Set(), history: [], memories: [], lastScannerText: "", scannerVisible: true, effectInterval: null };
+
+        const canvas = document.getElementById('raycaster'), ctx = canvas.getContext('2d', { alpha: false }); 
+        const depthCanvas = document.getElementById('depth-canvas'), dCtx = depthCanvas.getContext('2d', { alpha: false });
+        const mmCanvas = document.getElementById('minimap-canvas'), mmCtx = mmCanvas.getContext('2d');
+        const scannerOut = document.getElementById('scanner-output'), bufferBox = document.getElementById('buffer-history');
+
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; depthCanvas.width = window.innerWidth; depthCanvas.height = window.innerHeight; updateBeamVisuals(); }
+        window.addEventListener('resize', resize);
+        function pulse(ms = 15) { if (navigator.vibrate) navigator.vibrate(ms); }
+        function showMessage(txt) { const p = document.getElementById('msg-popup'); p.innerText = txt; p.style.display = 'block'; setTimeout(() => p.style.display = 'none', 1500); }
+
+        function updateBeamVisuals() {
+            const cx = window.innerWidth / 2, w = CONFIG.scannerWidth / 2;
+            const gL = document.getElementById('guide-left'), gR = document.getElementById('guide-right');
+            if (gL && gR) { gL.style.left = (cx - w) + 'px'; gR.style.left = (cx + w) + 'px'; }
+        }
+
+        function captureDepthMap() {
+            dCtx.fillStyle = "#000"; dCtx.fillRect(0,0,depthCanvas.width, depthCanvas.height);
+            const w = depthCanvas.width, h = depthCanvas.height, step = CONFIG.res; 
+            for(let x=0; x<w; x+=step) {
+                const camX = 2 * x / w - 1, rDX = State.player.dirX + State.player.planeX * camX, rDY = State.player.dirY + State.player.planeY * camX;
+                let mX = Math.floor(State.player.x), mY = Math.floor(State.player.y), sDX, sDY, stX = rDX<0?-1:1, stY = rDY<0?-1:1, hit = 0, side, pD;
+                const dDX = Math.abs(1/rDX), dDY = Math.abs(1/rDY);
+                sDX = rDX<0?(State.player.x-mX)*dDX:(mX+1-State.player.x)*dDX; sDY = rDY<0?(State.player.y-mY)*dDY:(mY+1-State.player.y)*dDY;
+                while(hit === 0) {
+                    if(sDX<sDY){sDX+=dDX; mX+=stX; side=0;}else{sDY+=dDY; mY+=stY; side=1;}
+                    if(mX<0||mX>=24||mY<0||mY>=24){hit=1;pD=100;} else if(State.map[mX][mY].type>0)hit=1;
+                }
+                if(mX >= 0 && mX < 24 && mY >= 0 && mY < 24) {
+                    pD = side===0?(mX-State.player.x+(1-stX)/2)/rDX : (mY-State.player.y+(1-stY)/2)/rDY;
+                    const lH = Math.floor(h/pD), v = Math.max(0, 255 - (pD * 12)); dCtx.fillStyle=`rgb(${v},${v},${v})`; dCtx.fillRect(x, -lH/2+h/2, step, lH);
+                }
+            }
+            return depthCanvas.toDataURL('image/jpeg', 0.8);
+        }
+
+        function runMatrixEffect(txt) {
+            const eC = document.getElementById('effect-canvas'), eCtx = eC.getContext('2d');
+            eC.width = eC.offsetWidth; eC.height = eC.offsetHeight;
+            const words = txt.toUpperCase().split(/\s+/).filter(w => w.length > 1);
+            if(words.length === 0) words.push("VOID");
+            const cols = Math.floor(eC.width / 14), drops = Array(cols).fill(0);
+            const iD = document.getElementById('img-depth'); let tick = 0;
+            State.effectInterval = setInterval(() => {
+                tick += 0.1; iD.style.opacity = (Math.sin(tick) + 1) / 2;
+                eCtx.fillStyle = 'rgba(0, 0, 0, 0.25)'; eCtx.fillRect(0, 0, eC.width, eC.height);
+                eCtx.fillStyle = State.world.palette.text; eCtx.font = '900 12px monospace';
+                for(let i=0; i<cols; i++) {
+                    const char = words[i % words.length][Math.floor(drops[i]) % words[i % words.length].length];
+                    eCtx.fillText(char, i*14, drops[i]*14);
+                    if(drops[i]*14 > eC.height && Math.random() > 0.98) drops[i] = 0; drops[i]++;
+                }
+            }, 30);
+        }
+
+        async function generateFromBuffer() {
+            const text = scannerOut.innerText; if(!text || text === "...") return;
+            const m = document.getElementById('img-modal'), iS = document.getElementById('img-screenshot'), iG = document.getElementById('gen-image'), iD = document.getElementById('img-depth'), cap = document.getElementById('img-caption'), mU = document.getElementById('mixer-ui'), aB = document.getElementById('action-buttons');
+            const sS = canvas.toDataURL('image/jpeg', 0.8), dM = captureDepthMap();
+            iS.src = sS; iD.src = dM; iG.style.opacity = 0; iD.style.opacity = 0; m.classList.add('active'); mU.style.display = 'none'; aB.style.display = 'none';
+            runMatrixEffect(text);
+            
+            const prompt = `Point-of-view scene based on: "${text}". Style: ${State.world.stylePrompt}. Strictly obey depth map structure. NO TEXT. Atmospheric lighting.`;
+            const payload = {
+                contents: [{ role: "user", parts: [
+                    { text: prompt },
+                    { inlineData: { mimeType: "image/jpeg", data: sS.split(',')[1] } },
+                    { inlineData: { mimeType: "image/jpeg", data: dM.split(',')[1] } }
+                ]}],
+                generationConfig: { responseModalities: ["IMAGE"] }
+            };
+
+            try {
+                const apiKey = localStorage.getItem('gemini_api_key') || '';
+                if(!apiKey) { stopMatrixEffect(); cap.innerText = "NO_API_KEY: Open config [≡]"; return; }
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, { 
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) 
+                });
+                const data = await res.json(); clearInterval(State.effectInterval); stopMatrixEffect();
+                const b64 = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+                if(b64) {
+                    const src = `data:image/png;base64,${b64}`; iG.src = src; cap.innerText = text; mU.style.display = 'block'; aB.style.display = 'flex';
+                    document.getElementById('slider-vision').value = 100; document.getElementById('slider-depth').value = 0; iG.style.opacity = 1; 
+                    State.memories.push({ prompt: text, pose: {...State.player}, vision: src });
+                } else { cap.innerText = "LINK_FAILURE: REJECTED"; }
+            } catch(e) { clearInterval(State.effectInterval); cap.innerText = "SIGNAL_LOST"; }
+        }
+
+        function stopMatrixEffect() { const eC = document.getElementById('effect-canvas'); eC.getContext('2d').clearRect(0,0,eC.width,eC.height); document.getElementById('img-depth').style.opacity = 0; }
+        function setOpacity(id, v) { document.getElementById(id).style.opacity = v / 100; }
+        function updateBlendMode(m) { document.getElementById('gen-image').style.mixBlendMode = m; }
+        function closeImgModal() { document.getElementById('img-modal').classList.remove('active'); clearInterval(State.effectInterval); }
+        
+        async function downloadImage(id, n) { const a = document.createElement('a'); a.href = document.getElementById(id).src; a.download = `${n}_${Date.now()}.png`; a.click(); }
+        async function copyImage(id) { try { const r = await fetch(document.getElementById(id).src); const b = await r.blob(); await navigator.clipboard.write([new ClipboardItem({[b.type]: b})]); showMessage("COPIED"); } catch(e) { showMessage("PERMISSION_ERROR"); } }
+        function downloadComposite() {
+            const iS = document.getElementById('img-screenshot'), iG = document.getElementById('gen-image'), iD = document.getElementById('img-depth');
+            const c = document.createElement('canvas'); c.width = 1200; c.height = 300; const cx = c.getContext('2d');
+            cx.drawImage(iS, 0,0,400,300); cx.drawImage(iG, 400,0,400,300); cx.drawImage(iD, 800,0,400,300);
+            const a = document.createElement('a'); a.href = c.toDataURL('image/jpeg', 0.9); a.download = `dataset_${Date.now()}.jpg`; a.click();
+        }
+        function exportMemories() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({ frames: State.memories }, null, 2)], {type: "application/json"})); a.download = `world_model_${Date.now()}.json`; a.click(); }
+
+        // Check for POML injection from IDE
+function checkPomlInjection() {
+  const customWorld = sessionStorage.getItem('poml_custom_world');
+  if (customWorld) {
+    try {
+      const w = JSON.parse(customWorld);
+      WORLDS['POML'] = {
+        id: w.id || 'POML_WORLD',
+        stylePrompt: `${w.theorist || 'grid'} style, atmospheric`,
+        palette: { text: w.palette?.text || '#00ffa3', bg: '#050505', floorStart: '#0a0a0a', map: w.palette?.text || '#00ffa3' },
+        text: w.text || 'POML WORLD LOADED',
+        mapType: w.mapType || 'RINGS'
+      };
+      // Add POML button
+      const selector = document.querySelector('.source-selector');
+      if (selector && !document.querySelector('.btn-source[onclick*="POML"]')) {
+        const btn = document.createElement('button');
+        btn.className = 'btn-source';
+        btn.onclick = () => loadWorld('POML');
+        btn.innerText = 'POML';
+        btn.style.borderColor = w.palette?.text || '#00ffa3';
+        btn.style.color = w.palette?.text || '#00ffa3';
+        selector.insertBefore(btn, selector.querySelector('.config-btn'));
+      }
+      sessionStorage.removeItem('poml_custom_world');
+      showMessage('POML WORLD INJECTED');
+      setTimeout(() => loadWorld('POML'), 500);
+    } catch(e) { console.error('POML injection failed', e); }
+  }
+}
+
+function loadWorld(k) {
+            document.querySelectorAll('.btn-source').forEach(b => b.classList.remove('active'));
+            const btn = Array.from(document.querySelectorAll('.btn-source')).find(b => b.innerText.toUpperCase() === k);
+            if(btn) btn.classList.add('active');
+            const d = WORLDS[k]; State.world = d; document.documentElement.style.setProperty('--ui-text', d.palette.text);
+            document.documentElement.style.setProperty('--ui-dim', d.palette.text + '33');
+            const clean = d.text.toUpperCase().replace(/\s+/g, ' ');
+            State.textStrips = []; for(let i=0; i<clean.length; i+=16) State.textStrips.push(clean.substring(i, i+16).padEnd(16));
+            State.textures = []; State.textStrips.forEach(s => {
+                const c = document.createElement('canvas'); c.width = 64; c.height = 1024; const x = c.getContext('2d');
+                let col = d.palette.text; Object.entries(KEYWORDS).forEach(([kw, color]) => { if(s.includes(kw)) col = color; });
+                x.fillStyle = col; x.font = "900 50px Courier New"; x.textAlign = 'center';
+                for(let i=0; i<16; i++) if(s[i]!==' ') x.fillText(s[i], 32, i*64 + 45); State.textures.push(c);
+            });
+            State.map = []; for(let x=0; x<24; x++){ State.map[x]=[]; for(let y=0; y<24; y++) State.map[x][y] = { type: 0, idx: -1, hasMemory: false }; }
+            if(k==='ILIAD'){ for(let x=0; x<24; x++) for(let y=0; y<24; y++) if(Math.abs(Math.sqrt((x-12)**2+(y-12)**2)-8)<1.3) State.map[x][y].type=1; }
+            else if(k==='INFERNO'){ for(let i=0; i<90; i++){ let x=2+Math.floor(Math.random()*20), y=2+Math.floor(Math.random()*20); if(Math.abs(x-12)>2) State.map[x][y].type=1; } }
+            else { for(let x=4; x<20; x+=4) for(let y=2; y<22; y++) State.map[x][y].type=1; }
+            let sIdx = 0; for(let x=0; x<24; x++) for(let y=0; y<24; y++) if(State.map[x][y].type===1) { State.map[x][y].idx = sIdx; sIdx = (sIdx+2)%State.textures.length; }
+            State.player = { x: 12.5, y: 12.5, dirX: -1, dirY: 0, planeX: 0, planeY: 0.66 };
+        }
+
+        function update(dt) {
+            const ms = 4 * dt, rs = 2 * dt;
+            let fwd = (State.keys.w?1:0)-(State.keys.s?1:0)+State.touch.move, trn = (State.keys.rotRight||State.keys.d?1:0)-(State.keys.rotLeft||State.keys.a?1:0)+State.touch.turn+State.mouse.turn;
+            if(trn !== 0) { const c = Math.cos(trn*rs), s = Math.sin(trn*rs), oDX = State.player.dirX, oPX = State.player.planeX; State.player.dirX = State.player.dirX*c-State.player.dirY*s; State.player.dirY = oDX*s+State.player.dirY*c; State.player.planeX = State.player.planeX*c-State.player.planeY*s; State.player.planeY = oPX*s+State.player.planeY*c; }
+            if(fwd !== 0) { const nX = State.player.x+State.player.dirX*fwd*ms, nY = State.player.y+State.player.dirY*fwd*ms; if(nX>=0&&nX<24&&State.map[Math.floor(nX)][Math.floor(State.player.y)].type===0) State.player.x=nX; if(nY>=0&&nY<24&&State.map[Math.floor(State.player.x)][Math.floor(nY)].type===0) State.player.y=nY; }
+            document.getElementById('debug-pos').innerText = `${State.player.x.toFixed(1)},${State.player.y.toFixed(1)}`;
+        }
+
+        function draw() {
+            ctx.fillStyle = State.world.palette.bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+            const g = ctx.createLinearGradient(0,canvas.height/2,0,canvas.height); g.addColorStop(0,State.world.palette.floorStart||"#0a0a0a"); g.addColorStop(1,"#000"); ctx.fillStyle=g; ctx.fillRect(0,canvas.height/2,canvas.width,canvas.height/2);
+            State.visibleStrips.clear(); const w = canvas.width, h = canvas.height, bH = CONFIG.scannerWidth/2;
+            for(let x=0; x<w; x+=CONFIG.res) {
+                const camX = 2*x/w-1, rDX = State.player.dirX + State.player.planeX*camX, rDY = State.player.dirY + State.player.planeY*camX;
+                let mX = Math.floor(State.player.x), mY = Math.floor(State.player.y), sDX, sDY, stX=rDX<0?-1:1, stY=rDY<0?-1:1, hit=0, side, pD;
+                const dDX=Math.abs(1/rDX), dDY=Math.abs(1/rDY);
+                sDX = rDX<0?(State.player.x-mX)*dDX:(mX+1-State.player.x)*dDX; sDY = rDY<0?(State.player.y-mY)*dDY:(mY+1-State.player.y)*dDY;
+                while(hit===0){ if(sDX<sDY){sDX+=dDX; mX+=stX; side=0;}else{sDY+=dDY; mY+=stY; side=1;} if(mX<0||mX>=24||mY<0||mY>=24){hit=1;pD=100;}else if(State.map[mX][mY].type>0)hit=1; }
+                pD = side===0?(mX-State.player.x+(1-stX)/2)/rDX : (mY-State.player.y+(1-stY)/2)/rDY;
+                if(pD<30) {
+                    const lH = Math.floor(h/pD); let wX = side===0?State.player.y+pD*rDY : State.player.x+pD*rDX; wX-=Math.floor(wX);
+                    const cell = State.map[mX][mY], sO = Math.floor(wX*4), tIdx = (cell.idx+sO)%State.textures.length;
+                    if(State.scannerVisible && Math.abs(x-w/2)<bH) State.visibleStrips.add(tIdx);
+                    let b = 1/(pD*0.4); if(side===1) b*=0.7; if(cell.hasMemory){b*=1.3; ctx.filter='hue-rotate(180deg) brightness(1.5)';}
+                    ctx.globalAlpha = Math.min(1,b); ctx.drawImage(State.textures[tIdx], Math.floor((wX*4-Math.floor(wX*4))*64), 0, 1, 1024, x, -lH/2+h/2, CONFIG.res, lH); ctx.globalAlpha=1; ctx.filter='none';
+                }
+            }
+            if(State.scannerVisible) {
+                const idxs = Array.from(State.visibleStrips).sort((a,b)=>a-b);
+                let txt = ""; idxs.forEach(i => txt += State.textStrips[i]); txt = txt.replace(/\s+/g,' ').trim();
+                if(txt && txt !== State.lastScannerText) { scannerOut.innerText = txt; State.lastScannerText = txt; if(txt.length>5){State.history.push(txt); pulse(5);}}
+            }
+            mmCtx.fillStyle='#000'; mmCtx.fillRect(0,0,90,90);
+            for(let x=0; x<24; x++) for(let y=0; y<24; y++) if(State.map[x][y].type>0){ mmCtx.fillStyle=State.map[x][y].hasMemory?'#00ffff':State.world.palette.map; mmCtx.fillRect(x*3.7, y*3.7, 3, 3); }
+            mmCtx.fillStyle='#fff'; mmCtx.beginPath(); mmCtx.arc(State.player.x*3.7, State.player.y*3.7, 2, 0, 7); mmCtx.fill();
+            mmCtx.strokeStyle='rgba(255,255,255,0.4)'; mmCtx.beginPath(); mmCtx.moveTo(State.player.x*3.7, State.player.y*3.7);
+            mmCtx.lineTo((State.player.x+(State.player.dirX+State.player.planeX)*3)*3.7, (State.player.y+(State.player.dirY+State.player.planeY)*3)*3.7); mmCtx.stroke();
+        }
+
+        // Mouse look
+        canvas.addEventListener('click', () => canvas.requestPointerLock?.());
+        document.addEventListener('mousemove', e => { if(document.pointerLockElement === canvas) State.mouse.turn = e.movementX * 0.002; });
+        document.addEventListener('pointerlockchange', () => { if(document.pointerLockElement !== canvas) State.mouse.turn = 0; });
+        setInterval(() => State.mouse.turn *= 0.8, 16); // Decay mouse turn
+        
+        window.addEventListener('keydown', e => { const k=e.key.toLowerCase(); if(k==='w')State.keys.w=true; if(k==='s')State.keys.s=true; if(k==='a')State.keys.a=true; if(k==='d')State.keys.d=true; if(e.key==='ArrowLeft')State.keys.rotLeft=true; if(e.key==='ArrowRight')State.keys.rotRight=true; if(e.key==='ArrowUp')State.keys.w=true; if(e.key==='ArrowDown')State.keys.s=true; if(k==='h') toggleCinematic(); if(k===' '){e.preventDefault();State.scannerVisible=true;document.body.classList.remove('hide-scanner');} if(k==='escape') document.exitPointerLock?.(); });
+        window.addEventListener('keyup', e => { const k=e.key.toLowerCase(); if(k==='w')State.keys.w=false; if(k==='s')State.keys.s=false; if(k==='a')State.keys.a=false; if(k==='d')State.keys.d=false; if(e.key==='ArrowLeft')State.keys.rotLeft=false; if(e.key==='ArrowRight')State.keys.rotRight=false; if(e.key==='ArrowUp')State.keys.w=false; if(e.key==='ArrowDown')State.keys.s=false; });
+        function hT(e, a) { e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(), t = e.targetTouches[0]; if(!t){ State.touch[a]=0; return; } if(a==='move') State.touch.move = -Math.max(-1,Math.min(1,(t.clientY-(r.top+r.height/2))/(r.height/2))); else State.touch.turn = Math.max(-1,Math.min(1,(t.clientX-(r.left+r.width/2))/(r.width/2))); }
+        document.getElementById('stick-move').addEventListener('touchstart', e=>hT(e,'move'), {passive:false}); document.getElementById('stick-move').addEventListener('touchmove', e=>hT(e,'move'), {passive:false}); document.getElementById('stick-move').addEventListener('touchend', e=>{State.touch.move=0;});
+        document.getElementById('stick-look').addEventListener('touchstart', e=>hT(e,'turn'), {passive:false}); document.getElementById('stick-look').addEventListener('touchmove', e=>hT(e,'turn'), {passive:false}); document.getElementById('stick-look').addEventListener('touchend', e=>{State.touch.turn=0;});
+        function toggleTUI() { document.getElementById('tui-overlay').classList.toggle('active'); }
+        function toggleCinematic() { document.body.classList.toggle('cinematic'); }
+        function toggleScannerUI() { State.scannerVisible = !State.scannerVisible; document.body.classList.toggle('hide-scanner'); }
+        function updateBeam(v) { CONFIG.scannerWidth = parseInt(v); document.getElementById('val-beam').innerText = v; updateBeamVisuals(); }
+        function copyBuffer() { navigator.clipboard.writeText(State.history.join('\n')); showMessage("BUFFER COPIED"); }
+        function loadCustomText() {
+            const txt = document.getElementById('custom-text').value.trim();
+            if(!txt) { showMessage("Enter text first"); return; }
+            WORLDS['CUSTOM'] = { id: 'CUSTOM', stylePrompt: "Abstract artistic rendering", palette: { text: '#00ffa3', bg: '#050505', floorStart: '#0a0a0a', map: '#00ffa3' }, text: txt.toUpperCase().replace(/[^A-Z0-9\s]/g, ''), mapType: 'RINGS' };
+            loadWorld('CUSTOM');
+            toggleTUI();
+            showMessage("CUSTOM WORLD LOADED");
+        }
+        function gameLoop(t) { const dt = (t - State.lastTime) / 1000; State.lastTime = t; update(dt); draw(); requestAnimationFrame(gameLoop); }
+        
+        resize(); loadWorld('ILIAD'); checkPomlInjection();
+        const savedKey = localStorage.getItem('gemini_api_key'); if(savedKey) document.getElementById('api-key').value = savedKey;
+        setTimeout(() => { document.getElementById('loader').style.opacity=0; setTimeout(()=>document.getElementById('loader').style.display='none',500); requestAnimationFrame(gameLoop); }, 1200);
+    </script>
+</body>
+</html>
