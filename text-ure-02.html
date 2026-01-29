@@ -328,6 +328,11 @@
             <div class="tui-header"><span>SYSTEM CONFIG</span><span style="cursor:pointer" onclick="toggleTUI()">[X]</span></div>
             
             <div class="tui-section">
+                <label class="tui-label">Gemini API Key</label>
+                <input type="password" id="api-key" placeholder="Enter API key for vision..." style="width:100%;padding:6px;background:#000;border:1px solid #333;color:var(--ui-text);font:inherit;font-size:0.6rem;margin-bottom:8px" onchange="localStorage.setItem('gemini_api_key',this.value)">
+            </div>
+
+            <div class="tui-section">
                 <label class="tui-label">Sampler Beam Width: <span id="val-beam">100</span>px</label>
                 <input type="range" min="20" max="300" value="100" oninput="updateBeam(this.value)">
             </div>
@@ -625,7 +630,8 @@
             
             runMatrixEffect(text);
 
-            const apiKey = ""; 
+            const apiKey = localStorage.getItem('gemini_api_key') || '';
+            if(!apiKey) { cap.innerText = "NO_API_KEY: Open config [≡]"; return; } 
             const style = State.world.stylePrompt;
             const cleanText = text.replace(/[^a-zA-Z0-9 ]/g, '');
             
@@ -1035,9 +1041,9 @@
                 State.player.planeY = oldPlane * s + State.player.planeY * c;
             }
 
-            if(fwd !== 0 || str !== 0) {
-                const dx = State.player.dirX * fwd + (-State.player.dirY) * str;
-                const dy = State.player.dirY * fwd + (State.player.dirX) * str;
+            if(fwd !== 0) {
+                const dx = State.player.dirX * fwd;
+                const dy = State.player.dirY * fwd;
                 const nx = State.player.x + dx * ms;
                 const ny = State.player.y + dy * ms;
                 
@@ -1221,6 +1227,8 @@
 
         resize();
         loadWorld('ILIAD');
+        const savedKey = localStorage.getItem('gemini_api_key'); 
+        if(savedKey) document.getElementById('api-key').value = savedKey;
         setTimeout(() => {
             document.getElementById('loader').style.opacity = 0;
             setTimeout(()=> document.getElementById('loader').style.display='none', 500);

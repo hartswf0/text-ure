@@ -3,428 +3,237 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TEXT-URE — The Medium as Operator Research Project</title>
+<title>TEXT-URE — The Medium as Operator</title>
 <style>
-:root{--bg:#08080c;--bg2:#0f0f14;--panel:#12121a;--fg:#e8e8f0;--dim:#9090a8;--muted:#606080;--accent:#00ffa3;--accent2:#ff5f87;--accent3:#8787ff;--carey:#ff6b9d;--kittler:#7c5cff;--apollinaire:#00d4aa;--bajohr:#ffc864;--grid:#64b4ff;--border:#1e1e2e;--mono:'SF Mono','Fira Code',monospace;--sans:system-ui,-apple-system,sans-serif}
-*{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{font-family:var(--sans);background:var(--bg);color:var(--fg);line-height:1.7;font-size:15px}
-a{color:var(--accent);text-decoration:none}
-a:hover{text-decoration:underline}
+:root {
+  --bg: #0a0a0c; --fg: #e8e8f0; --dim: #888; --muted: #555;
+  --accent: #0f8; --panel: #111; --border: #222;
+  --mono: 'SF Mono', 'Courier New', monospace;
+  --serif: Georgia, 'Times New Roman', serif;
+}
+[data-theme="light"] {
+  --bg: #fafafa; --fg: #1a1a1a; --dim: #666; --muted: #999;
+  --accent: #0a7; --panel: #fff; --border: #ddd;
+}
+[data-theme="newspaper"] {
+  --bg: #f5f0e8; --fg: #1a1a18; --dim: #5a5850; --muted: #8a8880;
+  --accent: #8b0000; --panel: #faf8f2; --border: #d0c8b8;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--mono); background: var(--bg); color: var(--fg); line-height: 1.7; font-size: 14px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
 
-.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:40px 20px;background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2300ffa3' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
-.hero-badge{font-size:10px;letter-spacing:.2em;color:var(--accent);background:rgba(0,255,163,.1);padding:8px 16px;border-radius:20px;margin-bottom:24px;border:1px solid rgba(0,255,163,.2)}
-.hero h1{font-size:clamp(2.5rem,8vw,5rem);font-weight:800;letter-spacing:-.02em;margin-bottom:16px;background:linear-gradient(135deg,var(--fg) 0%,var(--accent) 50%,var(--accent3) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero-sub{font-size:clamp(1rem,3vw,1.4rem);color:var(--dim);max-width:700px;margin-bottom:40px}
-.hero-links{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
-.hero-link{padding:14px 28px;border-radius:8px;font-size:13px;font-weight:600;letter-spacing:.03em;transition:all .2s}
-.hero-link.primary{background:var(--accent);color:var(--bg)}
-.hero-link.primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,255,163,.3);text-decoration:none}
-.hero-link.secondary{background:var(--panel);border:1px solid var(--border);color:var(--fg)}
-.hero-link.secondary:hover{border-color:var(--accent);text-decoration:none}
-.scroll-hint{position:absolute;bottom:40px;color:var(--muted);font-size:12px;letter-spacing:.1em;animation:bounce 2s infinite}
-@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+.theme-bar { position: fixed; top: 12px; right: 12px; display: flex; gap: 8px; z-index: 100; }
+.theme-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; font-size: 12px; }
+.theme-btn:hover { transform: scale(1.1); }
+.theme-btn[data-t="dark"] { background: #0a0a0c; color: #0f8; }
+.theme-btn[data-t="light"] { background: #fafafa; color: #0a7; }
+.theme-btn[data-t="newspaper"] { background: #f5f0e8; color: #8b0000; }
 
-section{padding:80px 20px;max-width:1200px;margin:0 auto}
-.section-header{text-align:center;margin-bottom:60px}
-.section-badge{font-size:10px;letter-spacing:.15em;color:var(--accent);margin-bottom:12px;display:block}
-.section-title{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:700;margin-bottom:16px}
-.section-desc{color:var(--dim);max-width:600px;margin:0 auto;font-size:16px}
+header { padding: 60px 20px 40px; text-align: center; border-bottom: 1px solid var(--border); }
+header h1 { font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+header p { color: var(--dim); max-width: 600px; margin: 0 auto 24px; }
 
-.theory-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-top:40px}
-.theory-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:28px;transition:all .2s}
-.theory-card:hover{border-color:var(--accent);transform:translateY(-4px)}
-.theory-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px}
-.theory-card h3{font-size:18px;margin-bottom:10px;color:var(--fg)}
-.theory-card p{font-size:14px;color:var(--dim);line-height:1.6}
-.theory-impl{margin-top:16px;padding-top:16px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--muted)}
-.theory-impl code{color:var(--accent);background:rgba(0,255,163,.1);padding:2px 6px;border-radius:4px}
+.source-links { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; padding: 12px 0; background: var(--panel); border-bottom: 1px solid var(--border); font-size: 12px; }
+.source-links a { color: var(--accent); display: flex; align-items: center; gap: 6px; }
 
-.texture-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
-.texture-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:all .2s}
-.texture-card:hover{border-color:var(--grid);transform:translateY(-4px)}
-.texture-preview{height:140px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:40px;color:var(--grid);border-bottom:1px solid var(--border)}
-.texture-info{padding:20px}
-.texture-version{font-size:10px;letter-spacing:.1em;color:var(--muted);margin-bottom:6px}
-.texture-name{font-size:16px;font-weight:600;margin-bottom:8px}
-.texture-features{font-size:12px;color:var(--dim);line-height:1.6}
-.texture-link{display:block;margin-top:16px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;text-align:center;font-size:12px;font-weight:600;color:var(--grid)}
-.texture-link:hover{background:var(--grid);color:var(--bg);text-decoration:none}
+main { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
 
-.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
-.tool-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:28px}
-.tool-card h3{font-size:18px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
-.tool-card h3 span{font-size:20px}
-.tool-card p{font-size:14px;color:var(--dim);margin-bottom:20px}
-.tool-link{display:inline-block;padding:10px 20px;background:var(--accent);color:var(--bg);border-radius:6px;font-size:12px;font-weight:600}
-.tool-link:hover{text-decoration:none;opacity:.9}
+.section { margin-bottom: 48px; }
+.section-title { font-size: 11px; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
 
-.mapper-section{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:80px 20px}
-.mapper-container{max-width:1000px;margin:0 auto}
-.mapper-row{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-@media(max-width:768px){.mapper-row{grid-template-columns:1fr}}
-.mapper-input{display:flex;flex-direction:column}
-.mapper-input label{font-size:11px;letter-spacing:.1em;color:var(--muted);margin-bottom:8px}
-.mapper-input textarea{flex:1;min-height:200px;padding:16px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--fg);font-family:var(--sans);font-size:14px;resize:none}
-.mapper-input textarea:focus{outline:none;border-color:var(--accent)}
-.mapper-output{background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden}
-.mapper-output-header{padding:12px 16px;background:rgba(0,0,0,.3);border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);letter-spacing:.1em;display:flex;justify-content:space-between;align-items:center}
-.mapper-grid{display:grid;grid-template-columns:repeat(24,1fr);gap:1px;padding:16px;background:var(--bg);aspect-ratio:1}
-.mapper-cell{background:var(--panel);border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:6px;color:var(--accent);cursor:pointer;transition:all .1s}
-.mapper-cell:hover{background:var(--accent);color:var(--bg)}
-.mapper-cell.filled{background:rgba(0,255,163,.2)}
-.mapper-controls{display:flex;gap:12px;margin-top:20px;justify-content:center}
-.mapper-btn{padding:12px 24px;background:var(--accent);border:none;color:var(--bg);font:inherit;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer}
-.mapper-btn:hover{opacity:.9}
-.mapper-btn.secondary{background:var(--panel);border:1px solid var(--border);color:var(--fg)}
+.launch-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.launch-card { background: var(--panel); border: 1px solid var(--border); padding: 16px; transition: all 0.15s; }
+.launch-card:hover { border-color: var(--accent); }
+.launch-card .icon { font-size: 20px; margin-bottom: 8px; }
+.launch-card .name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.launch-card .desc { font-size: 11px; color: var(--dim); line-height: 1.5; }
+.launch-card a { display: block; margin-top: 12px; padding: 8px; background: var(--bg); border: 1px solid var(--border); text-align: center; font-size: 10px; font-weight: 600; }
+.launch-card a:hover { background: var(--accent); color: var(--bg); text-decoration: none; }
+.launch-card a.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 
-.resources-section{background:var(--panel)}
-.resources-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-.resource-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:20px}
-.resource-card h4{font-size:14px;margin-bottom:8px;color:var(--fg)}
-.resource-card p{font-size:12px;color:var(--dim);margin-bottom:12px}
-.resource-card a{font-size:11px;color:var(--accent)}
+.theory-list { display: flex; flex-direction: column; gap: 12px; }
+.theory-item { display: flex; gap: 16px; padding: 16px; background: var(--panel); border: 1px solid var(--border); }
+.theory-item .tag { width: 80px; flex-shrink: 0; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: var(--accent); }
+.theory-item .content { flex: 1; }
+.theory-item .name { font-weight: 600; margin-bottom: 4px; }
+.theory-item .desc { font-size: 12px; color: var(--dim); }
 
-footer{padding:60px 20px;text-align:center;border-top:1px solid var(--border)}
-footer p{font-size:12px;color:var(--muted)}
-.footer-links{margin-top:16px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
-.footer-links a{font-size:11px;color:var(--dim)}
+.quick-input { background: var(--panel); border: 1px solid var(--border); padding: 20px; }
+.quick-input label { font-size: 10px; letter-spacing: 0.1em; color: var(--muted); display: block; margin-bottom: 8px; }
+.quick-input textarea { width: 100%; height: 100px; background: var(--bg); border: 1px solid var(--border); color: var(--fg); font: inherit; padding: 12px; resize: none; }
+.quick-input textarea:focus { outline: none; border-color: var(--accent); }
+.quick-input .actions { display: flex; gap: 8px; margin-top: 12px; }
+.quick-input button { flex: 1; padding: 10px; background: var(--accent); border: none; color: var(--bg); font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; }
+.quick-input button:hover { opacity: 0.9; }
+.quick-input button.secondary { background: var(--bg); border: 1px solid var(--border); color: var(--fg); }
 
-.tag{display:inline-block;padding:4px 10px;border-radius:12px;font-size:10px;font-weight:600;letter-spacing:.03em}
-.tag-carey{background:rgba(255,107,157,.15);color:var(--carey)}
-.tag-kittler{background:rgba(124,92,255,.15);color:var(--kittler)}
-.tag-apollinaire{background:rgba(0,212,170,.15);color:var(--apollinaire)}
-.tag-bajohr{background:rgba(255,200,100,.15);color:var(--bajohr)}
+footer { padding: 40px 20px; text-align: center; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
 </style>
 </head>
 <body>
 
-<div class="hero">
-  <div class="hero-badge">RESEARCH PROJECT</div>
-  <h1>TEXT-URE</h1>
-  <p class="hero-sub">The Medium as Operator: From Ritual Belonging to Technical Systems — A spatial-semantic exploration of operative ekphrasis through navigable text architectures.</p>
-  <div class="hero-links">
-    <a href="poml-ide.html" class="hero-link primary">◆ Open POML IDE</a>
-    <a href="text-ure-03.html" class="hero-link secondary">▶ Launch Text-ure v16.6</a>
-    <a href="#mapper" class="hero-link secondary">⊞ Text Mapper</a>
-  </div>
-  <div class="scroll-hint">↓ SCROLL TO EXPLORE</div>
+<div class="theme-bar">
+  <button class="theme-btn" data-t="dark" onclick="setTheme('')" title="Dark">◐</button>
+  <button class="theme-btn" data-t="light" onclick="setTheme('light')" title="Light">◑</button>
+  <button class="theme-btn" data-t="newspaper" onclick="setTheme('newspaper')" title="Newspaper">▤</button>
 </div>
 
-<section id="theory">
-  <div class="section-header">
-    <span class="section-badge">THEORETICAL FRAMEWORK</span>
-    <h2 class="section-title">Four Theorists, One Grid</h2>
-    <p class="section-desc">The 24×24 spatial-semantic grid synthesizes four distinct media theories into a single navigable architecture.</p>
-  </div>
-  
-  <div class="theory-grid">
-    <div class="theory-card">
-      <div class="theory-icon" style="background:rgba(255,107,157,.15);color:var(--carey)">☩</div>
-      <span class="tag tag-carey">JAMES CAREY</span>
-      <h3>Ritual Communication</h3>
-      <p>Communication as a symbolic process whereby reality is <strong>produced, maintained, repaired, and transformed</strong>. The grid is not a container for messages — it is a ceremonial architecture where meaning is rehearsed through traversal.</p>
-      <div class="theory-impl">Implementation: <code>Player Traversal</code> = Ritual procession through sacred space</div>
-    </div>
-    
-    <div class="theory-card">
-      <div class="theory-icon" style="background:rgba(124,92,255,.15);color:var(--kittler)">▦</div>
-      <span class="tag tag-kittler">FRIEDRICH KITTLER</span>
-      <h3>Inscription Systems</h3>
-      <p>Media determine what can be <strong>stored, processed, and retrieved</strong>. Meaning is an interface effect. The grid functions as address space (memory), not decoration — storage + addressing + retrieval.</p>
-      <div class="theory-impl">Implementation: <code>State.map[x][y]</code> = Addressable cell storage system</div>
-    </div>
-    
-    <div class="theory-card">
-      <div class="theory-icon" style="background:rgba(0,212,170,.15);color:var(--apollinaire)">◎</div>
-      <span class="tag tag-apollinaire">APOLLINAIRE</span>
-      <h3>Calligram Topology</h3>
-      <p>Text may function as geometry. Typography becomes architecture; layout becomes meaning. The calligram is a <strong>signal-device</strong> where words are arranged as spatial transmission systems.</p>
-      <div class="theory-impl">Implementation: <code>mapType: RINGS | SNAKE | ROWS</code> = Geometric text layouts</div>
-    </div>
-    
-    <div class="theory-card">
-      <div class="theory-icon" style="background:rgba(255,200,100,.15);color:var(--bajohr)">◇</div>
-      <span class="tag tag-bajohr">HANNES BAJOHR</span>
-      <h3>Operative Ekphrasis</h3>
-      <p>Ekphrasis is defined by what it <strong>DOES</strong>, not by faithful depiction. Text becomes a causal substrate that computationally produces image-like constellations. Performance over mimesis.</p>
-      <div class="theory-impl">Implementation: <code>VISION Button</code> = Text → Image generation</div>
-    </div>
-  </div>
-</section>
+<header>
+  <h1>TEXT-URE</h1>
+  <p>The Medium as Operator — Spatial-semantic grids, operative ekphrasis, and text-as-architecture through interactive raycaster environments.</p>
+</header>
 
-<section id="texture">
-  <div class="section-header">
-    <span class="section-badge">THE TEXT-URE SERIES</span>
-    <h2 class="section-title">Semantic Raycaster Evolution</h2>
-    <p class="section-desc">A progression of spatial-text engines implementing the theoretical framework as navigable 3D environments.</p>
-  </div>
-  
-  <div class="texture-grid">
-    <div class="texture-card">
-      <div class="texture-preview">v11</div>
-      <div class="texture-info">
-        <div class="texture-version">FOUNDATION</div>
-        <div class="texture-name">Semantic Raycaster v11</div>
-        <div class="texture-features">Wolfenstein-style raycaster with text walls • Scanner beam samples visible text • Buffer captures reading trajectory • Three source texts: Iliad, Inferno, Neuromancer</div>
-        <a href="text-ure-00.html" class="texture-link">LAUNCH v11 →</a>
+<div class="source-links">
+  <a href="https://g.co/gemini/share/13cd48bf4958" target="_blank">🔗 Gemini Session #1 — Theoretical Framework</a>
+  <a href="https://g.co/gemini/share/d27cfdc1d04b" target="_blank">🔗 Gemini Session #2 — Operative Ekphrasis</a>
+  <a href="data.json" target="_blank">📄 data.json</a>
+</div>
+
+<main>
+  <div class="section">
+    <div class="section-title">LAUNCH</div>
+    <div class="launch-grid">
+      <div class="launch-card">
+        <div class="icon">▶</div>
+        <div class="name">NEXUS</div>
+        <div class="desc">Base camp launcher. Color themes, quick launch, file loading.</div>
+        <a href="text-ure-nexus.html" class="primary">★ OPEN NEXUS</a>
       </div>
-    </div>
-    
-    <div class="texture-card">
-      <div class="texture-preview">v12</div>
-      <div class="texture-info">
-        <div class="texture-version">UI POLISH</div>
-        <div class="texture-name">Semantic Raycaster v12.1</div>
-        <div class="texture-features">Added minimap with FOV visualization • Text-to-speech for sampled text • Haptic feedback on wall collision • Alchemical keyword coloring</div>
-        <a href="text-ure-01.html" class="texture-link">LAUNCH v12.1 →</a>
+      <div class="launch-card">
+        <div class="icon">◈</div>
+        <div class="name">CASCADE</div>
+        <div class="desc">Infinite text stream. Load books, animated cycling walls.</div>
+        <a href="text-ure-cascade.html">OPEN</a>
       </div>
-    </div>
-    
-    <div class="texture-card">
-      <div class="texture-preview">v16</div>
-      <div class="texture-info">
-        <div class="texture-version">TRIAD SYSTEM</div>
-        <div class="texture-name">Semantic Raycaster v16</div>
-        <div class="texture-features">VISION button: AI image generation from sampled text • Depth map capture • Spectral mixer for reality/vision/depth blending • Screenshot + Depth + Vision triad export</div>
-        <a href="text-ure-02.html" class="texture-link">LAUNCH v16 →</a>
+      <div class="launch-card">
+        <div class="icon">◆</div>
+        <div class="name">POML SCROLL</div>
+        <div class="desc">Mobile-first IDE. Chain builder, notes, export.</div>
+        <a href="poml-scroll.html">OPEN</a>
       </div>
-    </div>
-    
-    <div class="texture-card">
-      <div class="texture-preview" style="color:var(--accent)">v16.6</div>
-      <div class="texture-info">
-        <div class="texture-version">LATEST • RECOMMENDED</div>
-        <div class="texture-name">Semantic Raycaster v16.6</div>
-        <div class="texture-features">Refined minimal UI • Dataset export (JSON) • Memory system marks explored cells • POML injection support • World model export for training</div>
-        <a href="text-ure-03.html" class="texture-link" style="background:var(--accent);color:var(--bg)">★ LAUNCH v16.6 →</a>
+      <div class="launch-card">
+        <div class="icon">⬡</div>
+        <div class="name">v16.6</div>
+        <div class="desc">Latest stable raycaster. Full features, POML injection.</div>
+        <a href="text-ure-03.html">OPEN</a>
       </div>
     </div>
   </div>
-</section>
 
-<section id="mapper" class="mapper-section">
-  <div class="mapper-container">
-    <div class="section-header">
-      <span class="section-badge">TEXT → TEXTURE MAPPER</span>
-      <h2 class="section-title">Map Any Text to the 24×24 Grid</h2>
-      <p class="section-desc">Enter text to see how it maps to the spatial-semantic grid. Each cell becomes a navigable wall segment.</p>
-    </div>
-    
-    <div class="mapper-row">
-      <div class="mapper-input">
-        <label>INPUT TEXT</label>
-        <textarea id="mapper-text" placeholder="Enter any text here to see how it maps to the 24×24 grid...
-
-The text will be segmented into 16-character strips, each becoming a vertical texture on a wall. Navigate through the raycaster to 'read' the text spatially.
-
-Try pasting poetry, prose, or code — anything becomes a navigable text-world."></textarea>
+  <div class="section">
+    <div class="section-title">QUICK LAUNCH</div>
+    <div class="quick-input">
+      <label>ENTER TEXT TO EXPLORE</label>
+      <textarea id="quick-text" placeholder="Paste any text here — poetry, prose, code — and explore it spatially..."></textarea>
+      <div class="actions">
+        <button onclick="launchText()">LAUNCH IN TEXT-URE →</button>
+        <button class="secondary" onclick="launchCascade()">LAUNCH IN CASCADE →</button>
       </div>
-      
-      <div class="mapper-output">
-        <div class="mapper-output-header">
-          <span>24×24 GRID PREVIEW</span>
-          <span id="strip-count">0 strips</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">THEORETICAL FRAMEWORK</div>
+    <div class="theory-list">
+      <div class="theory-item">
+        <div class="tag">CAREY</div>
+        <div class="content">
+          <div class="name">Ritual Model</div>
+          <div class="desc">Communication as shared ceremony. The grid becomes a world to traverse, not a page to read.</div>
         </div>
-        <div class="mapper-grid" id="mapper-grid"></div>
+      </div>
+      <div class="theory-item">
+        <div class="tag">KITTLER</div>
+        <div class="content">
+          <div class="name">Inscription</div>
+          <div class="desc">Media as material discourse networks. Movement is a scan-head; the beam is a read operation.</div>
+        </div>
+      </div>
+      <div class="theory-item">
+        <div class="tag">APOLLINAIRE</div>
+        <div class="content">
+          <div class="name">Calligram</div>
+          <div class="desc">Spatial typography. Geometry precedes reading; topology encodes meaning.</div>
+        </div>
+      </div>
+      <div class="theory-item">
+        <div class="tag">BAJOHR</div>
+        <div class="content">
+          <div class="name">Operative Ekphrasis</div>
+          <div class="desc">Text that causally produces images. The prompt becomes the operational surface.</div>
+        </div>
       </div>
     </div>
-    
-    <div class="mapper-controls">
-      <button class="mapper-btn" onclick="mapTextToGrid()">MAP TO GRID</button>
-      <button class="mapper-btn secondary" onclick="launchWithText()">LAUNCH IN TEXT-URE →</button>
-    </div>
   </div>
-</section>
 
-<section id="tools">
-  <div class="section-header">
-    <span class="section-badge">PROJECT TOOLS</span>
-    <h2 class="section-title">IDE & Resources</h2>
-  </div>
-  
-  <div class="tools-grid">
-    <div class="tool-card">
-      <h3><span>▶</span> TEXT-URE NEXUS</h3>
-      <p>Base camp launcher for all text-ure versions. Quick launch, file loading, color themes, and matrix background.</p>
-      <a href="text-ure-nexus.html" class="tool-link" style="background:var(--accent)">★ Open Nexus</a>
-    </div>
-    
-    <div class="tool-card">
-      <h3><span>◈</span> CASCADE</h3>
-      <p>Infinite text stream for books and chapters. Animated cycling walls with organic rain effect. Load entire manuscripts.</p>
-      <a href="text-ure-cascade.html" class="tool-link">Open Cascade</a>
-    </div>
-    
-    <div class="tool-card">
-      <h3><span>◆</span> POML SCROLL</h3>
-      <p>Mobile-first horizontal column interface. Build prompt chains, paste text, add notes, export to JSON. Context menu with branch/copy/send.</p>
-      <a href="poml-scroll.html" class="tool-link">Open POML Scroll</a>
-    </div>
-    
-    <div class="tool-card">
-      <h3><span>⬡</span> POML IDE</h3>
-      <p>The original POML development environment. Browse extracted blocks, filter by theorist, inject custom worlds.</p>
-      <a href="poml-ide.html" class="tool-link">Open POML IDE</a>
-    </div>
-    
-    <div class="tool-card">
-      <h3><span>📜</span> POML Codex Source</h3>
-      <p>Raw extracted POML and prompt blocks from the original conversation. Axioms, schemas, and world-building protocols.</p>
-      <a href="poml-codex-source.html" class="tool-link">View Codex</a>
-    </div>
-    
-    <div class="tool-card">
-      <h3><span>⚖</span> EK-IDE Comparison</h3>
-      <p>Paper outline comparison tool. Side-by-side analysis of theoretical sections with selection, diff, and notes features.</p>
-      <a href="ek-ide.html" class="tool-link">Open EK-IDE</a>
-    </div>
-  </div>
-</section>
-
-<section id="resources" class="resources-section">
-  <div style="max-width:1200px;margin:0 auto">
-    <div class="section-header">
-      <span class="section-badge">EXTERNAL RESOURCES</span>
-      <h2 class="section-title">Research Links</h2>
-    </div>
-    
-    <div class="resources-grid">
-      <div class="resource-card">
-        <h4>🔗 Gemini Session #1</h4>
-        <p>Original conversation exploring the theoretical framework and POML development.</p>
-        <a href="https://g.co/gemini/share/13cd48bf4958" target="_blank">g.co/gemini/share/13cd48bf4958 →</a>
+  <div class="section">
+    <div class="section-title">ALL VERSIONS</div>
+    <div class="launch-grid">
+      <div class="launch-card">
+        <div class="name">v11 Foundation</div>
+        <div class="desc">Core raycaster engine</div>
+        <a href="text-ure-00.html">OPEN</a>
       </div>
-      
-      <div class="resource-card">
-        <h4>🔗 Gemini Session #2</h4>
-        <p>Extended exploration of operative ekphrasis and spatial-semantic grids.</p>
-        <a href="https://g.co/gemini/share/d27cfdc1d04b" target="_blank">g.co/gemini/share/d27cfdc1d04b →</a>
+      <div class="launch-card">
+        <div class="name">v12 Polished</div>
+        <div class="desc">Minimap, TTS, haptics</div>
+        <a href="text-ure-01.html">OPEN</a>
       </div>
-      
-      <div class="resource-card">
-        <h4>📄 data.json</h4>
-        <p>Source conversation data containing all POML blocks and theoretical discussions.</p>
-        <a href="data.json" target="_blank">View Raw Data →</a>
+      <div class="launch-card">
+        <div class="name">v16 Triad</div>
+        <div class="desc">Vision generation, depth maps</div>
+        <a href="text-ure-02.html">OPEN</a>
       </div>
-      
-      <div class="resource-card">
-        <h4>📖 Prompt Codex</h4>
-        <p>Synthesized operator's manual for the theoretical framework.</p>
-        <a href="prompt-codex.html" target="_blank">View Codex →</a>
+      <div class="launch-card">
+        <div class="name">POML IDE</div>
+        <div class="desc">Original development environment</div>
+        <a href="poml-ide.html">OPEN</a>
       </div>
     </div>
   </div>
-</section>
-
-<section id="core">
-  <div class="section-header">
-    <span class="section-badge">CORE RESEARCH QUESTION</span>
-    <h2 class="section-title" style="color:var(--accent)">Are media cultural rituals or deterministic systems?</h2>
-    <p class="section-desc" style="max-width:800px;font-size:18px;margin-top:24px">
-      This project synthesizes Carey's <em>ritual view</em> (communication as world-production) with Kittler's <em>materialist view</em> (media as technical inscription systems) through the lens of <strong>operative ekphrasis</strong> — text that computationally produces visual output.
-    </p>
-    <p class="section-desc" style="margin-top:20px">
-      The 24×24 grid is both a <span class="tag tag-carey">ceremonial space</span> for ritual traversal AND an <span class="tag tag-kittler">address space</span> for inscription and retrieval. Navigation is reading. Reading is navigation.
-    </p>
-  </div>
-</section>
+</main>
 
 <footer>
-  <p>TEXT-URE: The Medium as Operator — Research Project</p>
-  <div class="footer-links">
-    <a href="#theory">Theory</a>
-    <a href="#texture">Text-ure Series</a>
-    <a href="#mapper">Text Mapper</a>
-    <a href="#tools">Tools</a>
-    <a href="poml-ide.html">POML IDE</a>
-    <a href="text-ure-03.html">Launch v16.6</a>
-  </div>
+  <p>TEXT-URE — The Medium as Operator Research Project</p>
 </footer>
 
 <script>
-// Initialize mapper grid
-function initMapperGrid() {
-  const grid = document.getElementById('mapper-grid');
-  for (let i = 0; i < 576; i++) {
-    const cell = document.createElement('div');
-    cell.className = 'mapper-cell';
-    cell.dataset.idx = i;
-    cell.onclick = () => cell.classList.toggle('filled');
-    grid.appendChild(cell);
-  }
+function setTheme(theme) {
+  document.body.setAttribute('data-theme', theme);
+  localStorage.setItem('texture-index-theme', theme);
 }
+const saved = localStorage.getItem('texture-index-theme');
+if (saved) setTheme(saved);
 
-// Map text to grid
-function mapTextToGrid() {
-  const text = document.getElementById('mapper-text').value;
-  const clean = text.toUpperCase().replace(/\s+/g, ' ');
-  const strips = [];
-  
-  for (let i = 0; i < clean.length; i += 16) {
-    strips.push(clean.substring(i, i + 16).padEnd(16));
-  }
-  
-  document.getElementById('strip-count').textContent = strips.length + ' strips';
-  
-  const cells = document.querySelectorAll('.mapper-cell');
-  cells.forEach(c => {
-    c.classList.remove('filled');
-    c.textContent = '';
-  });
-  
-  // Map to grid pattern (RINGS by default)
-  const cx = 12, cy = 12;
-  let stripIdx = 0;
-  
-  for (let x = 0; x < 24; x++) {
-    for (let y = 0; y < 24; y++) {
-      const d = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
-      const isWall = (Math.abs(d - 5) < 1 || Math.abs(d - 9) < 1) && (x !== 12 && y !== 12);
-      
-      if (isWall && stripIdx < strips.length) {
-        const cellIdx = y * 24 + x;
-        const cell = cells[cellIdx];
-        if (cell) {
-          cell.classList.add('filled');
-          cell.textContent = strips[stripIdx][0];
-          cell.title = strips[stripIdx];
-        }
-        stripIdx++;
-      }
-    }
-  }
-}
-
-// Launch with custom text
-function launchWithText() {
-  const text = document.getElementById('mapper-text').value;
-  if (!text.trim()) {
-    alert('Enter some text first!');
-    return;
-  }
-  
-  const customWorld = {
-    id: 'CUSTOM_TEXT',
-    text: text.toUpperCase().replace(/[^A-Z\s]/g, '').slice(0, 1000),
-    palette: { text: '#00ffa3' },
+function launchText() {
+  const txt = document.getElementById('quick-text').value.trim();
+  if (!txt) { alert('Enter text first'); return; }
+  const w = {
+    id: 'QUICK',
+    text: txt.toUpperCase().replace(/[^A-Z0-9\s]/g, ''),
+    palette: { text: '#0f8' },
     mapType: 'RINGS',
     theorist: 'grid'
   };
-  
-  sessionStorage.setItem('poml_custom_world', JSON.stringify(customWorld));
-  window.open('text-ure-03.html', '_blank');
+  sessionStorage.setItem('poml_custom_world', JSON.stringify(w));
+  window.location.href = 'text-ure-03.html';
 }
 
-// Init
-initMapperGrid();
-
-// Auto-map on input
-document.getElementById('mapper-text').addEventListener('input', () => {
-  clearTimeout(window.mapDebounce);
-  window.mapDebounce = setTimeout(mapTextToGrid, 300);
-});
+function launchCascade() {
+  const txt = document.getElementById('quick-text').value.trim();
+  if (!txt) { alert('Enter text first'); return; }
+  const w = {
+    id: 'QUICK',
+    text: txt.toUpperCase().replace(/[^A-Z0-9\s]/g, ''),
+    palette: { text: '#0f8' },
+    mapType: 'SPIRAL',
+    theorist: 'grid'
+  };
+  sessionStorage.setItem('poml_custom_world', JSON.stringify(w));
+  window.location.href = 'text-ure-cascade.html';
+}
 </script>
 </body>
 </html>

@@ -423,9 +423,9 @@
                 State.player.planeY = oldPlane * s + State.player.planeY * c;
             }
 
-            if(fwd !== 0 || str !== 0) {
-                const dx = State.player.dirX * fwd + (-State.player.dirY) * str;
-                const dy = State.player.dirY * fwd + (State.player.dirX) * str;
+            if(fwd !== 0) {
+                const dx = State.player.dirX * fwd;
+                const dy = State.player.dirY * fwd;
                 const nx = State.player.x + dx * ms;
                 const ny = State.player.y + dy * ms;
                 
