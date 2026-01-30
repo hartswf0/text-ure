@@ -1,0 +1,144 @@
+<poml>
+  <meta>
+    <name>Hephaestus Shield Calligram</name>
+    <version>1.0</version>
+    <intent>
+      Encode the Ekphrasis of Achilles' Shield as a radial
+      cosmological map where narrative flows outward from
+      the creative center to the oceanic bound.
+    </intent>
+  </meta>
+
+  <axioms>
+    <axiom>A1: The Shield is a map of the total cosmos.</axiom>
+    <axiom>A2: Contrast (War/Peace) creates structural tension.</axiom>
+    <axiom>A3: The Center (Vulcan's Art) dictates the periphery.</axiom>
+    <axiom>A4: Narrative spirals outward from the Anvil.</axiom>
+  </axioms>
+
+  <!-- ================================================= -->
+  <!-- CORE ENTITIES -->
+  <!-- ================================================= -->
+
+  <entities>
+
+    <entity id="TEXT_LAYER">
+      <description>Concentric rings of the shield.</description>
+      <values>
+        LAYER_1_COSMOS
+        LAYER_2_CITIES
+        LAYER_3_AGRICULTURE
+        LAYER_4_DANCE
+        LAYER_5_OCEAN
+      </values>
+    </entity>
+
+    <entity id="HEMISPHERE">
+      <description>The dual nature of human existence.</description>
+      <values>
+        HEMISPHERE_JOY (Peace, harvest, marriage)
+        HEMISPHERE_STRIFE (War, ambush, terror)
+      </values>
+    </entity>
+
+    <entity id="GEOMETRIC_INTENT">
+      <description>Shape grammar derived from scene content.</description>
+      <values>
+        ORBIT (Planetary bodies, The Ocean)
+        GRID (Furrowed fields, Justice forums)
+        CHAOS_VECTOR (Battle lines, Ambush)
+        SPIRAL (The Dance)
+      </values>
+    </entity>
+
+  </entities>
+
+  <!-- ================================================= -->
+  <!-- MORPHISMS -->
+  <!-- ================================================= -->
+
+  <morphisms>
+
+    <morphism>
+      <from>TEXT_LAYER</from>
+      <to>GEOMETRIC_INTENT</to>
+      <rule>
+        If Layer=COSMOS -> RADIAL STARBURST
+        If Layer=CITIES AND Hemisphere=JOY -> RECTILINEAR/COLUMNAR (Civic Order)
+        If Layer=CITIES AND Hemisphere=STRIFE -> FRACTURED SHARDS (Disorder)
+        If Layer=OCEAN -> CONTINUOUS LOOP
+      </rule>
+    </morphism>
+
+  </morphisms>
+
+  <!-- ================================================= -->
+  <!-- ZONE ARCHITECTURE -->
+  <!-- ================================================= -->
+
+  <zones>
+
+    <zone id="CORE">
+      <world>THE FORGE</world>
+      <geometry>CENTER_POINT</geometry>
+      <text_fragments>
+        "The ponderous hammer loads his better hand"
+        "Stubborn brass, and tin, and solid gold"
+      </text_fragments>
+    </zone>
+
+    <zone id="RING_1_SKY">
+      <world>COSMOS</world>
+      <geometry>ORBIT</geometry>
+      <text_fragments>
+        "The unwearied sun"
+        "The Pleiads, Hyads"
+        "Great Orion"
+      </text_fragments>
+    </zone>
+
+    <zone id="RING_2_CIVILIZATION">
+      <world>DUAL CITIES</world>
+      <geometry>SPLIT_FIELD</geometry>
+      <sub_zone type="PEACE">
+        "Genial feast" | "Brides led with torches" | "Soft flute"
+      </sub_zone>
+      <sub_zone type="WAR">
+        "Horrid war" | "Tumult and Contention" | "Grim with human gore"
+      </sub_zone>
+    </zone>
+
+    <zone id="RING_3_NATURE">
+      <world>EARTH</world>
+      <geometry>TEXTURED_BLOCKS</geometry>
+      <text_fragments>
+        "Field deep furrow'd" (Ploughing)
+        "Vineyard in yellow gold" (Vintage)
+        "Lions rushing from the wood" (Pastoral Violence)
+      </text_fragments>
+    </zone>
+
+    <zone id="RING_4_PERIMETER">
+      <world>OCEANUS</world>
+      <geometry>BOUNDARY_WAVE</geometry>
+      <text_fragments>
+        "In living silver seem'd the waves to roll"
+        "Pour'd the ocean round"
+      </text_fragments>
+    </zone>
+
+  </zones>
+
+  <!-- ================================================= -->
+  <!-- OUTPUT DEFINITION -->
+  <!-- ================================================= -->
+
+  <output>
+    <description>
+      A verbal mandala where the center is fire and the edge is water.
+      Reading proceeds from the center outward, alternating between
+      scenes of construction (Peace) and destruction (War).
+    </description>
+  </output>
+
+</poml>

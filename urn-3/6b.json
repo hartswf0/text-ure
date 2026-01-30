@@ -1,0 +1,196 @@
+Here is the specification for the **Keats Inscription System (KIS-01)**. This design treats the poem not as literature, but as a dataset requiring specific topological preservation within a 576-cell () memory architecture.
+
+### O1. The Line Index
+
+*A normalized database of atomic units. This strips the poem of formatting to prepare for spatial injection.*
+
+**Data Structure Definition:**
+`LineObject = { id: string, stanza: int, seq: int, text: string, type: enum, weight: float }`
+
+**Sample Index (Truncated for brevity, full 50 lines processed):**
+
+| Line ID | Stanza | Seq | Type | Text Segment | Weight (Semantic Load) |
+| --- | --- | --- | --- | --- | --- |
+| **S1.L01** | 1 | 01 | `ADDR` | Thou still unravish'd bride of quietness, | 1.0 |
+| **S1.L02** | 1 | 02 | `ADDR` | Thou foster-child of silence and slow time, | 1.0 |
+| **S2.L01** | 2 | 11 | `PARA` | Heard melodies are sweet, but those unheard | 1.2 |
+| **S2.L02** | 2 | 12 | `INST` | Are sweeter; therefore, ye soft pipes, play on; | 1.1 |
+| **S3.L01** | 3 | 21 | `LOOP` | Ah, happy, happy boughs! that cannot shed | 0.8 |
+| **S4.L01** | 4 | 31 | `VOID` | Who are these coming to the sacrifice? | 1.0 |
+| **S5.L09** | 5 | 49 | `CORE` | "Beauty is truth, truth beauty,—that is all | **2.0** |
+| **S5.L10** | 5 | 50 | `CORE` | Ye know on earth, and all ye need to know." | **2.0** |
+
+---
+
+### O2. The Panel Model (Assemblage Layer)
+
+*Logical groupings based on Ekphrasis Mechanisms. These determine storage topology.*
+
+**Panel A: The Interface Shell (Address)**
+
+* **Rationale:** The outer layer of the urn. The user's entry point.
+* **Mechanisms:** Address (invocation), Object-Definition.
+* **Members:** Stanza 1 (L1-4), Stanza 5 (L1-8).
+* **Tagset:** `[surface]`, `[silence]`, `[historian]`.
+
+**Panel B: The Kinetic Frieze (The Pursuit)**
+
+* **Rationale:** High-frequency movement. Needs rapid retrieval to simulate "mad pursuit."
+* **Mechanisms:** Frozen Action, Unheard Audio.
+* **Members:** Stanza 1 (L5-10), Stanza 2 (L1-4).
+* **Tagset:** `[chase]`, `[pipes]`, `[ecstasy]`.
+
+**Panel C: The Static Loop (The Youth)**
+
+* **Rationale:** Infinite recursion. The system creates a lock where the pointer never advances.
+* **Mechanisms:** Ritual Loop.
+* **Members:** Stanza 2 (L5-10), Stanza 3 (Full).
+* **Tagset:** `[never_fade]`, `[forever_warm]`.
+
+**Panel D: The Desolation Buffer (The Empty Town)**
+
+* **Rationale:** A pointer to off-site memory. The town is not on the urn; it is an inferred void.
+* **Mechanisms:** Address (Interrogation), Null Reference.
+* **Members:** Stanza 4 (Full).
+* **Tagset:** `[sacrifice]`, `[desolate]`, `[silent]`.
+
+**Panel E: The Kernel (The Dictum)**
+
+* **Rationale:** The immutable output. The system's axiom. High redundancy required.
+* **Mechanisms:** Epigram Output.
+* **Members:** Stanza 5 (L9-10).
+* **Tagset:** `[truth]`, `[beauty]`.
+
+---
+
+### O3. Grid Allocation ()
+
+*Mapping the Urn's geometry to address space. We utilize a Polar-to-Cartesian projection where the center of the grid represents the interior of the urn (The Kernel) and the perimeter represents the surface (The Interface).*
+
+**Coordinate System:**
+Center .
+Radius .
+
+**Zoning Strategy (Concentric Storage Bands):**
+
+1. **Zone E (The Kernel) | **
+* **Cells:** ~48 central cells.
+* **Content:** S5.L09-10 repeating.
+* **Redundancy:** `CORE`. Every cell contains the full dictum. High error tolerance.
+* **Beacon:** TRUE (High intensity).
+
+
+2. **Zone C (The Static Loop) | **
+* **Cells:** ~150 cells surrounding the core.
+* **Content:** Panel C (The Youth/Trees).
+* **Redundancy:** `ECHO`. Interleaved repetition. "Forever piping" requires the data to physically loop around the core.
+
+
+3. **Zone B (The Kinetic Frieze) | **
+* **Cells:** ~110 cells.
+* **Content:** Panel B (The Pursuit).
+* **Redundancy:** `GLUE`. High density. Short fragments packed tight to simulate "wild ecstasy" and clutter.
+
+
+4. **Zone D (The Desolation Buffer) | **
+* **Cells:** ~100 cells.
+* **Content:** Panel D (The Empty Town).
+* **Redundancy:** `LOW`. Sparse allocation. Many empty cells or "silence" characters to simulate spatial emptiness.
+
+
+5. **Zone A (The Interface Shell) | **
+* **Cells:** The perimeter ring (approx 160 cells).
+* **Content:** Panel A (The Address).
+* **Redundancy:** `CORE`. This shields the inner data.
+* **Beacon:** TRUE (Entry headers).
+
+
+
+**Visualization of Grid :**
+
+```text
+[A][A][A][A][A][A][A]...
+[A] [D] [D] [D] [D] [A]...
+[A] [D] [B] [B] [D] [A]...
+[A] [D] [B] [C] [B] [D] [A]...
+[A] [D] [B] [C] [E] [C] [B] [D] [A]...
+... [Center E] ...
+
+```
+
+---
+
+### O4. Retrieval Ruleset (The Raycaster)
+
+*How the reading head traverses the memory grid.*
+
+**1. Beacon Detection Grammar:**
+The reader scans the perimeter (Zone A).
+
+
+* **Rule:** If a cell contains "Thou" or "Shape", initiate `READ_PROTOCOL`.
+* **Constraint:** The reader cannot access Zone E (Truth) without traversing Zones A  B/C  E.
+
+**2. Panel Lock Behavior (Sampling Bias):**
+When the raycaster enters a Zone (e.g., Zone C - The Loop):
+
+* **Lock:** Movement vector is constrained to the tangent of the ring.
+* **Effect:** The reader is forced to "rotate" around the urn (read the frieze laterally) rather than piercing straight to the center.
+* **Release:** Only a specific "Break" token (e.g., "Tease us out of thought") allows radial movement inward.
+
+**3. Seek Cost Metric:**
+Movement cost  is defined by radial shift:
+
+
+
+Where  is the resistance of the medium.
+
+* **Result:** It is cheap to read *about* the urn (circumference), but expensive to reach the *meaning* (center).
+* **Exception:** Zone D (Empty Town) has 0 friction, representing the absence of life/data.
+
+---
+
+### O5. Compiler Plan
+
+*Serialization Protocol: Flattening the 2D Urn back into a 1D Stream.*
+
+To preserve the topological relations in a linear stream, we do not use standard raster scanning. We use a **Spiral Injection Path**.
+
+**Protocol:**
+
+1. **Start:** Coordinate .
+2. **Algorithm:** Traverse the grid in a square spiral (outward to inward, or perimeter-in).
+* *Note:* For this archive, we use **Perimeter-In** to match the reading experience (Surface  Core).
+
+
+3. **Delimiters:**
+* `||` = Cell Boundary.
+* `>>` = Zone Transition (Radial Shift).
+* `{{` / `}}` = Redundancy Block (Compressed repetitions).
+
+
+
+**Output Stream Logic:**
+
+```text
+[HEADER_META]
+>> ZONE_A_START
+|| S1.L1 || S1.L2 || ... (Perimeter data)
+>> ZONE_D_START
+|| S4.L1 || [NULL] || [NULL] || S4.L2 ... (Sparse data)
+>> ZONE_B_START
+|| S1.L5 || S1.L6 ... (Dense data)
+>> ZONE_E_START
+{{ S5.L9-10 (x48 Replicas) }}
+[EOF]
+
+```
+
+**Seam Markers:**
+To ensure the "Cold Pastoral" effect, line breaks are not stored as `\n` but as distinct glyphs `¶` within the cell payload. This forces the renderer to acknowledge the artificiality of the break.
+
+---
+
+### Next Step
+
+Would you like me to generate a **JSON map** of this grid, or write a Python script that instantiates this  array and "pours" the text into the spiral zones?

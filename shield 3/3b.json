@@ -1,0 +1,136 @@
+{
+  "meta": {
+    "project": "APOLLINAIRE_BAJOHR_GRID",
+    "text_source": "The Iliad, Book XVIII [Pope Translation]",
+    "topology": "RINGS",
+    "grid_dimensions": { "w": 24, "h": 24 },
+    "total_cells": 576,
+    "timestamp": "2024-10-27T10:00:00Z"
+  },
+  "roles": {
+    "compiler": "WorldCompiler_v1",
+    "auditor": "BajohrAuditor_Alpha"
+  },
+  "theory_implementation": {
+    "A1_performative": "Grid placement is not descriptive; it is the act of forging. Center cells = Hammer strikes. Rim cells = Ocean flow.",
+    "A2_operative_separation": "Mapping Logic (Polar->Cartesian) is distinct from the Line Data.",
+    "A3_connectionist": "Tags (e.g., 'GOLD', 'BLOOD', 'SILVER') create cross-ring semantic clusters."
+  },
+  "panels": [
+    {
+      "id": "P0_CORE",
+      "title": "The Forge & The Request",
+      "zone": "CENTER_NUCLEUS",
+      "radius_range": [0, 3],
+      "color_hex": "#B22222",
+      "motif_headers": ["VULCAN", "THETIS", "FIRE", "HAMMER"],
+      "semantic_weight": 1.5,
+      "description": "The causal engine. Vulcan's labor."
+    },
+    {
+      "id": "P1_COSMOS",
+      "title": "The Heavens",
+      "zone": "RING_1_COSMOS",
+      "radius_range": [3, 5],
+      "color_hex": "#4B0082",
+      "motif_headers": ["ORION", "PLEIADS", "MOON", "BEAR"],
+      "semantic_weight": 1.0,
+      "description": "Elemental constants fixed in the firmament."
+    },
+    {
+      "id": "P2_CITIES",
+      "title": "Two Cities (Peace & War)",
+      "zone": "RING_2_HUMANITY",
+      "radius_range": [5, 9],
+      "color_hex": "#FFD700",
+      "motif_headers": ["BRIDE", "JUDGE", "AMBUSH", "MARS"],
+      "semantic_weight": 1.2,
+      "description": "Binary opposition. Hemisphere Top-Right: Peace. Hemisphere Bottom-Left: War."
+    },
+    {
+      "id": "P3_RURAL",
+      "title": "The Fields & Vintage",
+      "zone": "RING_3_EARTH",
+      "radius_range": [9, 11],
+      "color_hex": "#228B22",
+      "motif_headers": ["PLOUGH", "GRAPE", "LION", "DOG"],
+      "semantic_weight": 0.9,
+      "description": "Cyclical labor and nature's violence."
+    },
+    {
+      "id": "P4_DANCE",
+      "title": "The Labyrinth Dance",
+      "zone": "RING_4_MOVEMENT",
+      "radius_range": [11, 12],
+      "color_hex": "#FF69B4",
+      "motif_headers": ["WHIRL", "TUMBLER", "YOUTH", "MAID"],
+      "semantic_weight": 1.1,
+      "description": "The Daedalean maze, rapid motion."
+    },
+    {
+      "id": "P5_OCEAN",
+      "title": "The River Oceanus",
+      "zone": "RIM_BOUNDARY",
+      "radius_range": [12, 14],
+      "color_hex": "#00008B",
+      "motif_headers": ["SURGE", "BOUND", "SILVER", "FLOOD"],
+      "semantic_weight": 0.8,
+      "description": "The binding agent. The outermost edge of the shield."
+    }
+  ],
+  "line_index_sample": [
+    { "id": 41, "text": "To the black labours of his forge retires.", "tags": ["ACTION", "FIRE", "DARK"], "panel": "P0_CORE" },
+    { "id": 55, "text": "Then first he form'd the immense and solid shield;", "tags": ["CREATION", "OBJECT"], "panel": "P0_CORE" },
+    { "id": 61, "text": "The unwearied sun, the moon completely round;", "tags": ["COSMIC", "LIGHT"], "panel": "P1_COSMOS" },
+    { "id": 75, "text": "Two cities radiant on the shield appear,", "tags": ["CIVILIZATION", "DUALITY"], "panel": "P2_CITIES" },
+    { "id": 140, "text": "The waving silver seem'd to blush with blood.", "tags": ["WAR", "COLOR_CLASH"], "panel": "P2_CITIES" },
+    { "id": 260, "text": "In living silver seem'd the waves to roll,", "tags": ["OCEAN", "METAL"], "panel": "P5_OCEAN" }
+  ],
+  "grid_allocation_logic": {
+    "algorithm": "POLAR_PROJECTION",
+    "formula": "x = cx + r * cos(theta); y = cy + r * sin(theta)",
+    "rules": [
+      "If Panel == P0, spread densely in center 4x4.",
+      "If Panel == P2 (CITIES), split theta: 0-180 (Peace), 180-360 (War).",
+      "If Panel == P5 (OCEAN), map to cells where distance_from_center > 11.",
+      "Overlap resolution: High semantic weight displaces low weight."
+    ]
+  },
+  "grid_sample_data": [
+    {
+      "coord": [12, 12],
+      "zone": "CENTER_NUCLEUS",
+      "content": "ANVIL",
+      "text_fragment": "The ponderous hammer loads his better hand",
+      "line_ref": 52
+    },
+    {
+      "coord": [12, 15],
+      "zone": "RING_1_COSMOS",
+      "content": "ORION",
+      "text_fragment": "And great Orion's more refulgent beam",
+      "line_ref": 64
+    },
+    {
+      "coord": [18, 18],
+      "zone": "RING_2_HUMANITY",
+      "content": "WAR_TUMULT",
+      "text_fragment": "Fate stalk'd amidst them, grim with human gore",
+      "line_ref": 148
+    },
+    {
+      "coord": [6, 6],
+      "zone": "RING_2_HUMANITY",
+      "content": "PEACE_FEAST",
+      "text_fragment": "Here sacred pomp and genial feast delight",
+      "line_ref": 77
+    },
+    {
+      "coord": [0, 12],
+      "zone": "RIM_BOUNDARY",
+      "content": "OCEANUS",
+      "text_fragment": "And pour'd the ocean round",
+      "line_ref": 259
+    }
+  ]
+}

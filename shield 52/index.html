@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Shield 52 — Index</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{font-family:system-ui,-apple-system,sans-serif;background:#fafafa;color:#111}
+    body{padding:24px;max-width:1800px;margin:0 auto}
+    
+    h1{font-size:20px;font-weight:700;margin-bottom:6px;letter-spacing:-.02em}
+    .sub{color:#666;font-size:13px;margin-bottom:24px}
+    
+    .nav-bar{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:24px;
+      padding-bottom:16px;
+      border-bottom:1px solid #e5e5e5;
+    }
+    .nav-link{
+      font-size:12px;
+      font-weight:600;
+      padding:8px 14px;
+      border-radius:6px;
+      text-decoration:none;
+      border:1px solid #ddd;
+      background:#fff;
+      color:#333;
+      transition:background .15s;
+    }
+    .nav-link:hover{background:#f0f0f0}
+    .nav-link.home{background:#111;color:#fff;border-color:#111}
+    .nav-link.home:hover{background:#333}
+    
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+      gap:16px;
+    }
+    
+    .card{
+      background:#fff;
+      border:1px solid #e5e5e5;
+      border-radius:10px;
+      overflow:hidden;
+    }
+    
+    .card-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 12px;
+      border-bottom:1px solid #eee;
+      background:#fafafa;
+    }
+    
+    .card-title{
+      font-size:14px;
+      font-weight:700;
+    }
+    
+    .card-links{
+      display:flex;
+      gap:8px;
+    }
+    
+    .btn{
+      font-size:11px;
+      font-weight:600;
+      padding:5px 10px;
+      border-radius:6px;
+      text-decoration:none;
+      border:1px solid #ddd;
+      background:#fff;
+      color:#333;
+      cursor:pointer;
+      transition:background .15s;
+    }
+    .btn:hover{background:#f0f0f0}
+    .btn.primary{background:#111;color:#fff;border-color:#111}
+    .btn.primary:hover{background:#333}
+    
+    .iframe-wrap{
+      position:relative;
+      height:280px;
+      background:#f5f5f5;
+    }
+    
+    .iframe-wrap iframe{
+      width:100%;
+      height:100%;
+      border:0;
+      transform-origin:0 0;
+    }
+    
+    .card-foot{
+      padding:8px 12px;
+      border-top:1px solid #eee;
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+    
+    .tag{
+      font-size:10px;
+      padding:3px 7px;
+      border-radius:4px;
+      background:#f0f0f0;
+      color:#555;
+    }
+    
+    .section-title{
+      font-size:14px;
+      font-weight:700;
+      color:#666;
+      margin:32px 0 12px;
+      padding-bottom:8px;
+      border-bottom:1px solid #eee;
+    }
+    
+    .md-list{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+      gap:8px;
+    }
+    
+    .md-link{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      background:#fff;
+      border:1px solid #e5e5e5;
+      border-radius:8px;
+      text-decoration:none;
+      color:#111;
+      font-size:13px;
+      font-weight:500;
+      transition:background .15s;
+    }
+    .md-link:hover{background:#f5f5f5}
+    .md-link .num{
+      font-size:11px;
+      font-weight:700;
+      color:#999;
+      min-width:24px;
+    }
+    .md-link .size{
+      margin-left:auto;
+      font-size:10px;
+      color:#999;
+    }
+
+    @media(max-width:600px){
+      body{padding:12px}
+      .grid{grid-template-columns:1fr}
+      .iframe-wrap{height:220px}
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav-bar">
+    <a class="nav-link home" href="../text-ure-nexus.html">← TEXT-URE NEXUS</a>
+    <a class="nav-link" href="../shield 3/index.html">Shield 3</a>
+    <a class="nav-link" href="../urn-52/index.html">Urn 52</a>
+    <a class="nav-link" href="../urn-3/index.html">Urn 3</a>
+  </nav>
+
+  <h1>Shield 52</h1>
+  <p class="sub">12 iterations · HTML + MD pairs · Carey ritual grid experiments</p>
+
+  <div class="grid" id="cards"></div>
+
+  <h2 class="section-title">Markdown Sources</h2>
+  <div class="md-list" id="mdList"></div>
+
+<script>
+const files = [
+  {n:1, html:"1.html", md:"1.md", mdSize:"16KB"},
+  {n:2, html:"2.html", md:"2.md", mdSize:"20KB"},
+  {n:3, html:"3.html", md:"3.md", mdSize:"15KB"},
+  {n:4, html:"4.html", md:"4.md", mdSize:"16KB"},
+  {n:5, html:"5.html", md:"5.md", mdSize:"17KB"},
+  {n:6, html:"6.html", md:"6.md", mdSize:"23KB"},
+  {n:7, html:"7.html", md:"7.md", mdSize:"20KB"},
+  {n:8, html:"8.html", md:"8.md", mdSize:"0KB", extra:"8.json (44KB)"},
+  {n:9, html:"9.html", md:"9.md", mdSize:"21KB"},
+  {n:10, html:"10.html", md:"10.md", mdSize:"16KB"},
+  {n:11, html:"11.html", md:"11.md", mdSize:"17KB"},
+  {n:12, html:"12.html", md:"12.md", mdSize:"14KB"},
+];
+
+const cardsEl = document.getElementById("cards");
+const mdListEl = document.getElementById("mdList");
+
+files.forEach(f => {
+  // Card with iframe
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `
+    <div class="card-head">
+      <span class="card-title">Shield ${f.n}</span>
+      <div class="card-links">
+        <a class="btn" href="${f.md}" target="_blank">.md</a>
+        <a class="btn primary" href="${f.html}" target="_blank">Open ↗</a>
+      </div>
+    </div>
+    <div class="iframe-wrap">
+      <iframe src="${f.html}" loading="lazy" sandbox="allow-scripts allow-same-origin"></iframe>
+    </div>
+    <div class="card-foot">
+      <span class="tag">${f.html}</span>
+      <span class="tag">${f.md} · ${f.mdSize}</span>
+      ${f.extra ? `<span class="tag">${f.extra}</span>` : ""}
+    </div>
+  `;
+  cardsEl.appendChild(card);
+
+  // MD list item
+  const mdLink = document.createElement("a");
+  mdLink.className = "md-link";
+  mdLink.href = f.md;
+  mdLink.target = "_blank";
+  mdLink.innerHTML = `
+    <span class="num">${f.n}</span>
+    <span>${f.md}</span>
+    <span class="size">${f.mdSize}</span>
+  `;
+  mdListEl.appendChild(mdLink);
+});
+</script>
+</body>
+</html>

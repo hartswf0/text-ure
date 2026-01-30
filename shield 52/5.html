@@ -1,0 +1,2150 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+  <title>Carey Ritual Grid — Shield of Achilles (Iliad XVIII)</title>
+  <style>
+    :root{
+      --paper:#F8F6F0;
+      --ink:#1a1a1a;
+      --muted:#666;
+      --line:rgba(0,0,0,.10);
+      --soft:rgba(0,0,0,.04);
+      --panel:rgba(255,255,255,.92);
+      --panelSolid:#FFFFFF;
+      --focus:rgba(0,0,0,.06);
+
+      /* Zone colors - distinct warm/cool palette */
+      --z-center:#6366F1;
+      --z-center-bg:rgba(99,102,241,.12);
+      --z-rings:#10B981;
+      --z-rings-bg:rgba(16,185,129,.10);
+      --z-edges:#F59E0B;
+      --z-edges-bg:rgba(245,158,11,.10);
+
+      /* Act colors - rich semantic palette */
+      --act-inv:#7C3AED;
+      --act-que:#F59E0B;
+      --act-cha:#10B981;
+      --act-wit:#3B82F6;
+      --act-com:#EF4444;
+      --act-sea:#1F2937;
+
+      --ok:#059669;
+      --warn:#D97706;
+      --hot:#DC2626;
+      --accent:#6366F1;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--ink);
+      background: var(--paper);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* Top bar */
+    header{
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:linear-gradient(to bottom, var(--paper) 60%, rgba(246,243,234,0));
+      padding:10px 10px 6px;
+    }
+    .toprow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width: 220px;
+    }
+    .brand .title{
+      font-weight:800;
+      letter-spacing:-0.02em;
+      line-height:1.05;
+      font-size:16px;
+    }
+    .brand .subtitle{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.2;
+    }
+    .controls{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    button, .chip, select, input[type="range"]{
+      font:inherit;
+    }
+    button{
+      border:1px solid var(--line);
+      background:var(--panelSolid);
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      color:var(--ink);
+      box-shadow: 0 1px 0 var(--soft);
+    }
+    button:active{ transform:translateY(1px); }
+    button.primary{
+      background: var(--ink);
+      color: var(--paper);
+      border-color: rgba(0,0,0,.3);
+    }
+    button.ghost{
+      background: transparent;
+    }
+    .seg{
+      display:flex;
+      border:1px solid var(--line);
+      border-radius:14px;
+      overflow:hidden;
+      background:var(--panelSolid);
+      box-shadow: 0 1px 0 var(--soft);
+    }
+    .seg button{
+      border:none;
+      border-right:1px solid var(--line);
+      border-radius:0;
+      padding:8px 10px;
+      box-shadow:none;
+      background:transparent;
+      color:var(--muted);
+    }
+    .seg button:last-child{ border-right:none; }
+    .seg button.on{
+      background:var(--focus);
+      color:var(--ink);
+      font-weight:700;
+    }
+    .scaleWrap{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid var(--line);
+      background:var(--panelSolid);
+      border-radius:14px;
+      padding:6px 10px;
+      box-shadow: 0 1px 0 var(--soft);
+    }
+    .scaleWrap label{
+      font-size:12px;
+      color:var(--muted);
+      user-select:none;
+    }
+    input[type="range"]{ width:120px; }
+
+    /* Main layout */
+    main{
+      flex:1;
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap:10px;
+      padding:10px;
+      padding-top:6px;
+      min-height:0;
+    }
+    @media (max-width: 980px){
+      main{ grid-template-columns: 1fr; }
+    }
+
+    /* Grid stage */
+    .stage{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.35);
+      border-radius:18px;
+      overflow:hidden;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+    }
+    .stageHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background:var(--panel);
+      backdrop-filter: blur(8px);
+      gap:10px;
+    }
+    .stageHeader .meta{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width: 200px;
+    }
+    .stageHeader .meta .h{
+      font-weight:800;
+      letter-spacing:-0.02em;
+      font-size:13px;
+    }
+    .stageHeader .meta .d{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.2;
+    }
+    .stageHeader .mini{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .pill{
+      font-size:11px;
+      padding:6px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.7);
+      color:var(--muted);
+    }
+
+    .gridWrap{
+      flex:1;
+      min-height:0;
+      overflow:auto;
+      padding:12px;
+    }
+    .grid{
+      --cell: 28px;
+      display:grid;
+      grid-template-columns: repeat(24, var(--cell));
+      grid-template-rows: repeat(24, var(--cell));
+      gap:2px;
+      transform-origin: top left;
+      user-select:none;
+    }
+    .cell{
+      width:var(--cell);
+      height:var(--cell);
+      border:1px solid var(--line);
+      border-radius:6px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:10px;
+      font-weight:700;
+      line-height:1;
+      text-align:center;
+      color:#fff;
+      background:#e5e5e5;
+      position:relative;
+      overflow:hidden;
+      cursor:pointer;
+      transition: transform .1s ease, box-shadow .1s ease;
+    }
+    .cell:hover{ transform:scale(1.08); z-index:2; }
+    .cell .tag{
+      position:absolute;
+      left:3px;
+      top:3px;
+      font-size:7px;
+      color:rgba(255,255,255,.7);
+      letter-spacing:.02em;
+      font-weight:500;
+    }
+    .cell .dot{
+      position:absolute;
+      right:3px;
+      bottom:3px;
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background:#fff;
+      border:2px solid rgba(0,0,0,.15);
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .cell.silence{
+      background:rgba(0,0,0,.04);
+      color:rgba(0,0,0,.2);
+      border-color:rgba(0,0,0,.06);
+    }
+    .cell.silence .tag{ color:rgba(0,0,0,.25); }
+    /* Zone backgrounds with distinct colors */
+    .cell.center{ background: linear-gradient(135deg, #818CF8, #6366F1); border-color:#4F46E5; }
+    .cell.rings { background: linear-gradient(135deg, #34D399, #10B981); border-color:#059669; }
+    .cell.edges { background: linear-gradient(135deg, #FBBF24, #F59E0B); border-color:#D97706; color:#1a1a1a; }
+    .cell.edges .tag{ color:rgba(0,0,0,.5); }
+
+    .cell.hasEntry{ box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+    .cell.focused{
+      outline: 3px solid #1a1a1a;
+      outline-offset: 2px;
+      z-index:10;
+      transform:scale(1.15);
+    }
+    .cell.glow{
+      box-shadow: 0 0 0 3px rgba(99,102,241,.5), 0 8px 24px rgba(0,0,0,.25);
+      z-index:10;
+      transform:scale(1.15);
+    }
+    .cell.hl{
+      outline:3px solid #EF4444;
+      outline-offset:2px;
+      animation: pulse 1s ease infinite;
+    }
+    @keyframes pulse{
+      0%,100%{ outline-color:#EF4444; }
+      50%{ outline-color:#FCA5A5; }
+    }
+
+    /* Right panel */
+    .panel{
+      border:1px solid var(--line);
+      background:var(--panel);
+      border-radius:18px;
+      overflow:hidden;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+      backdrop-filter: blur(8px);
+    }
+    .panelHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background:rgba(255,255,255,.55);
+    }
+    .panelHeader .tabs{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+    .tab{
+      font-size:12px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.6);
+      color:var(--muted);
+      cursor:pointer;
+    }
+    .tab.on{
+      background:var(--ink);
+      border-color: rgba(0,0,0,.3);
+      color:var(--paper);
+      font-weight:700;
+    }
+    .panelBody{
+      flex:1;
+      min-height:0;
+      overflow:auto;
+      padding:12px;
+    }
+
+    .sectionTitle{
+      font-weight:800;
+      letter-spacing:-0.02em;
+      font-size:13px;
+      margin:0 0 6px 0;
+    }
+    .small{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 120px 1fr;
+      gap:6px 10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.55);
+      border-radius:14px;
+      padding:10px;
+      margin:10px 0;
+    }
+    .k{ color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+    .v{ font-size:12px; line-height:1.35; }
+
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .card{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.65);
+      border-radius:14px;
+      padding:10px;
+    }
+    .card .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .badge{
+      font-size:10px;
+      font-weight:700;
+      padding:5px 9px;
+      border-radius:999px;
+      border:none;
+      background:#f0f0f0;
+      color:#444;
+      white-space:nowrap;
+    }
+    .badge.inv{ background:rgba(124,58,237,.15); color:#7C3AED; }
+    .badge.que{ background:rgba(245,158,11,.15); color:#D97706; }
+    .badge.cha{ background:rgba(16,185,129,.15); color:#059669; }
+    .badge.wit{ background:rgba(59,130,246,.15); color:#2563EB; }
+    .badge.cmd{ background:rgba(239,68,68,.15); color:#DC2626; }
+    .badge.sea{ background:rgba(31,41,55,.15); color:#1F2937; }
+    .badge.produce{ background:rgba(124,58,237,.12); color:#7C3AED; }
+    .badge.maintain{ background:rgba(16,185,129,.12); color:#059669; }
+    .badge.repair{ background:rgba(245,158,11,.12); color:#D97706; }
+    .badge.transform{ background:rgba(239,68,68,.12); color:#DC2626; }
+    .frag{
+      font-size:12px;
+      line-height:1.35;
+      margin-top:6px;
+      color:rgba(0,0,0,.85);
+      white-space:pre-wrap;
+    }
+    .muterow{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .mutebadge{
+      font-size:10px;
+      padding:5px 7px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.04);
+      color:rgba(0,0,0,.72);
+    }
+    .search{
+      width:100%;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.75);
+      border-radius:14px;
+      padding:10px 12px;
+      outline:none;
+      font-size:13px;
+      box-shadow: 0 1px 0 var(--soft) inset;
+      margin-bottom:10px;
+    }
+
+    /* Modal / sheet */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.35);
+      display:none;
+      z-index:50;
+    }
+    .overlay.on{ display:block; }
+    .modal{
+      position:fixed;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      width:min(920px, calc(100vw - 24px));
+      max-height: calc(100vh - 24px);
+      background:var(--panelSolid);
+      border:1px solid rgba(0,0,0,.2);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow: 0 18px 60px rgba(0,0,0,.25);
+      display:none;
+      z-index:60;
+    }
+    .modal.on{ display:block; }
+    .modalHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background:rgba(0,0,0,.03);
+    }
+    .modalHeader .mh{
+      font-weight:800;
+      letter-spacing:-0.02em;
+      font-size:13px;
+    }
+    .modalBody{
+      padding:12px;
+      overflow:auto;
+      max-height: calc(100vh - 140px);
+    }
+    textarea{
+      width:100%;
+      min-height: 44vh;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.02);
+      border-radius:14px;
+      padding:12px;
+      font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      outline:none;
+      resize:vertical;
+    }
+    .modalFooter{
+      display:flex;
+      gap:8px;
+      justify-content:flex-end;
+      padding:12px;
+      border-top:1px solid var(--line);
+      background:rgba(0,0,0,.02);
+      flex-wrap:wrap;
+    }
+
+    /* Mobile: panel becomes bottom sheet */
+    @media (max-width: 980px){
+      header{ padding:8px; }
+      .brand .title{ font-size:14px; }
+      .brand .subtitle{ display:none; }
+      .controls{ gap:6px; }
+      .controls .scaleWrap{ display:none; }
+      .controls #btnExport{ display:none; }
+      .seg button{ padding:8px 8px; font-size:11px; }
+      .panel{ display:none; }
+      .panel.mobile{
+        display:flex;
+        position:fixed;
+        left:8px;
+        right:8px;
+        bottom:8px;
+        top:auto;
+        max-height: 65vh;
+        z-index:30;
+        border-radius:20px;
+        box-shadow: 0 -4px 30px rgba(0,0,0,.2);
+      }
+      .panel.mobile.hidden{ display:none; }
+      .stage{ margin-bottom: 72px; }
+      .stageHeader .meta .d{ display:none; }
+      .stageHeader .mini{ display:none; }
+      .grid{ --cell: 13px; gap:1px; }
+      .cell{ border-radius:3px; font-size:7px; }
+      .cell .tag{ display:none; }
+      .cell .dot{ width:5px; height:5px; right:1px; bottom:1px; border-width:1px; }
+      .mobileDock{
+        position:fixed;
+        left:8px; right:8px; bottom:8px;
+        display:flex;
+        gap:8px;
+        z-index:40;
+      }
+      .mobileDock button{
+        flex:1;
+        border-radius:14px;
+        padding:14px 10px;
+        font-weight:800;
+        font-size:14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.15);
+      }
+      .panelHeader .tabs{ gap:4px; }
+      .tab{ padding:8px 10px; font-size:11px; }
+    }
+
+    /* Tiny screens */
+    @media (max-width: 420px){
+      .brand .title{ font-size:13px; }
+      .grid{ --cell: 11px; gap:1px; }
+      .cell{ border-radius:2px; font-size:6px; }
+      .seg button{ padding:7px 6px; font-size:10px; min-width:40px; }
+      button{ padding:8px 8px; font-size:12px; }
+      .mobileDock button{ padding:16px 10px; font-size:15px; }
+    }
+
+    /* Landscape mobile */
+    @media (max-height: 500px) and (max-width: 980px){
+      .grid{ --cell: 16px; }
+      .panel.mobile{ max-height: 50vh; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="toprow">
+      <div class="brand">
+        <div class="title">Carey Ritual Grid</div>
+        <div class="subtitle">Shield of Achilles (Iliad XVIII) — grid as ceremonial architecture</div>
+      </div>
+
+      <div class="controls">
+        <button id="btnText" class="ghost">Source Text</button>
+        <button id="btnCompile" class="primary">Compile → Grid</button>
+
+        <div class="seg" aria-label="View mode">
+          <button data-view="grid" class="on">Grid</button>
+          <button data-view="acts">Acts</button>
+          <button data-view="motifs">Motifs</button>
+          <button data-view="paths">Paths</button>
+        </div>
+
+        <div class="scaleWrap" title="Scale grid">
+          <label for="scale">Scale</label>
+          <input id="scale" type="range" min="0.65" max="1.9" step="0.05" value="1.0" />
+        </div>
+
+        <button id="btnExport" title="Download ritual manifest as JSON">Export Manifest</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage">
+      <div class="stageHeader">
+        <div class="meta">
+          <div class="h" id="stageH">24×24 Ceremonial Map</div>
+          <div class="d" id="stageD"><span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;"><span style="width:10px;height:10px;border-radius:3px;background:linear-gradient(135deg,#818CF8,#6366F1);"></span> CENTER</span><span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;"><span style="width:10px;height:10px;border-radius:3px;background:linear-gradient(135deg,#34D399,#10B981);"></span> RINGS</span><span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;"><span style="width:10px;height:10px;border-radius:3px;background:linear-gradient(135deg,#FBBF24,#F59E0B);"></span> EDGES</span><span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:3px;background:rgba(0,0,0,.04);border:1px solid rgba(0,0,0,.1);"></span> silence</span></div>
+        </div>
+        <div class="mini">
+          <div class="pill" id="pillCounts">—</div>
+          <div class="pill" id="pillFocus">Focus: none</div>
+          <div class="pill" id="pillMode">Mode: Grid</div>
+        </div>
+      </div>
+      <div class="gridWrap" id="gridWrap">
+        <div class="grid" id="grid"></div>
+      </div>
+    </section>
+
+    <aside class="panel" id="panelDesktop">
+      <div class="panelHeader">
+        <div class="tabs">
+          <div class="tab on" data-tab="detail">Cell</div>
+          <div class="tab" data-tab="acts">Acts</div>
+          <div class="tab" data-tab="motifs">Motifs</div>
+          <div class="tab" data-tab="paths">Paths</div>
+          <div class="tab" data-tab="about">About</div>
+        </div>
+        <button id="btnClear" class="ghost" title="Clear highlights">Clear</button>
+      </div>
+      <div class="panelBody" id="panelBody"></div>
+    </aside>
+
+    <aside class="panel mobile hidden" id="panelMobile">
+      <div class="panelHeader">
+        <div class="tabs">
+          <div class="tab on" data-tab="detail">Cell</div>
+          <div class="tab" data-tab="acts">Acts</div>
+          <div class="tab" data-tab="motifs">Motifs</div>
+          <div class="tab" data-tab="paths">Paths</div>
+          <div class="tab" data-tab="about">About</div>
+        </div>
+        <button id="btnCloseMobile" class="ghost">Close</button>
+      </div>
+      <div class="panelBody" id="panelBodyMobile"></div>
+    </aside>
+
+    <div class="mobileDock" id="mobileDock" style="display:none;">
+      <button id="btnOpenPanel">Panel</button>
+      <button id="btnNextStep" class="primary">Next</button>
+    </div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="modal" id="modalText">
+  <div class="modalHeader">
+    <div class="mh">Source Text (editable)</div>
+    <button id="btnCloseText" class="ghost">Close</button>
+  </div>
+  <div class="modalBody">
+    <p class="small" style="margin:0 0 10px 0;">
+      Paste/modify text, then <b>Compile → Grid</b>. The compiler assigns each fragment a ritual act, a world-function,
+      a reader-role, motif tags, and a ceremonial placement (center/rings/edges). You can export the resulting manifest.
+    </p>
+    <textarea id="txtSource" spellcheck="false"></textarea>
+  </div>
+  <div class="modalFooter">
+    <button id="btnReset" class="ghost">Reset to Iliad XVIII excerpt</button>
+    <button id="btnCompile2" class="primary">Compile → Grid</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CAREY RITUAL GRID — single-file operative ekphrasis compiler
+   - Grid is ceremonial architecture, not a container.
+   - Deterministic mapping from text → acts → zones → placement.
+   ============================================================ */
+
+const DEFAULT_TEXT = `The Iliad, Book XVIII, [The Shield of Achilles]
+
+Homer
+
+Thetis goes to the palace of Vulcan to obtain new arms for her son.
+
+"Thee, welcome, goddess! what occasion calls
+(So long a stranger) to these honour'd walls?
+'Tis thine, fair Thetis, the command to lay,
+And Vulcan's joy and duty to obey."
+
+To whom the mournful mother thus replies:
+(The crystal drops stood trembling in her eyes:)
+"O Vulcan! say, was ever breast divine
+So pierced with sorrows, so o'erwhelm'd as mine?
+Of all the goddesses, did Jove prepare
+For Thetis only such a weight of care?
+I, only I, of all the watery race
+By force subjected to a man's embrace,
+Who, sinking now with age and sorrow, pays
+The mighty fine imposed on length of days.
+Sprung from my bed, a godlike hero came,
+The bravest sure that ever bore the name;
+Like some fair plant beneath my careful hand
+He grew, he flourish'd, and he graced the land:
+To Troy I sent him! but his native shore
+Never, ah never, shall receive him more;
+(Even while he lives, he wastes with secret woe;)
+Nor I, a goddess, can retard the blow!
+Robb'd of the prize the Grecian suffrage gave,
+The king of nations forced his royal slave:
+For this he grieved; and, till the Greeks oppress'd
+Required his arm, he sorrow'd unredress'd.
+Large gifts they promise, and their elders send;
+In vain--he arms not, but permits his friend
+His arms, his steeds, his forces to employ:
+He marches, combats, almost conquers Troy:
+Then slain by Phoebus (Hector had the name)
+At once resigns his armour, life, and fame.
+But thou, in pity, by my prayer be won:
+Grace with immortal arms this short-lived son,
+And to the field in martial pomp restore,
+To shine with glory, till he shines no more!"
+
+To her the artist-god: "Thy griefs resign,
+Secure, what Vulcan can, is ever thine.
+O could I hide him from the Fates, as well,
+Or with these hands the cruel stroke repel,
+As I shall forge most envied arms, the gaze
+Of wondering ages, and the world's amaze!"
+
+Thus having said, the father of the fires
+To the black labours of his forge retires.
+Soon as he bade them blow, the bellows turn'd
+Their iron mouths; and where the furnace burn'd,
+Resounding breathed: at once the blast expires,
+And twenty forges catch at once the fires;
+Just as the god directs, now loud, now low,
+They raise a tempest, or they gently blow;
+In hissing flames huge silver bars are roll'd,
+And stubborn brass, and tin, and solid gold;
+Before, deep fix'd, the eternal anvils stand;
+The ponderous hammer loads his better hand,
+His left with tongs turns the vex'd metal round,
+And thick, strong strokes, the doubling vaults rebound.
+
+Then first he form'd the immense and solid shield;
+Rich various artifice emblazed the field;
+Its utmost verge a threefold circle bound;
+A silver chain suspends the massy round;
+Five ample plates the broad expanse compose,
+And godlike labours on the surface rose.
+There shone the image of the master-mind:
+There earth, there heaven, there ocean he design'd;
+The unwearied sun, the moon completely round;
+The starry lights that heaven's high convex crown'd;
+The Pleiads, Hyads, with the northern team;
+And great Orion's more refulgent beam;
+To which, around the axle of the sky,
+The Bear, revolving, points his golden eye,
+Still shines exalted on the ethereal plain,
+Nor bathes his blazing forehead in the main.
+
+Two cities radiant on the shield appear,
+The image one of peace, and one of war.
+Here sacred pomp and genial feast delight,
+And solemn dance, and hymeneal rite;
+Along the street the new-made brides are led,
+With torches flaming, to the nuptial bed:
+The youthful dancers in a circle bound
+To the soft flute, and cithern's silver sound:
+Through the fair streets the matrons in a row
+Stand in their porches, and enjoy the show.
+
+There in the forum swarm a numerous train;
+The subject of debate, a townsman slain:
+One pleads the fine discharged, which one denied,
+And bade the public and the laws decide:
+The witness is produced on either hand:
+For this, or that, the partial people stand:
+The appointed heralds still the noisy bands,
+And form a ring, with sceptres in their hands:
+On seats of stone, within the sacred place,
+The reverend elders nodded o'er the case;
+Alternate, each the attesting sceptre took,
+And rising solemn, each his sentence spoke
+Two golden talents lay amidst, in sight,
+The prize of him who best adjudged the right.
+
+Another part (a prospect differing far)
+Glow'd with refulgent arms, and horrid war.
+Two mighty hosts a leaguer'd town embrace,
+And one would pillage, one would burn the place.
+Meantime the townsmen, arm'd with silent care,
+A secret ambush on the foe prepare:
+Their wives, their children, and the watchful band
+Of trembling parents, on the turrets stand.
+They march; by Pallas and by Mars made bold:
+Gold were the gods, their radiant garments gold,
+And gold their armour: these the squadron led,
+August, divine, superior by the head!
+A place for ambush fit they found, and stood,
+Cover'd with shields, beside a silver flood.
+Two spies at distance lurk, and watchful seem
+If sheep or oxen seek the winding stream.
+Soon the white flocks proceeded o'er the plains,
+And steers slow-moving, and two shepherd swains;
+Behind them piping on their reeds they go,
+Nor fear an ambush, nor suspect a foe.
+In arms the glittering squadron rising round
+Rush sudden; hills of slaughter heap the ground;
+Whole flocks and herds lie bleeding on the plains,
+And, all amidst them, dead, the shepherd swains!
+The bellowing oxen the besiegers hear;
+They rise, take horse, approach, and meet the war,
+They fight, they fall, beside the silver flood;
+The waving silver seem'd to blush with blood.
+There Tumult, there Contention stood confess'd;
+One rear'd a dagger at a captive's breast;
+One held a living foe, that freshly bled
+With new-made wounds; another dragg'd a dead;
+Now here, now there, the carcases they tore:
+Fate stalk'd amidst them, grim with human gore.
+And the whole war came out, and met the eye;
+And each bold figure seem'd to live or die.
+
+A field deep furrow'd next the god design'd,
+The third time labour'd by the sweating hind;
+The shining shares full many ploughmen guide,
+And turn their crooked yokes on every side.
+Still as at either end they wheel around,
+The master meets them with his goblet crown'd;
+The hearty draught rewards, renews their toil,
+Then back the turning ploughshares cleave the soil:
+Behind, the rising earth in ridges roll'd;
+And sable look'd, though form'd of molten gold.
+
+Another field rose high with waving grain;
+With bended sickles stand the reaper train:
+Here stretched in ranks the levell'd swarths are found,
+Sheaves heap'd on sheaves here thicken up the ground.
+With sweeping stroke the mowers strow the lands;
+The gatherers follow, and collect in bands;
+And last the children, in whose arms are borne
+(Too short to gripe them) the brown sheaves of corn.
+The rustic monarch of the field descries,
+With silent glee, the heaps around him rise.
+A ready banquet on the turf is laid,
+Beneath an ample oak's expanded shade.
+The victim ox the sturdy youth prepare;
+The reaper's due repast, the woman's care.
+
+Next, ripe in yellow gold, a vineyard shines,
+Bent with the ponderous harvest of its vines;
+A deeper dye the dangling clusters show,
+And curl'd on silver props, in order glow:
+A darker metal mix'd intrench'd the place;
+And pales of glittering tin the inclosure grace.
+To this, one pathway gently winding leads,
+Where march a train with baskets on their heads,
+(Fair maids and blooming youths,) that smiling bear
+The purple product of the autumnal year.
+To these a youth awakes the warbling strings,
+Whose tender lay the fate of Linus sings;
+In measured dance behind him move the train,
+Tune soft the voice, and answer to the strain.
+
+Here herds of oxen march, erect and bold,
+Rear high their horns, and seem to low in gold,
+And speed to meadows on whose sounding shores
+A rapid torrent through the rushes roars:
+Four golden herdsmen as their guardians stand,
+And nine sour dogs complete the rustic band.
+Two lions rushing from the wood appear'd;
+And seized a bull, the master of the herd:
+He roar'd: in vain the dogs, the men withstood;
+They tore his flesh, and drank his sable blood.
+The dogs (oft cheer'd in vain) desert the prey,
+Dread the grim terrors, and at distance bay.
+
+Next this, the eye the art of Vulcan leads
+Deep through fair forests, and a length of meads,
+And stalls, and folds, and scatter'd cots between;
+And fleecy flocks, that whiten all the scene.
+
+A figured dance succeeds; such once was seen
+In lofty Gnossus for the Cretan queen,
+Form'd by Daedalean art; a comely band
+Of youths and maidens, bounding hand in hand.
+The maids in soft simars of linen dress'd;
+The youths all graceful in the glossy vest:
+Of those the locks with flowery wreath inroll'd;
+Of these the sides adorn'd with swords of gold,
+That glittering gay, from silver belts depend.
+Now all at once they rise, at once descend,
+With well-taught feet: now shape in oblique ways,
+Confusedly regular, the moving maze:
+Now forth at once, too swift for sight, they spring,
+And undistinguish'd blend the flying ring:
+So whirls a wheel, in giddy circle toss'd,
+And, rapid as it runs, the single spokes are lost.
+The gazing multitudes admire around:
+Two active tumblers in the centre bound;
+Now high, now low, their pliant limbs they bend:
+And general songs the sprightly revel end.
+
+Thus the broad shield complete the artist crown'd
+With his last hand, and pour'd the ocean round:
+In living silver seem'd the waves to roll,
+And beat the buckler's verge, and bound the whole.
+
+This done, whate'er a warrior's use requires
+He forged; the cuirass that outshone the fires,
+The greaves of ductile tin, the helm impress'd
+With various sculpture, and the golden crest.
+At Thetis' feet the finished labour lay:
+She, as a falcon cuts the aerial way,
+Swift from Olympus' snowy summit flies,
+And bears the blazing present through the skies.`;
+
+const CAREY = {
+  axioms: [
+    ["C1","Communication is a symbolic process whereby reality is produced, maintained, repaired, and transformed."],
+    ["C2","Symbolic forms are simultaneously symbols-of reality and symbols-for reality."],
+    ["C3","Maps do not represent space; maps constitute space."],
+    ["C4","Meaning is not transmitted; meaning is rehearsed."],
+    ["C5","Reading is participation in a ceremony."],
+    ["C6","Spatial arrangement is itself a communicative act."]
+  ],
+  gridFirstPrinciples: [
+    ["GFP1","Spatialization precedes interpretation."],
+    ["GFP2","Repetition produces authority."],
+    ["GFP3","Adjacency produces relation."],
+    ["GFP4","Traversal produces understanding."],
+    ["GFP5","Silence, gaps, and emptiness are active ritual components."]
+  ]
+};
+
+// App state
+let APP = {
+  view:"grid",     // grid | acts | motifs | paths
+  tab:"detail",    // detail | acts | motifs | paths | about
+  scale: 1.0,
+  focused: null,   // {x,y}
+  highlightMotif: null,
+  pathMode: null,  // {name, steps, index}
+  manifest: null,  // current ritual manifest
+  uiMobile: false
+};
+
+/* -------------------- Utility -------------------- */
+const qs = (sel, el=document)=>el.querySelector(sel);
+const qsa = (sel, el=document)=>Array.from(el.querySelectorAll(sel));
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+
+function dl(filename, text, mime="application/json"){
+  const blob = new Blob([text], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 2500);
+}
+
+function hash32(str){
+  // stable simple hash for deterministic tie-breaking
+  let h = 2166136261>>>0;
+  for(let i=0;i<str.length;i++){
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h>>>0;
+}
+
+/* -------------------- Fragmentation -------------------- */
+function normalizeText(raw){
+  return (raw||"")
+    .replace(/\r\n/g,"\n")
+    .replace(/\u00a0/g," ")
+    .replace(/[ \t]+\n/g,"\n")
+    .replace(/\n{3,}/g,"\n\n")
+    .trim();
+}
+
+function toFragments(raw){
+  const t = normalizeText(raw);
+  if(!t) return [];
+  // Paragraph-first: blank lines split. Keep small poem-line groups intact.
+  const paras = t.split(/\n\s*\n/g).map(p=>p.trim()).filter(Boolean);
+  const frags = [];
+  let id = 0;
+
+  for(const p of paras){
+    // If paragraph is many short lines, keep lines; else keep as paragraph.
+    const lines = p.split("\n").map(s=>s.trim()).filter(Boolean);
+    const shortLines = lines.filter(l=>l.length<=62).length;
+    const liney = lines.length>=4 && (shortLines/lines.length) >= 0.70;
+
+    if(liney){
+      // Keep each line as a fragment, but bind consecutive quotes/parentheticals with their neighbors.
+      for(let i=0;i<lines.length;i++){
+        let cur = lines[i];
+        // bind parenthetical lead-in
+        if(cur.startsWith("(") && frags.length){
+          frags[frags.length-1].raw_text += "\n" + cur;
+          frags[frags.length-1].raw_lines.push(cur);
+          continue;
+        }
+        frags.push({
+          id: `F${(++id).toString().padStart(3,"0")}`,
+          raw_text: cur,
+          raw_lines: [cur],
+          source_paragraph: p
+        });
+      }
+    } else {
+      frags.push({
+        id: `F${(++id).toString().padStart(3,"0")}`,
+        raw_text: lines.join("\n"),
+        raw_lines: lines,
+        source_paragraph: p
+      });
+    }
+  }
+  return frags;
+}
+
+/* -------------------- Ritual classification -------------------- */
+const ACTS = ["INVOCATION","QUESTION","CHANT","WITNESS","COMMAND","SEAL"];
+const WORLD = ["PRODUCE","MAINTAIN","REPAIR","TRANSFORM"];
+const ROLES = ["Witness","Pilgrim","Judge","Lover","Citizen","Archivist","Congregant"];
+
+const motifLex = {
+  SILENCE: ["silence","quiet","still","unheard","stranger"],
+  FIRE: ["fire","fires","forge","furnace","flames","blast","anvils","hammer","bellows"],
+  METAL: ["gold","silver","brass","tin","iron","ductile","molten"],
+  OCEAN: ["ocean","waves","flood","stream","main","torrent","water","shore"],
+  CIRCLE: ["circle","ring","round","revolve","revolving","axle","wheel","verge","bound"],
+  WAR: ["war","arms","hosts","pillage","burn","slaughter","blood","dagger","shields","ambush","fight","gore"],
+  PEACE: ["peace","feast","dance","hymeneal","brides","nuptial","flute","cithern","porches"],
+  LABOR: ["plough","furrow","labour","reaper","harvest","sickles","sheaves","toil","soil","field","grain","vineyard"],
+  FATE: ["fate","fates","phoebus","doom"],
+  MUSIC: ["flute","cithern","strings","warbling","tune","voice","lay","song","pipes"],
+  ANIMALS: ["oxen","lions","dogs","flocks","herds","bull","sheep","steers"]
+};
+
+function motifTags(text){
+  const s = (text||"").toLowerCase();
+  const tags = [];
+  for(const [m,words] of Object.entries(motifLex)){
+    for(const w of words){
+      if(s.includes(w)){
+        tags.push(m);
+        break;
+      }
+    }
+  }
+  return tags;
+}
+
+function classifyAct(fragText){
+  const t = fragText.trim();
+  const lo = t.toLowerCase();
+
+  const hasQ = t.includes("?");
+  if(hasQ) return "QUESTION";
+
+  // SEAL: closures, authorizations, completion
+  if(/^thus\b/i.test(t) || /^this done\b/i.test(t) || lo.includes("complete") || lo.includes("crown'd") && lo.includes("shield")) return "SEAL";
+
+  // INVOCATION: direct address, calling-into-being, welcoming, naming
+  const invKeys = ["o ", "thee, welcome", "welcome, goddess", "thy griefs", "o vulcan", "fair thetis"];
+  if(invKeys.some(k=>lo.includes(k))) return "INVOCATION";
+
+  // COMMAND: imperatives / directives / requests
+  const cmdKeys = ["say,", "resign", "secure", "grace", "obey", "bade", "blow", "directs", "prepare", "decide"];
+  if(cmdKeys.some(k=>lo.includes(k)) && (t.endsWith("!") || lo.includes("say,") || lo.includes("grace"))) return "COMMAND";
+
+  // CHANT: rhythmic parallelism, repeated "now", "still", "never", "at once"
+  const chantMarkers = ["now ", "still ", "never", "at once", "for ever", "in vain", "there "];
+  const repScore =
+    (lo.match(/\bnow\b/g)||[]).length +
+    (lo.match(/\bthere\b/g)||[]).length +
+    (lo.match(/\bat once\b/g)||[]).length +
+    (lo.match(/\bfor ever\b/g)||[]).length +
+    (lo.match(/\bnever\b/g)||[]).length;
+
+  if(repScore >= 3 || chantMarkers.some(m=>lo.includes(m) && t.length < 130)) return "CHANT";
+
+  // WITNESS default: scenes, presentations, displaying a world
+  return "WITNESS";
+}
+
+function classifyWorldFunction(act, fragText){
+  const lo = fragText.toLowerCase();
+  if(act==="INVOCATION") return "PRODUCE";
+  if(act==="QUESTION") return "REPAIR";
+  if(act==="CHANT") return "MAINTAIN";
+  if(act==="SEAL") return "MAINTAIN";
+  if(act==="COMMAND") return lo.includes("resign") || lo.includes("grace") ? "TRANSFORM" : "MAINTAIN";
+
+  // WITNESS heuristics
+  const hot = ["war","blood","slaughter","gore","fight","pillage","burn","dagger","dead","fate","tumult","contention"];
+  const make = ["form'd","design'd","forge","forges","anvils","hammer","made","suspends","compose"];
+  const soothe = ["peace","feast","dance","rite","banquet","shade","reaper","toil","harvest","vineyard","song","tune","porches"];
+
+  const scoreHot = hot.reduce((a,w)=>a + (lo.includes(w)?1:0),0);
+  const scoreMake = make.reduce((a,w)=>a + (lo.includes(w)?1:0),0);
+  const scoreSoothe = soothe.reduce((a,w)=>a + (lo.includes(w)?1:0),0);
+
+  if(scoreHot>=2) return "TRANSFORM";
+  if(scoreMake>=2) return "PRODUCE";
+  if(scoreSoothe>=2) return "MAINTAIN";
+  if(lo.includes("grief") || lo.includes("mourn") || lo.includes("sorrow")) return "REPAIR";
+  return "PRODUCE";
+}
+
+function roleFor(act, worldFn){
+  if(act==="INVOCATION") return "Pilgrim";
+  if(act==="QUESTION") return worldFn==="REPAIR" ? "Witness" : "Judge";
+  if(act==="CHANT") return "Congregant";
+  if(act==="COMMAND") return "Citizen";
+  if(act==="SEAL") return "Archivist";
+  return "Archivist";
+}
+
+function hookFor(act){
+  switch(act){
+    case "INVOCATION": return "move outward: seek surrounding witnesses";
+    case "QUESTION": return "edge-walk: gather other questions to repair the world";
+    case "CHANT": return "repeat along the band: reinforce the motif";
+    case "WITNESS": return "procession: proceed to the next scene";
+    case "COMMAND": return "comply: advance to a sealing point";
+    case "SEAL": return "return: pause at the center, then resume procession";
+    default: return "continue";
+  }
+}
+
+function abbreviation(act){
+  return ({INVOCATION:"INV",QUESTION:"Q",CHANT:"CH",WITNESS:"W",COMMAND:"CMD",SEAL:"SEAL"})[act] || act.slice(0,3);
+}
+
+/* -------------------- Grid zoning & placement -------------------- */
+const GRID = { w:24, h:24, cx:12, cy:12 };
+
+function zoneOf(x,y){
+  const d = Math.abs(x-GRID.cx) + Math.abs(y-GRID.cy);
+  if(d<=2) return "CENTER";
+  if(d<=6) return "RINGS";
+  return "EDGES";
+}
+
+function coordsSpiralCenter(){
+  // Manhattan spiral-ish: prioritize nearest to center, deterministic by angle then dist.
+  const coords = [];
+  for(let y=0;y<GRID.h;y++){
+    for(let x=0;x<GRID.w;x++){
+      const d = Math.abs(x-GRID.cx) + Math.abs(y-GRID.cy);
+      if(d<=2){
+        const ang = Math.atan2(y-GRID.cy, x-GRID.cx);
+        coords.push({x,y,d,ang});
+      }
+    }
+  }
+  coords.sort((a,b)=>a.d-b.d || a.ang-b.ang || a.x-b.x || a.y-b.y);
+  return coords.map(({x,y})=>({x,y}));
+}
+
+function coordsRings(){
+  // ring traversal: for dist 3..6, walk each ring perimeter in clockwise order
+  const out=[];
+  for(let d=3; d<=6; d++){
+    const ring=[];
+    for(let y=0;y<GRID.h;y++){
+      for(let x=0;x<GRID.w;x++){
+        const md = Math.abs(x-GRID.cx)+Math.abs(y-GRID.cy);
+        if(md===d) ring.push({x,y});
+      }
+    }
+    // sort by angle around center, clockwise
+    ring.sort((a,b)=>{
+      const aa = Math.atan2(a.y-GRID.cy, a.x-GRID.cx);
+      const bb = Math.atan2(b.y-GRID.cy, b.x-GRID.cx);
+      return bb-aa; // clockwise
+    });
+    out.push(...ring);
+  }
+  return out;
+}
+
+function coordsEdges(){
+  // perimeter snake: top row L->R, right col T->B, bottom row R->L, left col B->T, then expand inward one layer (still "edges" zone) in a tight spiral.
+  const coords=[];
+  const used = new Set();
+  function push(x,y){
+    const k=x+","+y;
+    if(used.has(k)) return;
+    used.add(k);
+    coords.push({x,y});
+  }
+  // first perimeter
+  for(let x=0;x<GRID.w;x++) push(x,0);
+  for(let y=1;y<GRID.h;y++) push(GRID.w-1,y);
+  for(let x=GRID.w-2;x>=0;x--) push(x,GRID.h-1);
+  for(let y=GRID.h-2;y>0;y--) push(0,y);
+
+  // then add remaining EDGES cells in deterministic outward-inward scan
+  const rest=[];
+  for(let y=0;y<GRID.h;y++){
+    for(let x=0;x<GRID.w;x++){
+      if(zoneOf(x,y)==="EDGES" && !used.has(x+","+y)){
+        const d = Math.abs(x-GRID.cx)+Math.abs(y-GRID.cy);
+        const ang = Math.atan2(y-GRID.cy, x-GRID.cx);
+        rest.push({x,y,d,ang});
+      }
+    }
+  }
+  rest.sort((a,b)=>b.d-a.d || b.ang-a.ang || a.y-b.y || a.x-b.x);
+  rest.forEach(c=>push(c.x,c.y));
+  return coords;
+}
+
+const ZONE_COORDS = {
+  CENTER: coordsSpiralCenter(),
+  RINGS: coordsRings(),
+  EDGES: coordsEdges()
+};
+
+function preferredZone(act, worldFn){
+  if(act==="INVOCATION" || act==="SEAL") return "CENTER";
+  if(act==="QUESTION" || worldFn==="REPAIR") return "EDGES";
+  if(act==="CHANT" || act==="WITNESS") return "RINGS";
+  if(act==="COMMAND") return "CENTER";
+  return "RINGS";
+}
+
+function compileManifest(sourceText){
+  const fragments = toFragments(sourceText);
+  const items = fragments.map((f,idx)=>{
+    const act = classifyAct(f.raw_text);
+    const world_function = classifyWorldFunction(act, f.raw_text);
+    const motifs = motifTags(f.raw_text);
+    const repetition_tag = motifs[0] || "NONE";
+    return {
+      id: f.id,
+      idx,
+      act,
+      world_function,
+      role_offered_to_reader: roleFor(act, world_function),
+      continuity_hook: hookFor(act),
+      repetition_tag,
+      motifs,
+      text_fragment: f.raw_text
+    };
+  });
+
+  // Create empty grid cells
+  const cells = [];
+  for(let y=0;y<GRID.h;y++){
+    const row=[];
+    for(let x=0;x<GRID.w;x++){
+      row.push({
+        addr:`(${x},${y})`,
+        x,y,
+        zone: zoneOf(x,y),
+        entries:[]
+      });
+    }
+    cells.push(row);
+  }
+
+  // Placement: deterministic, zone-first, fallback order
+  const zoneQueues = {
+    CENTER: [...ZONE_COORDS.CENTER],
+    RINGS: [...ZONE_COORDS.RINGS],
+    EDGES: [...ZONE_COORDS.EDGES]
+  };
+  const fallback = {
+    CENTER:["CENTER","RINGS","EDGES"],
+    RINGS:["RINGS","EDGES","CENTER"],
+    EDGES:["EDGES","RINGS","CENTER"]
+  };
+
+  function place(entry, kind="primary"){
+    const pref = preferredZone(entry.act, entry.world_function);
+    for(const z of fallback[pref]){
+      while(zoneQueues[z].length){
+        const {x,y} = zoneQueues[z][0];
+        zoneQueues[z].shift();
+        // only place if cell is in that zone (queues already filtered), and doesn't exceed entries limit
+        const cell = cells[y][x];
+        if(cell.entries.length < 2){ // allow occasional duplex
+          cell.entries.push({...entry, addr:cell.addr, kind});
+          return {x,y};
+        }
+      }
+    }
+    return null;
+  }
+
+  // Stable ordering: items by (zone pref, then original idx, then hash)
+  const sorted = [...items].sort((a,b)=>{
+    const za = preferredZone(a.act,a.world_function);
+    const zb = preferredZone(b.act,b.world_function);
+    const order = {CENTER:0,RINGS:1,EDGES:2};
+    return order[za]-order[zb] || a.idx-b.idx || (hash32(a.text_fragment)-hash32(b.text_fragment));
+  });
+
+  const placements = {};
+  for(const it of sorted){
+    const pos = place(it,"primary");
+    placements[it.id] = pos;
+  }
+
+  // Repetition: ensure each major motif appears in >=3 cells (echo if needed)
+  const motifCounts = {};
+  items.forEach(it=>{
+    (it.motifs||[]).forEach(m=>{ motifCounts[m]=(motifCounts[m]||0)+1; });
+  });
+  const majorMotifs = Object.keys(motifCounts).sort((a,b)=>motifCounts[b]-motifCounts[a]).slice(0,10);
+
+  const echoEntries = [];
+  for(const m of majorMotifs){
+    const need = Math.max(0, 3 - (motifCounts[m]||0));
+    for(let i=0;i<need;i++){
+      echoEntries.push({
+        id:`ECHO_${m}_${i+1}`,
+        idx: 100000 + i,
+        act:"CHANT",
+        world_function:"MAINTAIN",
+        role_offered_to_reader:"Congregant",
+        continuity_hook:"repeat along the band: reinforce the motif",
+        repetition_tag:m,
+        motifs:[m],
+        text_fragment:`ECHO: ${m} (rehearsal marker)`
+      });
+    }
+  }
+  // Place echoes into rings preferentially
+  echoEntries.forEach(e=>place(e,"echo"));
+
+  // Build indices
+  const cellsFlat = [];
+  const actIndex = {};
+  const motifIndex = {};
+  let filled=0;
+  for(let y=0;y<GRID.h;y++){
+    for(let x=0;x<GRID.w;x++){
+      const c = cells[y][x];
+      if(c.entries.length) filled++;
+      for(const e of c.entries){
+        (actIndex[e.act] ||= []).push({x,y,id:e.id});
+        (e.motifs||[]).forEach(m=>{
+          (motifIndex[m] ||= []).push({x,y,id:e.id});
+        });
+      }
+      cellsFlat.push(c);
+    }
+  }
+
+  const manifest = {
+    meta:{
+      name:"CAREY-SPATIAL-SEMANTIC-GRID-v2",
+      source:"Iliad XVIII — Shield of Achilles excerpt (default)",
+      compiled_at: new Date().toISOString(),
+      grid:{w:GRID.w,h:GRID.h,center:[GRID.cx,GRID.cy]},
+      doctrine:"Grid is ceremonial architecture; cells are sites of action."
+    },
+    carey_axioms: CAREY.axioms.map(([id,text])=>({id,text})),
+    grid_first_principles: CAREY.gridFirstPrinciples.map(([id,text])=>({id,text})),
+    zones:{
+      CENTER:"INVOCATION / SEAL",
+      RINGS:"CHANT / WITNESS",
+      EDGES:"QUESTION / REPAIR"
+    },
+    fragments: items,
+    cells: cellsFlat,
+    indices:{
+      acts: actIndex,
+      motifs: motifIndex,
+      counts:{
+        fragments: items.length,
+        occupied_cells: filled,
+        empty_cells: GRID.w*GRID.h - filled
+      }
+    }
+  };
+
+  return manifest;
+}
+
+/* -------------------- Paths (traversal) -------------------- */
+function buildPaths(manifest){
+  // PROCESSION: top→bottom snake through occupied cells (ritual reading as scan)
+  const occupied = manifest.cells.filter(c=>c.entries.length).map(c=>({x:c.x,y:c.y,zone:c.zone}));
+  const byY = {};
+  occupied.forEach(p=>{
+    (byY[p.y] ||= []).push(p);
+  });
+  const stepsProc=[];
+  for(let y=0;y<GRID.h;y++){
+    const row = byY[y] || [];
+    row.sort((a,b)=>a.x-b.x);
+    if(y%2===1) row.reverse();
+    stepsProc.push(...row.map(p=>({x:p.x,y:p.y})));
+  }
+
+  // CIRCULATION: ring-walk through ring+center occupied cells, sorted by manhattan distance then angle
+  const ringCells = occupied.filter(p=>p.zone!=="EDGES");
+  ringCells.sort((a,b)=>{
+    const da = Math.abs(a.x-GRID.cx)+Math.abs(a.y-GRID.cy);
+    const db = Math.abs(b.x-GRID.cx)+Math.abs(b.y-GRID.cy);
+    const aa = Math.atan2(a.y-GRID.cy,a.x-GRID.cx);
+    const bb = Math.atan2(b.y-GRID.cy,b.x-GRID.cx);
+    return da-db || bb-aa;
+  });
+  const stepsCirc = ringCells.map(p=>({x:p.x,y:p.y}));
+
+  // PILGRIMAGE: start at a question on the edge (first found), walk by greedy move toward center via nearest occupied cells
+  const edges = occupied.filter(p=>p.zone==="EDGES");
+  edges.sort((a,b)=>{
+    const da = Math.abs(a.x-GRID.cx)+Math.abs(a.y-GRID.cy);
+    const db = Math.abs(b.x-GRID.cx)+Math.abs(b.y-GRID.cy);
+    return db-da || a.y-b.y || a.x-b.x;
+  });
+  const start = edges[0] || {x:0,y:0};
+  const occSet = new Set(occupied.map(p=>`${p.x},${p.y}`));
+  const stepsPil=[{x:start.x,y:start.y}];
+  let cur = {x:start.x,y:start.y};
+  for(let i=0;i<220;i++){
+    if(cur.x===GRID.cx && cur.y===GRID.cy) break;
+    // candidates: 4-neighbors closer to center; fallback to any occupied neighbor
+    const nbs = [
+      {x:cur.x+1,y:cur.y},
+      {x:cur.x-1,y:cur.y},
+      {x:cur.x,y:cur.y+1},
+      {x:cur.x,y:cur.y-1},
+    ].filter(p=>p.x>=0&&p.x<GRID.w&&p.y>=0&&p.y<GRID.h);
+
+    const closer = nbs.filter(p=>{
+      const d0 = Math.abs(cur.x-GRID.cx)+Math.abs(cur.y-GRID.cy);
+      const d1 = Math.abs(p.x-GRID.cx)+Math.abs(p.y-GRID.cy);
+      return d1<d0;
+    });
+
+    const candidates = (closer.length?closer:nbs).filter(p=>occSet.has(`${p.x},${p.y}`));
+    if(!candidates.length) break;
+
+    candidates.sort((a,b)=>{
+      const da = Math.abs(a.x-GRID.cx)+Math.abs(a.y-GRID.cy);
+      const db = Math.abs(b.x-GRID.cx)+Math.abs(b.y-GRID.cy);
+      return da-db || a.y-b.y || a.x-b.x;
+    });
+    cur = candidates[0];
+    const key = `${cur.x},${cur.y}`;
+    if(stepsPil.some(s=>s.x===cur.x && s.y===cur.y)) break;
+    stepsPil.push({x:cur.x,y:cur.y});
+  }
+
+  return [
+    {name:"PROCESSION (scan)", steps: stepsProc},
+    {name:"CIRCULATION (ring)", steps: stepsCirc},
+    {name:"PILGRIMAGE (edge→center)", steps: stepsPil},
+  ];
+}
+
+/* -------------------- Rendering -------------------- */
+function setMobileMode(){
+  APP.uiMobile = window.matchMedia("(max-width: 980px)").matches;
+  qs("#mobileDock").style.display = APP.uiMobile ? "flex" : "none";
+}
+
+function renderGrid(manifest){
+  const el = qs("#grid");
+  el.innerHTML = "";
+  // scale
+  el.style.transform = `scale(${APP.scale})`;
+
+  for(let y=0;y<GRID.h;y++){
+    for(let x=0;x<GRID.w;x++){
+      const c = manifest.cells.find(k=>k.x===x && k.y===y); // flat lookup; ok for 576
+      const div = document.createElement("div");
+      div.className = "cell";
+      const zone = (c.zone||"").toLowerCase();
+      div.classList.add(zone);
+
+      const has = c.entries && c.entries.length;
+      if(!has) div.classList.add("silence");
+      else div.classList.add("hasEntry");
+
+      div.dataset.x = x;
+      div.dataset.y = y;
+
+      const tag = document.createElement("div");
+      tag.className = "tag";
+      tag.textContent = `${x},${y}`;
+      div.appendChild(tag);
+
+      if(has){
+        // show act abbreviation of primary entry
+        const primary = c.entries.find(e=>e.kind==="primary") || c.entries[0];
+        div.textContent = abbreviation(primary.act);
+        // dot color-ish via act
+        const dot = document.createElement("div");
+        dot.className = "dot";
+        dot.style.background = actColor(primary.act);
+        div.appendChild(dot);
+      } else {
+        div.textContent = "";
+      }
+
+      el.appendChild(div);
+    }
+  }
+}
+
+function actColor(act){
+  switch(act){
+    case "INVOCATION": return "#7C3AED";
+    case "QUESTION": return "#F59E0B";
+    case "CHANT": return "#10B981";
+    case "WITNESS": return "#3B82F6";
+    case "COMMAND": return "#EF4444";
+    case "SEAL": return "#1F2937";
+    default: return "#6B7280";
+  }
+}
+
+function actBadgeClass(act){
+  switch(act){
+    case "INVOCATION": return "inv";
+    case "QUESTION": return "que";
+    case "CHANT": return "cha";
+    case "WITNESS": return "wit";
+    case "COMMAND": return "cmd";
+    case "SEAL": return "sea";
+    default: return "";
+  }
+}
+
+function worldBadgeClass(fn){
+  switch(fn){
+    case "PRODUCE": return "produce";
+    case "MAINTAIN": return "maintain";
+    case "REPAIR": return "repair";
+    case "TRANSFORM": return "transform";
+    default: return "";
+  }
+}
+
+function setPills(manifest){
+  const c = manifest.indices.counts;
+  qs("#pillCounts").textContent = `${c.fragments} acts · ${c.occupied_cells} occupied · ${c.empty_cells} silence`;
+}
+
+function clearHighlights(){
+  qsa(".cell").forEach(el=>{
+    el.classList.remove("focused","glow","hl");
+  });
+  APP.highlightMotif = null;
+  APP.pathMode = null;
+  qs("#pillFocus").textContent = "Focus: none";
+}
+
+function focusCell(x,y, opts={glow:true, scroll:true}){
+  clearHighlights();
+  APP.focused = {x,y};
+  const sel = `.cell[data-x="${x}"][data-y="${y}"]`;
+  const el = qs(sel);
+  if(!el) return;
+  el.classList.add("focused");
+  if(opts.glow) el.classList.add("glow");
+  qs("#pillFocus").textContent = `Focus: (${x},${y})`;
+  if(opts.scroll){
+    el.scrollIntoView({behavior:"smooth", block:"center", inline:"center"});
+  }
+  renderPanel();
+}
+
+function highlightMotif(motif){
+  clearHighlights();
+  APP.highlightMotif = motif;
+  const hits = APP.manifest.indices.motifs[motif] || [];
+  for(const h of hits){
+    const el = qs(`.cell[data-x="${h.x}"][data-y="${h.y}"]`);
+    if(el) el.classList.add("hl");
+  }
+  qs("#pillFocus").textContent = `Motif: ${motif} (${hits.length})`;
+  renderPanel();
+}
+
+function setView(view){
+  APP.view = view;
+  qs("#pillMode").textContent = `Mode: ${view[0].toUpperCase()+view.slice(1)}`;
+  qsa(".seg button").forEach(b=>b.classList.toggle("on", b.dataset.view===view));
+  // On view switch, open appropriate tab on panel
+  if(view==="grid") APP.tab="detail";
+  if(view==="acts") APP.tab="acts";
+  if(view==="motifs") APP.tab="motifs";
+  if(view==="paths") APP.tab="paths";
+  qsa(".tab").forEach(t=>t.classList.toggle("on", t.dataset.tab===APP.tab));
+  renderPanel();
+}
+
+/* -------------------- Panel content -------------------- */
+function renderPanel(){
+  const body = APP.uiMobile ? qs("#panelBodyMobile") : qs("#panelBody");
+  const mf = APP.manifest;
+  if(!mf){ body.innerHTML = `<p class="small">No manifest yet. Click <b>Compile → Grid</b>.</p>`; return; }
+
+  if(APP.tab==="detail"){
+    const fx = APP.focused?.x ?? GRID.cx;
+    const fy = APP.focused?.y ?? GRID.cy;
+    const cell = mf.cells.find(c=>c.x===fx && c.y===fy);
+    body.innerHTML = detailHTML(cell);
+    attachDetailHandlers(body);
+    return;
+  }
+  if(APP.tab==="acts"){
+    body.innerHTML = actsHTML(mf);
+    attachActsHandlers(body);
+    return;
+  }
+  if(APP.tab==="motifs"){
+    body.innerHTML = motifsHTML(mf);
+    attachMotifsHandlers(body);
+    return;
+  }
+  if(APP.tab==="paths"){
+    body.innerHTML = pathsHTML(mf);
+    attachPathsHandlers(body);
+    return;
+  }
+  if(APP.tab==="about"){
+    body.innerHTML = aboutHTML();
+    return;
+  }
+}
+
+function detailHTML(cell){
+  const zoneDesc = ({CENTER:"INVOCATION/SEAL",RINGS:"CHANT/WITNESS",EDGES:"QUESTION/REPAIR"})[cell.zone] || cell.zone;
+  const entries = cell.entries || [];
+  const silence = entries.length===0;
+
+  return `
+    <div>
+      <div class="sectionTitle">Ritual Site ${cell.addr}</div>
+      <div class="small">Zone: <b>${cell.zone}</b> · ${zoneDesc}. ${silence ? "This gap is an active ritual silence." : "This site performs acts."}</div>
+
+      <div class="kv">
+        <div class="k">addr</div><div class="v">${cell.addr}</div>
+        <div class="k">zone</div><div class="v">${cell.zone}</div>
+        <div class="k">function</div><div class="v">${silence ? "SILENCE (active gap)" : "ACTION (site performs)"} </div>
+        <div class="k">next</div><div class="v">${silence ? "Pause; then resume a path." : (entries[0]?.continuity_hook || "continue")}</div>
+      </div>
+
+      ${silence ? `
+        <div class="card">
+          <div class="row">
+            <div class="badge">SILENCE</div>
+            <div class="badge">GFP5</div>
+          </div>
+          <div class="frag">This cell holds no fragment. In Carey’s frame, emptiness is a component: it disciplines attention, authorizes return, and makes recurrence legible.</div>
+        </div>
+      ` : `
+        <div class="list">
+          ${entries.map(e=>`
+            <div class="card">
+              <div class="row">
+                <div class="badge">${e.kind.toUpperCase()}</div>
+                <div class="badge ${actBadgeClass(e.act)}">${e.act}</div>
+                <div class="badge ${worldBadgeClass(e.world_function)}">${e.world_function}</div>
+              </div>
+              <div class="muterow">
+                <div class="mutebadge">Role: ${e.role_offered_to_reader}</div>
+                <div class="mutebadge">Tag: ${e.repetition_tag}</div>
+                ${ (e.motifs||[]).slice(0,4).map(m=>`<button class="mutebadge jsMotif" data-m="${m}" style="cursor:pointer;">Motif: ${m}</button>`).join("") }
+              </div>
+              <div class="frag">${escapeHTML(e.text_fragment)}</div>
+              <div class="small" style="margin-top:8px;">Continuity hook: <b>${e.continuity_hook}</b></div>
+              ${e.kind==="primary" ? `<button class="ghost jsJumpFrag" data-id="${e.id}" style="margin-top:10px;">Find this act in list</button>` : ``}
+            </div>
+          `).join("")}
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function actsHTML(mf){
+  const total = mf.fragments.length;
+  return `
+    <div>
+      <div class="sectionTitle">Acts (Text→Ritual Actions)</div>
+      <div class="small">Every fragment is classified by what it <b>does</b>. Filter, then tap an act to locate it in the grid.</div>
+      <input class="search" id="actSearch" placeholder="Filter (e.g., war, gold, question, forge, dance)..." />
+      <div class="muterow" style="margin:0 0 10px 0;">
+        ${ACTS.map(a=>`<button class="mutebadge jsActFilter" data-a="${a}" style="cursor:pointer;">${a}</button>`).join("")}
+        <button class="mutebadge jsActFilter" data-a="ALL" style="cursor:pointer;">ALL</button>
+      </div>
+      <div class="list" id="actList">
+        ${mf.fragments.slice(0, total).map(f=>{
+          const pos = findFragmentCell(mf, f.id);
+          const addr = pos ? `(${pos.x},${pos.y})` : "(unplaced)";
+          const motifs = (f.motifs||[]).slice(0,4);
+          return `
+            <div class="card jsAct" data-id="${f.id}" data-a="${f.act}" data-text="${escapeAttr((f.text_fragment||"").toLowerCase())}">
+              <div class="row">
+                <div class="badge ${actBadgeClass(f.act)}">${f.act}</div>
+                <div class="badge ${worldBadgeClass(f.world_function)}">${f.world_function}</div>
+                <div class="badge">${addr}</div>
+              </div>
+              <div class="muterow">
+                <div class="mutebadge">Role: ${f.role_offered_to_reader}</div>
+                ${motifs.map(m=>`<span class="mutebadge">Motif: ${m}</span>`).join("")}
+              </div>
+              <div class="frag">${escapeHTML(shorten(f.text_fragment, 220))}</div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function motifsHTML(mf){
+  const idx = mf.indices.motifs || {};
+  const motifs = Object.keys(idx).sort((a,b)=>(idx[b]?.length||0)-(idx[a]?.length||0));
+  return `
+    <div>
+      <div class="sectionTitle">Motif Index (Repetition Manufactures Reality)</div>
+      <div class="small">Tap a motif to mark all its sites. If a motif is rare, the compiler generates CHANT “echo” markers in the rings.</div>
+      <div class="list" style="margin-top:10px;">
+        ${motifs.map(m=>{
+          const n = idx[m].length;
+          return `
+            <div class="card jsMotifPick" data-m="${m}" style="cursor:pointer;">
+              <div class="row">
+                <div class="badge">MOTIF</div>
+                <div class="badge">${m}</div>
+                <div class="badge">${n} sites</div>
+              </div>
+              <div class="small" style="margin-top:6px;">Highlight all occurrences of <b>${m}</b> across the grid.</div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function pathsHTML(mf){
+  const paths = buildPaths(mf);
+  return `
+    <div>
+      <div class="sectionTitle">Traversal Paths (Meaning Emerges From Walking)</div>
+      <div class="small">Choose a path, then step through it. Each step is a ritual “reading” action—your movement is the ceremony.</div>
+      <div class="list" style="margin-top:10px;">
+        ${paths.map((p,i)=>`
+          <div class="card jsPathPick" data-i="${i}" style="cursor:pointer;">
+            <div class="row">
+              <div class="badge">PATH</div>
+              <div class="badge">${p.name}</div>
+              <div class="badge">${p.steps.length} steps</div>
+            </div>
+            <div class="small" style="margin-top:6px;">Tap to activate and begin at step 1.</div>
+          </div>
+        `).join("")}
+      </div>
+
+      ${APP.pathMode ? `
+        <div class="kv">
+          <div class="k">active</div><div class="v">${APP.pathMode.name}</div>
+          <div class="k">step</div><div class="v">${APP.pathMode.index+1} / ${APP.pathMode.steps.length}</div>
+          <div class="k">addr</div><div class="v">(${APP.pathMode.steps[APP.pathMode.index].x},${APP.pathMode.steps[APP.pathMode.index].y})</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="ghost" id="btnPrev">Prev</button>
+          <button class="primary" id="btnNext">Next</button>
+          <button class="ghost" id="btnExitPath">Exit Path</button>
+        </div>
+      ` : ``}
+    </div>
+  `;
+}
+
+function aboutHTML(){
+  return `
+    <div>
+      <div class="sectionTitle">Carey Ritual-First Protocol</div>
+      <div class="small">
+        This interface treats the grid as a <b>symbolic map</b> that <b>produces, maintains, repairs, and transforms</b> a shared world.
+        Cells are <b>ritual sites</b>, not storage. Traversal is the ceremony.
+      </div>
+
+      <div class="sectionTitle" style="margin-top:14px;">Carey Axioms</div>
+      <div class="list">
+        ${CAREY.axioms.map(([id,text])=>`
+          <div class="card">
+            <div class="row"><div class="badge">${id}</div><div class="badge">AXIOM</div></div>
+            <div class="frag">${escapeHTML(text)}</div>
+          </div>
+        `).join("")}
+      </div>
+
+      <div class="sectionTitle" style="margin-top:14px;">Grid First Principles</div>
+      <div class="list">
+        ${CAREY.gridFirstPrinciples.map(([id,text])=>`
+          <div class="card">
+            <div class="row"><div class="badge">${id}</div><div class="badge">PRINCIPLE</div></div>
+            <div class="frag">${escapeHTML(text)}</div>
+          </div>
+        `).join("")}
+      </div>
+
+      <div class="sectionTitle" style="margin-top:14px;">Compiler Notes</div>
+      <div class="small">
+        Classification is heuristic but deterministic. Edit the source text and recompile. Exported JSON includes all
+        fragments, cell placements, and indices (acts + motifs) so the “operative text” can regenerate the surface-text.
+      </div>
+    </div>
+  `;
+}
+
+/* -------------------- Event wiring -------------------- */
+function attachCoreHandlers(){
+  // Segmented view
+  qsa(".seg button").forEach(b=>{
+    b.addEventListener("click", ()=>setView(b.dataset.view));
+  });
+
+  // Tabs (panel)
+  function wireTabs(scope){
+    qsa(".tab", scope).forEach(t=>{
+      t.addEventListener("click", ()=>{
+        APP.tab = t.dataset.tab;
+        qsa(".tab", scope).forEach(x=>x.classList.toggle("on", x===t));
+        renderPanel();
+      });
+    });
+  }
+  wireTabs(qs("#panelDesktop"));
+  wireTabs(qs("#panelMobile"));
+
+  // Grid click
+  qs("#grid").addEventListener("click", (e)=>{
+    const cell = e.target.closest(".cell");
+    if(!cell) return;
+    const x = Number(cell.dataset.x);
+    const y = Number(cell.dataset.y);
+    focusCell(x,y,{glow:true,scroll:false});
+    if(APP.uiMobile){
+      openMobilePanel();
+    }
+  });
+
+  // Scale
+  qs("#scale").addEventListener("input", (e)=>{
+    APP.scale = Number(e.target.value);
+    if(APP.manifest) renderGrid(APP.manifest);
+  });
+
+  // Compile buttons
+  const compileNow = ()=>{
+    const src = qs("#txtSource").value;
+    APP.manifest = compileManifest(src);
+    APP.focused = {x: GRID.cx, y: GRID.cy};
+    APP.highlightMotif = null;
+    APP.pathMode = null;
+    renderAll();
+    closeTextModal();
+  };
+  qs("#btnCompile").addEventListener("click", compileNow);
+  qs("#btnCompile2").addEventListener("click", compileNow);
+
+  // Export
+  qs("#btnExport").addEventListener("click", ()=>{
+    if(!APP.manifest){ alert("Compile first."); return; }
+    const safe = JSON.stringify(APP.manifest, null, 2);
+    dl("carey_shield_ritual_manifest.json", safe, "application/json");
+  });
+
+  // Clear highlights
+  qs("#btnClear").addEventListener("click", ()=>{
+    clearHighlights();
+    renderPanel();
+  });
+
+  // Source text modal
+  qs("#btnText").addEventListener("click", openTextModal);
+  qs("#btnCloseText").addEventListener("click", closeTextModal);
+  qs("#overlay").addEventListener("click", ()=>{
+    closeTextModal();
+  });
+  qs("#btnReset").addEventListener("click", ()=>{
+    qs("#txtSource").value = DEFAULT_TEXT;
+    localStorage.setItem("carey_grid_source", DEFAULT_TEXT);
+  });
+  qs("#btnCloseMobile").addEventListener("click", closeMobilePanel);
+
+  // Mobile dock
+  qs("#btnOpenPanel").addEventListener("click", openMobilePanel);
+  qs("#btnNextStep").addEventListener("click", ()=>{
+    if(APP.pathMode){
+      stepPath(+1);
+      openMobilePanel();
+      setView("paths");
+      APP.tab="paths";
+      renderPanel();
+    } else {
+      // If no path active, pick PROCESSION and start
+      const paths = buildPaths(APP.manifest);
+      activatePath(paths[0]);
+      openMobilePanel();
+      setView("paths");
+      APP.tab="paths";
+      renderPanel();
+    }
+  });
+
+  // Keyboard scan-head (desktop)
+  window.addEventListener("keydown", (e)=>{
+    if(!APP.manifest) return;
+    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)){
+      e.preventDefault();
+      const cur = APP.focused || {x:GRID.cx,y:GRID.cy};
+      let nx=cur.x, ny=cur.y;
+      if(e.key==="ArrowUp") ny--;
+      if(e.key==="ArrowDown") ny++;
+      if(e.key==="ArrowLeft") nx--;
+      if(e.key==="ArrowRight") nx++;
+      nx = clamp(nx,0,GRID.w-1);
+      ny = clamp(ny,0,GRID.h-1);
+      focusCell(nx,ny,{glow:false,scroll:false});
+    }
+  });
+
+  window.addEventListener("resize", ()=>{
+    setMobileMode();
+    if(!APP.uiMobile) closeMobilePanel();
+  });
+}
+
+function attachDetailHandlers(scope){
+  qsa(".jsMotif", scope).forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      highlightMotif(btn.dataset.m);
+      setView("motifs");
+      APP.tab="motifs";
+      renderPanel();
+    });
+  });
+  qsa(".jsJumpFrag", scope).forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      setView("acts");
+      APP.tab="acts";
+      renderPanel();
+      // scroll to card
+      setTimeout(()=>{
+        const card = (APP.uiMobile ? qs("#panelBodyMobile") : qs("#panelBody")).querySelector(`.jsAct[data-id="${btn.dataset.id}"]`);
+        if(card) card.scrollIntoView({behavior:"smooth", block:"center"});
+      }, 60);
+    });
+  });
+}
+
+function attachActsHandlers(scope){
+  const input = qs("#actSearch", scope);
+  const list = qs("#actList", scope);
+
+  function applyFilter(filterAct="ALL"){
+    const q = (input.value||"").toLowerCase().trim();
+    qsa(".jsAct", list).forEach(card=>{
+      const a = card.dataset.a;
+      const txt = card.dataset.text;
+      const okAct = filterAct==="ALL" ? true : a===filterAct;
+      const okQ = !q ? true : txt.includes(q);
+      card.style.display = (okAct && okQ) ? "" : "none";
+    });
+  }
+
+  let currentAct = "ALL";
+  qsa(".jsActFilter", scope).forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      currentAct = btn.dataset.a;
+      applyFilter(currentAct);
+    });
+  });
+
+  input.addEventListener("input", ()=>applyFilter(currentAct));
+
+  qsa(".jsAct", scope).forEach(card=>{
+    card.addEventListener("click", ()=>{
+      const id = card.dataset.id;
+      const pos = findFragmentCell(APP.manifest, id);
+      if(pos) focusCell(pos.x,pos.y,{glow:true,scroll:true});
+      setView("grid");
+      APP.tab="detail";
+      renderPanel();
+      if(APP.uiMobile) closeMobilePanel();
+    });
+  });
+}
+
+function attachMotifsHandlers(scope){
+  qsa(".jsMotifPick", scope).forEach(card=>{
+    card.addEventListener("click", ()=>{
+      const m = card.dataset.m;
+      highlightMotif(m);
+      setView("grid");
+      APP.tab="detail";
+      if(APP.uiMobile) closeMobilePanel();
+    });
+  });
+}
+
+function attachPathsHandlers(scope){
+  const paths = buildPaths(APP.manifest);
+
+  qsa(".jsPathPick", scope).forEach(card=>{
+    card.addEventListener("click", ()=>{
+      const i = Number(card.dataset.i);
+      activatePath(paths[i]);
+      focusCell(APP.pathMode.steps[0].x, APP.pathMode.steps[0].y, {glow:true,scroll:true});
+      renderPanel();
+    });
+  });
+
+  const btnPrev = qs("#btnPrev", scope);
+  const btnNext = qs("#btnNext", scope);
+  const btnExit = qs("#btnExitPath", scope);
+
+  if(btnPrev) btnPrev.addEventListener("click", ()=>stepPath(-1));
+  if(btnNext) btnNext.addEventListener("click", ()=>stepPath(+1));
+  if(btnExit) btnExit.addEventListener("click", ()=>{
+    APP.pathMode = null;
+    clearHighlights();
+    renderPanel();
+  });
+}
+
+function activatePath(path){
+  APP.pathMode = {name:path.name, steps:path.steps, index:0};
+  qs("#pillFocus").textContent = `Path: ${path.name} (step 1/${path.steps.length})`;
+  // highlight current step
+  clearHighlights();
+  const s = APP.pathMode.steps[0];
+  const el = qs(`.cell[data-x="${s.x}"][data-y="${s.y}"]`);
+  if(el){ el.classList.add("focused","glow"); el.scrollIntoView({behavior:"smooth", block:"center", inline:"center"}); }
+}
+
+function stepPath(delta){
+  if(!APP.pathMode) return;
+  APP.pathMode.index = clamp(APP.pathMode.index + delta, 0, APP.pathMode.steps.length-1);
+  const s = APP.pathMode.steps[APP.pathMode.index];
+  clearHighlights();
+  const el = qs(`.cell[data-x="${s.x}"][data-y="${s.y}"]`);
+  if(el){ el.classList.add("focused","glow"); el.scrollIntoView({behavior:"smooth", block:"center", inline:"center"}); }
+  APP.focused = {x:s.x,y:s.y};
+  qs("#pillFocus").textContent = `Path: ${APP.pathMode.name} (step ${APP.pathMode.index+1}/${APP.pathMode.steps.length})`;
+  renderPanel();
+}
+
+/* -------------------- Helpers -------------------- */
+function findFragmentCell(mf, id){
+  for(const c of mf.cells){
+    for(const e of c.entries){
+      if(e.id===id) return {x:c.x,y:c.y};
+    }
+  }
+  return null;
+}
+
+function shorten(s,n){
+  const t = (s||"").trim();
+  if(t.length<=n) return t;
+  return t.slice(0,n-1).trimEnd() + "…";
+}
+
+function escapeHTML(str){
+  return (str||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+function escapeAttr(str){
+  return escapeHTML(str).replaceAll('"',"&quot;");
+}
+
+/* -------------------- Modal controls -------------------- */
+function openTextModal(){
+  qs("#overlay").classList.add("on");
+  qs("#modalText").classList.add("on");
+}
+function closeTextModal(){
+  qs("#overlay").classList.remove("on");
+  qs("#modalText").classList.remove("on");
+}
+function openMobilePanel(){
+  qs("#panelMobile").classList.remove("hidden");
+}
+function closeMobilePanel(){
+  qs("#panelMobile").classList.add("hidden");
+}
+
+/* -------------------- Render all -------------------- */
+function renderAll(){
+  renderGrid(APP.manifest);
+  setPills(APP.manifest);
+  focusCell(APP.focused?.x ?? GRID.cx, APP.focused?.y ?? GRID.cy, {glow:false,scroll:false});
+  renderPanel();
+}
+
+/* -------------------- Boot -------------------- */
+function boot(){
+  setMobileMode();
+  const saved = localStorage.getItem("carey_grid_source");
+  qs("#txtSource").value = saved || DEFAULT_TEXT;
+
+  // Initial compile (deterministic, immediate)
+  APP.manifest = compileManifest(qs("#txtSource").value);
+  APP.focused = {x:GRID.cx, y:GRID.cy};
+  APP.scale = Number(qs("#scale").value);
+
+  attachCoreHandlers();
+  renderAll();
+
+  // persist edits
+  qs("#txtSource").addEventListener("input", ()=>{
+    localStorage.setItem("carey_grid_source", qs("#txtSource").value);
+  });
+
+  // default view
+  setView("grid");
+}
+boot();
+</script>
+</body>
+</html>

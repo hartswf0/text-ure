@@ -1,0 +1,2013 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Shield of Achilles • Carey Ritual Grid (24×24)</title>
+  <style>
+    :root{
+      --ink:#101112;
+      --paper:#F6F4EE;
+      --paper2:#EFECE3;
+      --muted:#6D6B64;
+      --line:#D6D1C4;
+      --ring:#B9B2A3;
+
+      --z-core:#111111;
+      --z-inner:#2A2A2A;
+      --z-middle:#3B3B3B;
+      --z-outer:#4A4A4A;
+
+      --hi:#111111;
+      --hi2:#FFFFFF;
+      --warn:#8B0000;
+
+      --shadow: 0 10px 28px rgba(0,0,0,.10);
+      --shadow2: 0 8px 18px rgba(0,0,0,.12);
+      --r: 16px;
+
+      --cell: 26px;      /* base cell size; user can zoom */
+      --gap: 1px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      -webkit-font-smoothing: antialiased;
+      text-rendering: geometricPrecision;
+      overflow:hidden;
+    }
+
+    /* --- LAYOUT --- */
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .topbar{
+      position:relative;
+      z-index:10;
+      background: linear-gradient(180deg, var(--paper) 0%, var(--paper2) 100%);
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px 12px;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .title{
+      font-weight:800;
+      letter-spacing:.3px;
+      font-size:14px;
+      line-height:1.1;
+      padding:6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.45);
+      user-select:none;
+      white-space:nowrap;
+    }
+
+    .sub{
+      font-size:12px;
+      color: var(--muted);
+      user-select:none;
+      margin-left:auto;
+      white-space:nowrap;
+    }
+
+    .controls{
+      margin-top:10px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+
+    @media (min-width: 860px){
+      .controls{
+        grid-template-columns: 1.2fr 1fr 1fr;
+      }
+    }
+
+    .panel{
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      background: rgba(255,255,255,.55);
+      box-shadow: 0 1px 0 rgba(255,255,255,.6) inset;
+      padding: 10px;
+      min-width: 0;
+    }
+
+    .panel h3{
+      margin:0 0 8px;
+      font-size:12px;
+      letter-spacing:.2px;
+      text-transform:uppercase;
+      color:#2F2E2A;
+    }
+
+    .pillrow{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .pill{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.7);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .06s ease, background .12s ease;
+      white-space:nowrap;
+    }
+    .pill:active{ transform: scale(.98); }
+    .pill.on{
+      background: #111;
+      color:#fff;
+      border-color:#111;
+    }
+
+    .field{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .field input, .field select{
+      font-size:12px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,.85);
+      color: var(--ink);
+      outline:none;
+      min-width: 0;
+    }
+    .field input::placeholder{ color:#8A877D; }
+    .field label{
+      font-size:12px;
+      color: var(--muted);
+      user-select:none;
+    }
+
+    .range{
+      width: 180px;
+      accent-color: #111;
+    }
+
+    .tabs{
+      display:flex;
+      gap:8px;
+      margin-top:10px;
+    }
+    .tab{
+      flex:0 0 auto;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.65);
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .tab.on{
+      background:#111;
+      color:#fff;
+      border-color:#111;
+    }
+
+    .main{
+      flex:1;
+      min-height:0;
+      display:flex;
+      overflow:hidden;
+    }
+
+    .stage{
+      flex:1;
+      min-width:0;
+      position:relative;
+      background: radial-gradient(900px 900px at 40% 30%, rgba(0,0,0,.04), transparent 55%),
+                  radial-gradient(700px 700px at 70% 80%, rgba(0,0,0,.03), transparent 60%),
+                  linear-gradient(180deg, rgba(255,255,255,.0), rgba(0,0,0,.02));
+    }
+
+    .viewport{
+      position:absolute;
+      inset:0;
+      overflow:auto;
+      padding: 14px 14px 96px;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-x pan-y;
+    }
+
+    .gridWrap{
+      width: fit-content;
+      background: rgba(255,255,255,.45);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 10px;
+    }
+
+    /* --- GRID --- */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(24, var(--cell));
+      grid-template-rows: repeat(24, var(--cell));
+      gap: var(--gap);
+      background: var(--line);
+      border-radius: 12px;
+      overflow:hidden;
+      transform-origin: 0 0;
+    }
+
+    .cell{
+      position:relative;
+      background: #fff;
+      cursor:pointer;
+      user-select:none;
+      overflow:hidden;
+      display:flex;
+      align-items:flex-start;
+      justify-content:flex-start;
+      padding: 2px 3px;
+      font-size: 10px;
+      line-height: 1.05;
+      letter-spacing:.1px;
+    }
+    .cell:focus{
+      outline: 2px solid #111;
+      outline-offset: -2px;
+      z-index:2;
+    }
+
+    .cell .t{
+      display:block;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 100%;
+      opacity:.95;
+    }
+
+    .cell .g{
+      font-weight:900;
+      font-size: 12px;
+      opacity: .92;
+    }
+
+    /* zone tint */
+    .z-core{ background: rgba(17,17,17,.10); }
+    .z-inner{ background: rgba(17,17,17,.07); }
+    .z-middle{ background: rgba(17,17,17,.05); }
+    .z-outer{ background: rgba(17,17,17,.03); }
+
+    /* act stripe */
+    .cell::after{
+      content:"";
+      position:absolute;
+      left:0; top:0; bottom:0;
+      width: 3px;
+      opacity:.9;
+      background: transparent;
+    }
+    .a-invocation::after{ background: rgba(0,0,0,.85); }
+    .a-seal::after{ background: rgba(0,0,0,.55); }
+    .a-chant::after{ background: rgba(0,0,0,.35); }
+    .a-witness::after{ background: rgba(0,0,0,.25); }
+    .a-question::after{ background: rgba(139,0,0,.55); }
+
+    .silence{
+      background: rgba(255,255,255,.35) !important;
+      color: rgba(0,0,0,.45);
+    }
+    .silence::after{ background: rgba(0,0,0,.15); }
+
+    /* ring boundaries (visual law) */
+    .b-inner{ box-shadow: inset 0 0 0 2px rgba(0,0,0,.12); }
+    .b-middle{ box-shadow: inset 0 0 0 2px rgba(0,0,0,.10); }
+    .b-core{ box-shadow: inset 0 0 0 2px rgba(0,0,0,.18); }
+
+    .selected{
+      outline: 2px solid #111 !important;
+      outline-offset: -2px !important;
+      z-index: 3;
+    }
+
+    /* neighbor semantics */
+    .n-assoc{ box-shadow: inset 0 0 0 2px rgba(0,0,0,.22); }
+    .n-develop{ box-shadow: inset 0 0 0 2px rgba(0,0,0,.30); }
+    .n-tension{ box-shadow: inset 0 0 0 2px rgba(139,0,0,.42); }
+
+    /* highlights */
+    .hl-motif{ background: rgba(0,0,0,.12) !important; }
+    .hl-path{ background: rgba(0,0,0,.16) !important; }
+    .hl-path::after{ background: rgba(0,0,0,.75) !important; }
+
+    /* --- RIGHT DRAWER (desktop) / BOTTOM SHEET (mobile) --- */
+    .drawer{
+      width: 380px;
+      max-width: 46vw;
+      border-left: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.35));
+      padding: 14px;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      display:none;
+    }
+    @media (min-width: 980px){
+      .drawer{ display:block; }
+    }
+
+    .sheet{
+      position:absolute;
+      left:0; right:0; bottom:0;
+      background: rgba(255,255,255,.92);
+      border-top: 1px solid var(--line);
+      box-shadow: var(--shadow2);
+      border-top-left-radius: 18px;
+      border-top-right-radius: 18px;
+      padding: 10px 12px 14px;
+      transform: translateY(105%);
+      transition: transform .18s ease;
+      z-index: 12;
+    }
+    .sheet.on{ transform: translateY(0); }
+
+    @media (min-width: 980px){
+      .sheet{ display:none; }
+    }
+
+    .sheetHandle{
+      width: 54px;
+      height: 5px;
+      border-radius: 99px;
+      background: rgba(0,0,0,.18);
+      margin: 2px auto 10px;
+    }
+
+    .card{
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.65);
+      padding: 12px;
+      box-shadow: 0 1px 0 rgba(255,255,255,.7) inset;
+    }
+
+    .k{
+      display:grid;
+      grid-template-columns: 110px 1fr;
+      gap: 6px 10px;
+      font-size:12px;
+      line-height:1.2;
+    }
+    .k div:nth-child(odd){
+      color: var(--muted);
+      user-select:none;
+    }
+
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .bigQuote{
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 14px;
+      border: 1px dashed var(--line);
+      background: rgba(255,255,255,.55);
+      white-space: pre-wrap;
+      font-size: 12px;
+      line-height: 1.35;
+      max-height: 260px;
+      overflow:auto;
+    }
+
+    .btn{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.8);
+      padding: 7px 10px;
+      border-radius: 12px;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .06s ease, background .12s ease;
+      white-space:nowrap;
+    }
+    .btn:active{ transform: scale(.98); }
+
+    .btn.primary{
+      background:#111;
+      color:#fff;
+      border-color:#111;
+    }
+
+    .muted{
+      color: var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+
+    .protocol, .source, .ledger{
+      display:none;
+      padding: 14px;
+      overflow:auto;
+      height:100%;
+    }
+    .protocol.on, .source.on, .ledger.on{ display:block; }
+
+    pre{
+      margin:0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px;
+      line-height: 1.35;
+      background: rgba(255,255,255,.55);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 1px 0 rgba(255,255,255,.7) inset;
+    }
+
+    .small{
+      font-size:11px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="row">
+      <div class="title">Shield of Achilles • Carey Ritual Grid (24×24)</div>
+      <div class="sub">Cells stage acts • Adjacency performs relation • Traversal produces reading</div>
+    </div>
+
+    <div class="controls">
+      <div class="panel">
+        <h3>Traversal</h3>
+        <div class="pillrow" id="modes"></div>
+        <div style="height:10px"></div>
+        <div class="field">
+          <label for="zoom">Zoom</label>
+          <input class="range" id="zoom" type="range" min="18" max="52" value="26" />
+          <label class="small" id="zoomLabel">26px</label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Filters</h3>
+        <div class="pillrow">
+          <div class="pill on" id="toggleGlyph">Glyph</div>
+          <div class="pill" id="toggleText">Text</div>
+          <div class="pill on" id="toggleActs">Act Stripes</div>
+          <div class="pill" id="toggleMotif">Motif Highlight</div>
+          <div class="pill" id="toggleNeighbors">Neighbor Semantics</div>
+        </div>
+        <div style="height:10px"></div>
+        <div class="field">
+          <label for="q">Search</label>
+          <input id="q" type="text" placeholder="motif id, word, or (x,y) e.g. 12,9" />
+          <button class="btn" id="clearQ">Clear</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Export</h3>
+        <div class="pillrow">
+          <button class="btn primary" id="dlManifest">Download manifest.json</button>
+          <button class="btn" id="dlLedger">Download line-ledger.csv</button>
+          <button class="btn" id="reseed">Recompile (same laws)</button>
+        </div>
+        <div style="height:10px"></div>
+        <div class="muted">
+          This is not an index. The ledger is an <span class="mono">Archivist</span> tool outside the ritual field.
+          Inside the field, you navigate by rings, acts, and motifs.
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab on" data-tab="world">World</div>
+      <div class="tab" data-tab="protocol">Protocol</div>
+      <div class="tab" data-tab="source">Source</div>
+      <div class="tab" data-tab="ledger">Ledger</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="stage">
+      <div class="viewport" id="viewport">
+        <div class="gridWrap" id="gridWrap">
+          <div class="grid" id="grid" aria-label="24x24 ritual grid" role="grid"></div>
+        </div>
+      </div>
+
+      <!-- MOBILE SHEET -->
+      <div class="sheet" id="sheet" aria-live="polite">
+        <div class="sheetHandle"></div>
+        <div class="card" id="sheetCard"></div>
+      </div>
+
+      <!-- OVERLAY VIEWS -->
+      <div class="protocol" id="protocol"></div>
+      <div class="source" id="source"></div>
+      <div class="ledger" id="ledger"></div>
+    </div>
+
+    <!-- DESKTOP DRAWER -->
+    <aside class="drawer">
+      <div class="card" id="drawerCard">
+        <div class="muted">Select a cell. On hover/selection, neighbor semantics can appear (association / development / tension).</div>
+      </div>
+      <div style="height:10px"></div>
+      <div class="card">
+        <div class="muted"><b>Rings</b> (Carey zones):<br>
+          CORE = PRODUCE • INNER = MAINTAIN • MIDDLE = REPAIR • OUTER = TRANSFORM
+        </div>
+        <div style="height:10px"></div>
+        <div class="muted"><b>Acts</b>: INVOCATION • CHANT • WITNESS • QUESTION • SEAL</div>
+      </div>
+      <div style="height:10px"></div>
+      <div class="card">
+        <div class="muted"><b>Motifs</b> (tap in World): type a motif id in search, e.g. <span class="mono">OCEAN_RIM</span>, <span class="mono">CITY_PEACE</span>, <span class="mono">FORGE</span>.</div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   SOURCE TEXT (Iliad XVIII — Shield of Achilles excerpt as provided)
+   ============================================================ */
+const ILIAD_SOURCE = `{The Iliad, Book XVIII, [The Shield of Achilles]
+
+Homer
+
+Thetis goes to the palace of Vulcan to obtain new arms for her son.
+
+"Thee, welcome, goddess! what occasion calls
+(So long a stranger) to these honour'd walls?
+'Tis thine, fair Thetis, the command to lay,
+And Vulcan's joy and duty to obey."
+
+To whom the mournful mother thus replies:
+(The crystal drops stood trembling in her eyes:)
+"O Vulcan! say, was ever breast divine
+So pierced with sorrows, so o'erwhelm'd as mine?
+Of all the goddesses, did Jove prepare
+For Thetis only such a weight of care?
+I, only I, of all the watery race
+By force subjected to a man's embrace,
+Who, sinking now with age and sorrow, pays
+The mighty fine imposed on length of days.
+Sprung from my bed, a godlike hero came,
+The bravest sure that ever bore the name;
+Like some fair plant beneath my careful hand
+He grew, he flourish'd, and he graced the land:
+To Troy I sent him! but his native shore
+Never, ah never, shall receive him more;
+(Even while he lives, he wastes with secret woe;)
+Nor I, a goddess, can retard the blow!
+Robb'd of the prize the Grecian suffrage gave,
+The king of nations forced his royal slave:
+For this he grieved; and, till the Greeks oppress'd
+Required his arm, he sorrow'd unredress'd.
+Large gifts they promise, and their elders send;
+In vain--he arms not, but permits his friend
+His arms, his steeds, his forces to employ:
+He marches, combats, almost conquers Troy:
+Then slain by Phoebus (Hector had the name)
+At once resigns his armour, life, and fame.
+But thou, in pity, by my prayer be won:
+Grace with immortal arms this short-lived son,
+And to the field in martial pomp restore,
+To shine with glory, till he shines no more!"
+
+To her the artist-god: "Thy griefs resign,
+Secure, what Vulcan can, is ever thine.
+O could I hide him from the Fates, as well,
+Or with these hands the cruel stroke repel,
+As I shall forge most envied arms, the gaze
+Of wondering ages, and the world's amaze!"
+
+Thus having said, the father of the fires
+To the black labours of his forge retires.
+Soon as he bade them blow, the bellows turn'd
+Their iron mouths; and where the furnace burn'd,
+Resounding breathed: at once the blast expires,
+And twenty forges catch at once the fires;
+Just as the god directs, now loud, now low,
+They raise a tempest, or they gently blow;
+In hissing flames huge silver bars are roll'd,
+And stubborn brass, and tin, and solid gold;
+Before, deep fix'd, the eternal anvils stand;
+The ponderous hammer loads his better hand,
+His left with tongs turns the vex'd metal round,
+And thick, strong strokes, the doubling vaults rebound.
+
+Then first he form'd the immense and solid shield;
+Rich various artifice emblazed the field;
+Its utmost verge a threefold circle bound;
+A silver chain suspends the massy round;
+Five ample plates the broad expanse compose,
+And godlike labours on the surface rose.
+There shone the image of the master-mind:
+There earth, there heaven, there ocean he design'd;
+The unwearied sun, the moon completely round;
+The starry lights that heaven's high convex crown'd;
+The Pleiads, Hyads, with the northern team;
+And great Orion's more refulgent beam;
+To which, around the axle of the sky,
+The Bear, revolving, points his golden eye,
+Still shines exalted on the ethereal plain,
+Nor bathes his blazing forehead in the main.
+
+Two cities radiant on the shield appear,
+The image one of peace, and one of war.
+Here sacred pomp and genial feast delight,
+And solemn dance, and hymeneal rite;
+Along the street the new-made brides are led,
+With torches flaming, to the nuptial bed:
+The youthful dancers in a circle bound
+To the soft flute, and cithern's silver sound:
+Through the fair streets the matrons in a row
+Stand in their porches, and enjoy the show.
+
+There in the forum swarm a numerous train;
+The subject of debate, a townsman slain:
+One pleads the fine discharged, which one denied,
+And bade the public and the laws decide:
+The witness is produced on either hand:
+For this, or that, the partial people stand:
+The appointed heralds still the noisy bands,
+And form a ring, with sceptres in their hands:
+On seats of stone, within the sacred place,
+The reverend elders nodded o'er the case;
+Alternate, each the attesting sceptre took,
+And rising solemn, each his sentence spoke
+Two golden talents lay amidst, in sight,
+The prize of him who best adjudged the right.
+
+Another part (a prospect differing far)
+Glow'd with refulgent arms, and horrid war.
+Two mighty hosts a leaguer'd town embrace,
+And one would pillage, one would burn the place.
+Meantime the townsmen, arm'd with silent care,
+A secret ambush on the foe prepare:
+Their wives, their children, and the watchful band
+Of trembling parents, on the turrets stand.
+They march; by Pallas and by Mars made bold:
+Gold were the gods, their radiant garments gold,
+And gold their armour: these the squadron led,
+August, divine, superior by the head!
+A place for ambush fit they found, and stood,
+Cover'd with shields, beside a silver flood.
+Two spies at distance lurk, and watchful seem
+If sheep or oxen seek the winding stream.
+Soon the white flocks proceeded o'er the plains,
+And steers slow-moving, and two shepherd swains;
+Behind them piping on their reeds they go,
+Nor fear an ambush, nor suspect a foe.
+In arms the glittering squadron rising round
+Rush sudden; hills of slaughter heap the ground;
+Whole flocks and herds lie bleeding on the plains,
+And, all amidst them, dead, the shepherd swains!
+The bellowing oxen the besiegers hear;
+They rise, take horse, approach, and meet the war,
+They fight, they fall, beside the silver flood;
+The waving silver seem'd to blush with blood.
+There Tumult, there Contention stood confess'd;
+One rear'd a dagger at a captive's breast;
+One held a living foe, that freshly bled
+With new-made wounds; another dragg'd a dead;
+Now here, now there, the carcases they tore:
+Fate stalk'd amidst them, grim with human gore.
+And the whole war came out, and met the eye;
+And each bold figure seem'd to live or die.
+
+A field deep furrow'd next the god design'd,
+The third time labour'd by the sweating hind;
+The shining shares full many ploughmen guide,
+And turn their crooked yokes on every side.
+Still as at either end they wheel around,
+The master meets them with his goblet crown'd;
+The hearty draught rewards, renews their toil,
+Then back the turning ploughshares cleave the soil:
+Behind, the rising earth in ridges roll'd;
+And sable look'd, though form'd of molten gold.
+
+Another field rose high with waving grain;
+With bended sickles stand the reaper train:
+Here stretched in ranks the levell'd swarths are found,
+Sheaves heap'd on sheaves here thicken up the ground.
+With sweeping stroke the mowers strow the lands;
+The gatherers follow, and collect in bands;
+And last the children, in whose arms are borne
+(Too short to gripe them) the brown sheaves of corn.
+The rustic monarch of the field descries,
+With silent glee, the heaps around him rise.
+A ready banquet on the turf is laid,
+Beneath an ample oak's expanded shade.
+The victim ox the sturdy youth prepare;
+The reaper's due repast, the woman's care.
+
+Next, ripe in yellow gold, a vineyard shines,
+Bent with the ponderous harvest of its vines;
+A deeper dye the dangling clusters show,
+And curl'd on silver props, in order glow:
+A darker metal mix'd intrench'd the place;
+And pales of glittering tin the inclosure grace.
+To this, one pathway gently winding leads,
+Where march a train with baskets on their heads,
+(Fair maids and blooming youths,) that smiling bear
+The purple product of the autumnal year.
+To these a youth awakes the warbling strings,
+Whose tender lay the fate of Linus sings;
+In measured dance behind him move the train,
+Tune soft the voice, and answer to the strain.
+
+Here herds of oxen march, erect and bold,
+Rear high their horns, and seem to low in gold,
+And speed to meadows on whose sounding shores
+A rapid torrent through the rushes roars:
+Four golden herdsmen as their guardians stand,
+And nine sour dogs complete the rustic band.
+Two lions rushing from the wood appear'd;
+And seized a bull, the master of the herd:
+He roar'd: in vain the dogs, the men withstood;
+They tore his flesh, and drank his sable blood.
+The dogs (oft cheer'd in vain) desert the prey,
+Dread the grim terrors, and at distance bay.
+
+Next this, the eye the art of Vulcan leads
+Deep through fair forests, and a length of meads,
+And stalls, and folds, and scatter'd cots between;
+And fleecy flocks, that whiten all the scene.
+
+A figured dance succeeds; such once was seen
+In lofty Gnossus for the Cretan queen,
+Form'd by Daedalean art; a comely band
+Of youths and maidens, bounding hand in hand.
+The maids in soft simars of linen dress'd;
+The youths all graceful in the glossy vest:
+Of those the locks with flowery wreath inroll'd;
+Of these the sides adorn'd with swords of gold,
+That glittering gay, from silver belts depend.
+Now all at once they rise, at once descend,
+With well-taught feet: now shape in oblique ways,
+Confusedly regular, the moving maze:
+Now forth at once, too swift for sight, they spring,
+And undistinguish'd blend the flying ring:
+So whirls a wheel, in giddy circle toss'd,
+And, rapid as it runs, the single spokes are lost.
+The gazing multitudes admire around:
+Two active tumblers in the centre bound;
+Now high, now low, their pliant limbs they bend:
+And general songs the sprightly revel end.
+
+Thus the broad shield complete the artist crown'd
+With his last hand, and pour'd the ocean round:
+In living silver seem'd the waves to roll,
+And beat the buckler's verge, and bound the whole.
+
+This done, whate'er a warrior's use requires
+He forged; the cuirass that outshone the fires,
+The greaves of ductile tin, the helm impress'd
+With various sculpture, and the golden crest.
+At Thetis' feet the finished labour lay:
+She, as a falcon cuts the aerial way,
+Swift from Olympus' snowy summit flies,
+And bears the blazing present through the skies.
+}`;
+
+/* ============================================================
+   CAREY PROTOCOL (as provided)
+   ============================================================ */
+const CAREY_PROTOCOL_TEXT = `<prompt id="CAREY-24x24-RITUAL-GRID-v1"
+        mode="system"
+        audience="expert"
+        tone="architectural-ontological"
+        output_form="protocol">
+
+  <intent>
+    Instantiate Carey’s Cultural Approach to Communication
+    as enforceable spatial laws inside a 24×24 grid.
+
+    The grid must function as a ceremonial world,
+    not an information layout.
+
+    Every cell is a ritual site.
+    Every adjacency is a symbolic relation.
+  </intent>
+
+  <grid_axioms>
+
+    <a id="G1">
+      The grid is a world, not a page.
+    </a>
+
+    <a id="G2">
+      Spatial position performs meaning.
+    </a>
+
+    <a id="G3">
+      Cells do not store content.
+      Cells stage acts.
+    </a>
+
+    <a id="G4">
+      Traversal produces understanding.
+    </a>
+
+    <a id="G5">
+      Repetition manufactures reality.
+    </a>
+
+  </grid_axioms>
+
+  <grid_topology>
+    <dimensions rows="24" cols="24"/>
+    <zones>
+      <zone id="CENTER_CORE" coords="(10-13,10-13)" function="PRODUCE"/>
+      <zone id="INNER_RING"  coords="(7-16,7-16) excluding CENTER_CORE" function="MAINTAIN"/>
+      <zone id="MIDDLE_RING" coords="(4-19,4-19) excluding INNER_RING" function="REPAIR"/>
+      <zone id="OUTER_RING"  coords="(1-24,1-24) excluding MIDDLE_RING" function="TRANSFORM"/>
+    </zones>
+  </grid_topology>
+
+  <ritual_acts>
+    <act id="INVOCATION">Calls a world into being.</act>
+    <act id="CHANT">Repeats and stabilizes.</act>
+    <act id="WITNESS">Presents scenes.</act>
+    <act id="QUESTION">Opens uncertainty.</act>
+    <act id="SEAL">Closes and authorizes.</act>
+  </ritual_acts>
+
+  <zone_act_mapping>
+    <map zone="CENTER_CORE" acts="INVOCATION,SEAL"/>
+    <map zone="INNER_RING" acts="CHANT,WITNESS"/>
+    <map zone="MIDDLE_RING" acts="QUESTION,WITNESS"/>
+    <map zone="OUTER_RING" acts="QUESTION,TRANSFORM"/>
+  </zone_act_mapping>
+
+  <cell_schema>
+    {
+      "coord": "(x,y)",
+      "ritual_act": "INVOCATION|CHANT|WITNESS|QUESTION|SEAL",
+      "text_fragment": "verbatim or condensed",
+      "world_operation": "PRODUCE|MAINTAIN|REPAIR|TRANSFORM",
+      "motif_id": "string",
+      "reader_role": "Pilgrim|Witness|Congregant|Archivist|Judge",
+      "continuity_hook": "where reader tends next"
+    }
+  </cell_schema>
+
+  <motif_rules>
+    <rule>No motif may appear in only one cell.</rule>
+    <rule>Motifs must appear in multiple zones.</rule>
+    <rule>Core motifs must radiate outward.</rule>
+  </motif_rules>
+
+  <adjacency_rules>
+    <rule>Horizontal adjacency = association.</rule>
+    <rule>Vertical adjacency = development.</rule>
+    <rule>Diagonal adjacency = tension.</rule>
+  </adjacency_rules>
+
+  <traversal_modes>
+    <mode id="PILGRIMAGE">From OUTER_RING → CENTER_CORE</mode>
+    <mode id="CIRCULATION">Around rings.</mode>
+    <mode id="PROCESSION">Top → bottom.</mode>
+    <mode id="SPIRAL">Edge inward gradually.</mode>
+  </traversal_modes>
+
+  <silence>
+    <rule>At least 10% of cells must contain silence markers.</rule>
+    <rule>Silence cells perform MAINTAIN or REPAIR.</rule>
+  </silence>
+
+  <terminal_thesis>
+    This grid does not organize information.
+    This grid performs culture.
+  </terminal_thesis>
+</prompt>`;
+
+/* ============================================================
+   RITUAL COMPILER (executable translation of the protocol)
+   ============================================================ */
+const GRID_N = 24;
+const CENTER = { x: 12.5, y: 12.5 };
+
+const ZONES = {
+  CENTER_CORE:  { op:"PRODUCE"  },
+  INNER_RING:   { op:"MAINTAIN" },
+  MIDDLE_RING:  { op:"REPAIR"   },
+  OUTER_RING:   { op:"TRANSFORM"}
+};
+
+const MODES = [
+  {id:"PILGRIMAGE", label:"Pilgrimage"},
+  {id:"CIRCULATION", label:"Circulation"},
+  {id:"PROCESSION", label:"Procession"},
+  {id:"SPIRAL", label:"Spiral"},
+  {id:"NONE", label:"None"}
+];
+
+const MOTIFS = {
+  FORGE:        {name:"Forge / Black labours", refrains:["black labours of his forge","iron mouths — bellows breathe","thick strokes — vaults rebound"]},
+  THETIS_GRIEF: {name:"Thetis’ grief / plea", refrains:["crystal drops stood trembling","short-lived son","retard the blow"]},
+  FATE:         {name:"Fate / limit", refrains:["hide him from the Fates","grim with human gore","till he shines no more"]},
+  COSMOS:       {name:"Cosmos on the shield", refrains:["earth — heaven — ocean","sun and moon completely round","starry lights crown heaven"]},
+  STARS:        {name:"Constellations", refrains:["Pleiads — Hyads — northern team","Orion’s beam","the Bear points his golden eye"]},
+  CITY_PEACE:   {name:"City of peace", refrains:["hymeneal rite","new-made brides with torches","cithern’s silver sound"]},
+  CITY_JUSTICE: {name:"Forum / judgment", refrains:["a townsman slain","elders nodded o’er the case","two golden talents — prize of right"]},
+  CITY_WAR:     {name:"City of war", refrains:["leaguer’d town","one would pillage, one would burn","refulgent arms — horrid war"]},
+  AMBUSH:       {name:"Ambush by the silver flood", refrains:["spies at distance lurk","beside a silver flood","the waving silver blush’d with blood"]},
+  TUMULT:       {name:"Tumult / Contention", refrains:["Tumult stood confess’d","Contention rear’d a dagger","carcases they tore"]},
+  PLOUGH:       {name:"Ploughing field", refrains:["deep furrow’d","the third time labour’d","molten gold looked sable"]},
+  HARVEST:      {name:"Harvest / banquet", refrains:["waving grain","sheaves heap’d on sheaves","banquet beneath an ample oak"]},
+  VINEYARD:     {name:"Vineyard / Linus song", refrains:["dangling clusters","purple product of autumn","the fate of Linus sings"]},
+  CATTLE:       {name:"Cattle / lions", refrains:["herds of oxen march","two lions seized a bull","dogs at distance bay"]},
+  FLOCKS:       {name:"Meads / flocks / cottages", refrains:["fair forests and a length of meads","scatter’d cots between","fleecy flocks whiten all the scene"]},
+  DANCE:        {name:"Daedalean dance", refrains:["lofty Gnossus","moving maze","two tumblers in the centre bound"]},
+  OCEAN_RIM:    {name:"Ocean round the verge", refrains:["pour’d the ocean round","living silver waves","bound the whole"]},
+  ARMOR:        {name:"Arms completed / delivery", refrains:["cuirass outshone the fires","helm impress’d with sculpture","Thetis swift… bears the blazing present"]},
+};
+
+function zoneFor(x,y){
+  // 1-based coords
+  if (x>=10 && x<=13 && y>=10 && y<=13) return "CENTER_CORE";
+  if (x>=7  && x<=16 && y>=7  && y<=16) return "INNER_RING";
+  if (x>=4  && x<=19 && y>=4  && y<=19) return "MIDDLE_RING";
+  return "OUTER_RING";
+}
+
+// silence law: >=10% cells; silence performs MAINTAIN or REPAIR
+function isSilence(x,y){
+  const z = zoneFor(x,y);
+  if (z==="CENTER_CORE" || z==="INNER_RING") return false;
+  const h = (x*31 + y*17) % 997;
+  if (z==="MIDDLE_RING"){
+    return (h%17===0) || ((x+y)%7===0);
+  }
+  // OUTER_RING
+  return (h%17===0) || (h%19===0);
+}
+
+function actFor(x,y,zone){
+  // zone_act_mapping translated into a single enforced ritual act per cell
+  // CENTER_CORE: INVOCATION/SEAL
+  // INNER_RING: CHANT/WITNESS
+  // MIDDLE_RING: QUESTION/WITNESS
+  // OUTER_RING: QUESTION (with rare WITNESS/CHANT for repetition)
+  const dir = dirFor(x,y);
+  const h = hashInt(x,y);
+  if (zone==="CENTER_CORE"){
+    return ((x+y)%2===0) ? "INVOCATION" : "SEAL";
+  }
+  if (zone==="INNER_RING"){
+    // CHANT favors compass-cardinal cells; WITNESS elsewhere
+    const card = (dir==="N" || dir==="E" || dir==="S" || dir==="W");
+    return (card && (h%3!==0)) ? "CHANT" : "WITNESS";
+  }
+  if (zone==="MIDDLE_RING"){
+    return (h%4===0) ? "QUESTION" : "WITNESS";
+  }
+  // OUTER_RING
+  if (h%11===0) return "CHANT";
+  if (h%17===0) return "WITNESS";
+  return "QUESTION";
+}
+
+function dirFor(x,y){
+  // 8-direction compass around center; y increases downward so invert for "up"
+  const dx = x - CENTER.x;
+  const dy = -(y - CENTER.y);
+  const ang = Math.atan2(dy, dx); // -pi..pi, 0 = east, pi/2 = north
+  let deg = ang * 180 / Math.PI;  // -180..180
+  if (deg < 0) deg += 360;        // 0..360
+  const idx = Math.floor((deg + 22.5) / 45) % 8;
+  return ["E","NE","N","NW","W","SW","S","SE"][idx];
+}
+
+function themeFor(zone,dir){
+  // shield geography: sky (north), peace (west), war (east), work/dance/ocean (south)
+  if (zone==="CENTER_CORE") return "COSMOS_FORGE";
+
+  if (zone==="INNER_RING"){
+    if (dir==="N" || dir==="NE" || dir==="NW") return "SKY";
+    if (dir==="W") return "CITY_PEACE";
+    if (dir==="NW") return "CITY_JUSTICE"; // overlap allowed; SKY dominates above, but here gives junction
+    if (dir==="E" || dir==="NE") return "CITY_WAR";
+    if (dir==="SE") return "AMBUSH";
+    if (dir==="S" || dir==="SW") return "DANCE_OCEAN";
+    return "WITNESS_RING";
+  }
+
+  if (zone==="MIDDLE_RING"){
+    if (dir==="N" || dir==="NE") return "WAR_TUMULT";
+    if (dir==="E" || dir==="SE") return "CATTLE";
+    if (dir==="S") return "VINEYARD";
+    if (dir==="SW") return "HARVEST_PLOUGH";
+    if (dir==="W") return "FLOCKS";
+    if (dir==="NW") return "ECHO_GRIEF";
+    return "REPAIR_FIELD";
+  }
+
+  // OUTER_RING
+  if (dir==="N" || dir==="NW") return "THETIS";
+  if (dir==="W" || dir==="SW") return "VULCAN";
+  if (dir==="E" || dir==="NE") return "FORGE";
+  return "DELIVERY";
+}
+
+function weightedPick(items, seed){
+  // items: [{id, w}]
+  let total = 0;
+  for (const it of items) total += it.w;
+  let r = (seed % 100000) / 100000 * total;
+  for (const it of items){
+    r -= it.w;
+    if (r <= 0) return it.id;
+  }
+  return items[items.length-1].id;
+}
+
+function hashInt(x,y){
+  // deterministic integer hash
+  let n = (x * 73856093) ^ (y * 19349663);
+  n = (n >>> 0);
+  // mix
+  n ^= (n << 13) >>> 0;
+  n ^= (n >>> 17) >>> 0;
+  n ^= (n << 5) >>> 0;
+  return n >>> 0;
+}
+
+function motifFor(x,y,zone){
+  const dir = dirFor(x,y);
+  const theme = themeFor(zone,dir);
+  const h = hashInt(x,y);
+
+  // Core motifs radiate outward by appearing in multiple zones:
+  // FORGE, COSMOS, OCEAN_RIM, FATE are intentionally eligible everywhere.
+  const ubiquitous = [
+    {id:"FORGE", w: 0.6},
+    {id:"COSMOS", w: 0.5},
+    {id:"OCEAN_RIM", w: 0.5},
+    {id:"FATE", w: 0.4},
+  ];
+
+  function pickTheme(list){
+    // blend theme list with ubiquitous so motifs repeat across zones
+    const merged = [...list, ...ubiquitous];
+    return weightedPick(merged, h);
+  }
+
+  if (zone==="CENTER_CORE"){
+    return weightedPick([
+      {id:"FORGE", w: 2.0},
+      {id:"COSMOS", w: 2.2},
+      {id:"STARS", w: 1.2},
+      {id:"OCEAN_RIM", w: 1.4},
+      {id:"FATE", w: 0.8},
+      {id:"ARMOR", w: 0.6},
+    ], h);
+  }
+
+  if (theme==="SKY"){
+    return pickTheme([
+      {id:"COSMOS", w: 2.0},
+      {id:"STARS", w: 1.8},
+      {id:"OCEAN_RIM", w: 0.5},
+    ]);
+  }
+
+  if (theme==="CITY_PEACE"){
+    return pickTheme([
+      {id:"CITY_PEACE", w: 2.3},
+      {id:"DANCE", w: 1.0},
+      {id:"CITY_JUSTICE", w: 0.6},
+      {id:"VINEYARD", w: 0.5},
+    ]);
+  }
+
+  if (theme==="CITY_WAR"){
+    return pickTheme([
+      {id:"CITY_WAR", w: 2.2},
+      {id:"AMBUSH", w: 1.2},
+      {id:"TUMULT", w: 1.0},
+    ]);
+  }
+
+  if (theme==="AMBUSH"){
+    return pickTheme([
+      {id:"AMBUSH", w: 2.3},
+      {id:"CITY_WAR", w: 1.0},
+      {id:"TUMULT", w: 1.0},
+    ]);
+  }
+
+  if (theme==="DANCE_OCEAN"){
+    return pickTheme([
+      {id:"DANCE", w: 2.0},
+      {id:"OCEAN_RIM", w: 1.3},
+      {id:"CITY_PEACE", w: 0.9},
+    ]);
+  }
+
+  if (theme==="WAR_TUMULT"){
+    return pickTheme([
+      {id:"TUMULT", w: 2.1},
+      {id:"CITY_WAR", w: 1.2},
+      {id:"AMBUSH", w: 1.0},
+      {id:"FATE", w: 1.0},
+    ]);
+  }
+
+  if (theme==="HARVEST_PLOUGH"){
+    return pickTheme([
+      {id:"PLOUGH", w: 1.7},
+      {id:"HARVEST", w: 1.7},
+      {id:"FLOCKS", w: 0.7},
+      {id:"VINEYARD", w: 0.6},
+    ]);
+  }
+
+  if (theme==="VINEYARD"){
+    return pickTheme([
+      {id:"VINEYARD", w: 2.2},
+      {id:"DANCE", w: 0.9},
+      {id:"HARVEST", w: 0.8},
+      {id:"CITY_PEACE", w: 0.6},
+    ]);
+  }
+
+  if (theme==="CATTLE"){
+    return pickTheme([
+      {id:"CATTLE", w: 2.2},
+      {id:"FATE", w: 0.7},
+      {id:"CITY_WAR", w: 0.7},
+    ]);
+  }
+
+  if (theme==="FLOCKS"){
+    return pickTheme([
+      {id:"FLOCKS", w: 2.1},
+      {id:"HARVEST", w: 0.7},
+      {id:"PLOUGH", w: 0.6},
+      {id:"CITY_PEACE", w: 0.6},
+    ]);
+  }
+
+  if (theme==="ECHO_GRIEF"){
+    return pickTheme([
+      {id:"THETIS_GRIEF", w: 2.0},
+      {id:"FATE", w: 1.2},
+      {id:"FORGE", w: 0.8},
+    ]);
+  }
+
+  if (theme==="THETIS"){
+    return pickTheme([
+      {id:"THETIS_GRIEF", w: 2.3},
+      {id:"FATE", w: 1.2},
+      {id:"ARMOR", w: 0.5},
+    ]);
+  }
+
+  if (theme==="VULCAN"){
+    return pickTheme([
+      {id:"FORGE", w: 2.2},
+      {id:"COSMOS", w: 0.8},
+      {id:"ARMOR", w: 0.6},
+    ]);
+  }
+
+  if (theme==="FORGE"){
+    return pickTheme([
+      {id:"FORGE", w: 2.6},
+      {id:"COSMOS", w: 0.7},
+      {id:"ARMOR", w: 0.7},
+    ]);
+  }
+
+  if (theme==="DELIVERY"){
+    return pickTheme([
+      {id:"ARMOR", w: 2.3},
+      {id:"OCEAN_RIM", w: 0.7},
+      {id:"FATE", w: 0.7},
+      {id:"THETIS_GRIEF", w: 0.5},
+    ]);
+  }
+
+  return pickTheme([{id:"FORGE", w:1.0},{id:"COSMOS",w:1.0},{id:"OCEAN_RIM",w:1.0}]);
+}
+
+function readerRoleFor(act, motif){
+  if (motif==="CITY_JUSTICE") return "Judge";
+  if (act==="CHANT") return "Congregant";
+  if (act==="WITNESS") return "Witness";
+  if (act==="SEAL") return "Archivist";
+  if (act==="INVOCATION") return "Archivist";
+  return "Pilgrim";
+}
+
+function continuityHookFor(x,y,zone,motif){
+  // simple ritual tendency: outer->center for Pilgrimage; ring-circling for city motifs; ocean tends to edge
+  const cx = CENTER.x, cy = CENTER.y;
+  const dx = cx - x, dy = cy - y;
+
+  function stepTowardCenter(){
+    const sx = dx===0 ? 0 : (dx>0 ? 1 : -1);
+    const sy = dy===0 ? 0 : (dy>0 ? 1 : -1);
+    const nx = clamp(x + sx, 1, GRID_N);
+    const ny = clamp(y + sy, 1, GRID_N);
+    return `tend inward → (${nx},${ny})`;
+  }
+
+  if (motif==="OCEAN_RIM") return "tend outward → rim / boundary";
+  if (motif.startsWith("CITY")) return "tend around → same ring (circulation)";
+  if (motif==="DANCE") return "tend to spiral → ring becomes wheel";
+  if (motif==="FORGE") return stepTowardCenter();
+  if (zone==="OUTER_RING") return stepTowardCenter();
+  if (zone==="MIDDLE_RING") return "tend to a neighbor → development (vertical)";
+  if (zone==="INNER_RING") return "tend around → association (horizontal)";
+  return "tend inward → core";
+}
+
+function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
+
+/* ============================================================
+   LINE COMPLETENESS (atomic lines assigned to addresses)
+   ============================================================ */
+function parseLines(text){
+  return text
+    .replace(/\r/g,'')
+    .split('\n')
+    .map(s => s.trim())
+    .filter(s => s.length>0);
+}
+
+function spiralOrder(n){
+  // 1..n coords clockwise, outside -> inside
+  const coords=[];
+  let left=1, right=n, top=1, bottom=n;
+  while(left<=right && top<=bottom){
+    for(let x=left; x<=right; x++) coords.push([x,top]);
+    for(let y=top+1; y<=bottom; y++) coords.push([right,y]);
+    if(top<bottom){
+      for(let x=right-1; x>=left; x--) coords.push([x,bottom]);
+    }
+    if(left<right){
+      for(let y=bottom-1; y>top; y--) coords.push([left,y]);
+    }
+    left++; right--; top++; bottom--;
+  }
+  return coords;
+}
+
+/* ============================================================
+   BUILD MANIFEST
+   ============================================================ */
+let state = {
+  mode: "PILGRIMAGE",
+  showGlyph: true,
+  showText: false,
+  showActs: true,
+  showMotifHL: false,
+  showNeighbors: false,
+  q: "",
+  selectedKey: null,
+  manifest: null,
+  lineLedger: null,
+  pathSet: new Set(),
+  motifSet: new Set(),
+};
+
+function compileManifest(){
+  const lines = parseLines(ILIAD_SOURCE);
+  const order = spiralOrder(GRID_N);
+
+  // all non-silence coords in spiral order for line assignment
+  const contentCoords = order.filter(([x,y]) => !isSilence(x,y));
+  const lineMap = new Map(); // key -> {lineIndex, line}
+  for (let i=0; i<Math.min(lines.length, contentCoords.length); i++){
+    const [x,y] = contentCoords[i];
+    lineMap.set(`${x},${y}`, {lineIndex:i+1, line: lines[i]});
+  }
+
+  const cells = [];
+  const ledger = []; // for download / ledger view
+  let silenceCount = 0;
+
+  for(let y=1; y<=GRID_N; y++){
+    for(let x=1; x<=GRID_N; x++){
+      const zone = zoneFor(x,y);
+      const world_operation = ZONES[zone].op;
+
+      let ritual_act = actFor(x,y,zone);
+      let motif_id = motifFor(x,y,zone);
+
+      // enforce silence law
+      const sil = isSilence(x,y);
+      if (sil){
+        silenceCount++;
+        // silence must be MAINTAIN or REPAIR (law)
+        // we keep zone as-is but enforce operation semantics in data layer for silence.
+        // If it's OUTER_RING (TRANSFORM), we still mark it as MAINTAIN (performed act),
+        // without changing the zone boundary.
+        const op2 = (zone==="OUTER_RING") ? "MAINTAIN" : world_operation;
+        const act2 = (zone==="OUTER_RING") ? "CHANT" : (ritual_act==="WITNESS" ? "WITNESS" : "CHANT");
+        cells.push({
+          coord:`(${x},${y})`,
+          x,y, zone,
+          ritual_act: act2,
+          text_fragment: "⟂ SILENCE",
+          world_operation: op2,
+          motif_id: "SILENCE",
+          reader_role: "Congregant",
+          continuity_hook: "hold the world steady",
+          is_silence: true,
+          line_index: null,
+          line_text: null
+        });
+        continue;
+      }
+
+      const key = `${x},${y}`;
+      const assigned = lineMap.get(key);
+      const refrain = pickRefrain(motif_id, x, y);
+
+      const text_fragment = assigned ? assigned.line : refrain;
+
+      const reader_role = readerRoleFor(ritual_act, motif_id);
+      const continuity_hook = continuityHookFor(x,y,zone,motif_id);
+
+      cells.push({
+        coord:`(${x},${y})`,
+        x,y, zone,
+        ritual_act,
+        text_fragment,
+        world_operation,
+        motif_id,
+        reader_role,
+        continuity_hook,
+        is_silence: false,
+        line_index: assigned ? assigned.lineIndex : null,
+        line_text: assigned ? assigned.line : null
+      });
+
+      if (assigned){
+        ledger.push({
+          line_index: assigned.lineIndex,
+          coord: `(${x},${y})`,
+          zone,
+          ritual_act,
+          world_operation,
+          motif_id,
+          line_text: assigned.line
+        });
+      }
+    }
+  }
+
+  // sort ledger by line_index (so it’s a pure address book, not a displayed TOC inside the grid)
+  ledger.sort((a,b)=>a.line_index-b.line_index);
+
+  // quick motif validation (console only)
+  validateMotifDistribution(cells);
+
+  return {
+    meta: {
+      name: "Shield of Achilles • Carey Ritual Grid (24×24)",
+      version: "1.0",
+      silence_count: silenceCount,
+      total_cells: GRID_N*GRID_N,
+      silence_ratio: +(silenceCount/(GRID_N*GRID_N)).toFixed(4),
+      note: "Silence ≥10% enforced. Atomic line completeness mapped along spiral order to non-silence cells."
+    },
+    protocol: {
+      axioms: ["G1 world-not-page","G2 position-performs","G3 cells-stage-acts","G4 traversal-produces","G5 repetition-manufactures"],
+      adjacency_semantics: { horizontal:"association", vertical:"development", diagonal:"tension" },
+      zones: {
+        CENTER_CORE:"(10-13,10-13) PRODUCE",
+        INNER_RING:"(7-16,7-16) excluding core MAINTAIN",
+        MIDDLE_RING:"(4-19,4-19) excluding inner REPAIR",
+        OUTER_RING:"remaining TRANSFORM"
+      },
+      acts: ["INVOCATION","CHANT","WITNESS","QUESTION","SEAL"],
+      traversal_modes: ["PILGRIMAGE","CIRCULATION","PROCESSION","SPIRAL"]
+    },
+    motifs: Object.keys(MOTIFS).sort().map(id => ({id, ...MOTIFS[id]})),
+    cells
+  };
+}
+
+function pickRefrain(motif_id, x, y){
+  const m = MOTIFS[motif_id];
+  if (!m) return "…";
+  const h = hashInt(x,y);
+  return m.refrains[h % m.refrains.length];
+}
+
+function validateMotifDistribution(cells){
+  const map = new Map(); // motif -> {zones:Set}
+  for (const c of cells){
+    if (c.motif_id==="SILENCE") continue;
+    if (!map.has(c.motif_id)) map.set(c.motif_id, {zones:new Set(), count:0});
+    const it = map.get(c.motif_id);
+    it.zones.add(c.zone);
+    it.count++;
+  }
+  const bad = [];
+  for (const [motif, it] of map.entries()){
+    if (it.zones.size < 2) bad.push({motif, zones:[...it.zones], count: it.count});
+  }
+  if (bad.length){
+    console.warn("Motif distribution warnings (should span multiple zones):", bad);
+  }
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+const elGrid = document.getElementById('grid');
+const elModes = document.getElementById('modes');
+const elZoom = document.getElementById('zoom');
+const elZoomLabel = document.getElementById('zoomLabel');
+const elQ = document.getElementById('q');
+const elClearQ = document.getElementById('clearQ');
+
+const elDrawerCard = document.getElementById('drawerCard');
+const elSheet = document.getElementById('sheet');
+const elSheetCard = document.getElementById('sheetCard');
+
+const elProtocol = document.getElementById('protocol');
+const elSource = document.getElementById('source');
+const elLedger = document.getElementById('ledger');
+
+const tabs = [...document.querySelectorAll('.tab')];
+
+function setTab(name){
+  tabs.forEach(t => t.classList.toggle('on', t.dataset.tab === name));
+  // hide overlays
+  document.getElementById('viewport').style.display = (name==="world") ? "block" : "none";
+  document.querySelector('.drawer').style.display = (name==="world" && window.matchMedia("(min-width: 980px)").matches) ? "block" : "none";
+
+  elProtocol.classList.toggle('on', name==="protocol");
+  elSource.classList.toggle('on', name==="source");
+  elLedger.classList.toggle('on', name==="ledger");
+
+  if (name==="protocol"){
+    elProtocol.innerHTML = `
+      <div class="card">
+        <div class="muted"><b>Executable Translation</b>: the Carey prompt is preserved below, and the grid you see is generated by enforced laws (zones → operations, zone→act mapping, motif repetition, ≥10% silence, adjacency semantics).</div>
+      </div>
+      <div style="height:10px"></div>
+      <pre>${escapeHtml(CAREY_PROTOCOL_TEXT)}</pre>
+    `;
+  }
+  if (name==="source"){
+    elSource.innerHTML = `
+      <div class="card">
+        <div class="muted"><b>Source (as provided)</b>. This text is parsed into atomic lines; lines are assigned to grid addresses along a spiral (outside→inside). Motifs then repeat across rings to manufacture world-coherence.</div>
+      </div>
+      <div style="height:10px"></div>
+      <pre>${escapeHtml(ILIAD_SOURCE)}</pre>
+    `;
+  }
+  if (name==="ledger"){
+    renderLedgerView();
+  }
+}
+
+tabs.forEach(t => t.addEventListener('click', () => setTab(t.dataset.tab)));
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderModes(){
+  elModes.innerHTML = "";
+  for (const m of MODES){
+    const b = document.createElement('div');
+    b.className = "pill" + (state.mode===m.id ? " on" : "");
+    b.textContent = m.label;
+    b.addEventListener('click', () => {
+      state.mode = m.id;
+      renderModes();
+      computePathHighlight();
+      renderGrid(); // update classes
+    });
+    elModes.appendChild(b);
+  }
+}
+
+function ringBoundaryClass(x,y){
+  // visual ring boundaries to make topology visible
+  const z = zoneFor(x,y);
+  if (z==="CENTER_CORE") return "b-core";
+  if (z==="INNER_RING") return "b-inner";
+  if (z==="MIDDLE_RING") return "b-middle";
+  return "";
+}
+
+function zoneClass(z){
+  return (z==="CENTER_CORE") ? "z-core"
+    : (z==="INNER_RING") ? "z-inner"
+    : (z==="MIDDLE_RING") ? "z-middle"
+    : "z-outer";
+}
+
+function actClass(a){
+  return "a-" + a.toLowerCase();
+}
+
+function truncate(s, n=22){
+  if (!s) return "";
+  s = String(s);
+  if (s.length<=n) return s;
+  return s.slice(0,n-1) + "…";
+}
+
+function renderGrid(){
+  const m = state.manifest;
+  if (!m) return;
+
+  elGrid.innerHTML = "";
+  const q = (state.q||"").trim().toLowerCase();
+  let motifHL = null;
+  let jumpCoord = null;
+
+  if (q){
+    const coordMatch = q.match(/^(\d{1,2})\s*,\s*(\d{1,2})$/);
+    if (coordMatch){
+      const x = +coordMatch[1], y=+coordMatch[2];
+      if (x>=1 && x<=24 && y>=1 && y<=24) jumpCoord = `${x},${y}`;
+    } else {
+      // motif id highlight if exact match
+      const up = q.toUpperCase();
+      if (MOTIFS[up]) motifHL = up;
+    }
+  }
+
+  // Build an index for selection/fast lookup
+  const byKey = new Map();
+  for (const c of m.cells) byKey.set(`${c.x},${c.y}`, c);
+
+  for (const c of m.cells){
+    const cell = document.createElement('div');
+    cell.className = [
+      "cell",
+      zoneClass(c.zone),
+      ringBoundaryClass(c.x,c.y),
+      state.showActs ? actClass(c.ritual_act) : "",
+      c.is_silence ? "silence" : "",
+      (state.selectedKey===`${c.x},${c.y}`) ? "selected" : "",
+      (state.pathSet.has(`${c.x},${c.y}`)) ? "hl-path" : "",
+      (state.motifSet.has(`${c.x},${c.y}`)) ? "hl-motif" : "",
+      (motifHL && c.motif_id===motifHL) ? "hl-motif" : "",
+    ].filter(Boolean).join(" ");
+
+    cell.setAttribute("role","gridcell");
+    cell.setAttribute("tabindex","0");
+    cell.dataset.key = `${c.x},${c.y}`;
+
+    const content = document.createElement('span');
+    if (state.showGlyph){
+      content.className = "g";
+      content.textContent = c.is_silence ? "⟂" : glyphForMotif(c.motif_id);
+    } else {
+      content.className = "t";
+      content.textContent = truncate(c.text_fragment, 24);
+    }
+    cell.appendChild(content);
+
+    cell.addEventListener('click', () => selectCell(c));
+    cell.addEventListener('keydown', (e) => {
+      if (e.key==="Enter" || e.key===" "){
+        e.preventDefault();
+        selectCell(c);
+      }
+      if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)){
+        e.preventDefault();
+        const [nx,ny] = stepFromKey(c.x,c.y,e.key);
+        const n = byKey.get(`${nx},${ny}`);
+        if (n) selectCell(n, {silent:true});
+      }
+    });
+
+    elGrid.appendChild(cell);
+  }
+
+  // Apply neighbor semantics if requested
+  if (state.showNeighbors && state.selectedKey){
+    const [sx,sy] = state.selectedKey.split(',').map(Number);
+    markNeighbors(sx,sy);
+  }
+
+  // Jump to coord if typed
+  if (jumpCoord){
+    const [x,y] = jumpCoord.split(',').map(Number);
+    const c = byKey.get(jumpCoord);
+    if (c){
+      selectCell(c, {silent:true});
+      scrollToCell(x,y);
+    }
+  }
+}
+
+function glyphForMotif(motif){
+  // Small “pixel-puppet” glyphs without emoji: 2-letter sigils
+  if (motif==="SILENCE") return "Si";
+  const map = {
+    FORGE:"Fg", THETIS_GRIEF:"Th", FATE:"Ft", COSMOS:"Cs", STARS:"St",
+    CITY_PEACE:"Cp", CITY_JUSTICE:"Cj", CITY_WAR:"Cw", AMBUSH:"Am",
+    TUMULT:"Tu", PLOUGH:"Pl", HARVEST:"Hv", VINEYARD:"Vy", CATTLE:"Ca",
+    FLOCKS:"Fl", DANCE:"Dn", OCEAN_RIM:"Oc", ARMOR:"Ar"
+  };
+  return map[motif] || motif.slice(0,2);
+}
+
+function stepFromKey(x,y,key){
+  if (key==="ArrowUp") return [x, clamp(y-1,1,24)];
+  if (key==="ArrowDown") return [x, clamp(y+1,1,24)];
+  if (key==="ArrowLeft") return [clamp(x-1,1,24), y];
+  if (key==="ArrowRight") return [clamp(x+1,1,24), y];
+  return [x,y];
+}
+
+function markNeighbors(x,y){
+  // adjacency semantics: horizontal=association, vertical=development, diagonal=tension
+  // We mark in DOM after render
+  const keys = {
+    assoc: [[x-1,y],[x+1,y]],
+    dev: [[x,y-1],[x,y+1]],
+    tens: [[x-1,y-1],[x+1,y-1],[x-1,y+1],[x+1,y+1]],
+  };
+
+  const all = document.querySelectorAll('.cell');
+  all.forEach(el => {
+    el.classList.remove('n-assoc','n-develop','n-tension');
+  });
+
+  for (const [nx,ny] of keys.assoc){
+    if(nx>=1 && nx<=24 && ny>=1 && ny<=24){
+      const el = document.querySelector(`.cell[data-key="${nx},${ny}"]`);
+      if (el) el.classList.add('n-assoc');
+    }
+  }
+  for (const [nx,ny] of keys.dev){
+    if(nx>=1 && nx<=24 && ny>=1 && ny<=24){
+      const el = document.querySelector(`.cell[data-key="${nx},${ny}"]`);
+      if (el) el.classList.add('n-develop');
+    }
+  }
+  for (const [nx,ny] of keys.tens){
+    if(nx>=1 && nx<=24 && ny>=1 && ny<=24){
+      const el = document.querySelector(`.cell[data-key="${nx},${ny}"]`);
+      if (el) el.classList.add('n-tension');
+    }
+  }
+}
+
+function scrollToCell(x,y){
+  const cell = document.querySelector(`.cell[data-key="${x},${y}"]`);
+  const vp = document.getElementById('viewport');
+  if (!cell || !vp) return;
+  const rect = cell.getBoundingClientRect();
+  const vpRect = vp.getBoundingClientRect();
+  const dx = (rect.left - vpRect.left) - (vpRect.width/2 - rect.width/2);
+  const dy = (rect.top - vpRect.top) - (vpRect.height/2 - rect.height/2);
+  vp.scrollBy({left: dx, top: dy, behavior: "smooth"});
+}
+
+function selectCell(cell, opts={}){
+  state.selectedKey = `${cell.x},${cell.y}`;
+
+  // If motif highlight toggle is on, highlight motif constellation
+  if (state.showMotifHL){
+    state.motifSet = new Set();
+    const target = cell.is_silence ? "SILENCE" : cell.motif_id;
+    for (const c of state.manifest.cells){
+      if (c.motif_id === target) state.motifSet.add(`${c.x},${c.y}`);
+    }
+  } else {
+    state.motifSet = new Set();
+  }
+
+  renderGrid();
+  if (!opts.silent){
+    scrollToCell(cell.x, cell.y);
+  }
+
+  const detailHtml = cellDetailHTML(cell);
+  elDrawerCard.innerHTML = detailHtml;
+  elSheetCard.innerHTML = detailHtml;
+  // open mobile sheet
+  if (window.matchMedia("(max-width: 979px)").matches){
+    elSheet.classList.add('on');
+  }
+}
+
+function cellDetailHTML(c){
+  const z = c.zone;
+  const act = c.ritual_act;
+  const op = c.world_operation;
+  const motif = c.motif_id;
+  const motifName = (MOTIFS[motif] && MOTIFS[motif].name) ? MOTIFS[motif].name : (motif==="SILENCE" ? "Silence" : motif);
+  const refrain = (motif==="SILENCE") ? "hold / maintain / repair" : pickRefrain(motif, c.x, c.y);
+
+  const lineBlock = c.line_index ? `Line #${c.line_index} (assigned):\n${c.line_text}` : `No unique line assigned here.\nRefrain:\n${refrain}`;
+
+  return `
+    <div class="row" style="justify-content:space-between; gap:10px;">
+      <div class="title" style="margin:0;">Cell ${c.coord}</div>
+      <div class="pill" style="cursor:default;">${glyphForMotif(motif)}</div>
+    </div>
+    <div style="height:10px"></div>
+    <div class="k">
+      <div>Zone</div><div><b>${z}</b></div>
+      <div>Operation</div><div><b>${op}</b></div>
+      <div>Ritual act</div><div><b>${act}</b></div>
+      <div>Motif</div><div><b class="mono">${motif}</b> — ${escapeHtml(motifName)}</div>
+      <div>Reader role</div><div><b>${c.reader_role}</b></div>
+      <div>Continuity</div><div>${escapeHtml(c.continuity_hook)}</div>
+    </div>
+    <div style="height:10px"></div>
+    <div class="card" style="background: rgba(255,255,255,.55);">
+      <div class="muted"><b>Text fragment</b> (verbatim or condensed)</div>
+      <div class="bigQuote mono">${escapeHtml(c.text_fragment)}</div>
+    </div>
+    <div style="height:10px"></div>
+    <div class="card" style="background: rgba(255,255,255,.55);">
+      <div class="muted"><b>Atomic line address</b> (completeness)</div>
+      <div class="bigQuote mono">${escapeHtml(lineBlock)}</div>
+    </div>
+    <div style="height:10px"></div>
+    <div class="pillrow">
+      <button class="btn primary" onclick="window.__jumpToCore(${c.x},${c.y})">Pilgrimage step</button>
+      <button class="btn" onclick="window.__highlightMotif('${motif}')">Highlight motif</button>
+      <button class="btn" onclick="window.__closeSheet()">Close</button>
+    </div>
+  `;
+}
+
+window.__closeSheet = () => elSheet.classList.remove('on');
+
+window.__highlightMotif = (motif) => {
+  state.showMotifHL = true;
+  document.getElementById('toggleMotif').classList.add('on');
+  const target = motif;
+  state.motifSet = new Set();
+  for (const c of state.manifest.cells){
+    if (c.motif_id === target) state.motifSet.add(`${c.x},${c.y}`);
+  }
+  renderGrid();
+};
+
+window.__jumpToCore = (x,y) => {
+  // one step inward (toward center)
+  const sx = CENTER.x - x;
+  const sy = CENTER.y - y;
+  const nx = clamp(x + (sx===0 ? 0 : (sx>0 ? 1 : -1)), 1, 24);
+  const ny = clamp(y + (sy===0 ? 0 : (sy>0 ? 1 : -1)), 1, 24);
+  const c = state.manifest.cells.find(cc => cc.x===nx && cc.y===ny);
+  if (c) selectCell(c);
+};
+
+function computePathHighlight(){
+  state.pathSet = new Set();
+  if (state.mode==="NONE") return;
+
+  const cells = state.manifest.cells;
+  const key = (c)=>`${c.x},${c.y}`;
+
+  if (state.mode==="PROCESSION"){
+    // top to bottom reading column-major (ritual procession)
+    for (let y=1;y<=24;y++){
+      for (let x=1;x<=24;x++){
+        state.pathSet.add(`${x},${y}`);
+      }
+    }
+    return;
+  }
+
+  if (state.mode==="SPIRAL"){
+    const coords = spiralOrder(24);
+    coords.forEach(([x,y])=>state.pathSet.add(`${x},${y}`));
+    return;
+  }
+
+  if (state.mode==="CIRCULATION"){
+    // emphasize ring walk: highlight inner ring perimeter + middle ring perimeter
+    for (const c of cells){
+      const z = c.zone;
+      if (z==="INNER_RING" || z==="MIDDLE_RING"){
+        // perimeter test within that zone’s bounding box
+        const box = (z==="INNER_RING") ? {min:7,max:16} : {min:4,max:19};
+        if (c.x===box.min || c.x===box.max || c.y===box.min || c.y===box.max){
+          state.pathSet.add(key(c));
+        }
+      }
+    }
+    return;
+  }
+
+  if (state.mode==="PILGRIMAGE"){
+    // highlight a “tending inward” path from selected cell or from a default outer cell
+    let start = state.selectedKey ? state.selectedKey.split(',').map(Number) : [2,2];
+    let [x,y] = start;
+    for (let i=0;i<40;i++){
+      state.pathSet.add(`${x},${y}`);
+      const sx = CENTER.x - x;
+      const sy = CENTER.y - y;
+      const nx = clamp(x + (sx===0 ? 0 : (sx>0 ? 1 : -1)), 1, 24);
+      const ny = clamp(y + (sy===0 ? 0 : (sy>0 ? 1 : -1)), 1, 24);
+      if (nx===x && ny===y) break;
+      x=nx; y=ny;
+    }
+    return;
+  }
+}
+
+function renderLedgerView(){
+  const rows = state.lineLedger || [];
+  const head = `
+    <div class="card">
+      <div class="muted"><b>Line Ledger</b> (Archivist view). Each atomic line is assigned an address (x,y). This view is intentionally outside the ritual field, so the grid itself does not become a table of contents.</div>
+    </div>
+    <div style="height:10px"></div>
+  `;
+  const body = rows.slice(0, 600).map(r => {
+    const txt = escapeHtml(r.line_text);
+    return `<div class="card" style="margin-bottom:8px;">
+      <div class="small mono">#${r.line_index} → ${r.coord} • ${r.zone} • ${r.ritual_act} • ${r.world_operation} • ${r.motif_id}</div>
+      <div class="mono" style="margin-top:6px; font-size:12px; line-height:1.35;">${txt}</div>
+    </div>`;
+  }).join("");
+  elLedger.innerHTML = head + body;
+}
+
+/* ============================================================
+   TOGGLES / INPUTS
+   ============================================================ */
+const elToggleGlyph = document.getElementById('toggleGlyph');
+const elToggleText = document.getElementById('toggleText');
+const elToggleActs = document.getElementById('toggleActs');
+const elToggleMotif = document.getElementById('toggleMotif');
+const elToggleNeighbors = document.getElementById('toggleNeighbors');
+
+elToggleGlyph.addEventListener('click', ()=>{
+  state.showGlyph = true; state.showText = false;
+  elToggleGlyph.classList.add('on');
+  elToggleText.classList.remove('on');
+  renderGrid();
+});
+
+elToggleText.addEventListener('click', ()=>{
+  state.showGlyph = false; state.showText = true;
+  elToggleText.classList.add('on');
+  elToggleGlyph.classList.remove('on');
+  renderGrid();
+});
+
+elToggleActs.addEventListener('click', ()=>{
+  state.showActs = !state.showActs;
+  elToggleActs.classList.toggle('on', state.showActs);
+  renderGrid();
+});
+
+elToggleMotif.addEventListener('click', ()=>{
+  state.showMotifHL = !state.showMotifHL;
+  elToggleMotif.classList.toggle('on', state.showMotifHL);
+  state.motifSet = new Set();
+  if (state.showMotifHL && state.selectedKey){
+    const c = state.manifest.cells.find(cc => `${cc.x},${cc.y}`===state.selectedKey);
+    if (c){
+      for (const cc of state.manifest.cells){
+        if (cc.motif_id===c.motif_id) state.motifSet.add(`${cc.x},${cc.y}`);
+      }
+    }
+  }
+  renderGrid();
+});
+
+elToggleNeighbors.addEventListener('click', ()=>{
+  state.showNeighbors = !state.showNeighbors;
+  elToggleNeighbors.classList.toggle('on', state.showNeighbors);
+  renderGrid();
+});
+
+elZoom.addEventListener('input', ()=>{
+  const px = +elZoom.value;
+  document.documentElement.style.setProperty('--cell', px + 'px');
+  elZoomLabel.textContent = px + "px";
+});
+
+elQ.addEventListener('input', ()=>{
+  state.q = elQ.value;
+  renderGrid();
+});
+
+elClearQ.addEventListener('click', ()=>{
+  elQ.value = "";
+  state.q = "";
+  renderGrid();
+});
+
+/* ============================================================
+   EXPORTS
+   ============================================================ */
+document.getElementById('dlManifest').addEventListener('click', ()=>{
+  downloadText("manifest.json", JSON.stringify(state.manifest, null, 2));
+});
+
+document.getElementById('dlLedger').addEventListener('click', ()=>{
+  downloadText("line-ledger.csv", ledgerToCSV(state.lineLedger));
+});
+
+function ledgerToCSV(rows){
+  const cols = ["line_index","coord","zone","ritual_act","world_operation","motif_id","line_text"];
+  const escape = (v) => `"${String(v).replace(/"/g,'""')}"`;
+  const out = [cols.join(",")];
+  for (const r of rows){
+    out.push(cols.map(c => escape(r[c] ?? "")).join(","));
+  }
+  return out.join("\n");
+}
+
+function downloadText(filename, text){
+  const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
+}
+
+document.getElementById('reseed').addEventListener('click', ()=>{
+  boot(); // same laws; recompile & rerender
+});
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+function boot(){
+  state.manifest = compileManifest();
+  state.lineLedger = state.manifest.cells
+    .filter(c => c.line_index)
+    .sort((a,b)=>a.line_index-b.line_index)
+    .map(c => ({
+      line_index: c.line_index,
+      coord: c.coord,
+      zone: c.zone,
+      ritual_act: c.ritual_act,
+      world_operation: c.world_operation,
+      motif_id: c.motif_id,
+      line_text: c.line_text
+    }));
+
+  renderModes();
+  computePathHighlight();
+  renderGrid();
+
+  // default selection: a meaningful outer-ring cell that likely contains Thetis or Forge
+  const pick = state.manifest.cells.find(c => c.zone==="OUTER_RING" && !c.is_silence && (c.motif_id==="THETIS_GRIEF" || c.motif_id==="FORGE")) ||
+               state.manifest.cells.find(c => c.zone==="OUTER_RING" && !c.is_silence) ||
+               state.manifest.cells[0];
+  selectCell(pick, {silent:true});
+}
+boot();
+
+/* close sheet when tapping outside (mobile) */
+document.addEventListener('pointerdown', (e)=>{
+  const isMobile = window.matchMedia("(max-width: 979px)").matches;
+  if (!isMobile) return;
+  if (!elSheet.classList.contains('on')) return;
+  const inside = elSheet.contains(e.target);
+  if (!inside){
+    elSheet.classList.remove('on');
+  }
+});
+</script>
+</body>
+</html>

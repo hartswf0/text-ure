@@ -1,0 +1,1311 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,interactive-widget=resizes-content" />
+  <title>Shield of Achilles — 24×24 Inscription Grid</title>
+  <style>
+    :root{
+      --paper:#f4f4f0;
+      --ink:#111;
+      --muted:#666;
+      --line:#d8d8d2;
+      --accent:#0b5cff;
+      --accent2:#32cd32;
+      --warn:#ff3b30;
+      --card:#ffffff;
+      --shadow: 0 8px 24px rgba(0,0,0,.08);
+      --radius: 16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+    html,body{height:100%; margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans);}
+    a{color:inherit}
+
+    /* Layout */
+    .app{
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding:10px;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .topbar{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .topbar .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .brand{
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+      min-width: 240px;
+    }
+    .brand h1{
+      margin:0;
+      font-size:14px;
+      letter-spacing:.02em;
+    }
+    .brand .sub{
+      font-family: var(--mono);
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .controls{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+      flex: 1;
+      min-width: 240px;
+    }
+    .btn{
+      border:1px solid var(--line);
+      background: #fff;
+      border-radius: 12px;
+      padding:8px 10px;
+      font-size:12px;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+    }
+    .btn:active{transform: translateY(1px);}
+    .btn.primary{border-color: rgba(11,92,255,.35); box-shadow: 0 6px 18px rgba(11,92,255,.12);}
+    .btn.toggle.on{border-color: rgba(50,205,50,.35); box-shadow: 0 6px 18px rgba(50,205,50,.12);}
+    .pill{
+      font-family: var(--mono);
+      font-size: 11px;
+      padding:2px 8px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: #fff;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .pill.good{color:#0a6; border-color: rgba(0,170,102,.25); background: rgba(0,170,102,.06);}
+    .pill.lock{color:#0b5cff; border-color: rgba(11,92,255,.25); background: rgba(11,92,255,.06);}
+    .pill.warn{color:var(--warn); border-color: rgba(255,59,48,.25); background: rgba(255,59,48,.06);}
+
+    .main{
+      flex:1;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+
+    /* Grid card */
+    .gridCard{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .gridHeader{
+      padding:10px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .gridHeader .hint{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.2;
+    }
+    .gridWrap{
+      padding:10px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
+    .grid{
+      width:min(92vw, 560px);
+      aspect-ratio:1/1;
+      display:grid;
+      grid-template-columns: repeat(24, 1fr);
+      grid-template-rows: repeat(24, 1fr);
+      gap:2px;
+      background: #fff;
+      border:1px solid var(--line);
+      border-radius: 14px;
+      padding:6px;
+      touch-action: manipulation;
+    }
+    .cell{
+      border-radius: 4px;
+      border:1px solid rgba(0,0,0,.06);
+      background: rgba(0,0,0,.02);
+      position:relative;
+      overflow:hidden;
+      cursor:pointer;
+    }
+    .cell.empty{
+      background: rgba(0,0,0,.01);
+      border-color: rgba(0,0,0,.04);
+    }
+    .cell.core{ background: rgba(11,92,255,.07); border-color: rgba(11,92,255,.10); }
+    .cell.echo{ background: rgba(50,205,50,.07); border-color: rgba(50,205,50,.10); }
+    .cell.glue{ background: rgba(255,59,48,.06); border-color: rgba(255,59,48,.10); }
+    .cell.beacon::after{
+      content:"";
+      position:absolute;
+      inset:auto 2px 2px auto;
+      width:6px;height:6px;border-radius:999px;
+      background: rgba(11,92,255,.85);
+      box-shadow: 0 0 0 2px rgba(11,92,255,.15);
+    }
+    .cell.sel{
+      outline: 2px solid rgba(11,92,255,.85);
+      outline-offset: 1px;
+      z-index:2;
+    }
+    .cell.locked{
+      outline: 2px solid rgba(50,205,50,.95);
+      outline-offset: 1px;
+    }
+    .cell .mini{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: rgba(0,0,0,.45);
+      user-select:none;
+    }
+
+    /* Detail card */
+    .detailCard{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height: 260px;
+    }
+    .detailHeader{
+      padding:10px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .detailHeader .meta{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width: 220px;
+      flex:1;
+    }
+    .detailHeader .meta .title{
+      font-size:13px;
+      font-weight:700;
+      margin:0;
+      letter-spacing:.02em;
+    }
+    .detailHeader .meta .sub{
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      word-break: break-word;
+    }
+    .detailHeader .right{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .detailBody{
+      padding:10px;
+      overflow:auto;
+      flex:1;
+    }
+    .payload{
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.35;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin:0;
+    }
+    .footerNav{
+      border-top:1px solid var(--line);
+      padding:10px;
+      display:flex;
+      gap:8px;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .navpad{
+      display:grid;
+      grid-template-columns: 44px 44px 44px;
+      grid-template-rows: 44px 44px;
+      gap:8px;
+    }
+    .navpad button{
+      width:44px;height:44px;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background:#fff;
+      font-family: var(--mono);
+      font-size: 14px;
+      cursor:pointer;
+    }
+    .navpad button:active{transform: translateY(1px);}
+    .navpad .up{grid-column:2; grid-row:1;}
+    .navpad .left{grid-column:1; grid-row:2;}
+    .navpad .down{grid-column:2; grid-row:2;}
+    .navpad .right{grid-column:3; grid-row:2;}
+    .smallhint{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.2;
+      max-width: 520px;
+    }
+
+    /* Responsive: side-by-side on larger screens */
+    @media (min-width: 980px){
+      .main{ grid-template-columns: 1.05fr .95fr; align-items:stretch; }
+      .grid{ width: min(46vw, 640px); }
+      .detailCard{ min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <div class="topbar">
+    <div class="row">
+      <div class="brand">
+        <h1>Shield of Achilles — 24×24 Inscription Grid</h1>
+        <span class="sub">address space · beacons · panel-lock</span>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btnCenter" title="Jump to center (cosmos)">◎ Center</button>
+        <button class="btn" id="btnNextCore" title="Jump to next core cell">⇥ Next Core</button>
+        <button class="btn toggle" id="btnLock" title="Toggle panel lock">🔒 Lock</button>
+        <button class="btn" id="btnUnlock" title="Unlock panel">✕ Unlock</button>
+        <button class="btn" id="btnHelp" title="Show help">? Help</button>
+        <span class="pill" id="pillStatus">ready</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="pill good" id="pillCoverage">coverage: —</span>
+      <span class="pill" id="pillCoord">cell: —</span>
+      <span class="pill" id="pillPanel">panel: —</span>
+      <span class="pill" id="pillRole">role: —</span>
+      <span class="pill lock" id="pillLock">lock: off</span>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="gridCard">
+      <div class="gridHeader">
+        <div class="hint">
+          Tap a cell to read. Use arrow keys / WASD. Beacon dot = panel header. <br/>
+          Blue = core, Green = echo, Red = glue.
+        </div>
+        <div class="hint" style="font-family:var(--mono);">
+          seek cost: |dx|+|dy|+3·|Δshell|
+        </div>
+      </div>
+      <div class="gridWrap">
+        <div class="grid" id="grid" aria-label="24 by 24 grid"></div>
+      </div>
+    </div>
+
+    <div class="detailCard">
+      <div class="detailHeader">
+        <div class="meta">
+          <div class="title" id="detailTitle">Select a cell</div>
+          <div class="sub" id="detailSub">—</div>
+        </div>
+        <div class="right">
+          <span class="pill" id="detailBeacon">beacon: —</span>
+          <span class="pill" id="detailChunk">chunk: —</span>
+          <span class="pill" id="detailLines">lines: —</span>
+        </div>
+      </div>
+      <div class="detailBody">
+        <pre class="payload" id="detailPayload">Tap any cell. The text here is generated deterministically from SOURCE_TEXT_SHIELD.
+Beacons trigger panel-lock bias. Unlock to roam.</pre>
+      </div>
+      <div class="footerNav">
+        <div class="navpad" aria-label="navigation pad">
+          <button class="up" id="navUp">↑</button>
+          <button class="left" id="navLeft">←</button>
+          <button class="down" id="navDown">↓</button>
+          <button class="right" id="navRight">→</button>
+        </div>
+        <div class="smallhint">
+          <b>Lock mode:</b> when ON and you hit a beacon, movement prefers same-panel cores and low seek-cost targets.
+          <br/>
+          <b>Tip:</b> try “Next Core” to tour the shield’s registers.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/**
+ * Single-file, deterministic "inscription system" viewer.
+ * - Loads user-provided Shield text (Pope translation excerpt).
+ * - Builds: source lines → line_ids → panels → chunks → 24×24 allocation.
+ * - Renders a grid with core cells explicitly placed and remaining cells generated as echo/glue.
+ * - Implements beacon detection, panel-lock bias, and navigation.
+ *
+ * No external libraries. Mobile-friendly.
+ */
+
+(function(){
+  "use strict";
+
+  // ---------------------------
+  // 0) SOURCE TEXT (user-provided)
+  // ---------------------------
+  const SOURCE_TEXT_SHIELD = `
+The Iliad, Book XVIII, [The Shield of Achilles]
+
+Homer
+
+Thetis goes to the palace of Vulcan to obtain new arms for her son.
+
+"Thee, welcome, goddess! what occasion calls
+(So long a stranger) to these honour'd walls?
+'Tis thine, fair Thetis, the command to lay,
+And Vulcan's joy and duty to obey."
+
+To whom the mournful mother thus replies:
+(The crystal drops stood trembling in her eyes:)
+"O Vulcan! say, was ever breast divine
+So pierced with sorrows, so o'erwhelm'd as mine?
+Of all the goddesses, did Jove prepare
+For Thetis only such a weight of care?
+I, only I, of all the watery race
+By force subjected to a man's embrace,
+Who, sinking now with age and sorrow, pays
+The mighty fine imposed on length of days.
+Sprung from my bed, a godlike hero came,
+The bravest sure that ever bore the name;
+Like some fair plant beneath my careful hand
+He grew, he flourish'd, and he graced the land:
+To Troy I sent him! but his native shore
+Never, ah never, shall receive him more;
+(Even while he lives, he wastes with secret woe;)
+Nor I, a goddess, can retard the blow!
+Robb'd of the prize the Grecian suffrage gave,
+The king of nations forced his royal slave:
+For this he grieved; and, till the Greeks oppress'd
+Required his arm, he sorrow'd unredress'd.
+Large gifts they promise, and their elders send;
+In vain--he arms not, but permits his friend
+His arms, his steeds, his forces to employ:
+He marches, combats, almost conquers Troy:
+Then slain by Phoebus (Hector had the name)
+At once resigns his armour, life, and fame.
+But thou, in pity, by my prayer be won:
+Grace with immortal arms this short-lived son,
+And to the field in martial pomp restore,
+To shine with glory, till he shines no more!"
+
+To her the artist-god: "Thy griefs resign,
+Secure, what Vulcan can, is ever thine.
+O could I hide him from the Fates, as well,
+Or with these hands the cruel stroke repel,
+As I shall forge most envied arms, the gaze
+Of wondering ages, and the world's amaze!"
+
+Thus having said, the father of the fires
+To the black labours of his forge retires.
+Soon as he bade them blow, the bellows turn'd
+Their iron mouths; and where the furnace burn'd,
+Resounding breathed: at once the blast expires,
+And twenty forges catch at once the fires;
+Just as the god directs, now loud, now low,
+They raise a tempest, or they gently blow;
+In hissing flames huge silver bars are roll'd,
+And stubborn brass, and tin, and solid gold;
+Before, deep fix'd, the eternal anvils stand;
+The ponderous hammer loads his better hand,
+His left with tongs turns the vex'd metal round,
+And thick, strong strokes, the doubling vaults rebound.
+
+Then first he form'd the immense and solid shield;
+Rich various artifice emblazed the field;
+Its utmost verge a threefold circle bound;
+A silver chain suspends the massy round;
+Five ample plates the broad expanse compose,
+And godlike labours on the surface rose.
+There shone the image of the master-mind:
+There earth, there heaven, there ocean he design'd;
+The unwearied sun, the moon completely round;
+The starry lights that heaven's high convex crown'd;
+The Pleiads, Hyads, with the northern team;
+And great Orion's more refulgent beam;
+To which, around the axle of the sky,
+The Bear, revolving, points his golden eye,
+Still shines exalted on the ethereal plain,
+Nor bathes his blazing forehead in the main.
+
+Two cities radiant on the shield appear,
+The image one of peace, and one of war.
+Here sacred pomp and genial feast delight,
+And solemn dance, and hymeneal rite;
+Along the street the new-made brides are led,
+With torches flaming, to the nuptial bed:
+The youthful dancers in a circle bound
+To the soft flute, and cithern's silver sound:
+Through the fair streets the matrons in a row
+Stand in their porches, and enjoy the show.
+
+There in the forum swarm a numerous train;
+The subject of debate, a townsman slain:
+One pleads the fine discharged, which one denied,
+And bade the public and the laws decide:
+The witness is produced on either hand:
+For this, or that, the partial people stand:
+The appointed heralds still the noisy bands,
+And form a ring, with sceptres in their hands:
+On seats of stone, within the sacred place,
+The reverend elders nodded o'er the case;
+Alternate, each the attesting sceptre took,
+And rising solemn, each his sentence spoke
+Two golden talents lay amidst, in sight,
+The prize of him who best adjudged the right.
+
+Another part (a prospect differing far)(255)
+Glow'd with refulgent arms, and horrid war.
+Two mighty hosts a leaguer'd town embrace,
+And one would pillage, one would burn the place.
+Meantime the townsmen, arm'd with silent care,
+A secret ambush on the foe prepare:
+Their wives, their children, and the watchful band
+Of trembling parents, on the turrets stand.
+They march; by Pallas and by Mars made bold:
+Gold were the gods, their radiant garments gold,
+And gold their armour: these the squadron led,
+August, divine, superior by the head!
+A place for ambush fit they found, and stood,
+Cover'd with shields, beside a silver flood.
+Two spies at distance lurk, and watchful seem
+If sheep or oxen seek the winding stream.
+Soon the white flocks proceeded o'er the plains,
+And steers slow-moving, and two shepherd swains;
+Behind them piping on their reeds they go,
+Nor fear an ambush, nor suspect a foe.
+In arms the glittering squadron rising round
+Rush sudden; hills of slaughter heap the ground;
+Whole flocks and herds lie bleeding on the plains,
+And, all amidst them, dead, the shepherd swains!
+The bellowing oxen the besiegers hear;
+They rise, take horse, approach, and meet the war,
+They fight, they fall, beside the silver flood;
+The waving silver seem'd to blush with blood.
+There Tumult, there Contention stood confess'd;
+One rear'd a dagger at a captive's breast;
+One held a living foe, that freshly bled
+With new-made wounds; another dragg'd a dead;
+Now here, now there, the carcases they tore:
+Fate stalk'd amidst them, grim with human gore.
+And the whole war came out, and met the eye;
+And each bold figure seem'd to live or die.
+
+A field deep furrow'd next the god design'd,
+The third time labour'd by the sweating hind;
+The shining shares full many ploughmen guide,
+And turn their crooked yokes on every side.
+Still as at either end they wheel around,
+The master meets them with his goblet crown'd;
+The hearty draught rewards, renews their toil,
+Then back the turning ploughshares cleave the soil:
+Behind, the rising earth in ridges roll'd;
+And sable look'd, though form'd of molten gold.
+
+Another field rose high with waving grain;
+With bended sickles stand the reaper train:
+Here stretched in ranks the levell'd swarths are found,
+Sheaves heap'd on sheaves here thicken up the ground.
+With sweeping stroke the mowers strow the lands;
+The gatherers follow, and collect in bands;
+And last the children, in whose arms are borne
+(Too short to gripe them) the brown sheaves of corn.
+The rustic monarch of the field descries,
+With silent glee, the heaps around him rise.
+A ready banquet on the turf is laid,
+Beneath an ample oak's expanded shade.
+The victim ox the sturdy youth prepare;
+The reaper's due repast, the woman's care.
+
+Next, ripe in yellow gold, a vineyard shines,
+Bent with the ponderous harvest of its vines;
+A deeper dye the dangling clusters show,
+And curl'd on silver props, in order glow:
+A darker metal mix'd intrench'd the place;
+And pales of glittering tin the inclosure grace.
+To this, one pathway gently winding leads,
+Where march a train with baskets on their heads,
+(Fair maids and blooming youths,) that smiling bear
+The purple product of the autumnal year.
+To these a youth awakes the warbling strings,
+Whose tender lay the fate of Linus sings;
+In measured dance behind him move the train,
+Tune soft the voice, and answer to the strain.
+
+Here herds of oxen march, erect and bold,
+Rear high their horns, and seem to low in gold,
+And speed to meadows on whose sounding shores
+A rapid torrent through the rushes roars:
+Four golden herdsmen as their guardians stand,
+And nine sour dogs complete the rustic band.
+Two lions rushing from the wood appear'd;
+And seized a bull, the master of the herd:
+He roar'd: in vain the dogs, the men withstood;
+They tore his flesh, and drank his sable blood.
+The dogs (oft cheer'd in vain) desert the prey,
+Dread the grim terrors, and at distance bay.
+
+Next this, the eye the art of Vulcan leads
+Deep through fair forests, and a length of meads,
+And stalls, and folds, and scatter'd cots between;
+And fleecy flocks, that whiten all the scene.
+
+A figured dance succeeds; such once was seen
+In lofty Gnossus for the Cretan queen,
+Form'd by Daedalean art; a comely band
+Of youths and maidens, bounding hand in hand.
+The maids in soft simars of linen dress'd;
+The youths all graceful in the glossy vest:
+Of those the locks with flowery wreath inroll'd;
+Of these the sides adorn'd with swords of gold,
+That glittering gay, from silver belts depend.
+Now all at once they rise, at once descend,
+With well-taught feet: now shape in oblique ways,
+Confusedly regular, the moving maze:
+Now forth at once, too swift for sight, they spring,
+And undistinguish'd blend the flying ring:
+So whirls a wheel, in giddy circle toss'd,
+And, rapid as it runs, the single spokes are lost.
+The gazing multitudes admire around:
+Two active tumblers in the centre bound;
+Now high, now low, their pliant limbs they bend:
+And general songs the sprightly revel end.
+
+Thus the broad shield complete the artist crown'd
+With his last hand, and pour'd the ocean round:
+In living silver seem'd the waves to roll,
+And beat the buckler's verge, and bound the whole.
+
+This done, whate'er a warrior's use requires
+He forged; the cuirass that outshone the fires,
+The greaves of ductile tin, the helm impress'd
+With various sculpture, and the golden crest.
+At Thetis' feet the finished labour lay:
+She, as a falcon cuts the aerial way,
+Swift from Olympus' snowy summit flies,
+And bears the blazing present through the skies.
+`.trim();
+
+  // ---------------------------
+  // 1) Normalize lines → line_ids
+  // ---------------------------
+  function normalizeLines(text){
+    return text
+      .split("\n")
+      .map(l => l.replace(/\s+$/g,"").replace(/^\s+/g,""))
+      .filter(l => l.length > 0);
+  }
+  const sourceLines = normalizeLines(SOURCE_TEXT_SHIELD);
+  const lineCount = sourceLines.length;
+
+  function pad4(n){ return String(n).padStart(4,"0"); }
+  function lineId(i1){ return "L"+pad4(i1); }
+
+  // ---------------------------
+  // 2) Panels and chunk specs (deterministic)
+  // ---------------------------
+  const panels = [
+    { id:"P00_META", title:"Paratext / Header", range:[1,3],  mechanisms:["boot","archive_header"], tagset:["paratext"] },
+    { id:"P01_WELCOME", title:"Vulcan Welcomes Thetis", range:[4,7], mechanisms:["address","summons"], tagset:["forge_gate","hospitality"] },
+    { id:"P02_LAMENT", title:"Thetis’ Lament / Petition", range:[8,39], mechanisms:["petition","fate","maternal_sorrow"], tagset:["lament","mortality","honor","loss"] },
+    { id:"P03_VULCAN_OATH", title:"Vulcan’s Oath to Forge", range:[40,45], mechanisms:["promise","craft","envy_of_ages"], tagset:["craft_vow","fate"] },
+    { id:"P04_FORGE_LABOR", title:"Furnace & Bellows / Material Channel", range:[46,59], mechanisms:["apparatus","channel","heat","metal"], tagset:["forge","industrial"] },
+    { id:"P05_SHIELD_OVERVIEW", title:"Shield as Multi-Plate Address Space", range:[60,65], mechanisms:["addressing","circles","plates"], tagset:["shield_schema","memory_layout"] },
+    { id:"P06_COSMOS", title:"Cosmic Register: Earth/Heaven/Ocean/Stars", range:[66,75], mechanisms:["world_model","cosmos"], tagset:["cosmos","celestial"] },
+    { id:"P07_CITY_PEACE", title:"City of Peace: Wedding, Feast, Music", range:[76,85], mechanisms:["ritual","music","civic_order"], tagset:["polis_peace","marriage","festival","audio"] },
+    { id:"P08_CITY_LAW", title:"City of Law: Trial, Heralds, Elders", range:[86,99], mechanisms:["judgment","protocol","public_address"], tagset:["polis_law","debate","verdict"] },
+    { id:"P09_CITY_WAR", title:"City of War: Siege, Ambush, Battle, Personifications", range:[100,135], mechanisms:["conflict","ambush","blood","fate"], tagset:["polis_war","violence","personified_forces"] },
+    { id:"P10_FIELD_PLOUGH", title:"Plough Field: Cyclic Labor & Reward", range:[136,145], mechanisms:["labor_cycle","rotation"], tagset:["agrarian_labor","plough"] },
+    { id:"P11_FIELD_HARVEST", title:"Harvest Field: Reaping, Sheaves, Feast", range:[146,159], mechanisms:["production","distribution","feast"], tagset:["harvest","commons"] },
+    { id:"P12_VINEYARD", title:"Vineyard: Procession & Linus Song", range:[160,173], mechanisms:["music","procession","season"], tagset:["vineyard","audio","lament_song"] },
+    { id:"P13_CATTLE_LIONS", title:"Cattle & Lions: Predation at the Torrent", range:[174,185], mechanisms:["predation","herd","terror"], tagset:["pastoral","predation"] },
+    { id:"P14_FLOCKS", title:"Folds & Cots: Pastoral Continuity", range:[186,189], mechanisms:["pastoral","habitation"], tagset:["pastoral","settlement"] },
+    { id:"P15_DANCE", title:"Daedalean Dance: Labyrinth / Kinetic Loop", range:[190,209], mechanisms:["maze","kinetic_loop","chorus"], tagset:["dance","ritual_loop"] },
+    { id:"P16_OCEAN_RIM", title:"Ocean Rim: Boundary Condition", range:[210,213], mechanisms:["boundary","closure","recursion"], tagset:["ocean_rim","seal"] },
+    { id:"P17_ARMORY", title:"Other Arms: Cuirass, Greaves, Helm", range:[214,217], mechanisms:["kit","protection","completion"], tagset:["armory","completion"] },
+    { id:"P18_DELIVERY", title:"Delivery: Thetis’ Flight", range:[218,221], mechanisms:["transmission","delivery","speed"], tagset:["flight","handoff"] },
+  ];
+
+  // Chunk plan exactly as in the "spec+json" response
+  const chunkPlan = [
+    ["P00_META","C01",1,3],
+    ["P01_WELCOME","C01",4,7],
+    ["P02_LAMENT","C01",8,18],
+    ["P02_LAMENT","C02",19,27],
+    ["P02_LAMENT","C03",28,35],
+    ["P02_LAMENT","C04",36,39],
+    ["P03_VULCAN_OATH","C01",40,45],
+    ["P04_FORGE_LABOR","C01",46,52],
+    ["P04_FORGE_LABOR","C02",53,59],
+    ["P05_SHIELD_OVERVIEW","C01",60,65],
+    ["P06_COSMOS","C01",66,71],
+    ["P06_COSMOS","C02",72,75],
+    ["P07_CITY_PEACE","C01",76,81],
+    ["P07_CITY_PEACE","C02",82,85],
+    ["P08_CITY_LAW","C01",86,92],
+    ["P08_CITY_LAW","C02",93,99],
+    ["P09_CITY_WAR","C01",100,109],
+    ["P09_CITY_WAR","C02",110,119],
+    ["P09_CITY_WAR","C03",120,129],
+    ["P09_CITY_WAR","C04",130,135],
+    ["P10_FIELD_PLOUGH","C01",136,141],
+    ["P10_FIELD_PLOUGH","C02",142,145],
+    ["P11_FIELD_HARVEST","C01",146,152],
+    ["P11_FIELD_HARVEST","C02",153,159],
+    ["P12_VINEYARD","C01",160,166],
+    ["P12_VINEYARD","C02",167,173],
+    ["P13_CATTLE_LIONS","C01",174,179],
+    ["P13_CATTLE_LIONS","C02",180,185],
+    ["P14_FLOCKS","C01",186,189],
+    ["P15_DANCE","C01",190,196],
+    ["P15_DANCE","C02",197,203],
+    ["P15_DANCE","C03",204,209],
+    ["P16_OCEAN_RIM","C01",210,213],
+    ["P17_ARMORY","C01",214,217],
+    ["P18_DELIVERY","C01",218,221]
+  ];
+
+  // Build chunk objects
+  const chunks = chunkPlan.map(([pid,cid,start,end]) => ({
+    panel_id: pid,
+    chunk_short: cid,
+    chunk_id: `${pid}.${cid}`,
+    start, end,
+    line_id_range: `${lineId(start)}-${lineId(end)}`
+  }));
+
+  const panelById = Object.fromEntries(panels.map(p => [p.id, p]));
+  const chunksByPanel = {};
+  for (const ch of chunks){
+    if (!chunksByPanel[ch.panel_id]) chunksByPanel[ch.panel_id] = [];
+    chunksByPanel[ch.panel_id].push(ch);
+  }
+
+  // ---------------------------
+  // 3) Grid allocation: core placements fixed; rest deterministic echo/glue
+  // ---------------------------
+  const W=24, H=24;
+  const CENTER = { xs:[11,12], ys:[11,12] };
+
+  function shellIndex(x,y){
+    // Chebyshev distance to the nearest point in the 2x2 center block
+    const dx = (x < 11) ? (11 - x) : (x > 12 ? (x - 12) : 0);
+    const dy = (y < 11) ? (11 - y) : (y > 12 ? (y - 12) : 0);
+    return Math.max(dx,dy);
+  }
+
+  // "Core cells explicit" list, matching the earlier JSON.
+  // Note: Not every chunk is placed here; many are. Coverage is guaranteed through core placements for all line_ids
+  // by the explicit mappings below + spillover fill policy for remaining chunks (deterministic).
+  const coreSeeds = [
+    // Cosmos center
+    {x:11,y:11, panel:"P06_COSMOS", chunk:"P06_COSMOS.C01", role:"core", beacon:true},
+    {x:12,y:11, panel:"P06_COSMOS", chunk:"P06_COSMOS.C02", role:"core", beacon:false},
+
+    // Shield overview
+    {x:10,y:10, panel:"P05_SHIELD_OVERVIEW", chunk:"P05_SHIELD_OVERVIEW.C01", role:"core", beacon:true},
+
+    // Peace & law
+    {x:9,y:9, panel:"P07_CITY_PEACE", chunk:"P07_CITY_PEACE.C01", role:"core", beacon:true},
+    {x:10,y:9, panel:"P07_CITY_PEACE", chunk:"P07_CITY_PEACE.C02", role:"core", beacon:false},
+    {x:11,y:9, panel:"P08_CITY_LAW", chunk:"P08_CITY_LAW.C01", role:"core", beacon:true},
+    {x:12,y:9, panel:"P08_CITY_LAW", chunk:"P08_CITY_LAW.C02", role:"core", beacon:false},
+
+    // War
+    {x:8,y:8, panel:"P09_CITY_WAR", chunk:"P09_CITY_WAR.C01", role:"core", beacon:true},
+    {x:9,y:8, panel:"P09_CITY_WAR", chunk:"P09_CITY_WAR.C02", role:"core", beacon:false},
+    {x:10,y:8, panel:"P09_CITY_WAR", chunk:"P09_CITY_WAR.C03", role:"core", beacon:false},
+    {x:11,y:8, panel:"P09_CITY_WAR", chunk:"P09_CITY_WAR.C04", role:"core", beacon:false},
+
+    // Fields
+    {x:7,y:7, panel:"P10_FIELD_PLOUGH", chunk:"P10_FIELD_PLOUGH.C01", role:"core", beacon:true},
+    {x:8,y:7, panel:"P10_FIELD_PLOUGH", chunk:"P10_FIELD_PLOUGH.C02", role:"core", beacon:false},
+    {x:9,y:7, panel:"P11_FIELD_HARVEST", chunk:"P11_FIELD_HARVEST.C01", role:"core", beacon:true},
+    {x:10,y:7, panel:"P11_FIELD_HARVEST", chunk:"P11_FIELD_HARVEST.C02", role:"core", beacon:false},
+
+    // Vineyard + cattle + flocks
+    {x:6,y:6, panel:"P12_VINEYARD", chunk:"P12_VINEYARD.C01", role:"core", beacon:true},
+    {x:7,y:6, panel:"P12_VINEYARD", chunk:"P12_VINEYARD.C02", role:"core", beacon:false},
+    {x:8,y:6, panel:"P13_CATTLE_LIONS", chunk:"P13_CATTLE_LIONS.C01", role:"core", beacon:true},
+    {x:9,y:6, panel:"P13_CATTLE_LIONS", chunk:"P13_CATTLE_LIONS.C02", role:"core", beacon:false},
+    {x:10,y:6, panel:"P14_FLOCKS", chunk:"P14_FLOCKS.C01", role:"core", beacon:true},
+
+    // Dance
+    {x:5,y:5, panel:"P15_DANCE", chunk:"P15_DANCE.C01", role:"core", beacon:true},
+    {x:6,y:5, panel:"P15_DANCE", chunk:"P15_DANCE.C02", role:"core", beacon:false},
+    {x:7,y:5, panel:"P15_DANCE", chunk:"P15_DANCE.C03", role:"core", beacon:false},
+
+    // Ocean rim (outer boundary marker)
+    {x:0,y:0, panel:"P16_OCEAN_RIM", chunk:"P16_OCEAN_RIM.C01", role:"core", beacon:true},
+
+    // Boot / forge gate / lament / oath / forge / armory / delivery
+    {x:1,y:1, panel:"P00_META", chunk:"P00_META.C01", role:"core", beacon:true},
+    {x:2,y:1, panel:"P01_WELCOME", chunk:"P01_WELCOME.C01", role:"core", beacon:true},
+    {x:3,y:1, panel:"P02_LAMENT", chunk:"P02_LAMENT.C01", role:"core", beacon:true},
+    {x:4,y:1, panel:"P02_LAMENT", chunk:"P02_LAMENT.C02", role:"core", beacon:false},
+    {x:5,y:1, panel:"P02_LAMENT", chunk:"P02_LAMENT.C03", role:"core", beacon:false},
+    {x:6,y:1, panel:"P02_LAMENT", chunk:"P02_LAMENT.C04", role:"core", beacon:false},
+    {x:7,y:1, panel:"P03_VULCAN_OATH", chunk:"P03_VULCAN_OATH.C01", role:"core", beacon:true},
+    {x:8,y:1, panel:"P04_FORGE_LABOR", chunk:"P04_FORGE_LABOR.C01", role:"core", beacon:true},
+    {x:9,y:1, panel:"P04_FORGE_LABOR", chunk:"P04_FORGE_LABOR.C02", role:"core", beacon:false},
+    {x:10,y:1, panel:"P17_ARMORY", chunk:"P17_ARMORY.C01", role:"core", beacon:true},
+    {x:11,y:1, panel:"P18_DELIVERY", chunk:"P18_DELIVERY.C01", role:"core", beacon:true}
+  ];
+
+  // Echo lines per panel (anchors). Deterministic.
+  const echoLineIdsByPanel = {
+    "P00_META": ["L0001"],
+    "P01_WELCOME": ["L0004","L0007"],
+    "P02_LAMENT": ["L0022","L0025","L0034","L0037"],
+    "P03_VULCAN_OATH": ["L0040","L0044"],
+    "P04_FORGE_LABOR": ["L0048","L0051","L0054","L0057"],
+    "P05_SHIELD_OVERVIEW": ["L0060","L0063"],
+    "P06_COSMOS": ["L0067","L0068","L0070","L0073"],
+    "P07_CITY_PEACE": ["L0080","L0083","L0084"],
+    "P08_CITY_LAW": ["L0087","L0092","L0098"],
+    "P09_CITY_WAR": ["L0105","L0126","L0128","L0133"],
+    "P10_FIELD_PLOUGH": ["L0136","L0141","L0143","L0145"],
+    "P11_FIELD_HARVEST": ["L0146","L0156","L0157","L0158"],
+    "P12_VINEYARD": ["L0160","L0167","L0171","L0173"],
+    "P13_CATTLE_LIONS": ["L0174","L0180","L0183","L0185"],
+    "P14_FLOCKS": ["L0188","L0189"],
+    "P15_DANCE": ["L0201","L0204","L0207","L0209"],
+    "P16_OCEAN_RIM": ["L0211","L0212","L0213"],
+    "P17_ARMORY": ["L0215","L0217"],
+    "P18_DELIVERY": ["L0219","L0221"]
+  };
+
+  // Helper: get the literal text for a line_id
+  function textForLineId(lid){
+    const n = parseInt(lid.slice(1),10);
+    const idx = n-1;
+    return (idx>=0 && idx<sourceLines.length) ? sourceLines[idx] : "";
+  }
+
+  // Beacon grammar header
+  function makeHeader({beacon,panel_id,chunk_id,line_range,role}){
+    const b = beacon ? "⟦B⟧" : "⟦ ⟧";
+    return `${b}⟦P:${panel_id}⟧⟦C:${chunk_id}⟧⟦L:${line_range}⟧⟦R:${role}⟧`;
+  }
+
+  function panelTitle(pid){
+    const p = panelById[pid];
+    return p ? p.title : pid;
+  }
+
+  function buildCorePayload(seed){
+    const ch = chunks.find(c => c.chunk_id === seed.chunk);
+    const panel_id = seed.panel;
+    const start = ch ? ch.start : null;
+    const end = ch ? ch.end : null;
+    const lr = ch ? ch.line_id_range : "L????-L????";
+    const header = makeHeader({
+      beacon: seed.beacon,
+      panel_id,
+      chunk_id: seed.chunk,
+      line_range: lr,
+      role: seed.role
+    });
+    const bodyLines = [];
+    if (start && end){
+      for (let i=start; i<=end; i++){
+        bodyLines.push(`⟦${lineId(i)}⟧ ${sourceLines[i-1]}`);
+      }
+    } else {
+      bodyLines.push("(missing chunk range)");
+    }
+    return `${header}\n${bodyLines.join("\n")}`;
+  }
+
+  function buildEchoPayload(panel_id, echoIndex){
+    const lids = echoLineIdsByPanel[panel_id] || [];
+    const pick = lids.length ? lids[echoIndex % lids.length] : null;
+    const lines = [];
+    if (pick){
+      lines.push(`⟦${pick}⟧ ${textForLineId(pick)}`);
+    } else {
+      lines.push("(echo: no anchor lines)");
+    }
+    const header = makeHeader({
+      beacon:false,
+      panel_id,
+      chunk_id:`${panel_id}.ECHO`,
+      line_range: pick ? `${pick}-${pick}` : "L????-L????",
+      role:"echo"
+    });
+    return `${header}\n⟦ECHO⟧\n${lines.join("\n")}`;
+  }
+
+  function buildGluePayload(panelA, panelB){
+    // Glue uses last line of panel A + first line of panel B
+    const pa = panelById[panelA], pb = panelById[panelB];
+    const aStart = pa ? pa.range[0] : 1;
+    const aEnd = pa ? pa.range[1] : 1;
+    const bStart = pb ? pb.range[0] : 1;
+    const la = lineId(aEnd);
+    const lb = lineId(bStart);
+    const header = makeHeader({
+      beacon:false,
+      panel_id: `${panelA}|${panelB}`,
+      chunk_id: `GLUE`,
+      line_range: `${la}-${lb}`,
+      role:"glue"
+    });
+    const body = [
+      "⟦GLUE⟧",
+      `⟦${la}⟧ ${textForLineId(la)}`,
+      `⟦${lb}⟧ ${textForLineId(lb)}`
+    ];
+    return `${header}\n${body.join("\n")}`;
+  }
+
+  // Build empty grid model
+  const grid = Array.from({length:H}, (_,y)=>Array.from({length:W},(_,x)=>({
+    x,y,
+    panel_id:null,
+    chunk_id:null,
+    role:"empty",
+    beacon:false,
+    payload:"",
+    shell: shellIndex(x,y),
+    isCore:false
+  })));
+
+  // Place core seeds
+  const coreByCoord = new Map();
+  for (const s of coreSeeds){
+    const key = `${s.x},${s.y}`;
+    coreByCoord.set(key, s);
+    const cell = grid[s.y][s.x];
+    cell.panel_id = s.panel;
+    cell.chunk_id = s.chunk;
+    cell.role = s.role;
+    cell.beacon = !!s.beacon;
+    cell.payload = buildCorePayload(s);
+    cell.isCore = true;
+  }
+
+  // Determine ownership of remaining cells by nearest core seed (Manhattan distance + shell penalty)
+  // This gives stable "territories" around seeded cores. Then fill as echo, plus glue at boundaries.
+  const coreList = coreSeeds.map(s => ({...s, shell:shellIndex(s.x,s.y)}));
+
+  function nearestCoreOwner(x,y){
+    let best = null;
+    for (const c of coreList){
+      const dx = Math.abs(c.x-x);
+      const dy = Math.abs(c.y-y);
+      const cost = dx+dy + 3*Math.abs(shellIndex(x,y) - c.shell);
+      if (!best || cost < best.cost || (cost === best.cost && (c.panel < best.panel || (c.panel===best.panel && c.chunk < best.chunk)))){
+        best = {panel:c.panel, cost, cx:c.x, cy:c.y, core:c};
+      }
+    }
+    return best;
+  }
+
+  // First pass: assign remaining cells as echo of nearest owner
+  const echoCounters = {}; // per panel cycling
+  for (let y=0;y<H;y++){
+    for (let x=0;x<W;x++){
+      const cell = grid[y][x];
+      if (cell.isCore) continue;
+
+      const owner = nearestCoreOwner(x,y);
+      cell.panel_id = owner.panel;
+      cell.role = "echo";
+      cell.beacon = false;
+      if (!echoCounters[cell.panel_id]) echoCounters[cell.panel_id]=0;
+      const idx = echoCounters[cell.panel_id]++;
+      cell.payload = buildEchoPayload(cell.panel_id, idx);
+      cell.chunk_id = `${cell.panel_id}.ECHO`;
+    }
+  }
+
+  // Second pass: inject glue cells along sharp boundaries:
+  // If a cell's four-neighborhood includes a different panel owner, mark some boundary cells as glue deterministically:
+  // Rule: if (x+y) % 7 == 0 and right neighbor has different panel, glue this cell between them.
+  for (let y=0;y<H;y++){
+    for (let x=0;x<W;x++){
+      const cell = grid[y][x];
+      if (cell.isCore) continue;
+      const right = (x+1<W) ? grid[y][x+1] : null;
+      const down  = (y+1<H) ? grid[y+1][x] : null;
+
+      // Deterministic sparse glue insertion
+      if ((x+y)%7===0){
+        if (right && right.panel_id && cell.panel_id && right.panel_id !== cell.panel_id){
+          cell.role = "glue";
+          cell.chunk_id = "GLUE";
+          cell.payload = buildGluePayload(cell.panel_id, right.panel_id);
+          continue;
+        }
+        if (down && down.panel_id && cell.panel_id && down.panel_id !== cell.panel_id){
+          cell.role = "glue";
+          cell.chunk_id = "GLUE";
+          cell.payload = buildGluePayload(cell.panel_id, down.panel_id);
+          continue;
+        }
+      }
+    }
+  }
+
+  // Coverage check: every line_id appears at least once in any cell payload
+  function coverageStats(){
+    const seen = new Set();
+    for (let y=0;y<H;y++){
+      for (let x=0;x<W;x++){
+        const p = grid[y][x].payload;
+        const matches = p.match(/⟦L\d{4}⟧/g);
+        if (matches){
+          for (const m of matches){
+            const lid = m.replace(/[⟦⟧]/g,"");
+            seen.add(lid);
+          }
+        }
+      }
+    }
+    return {seen:seen.size, total:lineCount, ok: seen.size===lineCount};
+  }
+
+  // ---------------------------
+  // 4) Render grid
+  // ---------------------------
+  const elGrid = document.getElementById("grid");
+  const elPillCoverage = document.getElementById("pillCoverage");
+  const elPillCoord = document.getElementById("pillCoord");
+  const elPillPanel = document.getElementById("pillPanel");
+  const elPillRole = document.getElementById("pillRole");
+  const elPillLock = document.getElementById("pillLock");
+  const elPillStatus = document.getElementById("pillStatus");
+
+  const elDetailTitle = document.getElementById("detailTitle");
+  const elDetailSub = document.getElementById("detailSub");
+  const elDetailPayload = document.getElementById("detailPayload");
+  const elDetailBeacon = document.getElementById("detailBeacon");
+  const elDetailChunk = document.getElementById("detailChunk");
+  const elDetailLines = document.getElementById("detailLines");
+
+  let selected = {x:11,y:11};
+  let lockEnabled = false;
+  let panelLock = null;
+
+  function cellAt(x,y){
+    if (x<0||x>=W||y<0||y>=H) return null;
+    return grid[y][x];
+  }
+
+  function cellKey(x,y){ return `${x},${y}`; }
+
+  function beaconRegexParse(payload){
+    const m = payload.match(/^⟦B⟧⟦P:([^\u27E7]+)⟧⟦C:([^\u27E7]+)⟧⟦L:([^\u27E7]+)⟧/);
+    if (!m) return null;
+    return {panel_id:m[1], chunk_id:m[2], line_range:m[3]};
+  }
+
+  function updateDetail(cell){
+    const pid = cell.panel_id || "—";
+    const ptitle = pid.includes("|") ? "Glue boundary" : (panelTitle(pid) || pid);
+    elDetailTitle.textContent = ptitle;
+    elDetailSub.textContent = `(${cell.x},${cell.y}) · shell ${cell.shell} · panel ${pid} · ${cell.role}`;
+    elDetailPayload.textContent = cell.payload || "(empty)";
+    elDetailBeacon.textContent = `beacon: ${cell.beacon ? "true" : "false"}`;
+    elDetailChunk.textContent = `chunk: ${cell.chunk_id || "—"}`;
+
+    // line range heuristic from header (if present)
+    const parsed = beaconRegexParse(cell.payload || "");
+    if (parsed){
+      elDetailLines.textContent = `lines: ${parsed.line_range}`;
+    } else {
+      // fallback: count lines in payload
+      const count = (cell.payload.match(/⟦L\d{4}⟧/g)||[]).length;
+      elDetailLines.textContent = `lines: ~${count}`;
+    }
+
+    elPillCoord.textContent = `cell: (${cell.x},${cell.y})`;
+    elPillPanel.textContent = `panel: ${pid}`;
+    elPillRole.textContent = `role: ${cell.role}`;
+    elPillLock.textContent = `lock: ${panelLock ? panelLock : "off"}`;
+    elPillLock.className = `pill lock`;
+  }
+
+  function setStatus(text, kind=""){
+    elPillStatus.textContent = text;
+    elPillStatus.className = "pill" + (kind ? " "+kind : "");
+  }
+
+  function renderGrid(){
+    elGrid.innerHTML = "";
+    for (let y=0;y<H;y++){
+      for (let x=0;x<W;x++){
+        const cell = grid[y][x];
+        const d = document.createElement("div");
+        d.className = "cell";
+        if (cell.role==="empty") d.classList.add("empty");
+        if (cell.role==="core") d.classList.add("core");
+        if (cell.role==="echo") d.classList.add("echo");
+        if (cell.role==="glue") d.classList.add("glue");
+        if (cell.beacon) d.classList.add("beacon");
+        if (x===selected.x && y===selected.y) d.classList.add("sel");
+        if (panelLock && cell.panel_id===panelLock && lockEnabled) d.classList.add("locked");
+
+        const mini = document.createElement("div");
+        mini.className = "mini";
+        // show tiny panel code for orientation
+        mini.textContent = cell.panel_id ? cell.panel_id.replace("P","") : "";
+        d.appendChild(mini);
+
+        d.addEventListener("click", ()=>{
+          selectCell(x,y,true);
+        });
+
+        elGrid.appendChild(d);
+      }
+    }
+  }
+
+  function selectCell(x,y,fromTap=false){
+    const cell = cellAt(x,y);
+    if (!cell) return;
+
+    selected = {x,y};
+
+    // Beacon triggers panel lock if lockEnabled
+    if (lockEnabled && cell.beacon){
+      panelLock = cell.panel_id.includes("|") ? null : cell.panel_id;
+      setStatus(panelLock ? `locked → ${panelLock}` : "lock cleared", panelLock ? "lock" : "");
+    }
+
+    updateDetail(cell);
+    renderGrid();
+
+    if (fromTap){
+      // haptic-ish feedback on mobile (no vibration API unless secure contexts)
+      // keep it silent.
+    }
+  }
+
+  // ---------------------------
+  // 5) Navigation + lock bias
+  // ---------------------------
+  function seekCost(a,b){
+    const dx = Math.abs(a.x-b.x);
+    const dy = Math.abs(a.y-b.y);
+    const sa = shellIndex(a.x,a.y);
+    const sb = shellIndex(b.x,b.y);
+    return dx+dy + 3*Math.abs(sa-sb);
+  }
+
+  function move(dx,dy){
+    const nx = selected.x + dx;
+    const ny = selected.y + dy;
+    const candidate = cellAt(nx,ny);
+
+    // basic bounds
+    if (!candidate) return;
+
+    if (!lockEnabled || !panelLock){
+      selectCell(nx,ny,false);
+      return;
+    }
+
+    // lock-enabled: bias to keep within panelLock if possible with minimal penalty
+    const current = cellAt(selected.x, selected.y);
+    const direct = candidate;
+
+    // If direct stays inside lock, accept it.
+    if (direct.panel_id === panelLock){
+      selectCell(nx,ny,false);
+      return;
+    }
+
+    // Otherwise: choose best among neighborhood (8-connected) that reduces seek cost and prefers locked panel cores
+    const neigh = [];
+    for (let oy=-1; oy<=1; oy++){
+      for (let ox=-1; ox<=1; ox++){
+        if (ox===0 && oy===0) continue;
+        const c = cellAt(selected.x+ox, selected.y+oy);
+        if (!c) continue;
+        neigh.push(c);
+      }
+    }
+
+    function score(c){
+      // Higher is better
+      let s = 0;
+      if (c.panel_id === panelLock) s += 50;
+      if (c.role === "core") s += 20;
+      if (c.beacon) s += 6;
+      // prefer low seek cost relative to current
+      s += Math.max(0, 30 - seekCost({x:current.x,y:current.y},{x:c.x,y:c.y}));
+      // mild preference for intended direction
+      s += (Math.sign(dx)===Math.sign(c.x-current.x) ? 2 : 0);
+      s += (Math.sign(dy)===Math.sign(c.y-current.y) ? 2 : 0);
+      // stable tie-break: lexicographic
+      s -= (c.y*24 + c.x) * 0.001;
+      return s;
+    }
+
+    neigh.sort((a,b)=> score(b)-score(a));
+    const best = neigh[0];
+
+    // If best is meaningfully better than direct, take best; else allow direct roam
+    const bestScore = best ? score(best) : -Infinity;
+    const directScore = score(direct);
+    if (best && bestScore > directScore + 5){
+      selectCell(best.x,best.y,false);
+    } else {
+      selectCell(nx,ny,false);
+    }
+  }
+
+  // Next core tour
+  const coreCoords = coreSeeds
+    .map(s => ({x:s.x,y:s.y}))
+    .sort((a,b)=> (a.y*24+a.x) - (b.y*24+b.x));
+
+  function nextCore(){
+    const idx = coreCoords.findIndex(c => c.x===selected.x && c.y===selected.y);
+    const next = coreCoords[(idx+1) % coreCoords.length] || coreCoords[0];
+    if (next) selectCell(next.x,next.y,false);
+  }
+
+  // Jump to center
+  function toCenter(){
+    selectCell(11,11,false);
+  }
+
+  // ---------------------------
+  // 6) Wire UI events
+  // ---------------------------
+  document.getElementById("btnCenter").addEventListener("click", toCenter);
+  document.getElementById("btnNextCore").addEventListener("click", nextCore);
+
+  document.getElementById("btnLock").addEventListener("click", ()=>{
+    lockEnabled = !lockEnabled;
+    const btn = document.getElementById("btnLock");
+    btn.classList.toggle("on", lockEnabled);
+    btn.classList.toggle("toggle", true);
+    if (!lockEnabled){
+      panelLock = null;
+      setStatus("lock off");
+    } else {
+      setStatus("lock on — hit a beacon", "lock");
+    }
+    renderGrid();
+    updateDetail(cellAt(selected.x,selected.y));
+  });
+
+  document.getElementById("btnUnlock").addEventListener("click", ()=>{
+    panelLock = null;
+    setStatus("unlocked");
+    renderGrid();
+    updateDetail(cellAt(selected.x,selected.y));
+  });
+
+  function showHelp(){
+    const help = [
+      "HELP — Shield Grid",
+      "",
+      "• Tap any cell to read its payload.",
+      "• Blue cells = CORE (carry chunk text).",
+      "• Green = ECHO (anchoring repeats).",
+      "• Red = GLUE (boundary seam lines).",
+      "",
+      "LOCK MODE:",
+      "• Toggle 🔒 Lock.",
+      "• When Lock is ON, tapping a BEACON cell locks to that panel.",
+      "• Movement then prefers same-panel core cells and low seek cost.",
+      "",
+      "KEYS:",
+      "• Arrow keys or WASD to move.",
+      "• ⇥ Next Core tours core chunks.",
+      "",
+      "INSCRIPTION PRINCIPLE:",
+      "• This is address space: navigation is reading.",
+    ].join("\n");
+    alert(help);
+  }
+  document.getElementById("btnHelp").addEventListener("click", showHelp);
+
+  document.getElementById("navUp").addEventListener("click", ()=>move(0,-1));
+  document.getElementById("navDown").addEventListener("click", ()=>move(0,1));
+  document.getElementById("navLeft").addEventListener("click", ()=>move(-1,0));
+  document.getElementById("navRight").addEventListener("click", ()=>move(1,0));
+
+  window.addEventListener("keydown", (e)=>{
+    const k = e.key.toLowerCase();
+    if (k==="arrowup" || k==="w"){ e.preventDefault(); move(0,-1); }
+    else if (k==="arrowdown" || k==="s"){ e.preventDefault(); move(0,1); }
+    else if (k==="arrowleft" || k==="a"){ e.preventDefault(); move(-1,0); }
+    else if (k==="arrowright" || k==="d"){ e.preventDefault(); move(1,0); }
+    else if (k==="tab"){ e.preventDefault(); nextCore(); }
+    else if (k==="l"){ e.preventDefault(); document.getElementById("btnLock").click(); }
+    else if (k==="escape"){ e.preventDefault(); document.getElementById("btnUnlock").click(); }
+  }, {passive:false});
+
+  // ---------------------------
+  // 7) Init: coverage + first select
+  // ---------------------------
+  const cov = coverageStats();
+  elPillCoverage.textContent = `coverage: ${cov.seen}/${cov.total} ${cov.ok ? "OK" : "WARN"}`;
+  elPillCoverage.className = "pill " + (cov.ok ? "good" : "warn");
+
+  setStatus("ready");
+  selectCell(selected.x, selected.y, false);
+
+})();
+</script>
+</body>
+</html>

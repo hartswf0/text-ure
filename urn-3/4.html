@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operative Ekphrasis: Keats Urn 24x24</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Custom Scrollbar for the Poem Container */
+        .scroller::-webkit-scrollbar {
+            width: 6px;
+        }
+        .scroller::-webkit-scrollbar-track {
+            background: #1a1a1a; 
+        }
+        .scroller::-webkit-scrollbar-thumb {
+            background: #444; 
+            border-radius: 3px;
+        }
+        .scroller::-webkit-scrollbar-thumb:hover {
+            background: #666; 
+        }
+
+        /* Grid Cell Animation */
+        .cell-transition {
+            transition: all 0.2s ease-in-out;
+        }
+
+        /* Smooth scrolling for poem lines */
+        .poem-line {
+            scroll-margin-top: 100px;
+        }
+
+        /* CRT-like glow effect for active elements */
+        .glow-text {
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-black text-gray-300 font-mono overflow-hidden">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // --- DATA: The Poem ---
+        const POEM = [
+            { id: "S1", lines: [
+                { id: "L01", text: "Thou still unravish'd bride of quietness," },
+                { id: "L02", text: "Thou foster-child of silence and slow time," },
+                { id: "L03", text: "Sylvan historian, who canst thus express" },
+                { id: "L04", text: "A flowery tale more sweetly than our rhyme:" },
+                { id: "L05", text: "What leaf-fring'd legend haunts about thy shape" },
+                { id: "L06", text: "Of deities or mortals, or of both," },
+                { id: "L07", text: "In Tempe or the dales of Arcady?" },
+                { id: "L08", text: "What men or gods are these? What maidens loth?" },
+                { id: "L09", text: "What mad pursuit? What struggle to escape?" },
+                { id: "L10", text: "What pipes and timbrels? What wild ecstasy?" }
+            ]},
+            { id: "S2", lines: [
+                { id: "L11", text: "Heard melodies are sweet, but those unheard" },
+                { id: "L12", text: "Are sweeter; therefore, ye soft pipes, play on;" },
+                { id: "L13", text: "Not to the sensual ear, but, more endear'd," },
+                { id: "L14", text: "Pipe to the spirit ditties of no tone:" },
+                { id: "L15", text: "Fair youth, beneath the trees, thou canst not leave" },
+                { id: "L16", text: "Thy song, nor ever can those trees be bare;" },
+                { id: "L17", text: "Bold Lover, never, never canst thou kiss," },
+                { id: "L18", text: "Though winning near the goal yet, do not grieve;" },
+                { id: "L19", text: "She cannot fade, though thou hast not thy bliss," },
+                { id: "L20", text: "For ever wilt thou love, and she be fair!" }
+            ]},
+            { id: "S3", lines: [
+                { id: "L21", text: "Ah, happy, happy boughs! that cannot shed" },
+                { id: "L22", text: "Your leaves, nor ever bid the Spring adieu;" },
+                { id: "L23", text: "And, happy melodist, unwearied," },
+                { id: "L24", text: "For ever piping songs for ever new;" },
+                { id: "L25", text: "More happy love! more happy, happy love!" },
+                { id: "L26", text: "For ever warm and still to be enjoy'd," },
+                { id: "L27", text: "For ever panting, and for ever young;" },
+                { id: "L28", text: "All breathing human passion far above," },
+                { id: "L29", text: "That leaves a heart high-sorrowful and cloy'd," },
+                { id: "L30", text: "A burning forehead, and a parching tongue." }
+            ]},
+            { id: "S4", lines: [
+                { id: "L31", text: "Who are these coming to the sacrifice?" },
+                { id: "L32", text: "To what green altar, O mysterious priest," },
+                { id: "L33", text: "Lead'st thou that heifer lowing at the skies," },
+                { id: "L34", text: "And all her silken flanks with garlands drest?" },
+                { id: "L35", text: "What little town by river or sea shore," },
+                { id: "L36", text: "Or mountain-built with peaceful citadel," },
+                { id: "L37", text: "Is emptied of this folk, this pious morn?" },
+                { id: "L38", text: "And, little town, thy streets for evermore" },
+                { id: "L39", text: "Will silent be; and not a soul to tell" },
+                { id: "L40", text: "Why thou art desolate, can e'er return." }
+            ]},
+            { id: "S5", lines: [
+                { id: "L41", text: "O Attic shape! Fair attitude! with brede" },
+                { id: "L42", text: "Of marble men and maidens overwrought," },
+                { id: "L43", text: "With forest branches and the trodden weed;" },
+                { id: "L44", text: "Thou, silent form, dost tease us out of thought" },
+                { id: "L45", text: "As doth eternity: Cold Pastoral!" },
+                { id: "L46", text: "When old age shall this generation waste," },
+                { id: "L47", text: "Thou shalt remain, in midst of other woe" },
+                { id: "L48", text: "Than ours, a friend to man, to whom thou say'st," },
+                { id: "L49", text: "\"Beauty is truth, truth beauty,—that is all" },
+                { id: "L50", text: "Ye know on earth, and all ye need to know.\"" }
+            ]}
+        ];
+
+        // --- DATA: Ontology Zones ---
+        const ZONES = [
+            { id: "Z0", name: "LIP", range: [0, 2], color: "text-amber-500", bg: "bg-amber-900/20", border: "border-amber-700" },
+            { id: "Z1", name: "FRIEZE A", range: [3, 11], color: "text-emerald-500", bg: "bg-emerald-900/20", border: "border-emerald-700" },
+            { id: "Z2", name: "FRIEZE B", range: [12, 17], color: "text-stone-400", bg: "bg-stone-800/40", border: "border-stone-600" },
+            { id: "Z3", name: "HANDLES", range: [18, 19], color: "text-sky-500", bg: "bg-sky-900/20", border: "border-sky-700" },
+            { id: "Z4", name: "BASE", range: [20, 23], color: "text-rose-500", bg: "bg-rose-900/20", border: "border-rose-700" }
+        ];
+
+        // --- LOGIC: Procedural Generation of the 24x24 Map ---
+        const generateGridMapping = () => {
+            const map = {}; // lineId -> Array of {x, y}
+            
+            // Helper to add span
+            const addSpan = (lineId, xStart, y, xEnd) => {
+                if (!map[lineId]) map[lineId] = [];
+                for (let i = xStart; i <= xEnd; i++) {
+                    map[lineId].push({x: i, y: y});
+                }
+            };
+            
+            // Helper to add explicit points
+            const addPoints = (lineId, points) => {
+                if (!map[lineId]) map[lineId] = [];
+                points.forEach(p => map[lineId].push(p));
+            };
+
+            // --- Z0: LIP (Inscription) ---
+            addSpan("L01", 0, 0, 23); // Full ring
+            addSpan("L02", 0, 1, 23); // Full ring
+            addSpan("L03", 0, 2, 11); // Half ring
+            addSpan("L04", 12, 2, 23); // Half ring
+
+            // --- Z1: FRIEZE A (Motion/Pursuit) ---
+            // Stanza 1 Details
+            addSpan("L05", 0, 3, 11);
+            addSpan("L06", 12, 3, 23);
+            addPoints("L07", [{x:0,y:4}, {x:1,y:4}, {x:2,y:4}]);
+            addPoints("L08", [{x:3,y:4}, {x:4,y:4}, {x:5,y:4}]);
+            addSpan("L09", 6, 4, 14); // "Mad pursuit"
+            addSpan("L10", 15, 4, 23); // "Wild ecstasy"
+            
+            // Stanza 2 (Music/Lovers) - Scattering them across Y=5 to Y=9
+            addSpan("L11", 0, 5, 8);
+            addSpan("L12", 9, 5, 16);
+            addSpan("L13", 17, 5, 23);
+            addSpan("L14", 0, 6, 23); // "Ditties of no tone" - full spiritual layer
+            addSpan("L15", 0, 7, 11);
+            addSpan("L16", 12, 7, 23);
+            addSpan("L17", 8, 8, 16); // Center focus
+            addPoints("L18", [{x:4,y:8}, {x:5,y:8}, {x:19,y:8}, {x:20,y:8}]); // Flanking
+            addSpan("L19", 0, 9, 11);
+            addSpan("L20", 12, 9, 23);
+
+            // Stanza 3 (Happiness/Climax) - Filling Z1 lower bounds (Y=10, 11)
+            addSpan("L21", 0, 10, 5);
+            addSpan("L22", 6, 10, 11);
+            addSpan("L23", 12, 10, 17);
+            addSpan("L24", 18, 10, 23);
+            // L25 "More happy love" - Scattering for emphasis
+            addPoints("L25", [{x:0,y:11}, {x:6,y:11}, {x:12,y:11}, {x:18,y:11}]);
+            addSpan("L26", 1, 11, 5);
+            addSpan("L27", 7, 11, 11);
+            addSpan("L28", 13, 11, 17);
+            addSpan("L29", 19, 11, 23);
+            addSpan("L30", 0, 12, 23); // Bleeding slightly into Z2 boundary
+
+            // --- Z2: FRIEZE B (Sacrifice/Silence) ---
+            addSpan("L31", 0, 13, 11);
+            addSpan("L32", 12, 13, 23);
+            addSpan("L33", 0, 14, 11);
+            addSpan("L34", 12, 14, 23); // "Silken flanks"
+            addPoints("L35", [{x:2,y:15}, {x:3,y:15}]); // "Little town" small footprint
+            addPoints("L36", [{x:20,y:15}, {x:21,y:15}]); // "Mountain built"
+            addSpan("L37", 5, 16, 19);
+            // L38 "Silent be" - Negative space visualization (wide sparse placement)
+            addSpan("L38", 0, 17, 23); 
+            addPoints("L39", [{x:2,y:17}, {x:22,y:17}]);
+            addPoints("L40", [{x:12,y:17}]); // Echo
+
+            // --- Z3: HANDLES (Hinge) ---
+            addSpan("L41", 0, 18, 5); // Left Handle
+            addSpan("L42", 6, 18, 11);
+            addSpan("L43", 12, 18, 17);
+            addSpan("L44", 6, 19, 17); // Central mass
+            addSpan("L45", 18, 18, 23); // Right Handle
+
+            // --- Z4: BASE (Axiom) ---
+            addSpan("L46", 0, 20, 7);
+            addSpan("L47", 8, 20, 15);
+            addSpan("L48", 16, 20, 23);
+            // L49 "Beauty is truth" - Central Tablet
+            addSpan("L49", 4, 21, 19); 
+            addSpan("L49", 4, 22, 19); // Double height for weight
+            // L50 "Need to know" - Footer
+            addSpan("L50", 0, 23, 23);
+
+            return map;
+        };
+
+        const GRID_MAPPING = generateGridMapping();
+
+        // Reverse Index: Cell Key ("x,y") -> Line ID
+        const CELL_TO_LINE = {};
+        Object.entries(GRID_MAPPING).forEach(([lineId, points]) => {
+            points.forEach(p => {
+                CELL_TO_LINE[`${p.x},${p.y}`] = lineId;
+            });
+        });
+
+        // --- COMPONENTS ---
+
+        const Legend = () => (
+            <div className="flex flex-wrap gap-4 text-xs mb-4 border-b border-gray-800 pb-2">
+                {ZONES.map(z => (
+                    <div key={z.id} className="flex items-center gap-2">
+                        <div className={`w-3 h-3 ${z.bg} ${z.border} border`}></div>
+                        <span className={`${z.color} font-bold`}>{z.id}: {z.name}</span>
+                    </div>
+                ))}
+            </div>
+        );
+
+        const App = () => {
+            const [activeLine, setActiveLine] = useState(null);
+            const [isPlaying, setIsPlaying] = useState(false);
+            const scrollRef = useRef(null);
+
+            // Playback logic
+            useEffect(() => {
+                let interval;
+                if (isPlaying) {
+                    let currentIdx = 0;
+                    if (activeLine) {
+                        // Find current index
+                        const allLines = POEM.flatMap(s => s.lines);
+                        currentIdx = allLines.findIndex(l => l.id === activeLine);
+                    }
+
+                    interval = setInterval(() => {
+                        const allLines = POEM.flatMap(s => s.lines);
+                        const nextIdx = (currentIdx + 1) % allLines.length;
+                        setActiveLine(allLines[nextIdx].id);
+                        currentIdx = nextIdx;
+                        
+                        // Auto scroll
+                        const el = document.getElementById(`line-${allLines[nextIdx].id}`);
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        if (nextIdx === allLines.length - 1) setIsPlaying(false);
+                    }, 2000); // 2 seconds per line
+                }
+                return () => clearInterval(interval);
+            }, [isPlaying, activeLine]);
+
+            // Handlers
+            const handleGridHover = (x, y) => {
+                const lineId = CELL_TO_LINE[`${x},${y}`];
+                if (lineId) setActiveLine(lineId);
+                else setActiveLine(null);
+            };
+
+            const handleLineClick = (lineId) => {
+                setActiveLine(lineId === activeLine ? null : lineId);
+            };
+
+            return (
+                <div className="flex flex-col h-screen w-full max-w-7xl mx-auto md:flex-row overflow-hidden">
+                    
+                    {/* LEFT PANE: THE MAP */}
+                    <div className="flex-1 p-4 flex flex-col items-center justify-center bg-gray-950 relative border-r border-gray-800">
+                        <div className="absolute top-4 left-4 z-10">
+                            <h1 className="text-xl font-bold tracking-widest text-white mb-1">OPERATIVE EKPHRASIS</h1>
+                            <div className="text-xs text-gray-500 font-mono">MAPPER: URN_UNWRAP_24</div>
+                        </div>
+                        
+                        <div className="w-full max-w-[600px] aspect-square relative mt-8 md:mt-0">
+                            {/* Grid Rendering */}
+                            <div className="grid grid-cols-24 grid-rows-24 w-full h-full gap-[1px] bg-gray-900 border border-gray-800 p-1">
+                                {Array.from({ length: 24 }).map((_, y) => (
+                                    Array.from({ length: 24 }).map((_, x) => {
+                                        const cellKey = `${x},${y}`;
+                                        const lineId = CELL_TO_LINE[cellKey];
+                                        const zone = ZONES.find(z => y >= z.range[0] && y <= z.range[1]);
+                                        
+                                        const isActive = activeLine === lineId;
+                                        const isMapped = !!lineId;
+                                        
+                                        let cellClass = `w-full h-full text-[0px] cell-transition cursor-crosshair `;
+                                        
+                                        // Dynamic Styling
+                                        if (isActive) {
+                                            cellClass += `bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)] z-10 transform scale-125 `;
+                                        } else if (isMapped) {
+                                            cellClass += `${zone.bg} hover:bg-opacity-80 hover:brightness-125 `;
+                                        } else {
+                                            cellClass += `bg-gray-900/50 opacity-20 `;
+                                        }
+
+                                        return (
+                                            <div 
+                                                key={cellKey}
+                                                className={cellClass}
+                                                onMouseEnter={() => handleGridHover(x, y)}
+                                                onMouseLeave={() => setActiveLine(null)}
+                                                title={lineId ? `${lineId} [${zone.name}]` : `Empty ${x},${y}`}
+                                            />
+                                        );
+                                    })
+                                ))}
+                            </div>
+                            
+                            {/* Zone Markers (Left Side Overlay) */}
+                            <div className="absolute -left-6 top-0 h-full flex flex-col justify-between py-1 text-[8px] text-gray-600 font-mono text-right pr-2">
+                                {ZONES.map(z => {
+                                    const heightPercent = ((z.range[1] - z.range[0] + 1) / 24) * 100;
+                                    return (
+                                        <div key={z.id} style={{ height: `${heightPercent}%` }} className="border-r border-gray-700 flex items-center justify-end pr-1">
+                                            <span className="opacity-50 rotate-[-90deg] origin-right whitespace-nowrap translate-x-2">{z.name}</span>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Controls */}
+                        <div className="mt-4 flex gap-4 w-full max-w-[600px] justify-between items-center text-xs text-gray-500 font-mono">
+                            <div>Y:0 (LIP) -> Y:23 (BASE)</div>
+                            <button 
+                                onClick={() => setIsPlaying(!isPlaying)}
+                                className={`px-4 py-2 border ${isPlaying ? 'border-red-500 text-red-500 animate-pulse' : 'border-green-500 text-green-500'} hover:bg-gray-900 transition-colors uppercase`}
+                            >
+                                {isPlaying ? '[ STOP ]' : '[ EXECUTE ]'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* RIGHT PANE: THE TEXT */}
+                    <div className="h-1/2 md:h-full md:w-[450px] flex-shrink-0 bg-black flex flex-col border-t md:border-t-0 md:border-l border-gray-800">
+                        <div className="p-4 border-b border-gray-800 bg-gray-950">
+                            <Legend />
+                            <div className="text-xs text-gray-500">
+                                {activeLine ? (
+                                    <span className="text-white font-bold glow-text">SELECTED_NODE: {activeLine}</span>
+                                ) : (
+                                    "HOVER GRID TO DECODE // TAP LINE TO LOCATE"
+                                )}
+                            </div>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto scroller p-6 pb-24" ref={scrollRef}>
+                            {POEM.map((stanza, sIdx) => (
+                                <div key={stanza.id} className="mb-8">
+                                    <div className="text-xs text-gray-600 mb-2 font-bold tracking-widest">{stanza.id}</div>
+                                    {stanza.lines.map((line, lIdx) => {
+                                        // Find which zone this line predominantly belongs to for text coloring
+                                        const gridPoints = GRID_MAPPING[line.id] || [];
+                                        let lineZone = ZONES[0];
+                                        if (gridPoints.length > 0) {
+                                            const y = gridPoints[0].y;
+                                            lineZone = ZONES.find(z => y >= z.range[0] && y <= z.range[1]) || ZONES[0];
+                                        }
+
+                                        const isActive = activeLine === line.id;
+
+                                        return (
+                                            <div 
+                                                id={`line-${line.id}`}
+                                                key={line.id}
+                                                onMouseEnter={() => setActiveLine(line.id)}
+                                                onClick={() => handleLineClick(line.id)}
+                                                className={`
+                                                    poem-line text-sm md:text-base leading-relaxed py-1 px-2 mb-1 cursor-pointer border-l-2 transition-all duration-300
+                                                    ${isActive 
+                                                        ? `border-white bg-gray-800 text-white pl-4 font-bold scale-[1.02] origin-left shadow-lg` 
+                                                        : `border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-700 hover:pl-2`
+                                                    }
+                                                `}
+                                            >
+                                                <span className="text-[10px] text-gray-600 mr-3 font-mono inline-block w-6 opacity-50">{line.id}</span>
+                                                <span className={isActive ? 'glow-text' : ''}>{line.text}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ))}
+                            
+                            <div className="mt-12 pt-12 border-t border-dashed border-gray-800 text-center text-xs text-gray-600 font-mono">
+                                <div>END OF MANIFEST</div>
+                                <div>24x24 / 576 CELLS / 50 NODES</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            );
+        };
+
+        // Custom Grid Configuration for Tailwind
+        // We need a specific 24-column grid which isn't standard in Tailwind
+        tailwind.config = {
+            theme: {
+                extend: {
+                    gridTemplateColumns: {
+                        '24': 'repeat(24, minmax(0, 1fr))',
+                    },
+                    gridTemplateRows: {
+                        '24': 'repeat(24, minmax(0, 1fr))',
+                    }
+                }
+            }
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

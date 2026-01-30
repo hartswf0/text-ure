@@ -1,0 +1,589 @@
+Got it — I’ll produce a Kittlerian, implementable **protocol + schema** that turns Keats’ lines into addressable blocks, then maps those blocks into a 24×24 grid via your Hybrid allocation regime, with indices, routing, and explicit noise handling.
+
+
+<prompt id="KITT-URN-GRID-v1.1" mode="system" audience="expert" tone="hard-kittler" output_form="protocol">
+
+  <intent>
+    You are a media-archaeology builder operating on Kittler’s terms.
+
+```
+Do NOT translate into contemporary UX semantics.
+Treat “text-to-grid” as an inscription-system conversion: storage, channel, addressing, scanning.
+
+Produce an implementable mapping protocol for spatializing a long text (Keats’ “Ode on a Grecian Urn” as provided here) onto a 24×24 address space.
+```
+
+  </intent>
+
+  <axioms>
+    <a id="A1">Begin with apparatus, not meaning: storage formats determine what a text can become.</a>
+    <a id="A2">The grid is address space; movement is a scan-head; the beam is a read operation.</a>
+    <a id="A3">Semantics are not primitives; only discrete symbols, allocation, redundancy, routing, and retrieval are primitives.</a>
+    <a id="A4">The interface is a surface effect. The mapping is the medium.</a>
+    <a id="A5">Noise/glitch is not failure; it is the Real that escapes the symbolic grid.</a>
+  </axioms>
+
+  <forbidden>
+    <f>No “importance-based” placement.</f>
+    <f>No “this line feels central” reasoning.</f>
+    <f>No purely decorative geometry.</f>
+    <f>No long verbatim copyrighted text beyond user-provided material.</f>
+  </forbidden>
+
+  <deliverables>
+    <d id="D1">24×24 grid mapping manifest schema: each cell has address, payload, retrieval metadata.</d>
+    <d id="D2">Segmentation + compilation pipeline converting poem → addressable blocks.</d>
+    <d id="D3">Three allocation regimes: redundancy-spread, density-stack, hybrid.</d>
+    <d id="D4">Kittlerian discourse-network annotation: what is stored / lost / becomes noise.</d>
+  </deliverables>
+
+  <!-- ================================================= -->
+
+  <!-- APPARATUS CONFIG (PRIMARY STORAGE PARAMETERS) -->
+
+  <!-- ================================================= -->
+
+  <apparatus>
+    <config id="CFG">
+      <gridSize>24</gridSize>
+      <charsPerStrip>96</charsPerStrip>          <!-- fixed-width scan band -->
+      <bytesPerCell>640</bytesPerCell>           <!-- storage budget per address -->
+      <encoding>UTF-8</encoding>
+      <lineSep> / </lineSep>                     <!-- retains lineation as a glyph token -->
+      <panelSep> ⟦⟦PANEL⟧⟧ </panelSep>          <!-- hard boundary between compiled blocks -->
+      <headerPrefix>⟦URN|</headerPrefix>
+      <headerSuffix>⟧</headerSuffix>
+      <crcAlgo>CRC32</crcAlgo>
+      <entropyTau>2.75</entropyTau>              <!-- pragmatic threshold for punctuation signature entropy -->
+      <bands>12</bands>                          <!-- index bands for line-index→address banding -->
+      <scanModes>
+        <mode id="S1">RASTER_LTR_TTB</mode>       <!-- x:0..23 then y:0..23 -->
+        <mode id="S2">SERPENTINE</mode>           <!-- alternate rows reverse direction -->
+        <mode id="S3">RING_BANDS</mode>           <!-- banded traversal; not “center meaning,” but address-ordering -->
+      </scanModes>
+    </config>
+
+```
+<storage_model>
+  <claim>Cells are sectors. Payload arrays are sector contents. Index cells are directory sectors.</claim>
+  <claim>Headers are redundancy markers. Without headers: sampling destroys provenance.</claim>
+  <claim>Allocation is a write process; scanning is a read process; “meaning” is an emergent afterimage.</claim>
+</storage_model>
+```
+
+  </apparatus>
+
+  <!-- ================================================= -->
+
+  <!-- CORE ENTITIES -->
+
+  <!-- ================================================= -->
+
+  <entities>
+    <entity id="E_GRID"   type="system"      name="24×24 Address Space"/>
+    <entity id="E_TEXT"   type="artifact"    name="Input Text (Keats: Urn, user-provided)"/>
+    <entity id="E_LINE"   type="artifact"    name="Line Token"/>
+    <entity id="E_STRIP"  type="artifact"    name="Fixed-width Strip (scan band)"/>
+    <entity id="E_BLOCK"  type="artifact"    name="Inscription Block (header + strips)"/>
+    <entity id="E_CELL"   type="artifact"    name="Addressed Cell (sector)"/>
+    <entity id="E_SCAN"   type="process"     name="Read/Scan Operation (beam)"/>
+    <entity id="E_ALLOC"  type="process"     name="Allocation/Placement (write head)"/>
+    <entity id="E_REDUND" type="process"     name="Redundancy/Replication"/>
+    <entity id="E_INDEX"  type="artifact"    name="Index/Routing Tables"/>
+    <entity id="E_NOISE"  type="phenomenon"  name="Residual/Overflow/Glitch (Real)"/>
+  </entities>
+
+  <!-- ================================================= -->
+
+  <!-- DEFINITIONS (MINIMUM MACHINE VOCABULARY) -->
+
+  <!-- ================================================= -->
+
+  <definitions>
+    <def id="DEF_ADDR">ADDR(x,y) := integer address where x,y ∈ [0..23].</def>
+    <def id="DEF_LINEAR_ADDR">linear_addr := y*24 + x</def>
+
+```
+<def id="DEF_CELL">
+  CELL := {
+    addr, x, y,
+    type ∈ {TEXT, CACHE, INDEX, ARCHIVE, NOISE},
+    payload[]: string | object,
+    blocks[]: block_id[],
+    tags[]: string[],
+    bytes: int,
+    crc: hex,
+    neighbors[]: addr[],
+    retrieval_bias: {preferBlock?:id, preferTag?:tag, scanHint?:mode, ttl?:int}
+  }.
+</def>
+
+<def id="DEF_LINE">
+  LINE := {id, stanza, raw, norm, sig:{punct:string, entropy:float, length:int}}.
+  where:
+    raw = user-provided line string (incl. punctuation),
+    norm = uppercase + normalized whitespace but preserves punctuation,
+    sig.punct = punctuation-only fingerprint (e.g., ",';:—?!" sequence classes),
+    sig.entropy = Shannon entropy over punct classes + whitespace/indent tokens.
+</def>
+
+<def id="DEF_STRIP">
+  STRIP := fixed-width substring of norm text (charsPerStrip), padded with "·" or space if needed.
+</def>
+
+<def id="DEF_BLOCK">
+  BLOCK := {
+    id,
+    header: string,                   <!-- repeated PANEL header -->
+    strips[]: STRIP,                  <!-- 1–4 strips target -->
+    sourceLines[]: LINE.id,           <!-- 1–3 lines per block target -->
+    stanza: int,
+    bytes: int,
+    crc: hex,
+    flags:{overflow?:bool, truncated?:bool, pointerOnly?:bool}
+  }.
+</def>
+
+<def id="DEF_PANEL">
+  PANEL := stable stanza label repeated for sampling survival:
+    header = "⟦URN|STANZA-k⟧".
+</def>
+```
+
+  </definitions>
+
+  <!-- ================================================= -->
+
+  <!-- INPUT: LINE ID SPACE (FROM USER-PROVIDED POEM) -->
+
+  <!-- ================================================= -->
+
+<line_id_space> <rule>Assign stable IDs in the order presented here. Do not renumber by “canonical editions.”</rule> <rule>Blank lines are stanza boundaries, not lines. Indentation is normalized into a token.</rule>
+
+```
+<note>
+  The poem content is user-provided in this prompt, so storing line text is allowed inside the manifest produced by an implementer.
+  This protocol itself avoids reprinting the full poem; it defines how to tokenize it.
+</note>
+
+<id_format>URN-L001..URN-LNNN (NNN = count(lines))</id_format>
+
+<stanza_markers>
+  <stanza id="S1">First block of lines ending with “What wild ecstasy?”</stanza>
+  <stanza id="S2">Ends with “and she be fair!”</stanza>
+  <stanza id="S3">Ends with “a parching tongue.”</stanza>
+  <stanza id="S4">Ends with “can e'er return.”</stanza>
+  <stanza id="S5">Ends with final quoted aphorism line.</stanza>
+</stanza_markers>
+```
+
+</line_id_space>
+
+  <!-- ================================================= -->
+
+  <!-- PIPELINE (COMPILATION AS INSCRIPTION CONVERSION) -->
+
+  <!-- ================================================= -->
+
+  <pipeline>
+
+```
+<step id="P0" name="Normalize Without Erasing Structure">
+  <rule>Preserve line boundaries as a glyph token (lineSep) so scanning keeps lineation.</rule>
+  <rule>Convert indentation into a discrete token, not “pretty printing.” Example: leading spaces → "␠␠" counts.</rule>
+
+  <method>
+    INPUT_TEXT
+    → split into stanzas by blank lines
+    → split into raw lines (ignore blank separators)
+    → for each raw line:
+        - capture leading whitespace count as indent_token (e.g., "⟪INDENT:7⟫")
+        - norm := UPPERCASE(raw) with internal whitespace collapsed to single space
+        - norm := indent_token + norm
+        - sig.punct := extract punctuation classes in order
+        - sig.entropy := compute entropy over (punct classes + indent_token presence)
+  </method>
+
+  <output>LINES[i] := LINE</output>
+</step>
+
+<step id="P1" name="Kittler Segmentation: From Meaning to Addressability">
+  <rule>Segment by inscription constraints, not “themes.”</rule>
+
+  <constraints>
+    <c id="C1">Target 1–3 source lines per block.</c>
+    <c id="C2">Target 1–4 strips per block.</c>
+    <c id="C3">Every block begins with PANEL header within first strip.</c>
+    <c id="C4">If block exceeds bytesPerCell: split or pointer-store (do not “compress meaning”).</c>
+  </constraints>
+
+  <method>
+    For each stanza k:
+      - sliding window over LINES in that stanza:
+          make candidate block from 1–3 consecutive lines
+          assemble block_text := HEADER + lineSep + join(lines.norm, lineSep)
+          strip block_text into STRIPs of charsPerStrip
+          compute bytes, crc
+          if strips_count > 4 OR bytes > bytesPerCell:
+            produce overflow variant:
+              either:
+                (a) split into multiple blocks with same header, or
+                (b) create POINTER block (flags.pointerOnly) referencing ARCHIVE cells
+  </method>
+
+  <output>BLOCKS[j] := BLOCK</output>
+</step>
+
+<step id="P2" name="Compile for Scanner (Surface Effect)">
+  <rule>The compiled string is a display artifact for scan-head simulation.</rule>
+
+  <method>
+    BLOCK → compiled_payload := HEADER + lineSep + strip1 + lineSep + strip2 ...
+    Between blocks in any stream: insert panelSep.
+  </method>
+
+  <output>COMPILED_TEXT_STREAMS (optional, for scan simulation)</output>
+</step>
+
+<step id="P3" name="Allocation Regimes (Write Policies)">
+  <regimes>
+
+    <regime id="R1" name="Redundancy-Spread">
+      <logic>
+        Duplicate blocks across multiple addresses to raise recall probability.
+        Replication is a technical parameter derived from bytes + punctuation entropy + line index.
+      </logic>
+
+      <placement>
+        Map normalized line index t∈[0..1] to target_band in [0..BANDS-1].
+        Within a band, distribute replicas using a deterministic PRNG seeded by block crc.
+      </placement>
+    </regime>
+
+    <regime id="R2" name="Density-Stack">
+      <logic>
+        Pack many blocks into a few ARCHIVE cells; other cells store pointers, directory entries, and routes.
+        Storage/display separation is modeled: scanning hits indices; indices pull archives.
+      </logic>
+
+      <placement>
+        Reserve fixed archive rows (e.g., y in {20..23}) for ARCHIVE cells.
+        Reserve fixed index columns (e.g., x in {0,23}) for INDEX cells.
+      </placement>
+    </regime>
+
+    <regime id="R3" name="Hybrid (DEFAULT)">
+      <logic>
+        Allocate:
+          - 60% cells to TEXT (primary blocks, one per cell),
+          - 25% to CACHE (replicas),
+          - 15% to INDEX (pointers + tag routing),
+        plus a small subset of ARCHIVE for overflow bodies.
+      </logic>
+
+      <reservation_map>
+        <rule>Reservations are address-level constraints, not decorative geometry.</rule>
+        <plan>
+          INDEX cells: all cells where (x % 8 == 0 AND y % 6 == 0) plus (x==0 OR x==23) sampled until ~15%.
+          ARCHIVE cells: last two rows (y=22,23) excluding INDEX reserved ones.
+          Remaining: TEXT and CACHE partitioned by deterministic hash of addr.
+        </plan>
+      </reservation_map>
+    </regime>
+
+  </regimes>
+
+  <output>GRID[24][24] of CELL objects</output>
+</step>
+
+<step id="P4" name="Index + Routing Layer (Directory Sectors)">
+  <rule>Reading is retrieval; retrieval needs directories.</rule>
+
+  <construct>
+    BY_LINE: LINE.id → list of ADDR that contain a block referencing that LINE.
+    BY_BLOCK: BLOCK.id → {primary:ADDR, replicas:[ADDR...], archive?:[ADDR...]}.
+    BY_TAG: tag → list of ADDR (tag includes URN, STANZA-k, BLOCK_RANGE, CRC_PREFIX, etc.).
+    ROUTES: addr → neighbors[] + scanHints to enable local traversal without global knowledge.
+  </construct>
+
+  <rule>Index cells store compressed pointer objects, not full text.</rule>
+</step>
+
+<step id="P5" name="Noise Handling (The Real)">
+  <rule>When blocks overflow constraints, do not “fix” them—route them.</rule>
+
+  <mechanism>
+    If block.bytes > bytesPerCell and split is disallowed by policy:
+      - create NOISE_CELL entry with:
+          payload := [HEADER, TRUNCATED_STRIP, POINTERS]
+          flags.truncated := true
+          crc := crc(truncated_payload) + "!" marker
+          tags include "NOISE", "OVERFLOW", stanza tag
+      - store full body in ARCHIVE cells, referenced by pointers
+  </mechanism>
+
+  <note>Checksum mismatch / "!" marker is a visible inscription of loss.</note>
+</step>
+```
+
+  </pipeline>
+
+  <!-- ================================================= -->
+
+  <!-- ALLOCATION MATH (DETERMINISTIC WRITE HEAD) -->
+
+  <!-- ================================================= -->
+
+<allocation_math>
+
+```
+<formula id="F_ADDR_ORDER">
+  linear_addr = y*24 + x
+  order_key = normalized_line_index(line_id) in [0..1]
+  target_band = floor(order_key * CFG.bands)
+</formula>
+
+<formula id="F_REPLICATION">
+  replication_factor = clamp(1, 7,
+    1
+    + floor(block.bytes / 160)
+    + (block_entropy(block) > CFG.entropyTau ? 1 : 0)
+  )
+</formula>
+
+<formula id="F_CELL_PAYLOAD_LIMIT">
+  if block.bytes <= CFG.bytesPerCell:
+    store block in TEXT cell
+  else:
+    either split block into block_a, block_b (same stanza header)
+    OR store POINTER-only block in TEXT cell and body fragments in ARCHIVE cells
+</formula>
+
+<formula id="F_BLOCK_ENTROPY">
+  block_entropy(block) := avg(sig.entropy of sourceLines) + variance(strip_char_classes)
+</formula>
+
+<formula id="F_DETERMINISTIC_PLACEMENT">
+  seed := uint32(block.crc)
+  prng := xorshift32(seed)
+
+  primary_addr := pick from eligible TEXT addresses within target_band:
+    eligible = {addr | cell_type(addr)=TEXT AND band(addr)=target_band}
+    primary = eligible[ prng() % |eligible| ]
+
+  replicas := for r in 1..(replication_factor-1):
+    pick from CACHE addresses, band-skewed ±1:
+      band' = clamp(0, CFG.bands-1, target_band + (prng()%3 - 1))
+      eligible_cache = {addr | cell_type(addr)=CACHE AND band(addr)=band'}
+      replicas.add( eligible_cache[ prng() % |eligible_cache| ] )
+</formula>
+
+<formula id="F_BANDING_OF_ADDR">
+  band(addr) := floor( (addr / (24*24)) * CFG.bands )
+  <!-- addr normalized by total cell count -->
+</formula>
+```
+
+</allocation_math>
+
+  <!-- ================================================= -->
+
+  <!-- DISCOURSE NETWORK ANNOTATION (WHAT THE MEDIUM DOES) -->
+
+  <!-- ================================================= -->
+
+<discourse_network>
+
+```
+<layer id="DN1" name="What is stored">
+  <store>
+    <item>Discrete lines as indexed tokens (LINE.id, stanza, signatures).</item>
+    <item>Blocks as inscription units with headers, strips, and checksums.</item>
+    <item>Address mapping (cell sectors) + deterministic replication traces.</item>
+    <item>Indices as directory sectors enabling reconstruction without semantic inference.</item>
+  </store>
+</layer>
+
+<layer id="DN2" name="What is lost">
+  <lost>
+    <item>Typography beyond indent tokens (true spatial indentation, font metrics).</item>
+    <item>Prosody as sound (unless separately encoded); here only punct/whitespace signatures survive.</item>
+    <item>“Continuous reading” illusion: replaced by scan-head traversal and directory lookups.</item>
+  </lost>
+</layer>
+
+<layer id="DN3" name="What becomes noise (Real)">
+  <noise>
+    <item>Overflow beyond bytesPerCell: stored as truncated + pointers + checksum warning.</item>
+    <item>Sampling without index access: fragments detach; headers fight entropy by repetition.</item>
+    <item>Scan artifacts: strip boundaries cut across words; the cut is recorded, not smoothed.</item>
+  </noise>
+</layer>
+
+<layer id="DN4" name="Operational consequences">
+  <consequence>
+    <item>Retrieval is probabilistic under random scan; redundancy increases recall.</item>
+    <item>Archive/index split models storage/display separation: the “surface” is a readout, not the store.</item>
+    <item>“Understanding” is a reconstruction algorithm over indices; anything else is epiphenomenal.</item>
+  </consequence>
+</layer>
+```
+
+</discourse_network>
+
+  <!-- ================================================= -->
+
+  <!-- URN MAPPING DIRECTIVE (THIS POEM INSTANCE) -->
+
+  <!-- ================================================= -->
+
+<urn_mapping_directive>
+
+```
+<goal>
+  Fully map every user-provided line of “Ode on a Grecian Urn” into a 24×24 grid as addressable blocks.
+</goal>
+
+<instruction>
+  1) Parse LINES in presented order; assign IDs URN-L001..URN-LNNN.
+
+  2) Generate BLOCKS so each block references 1–3 consecutive lines, always prefixed by:
+     header := "⟦URN|STANZA-k⟧".
+
+     Strip into 96-char bands (charsPerStrip). Target 1–4 strips.
+
+  3) Allocate using Regime R3 (Hybrid):
+     - reserve INDEX and ARCHIVE addresses per reservation_map
+     - place primaries in TEXT cells deterministically by target_band + crc-seeded PRNG
+     - place replicas in CACHE cells with band-skew ±1
+
+  4) Ensure every LINE appears in:
+     - ≥1 primary TEXT cell via at least one BLOCK referencing it
+     - ≥1 CACHE cell as a replica of a block referencing it
+     - ≥1 INDEX entry (BY_LINE) mapping LINE → addresses
+
+  5) Any overflow produces either:
+     - split blocks with shared headers, OR
+     - pointer blocks with ARCHIVE bodies, OR
+     - NOISE blocks with truncation + checksum warning.
+</instruction>
+
+<cell_types>
+  <t id="T_TEXT">TEXT_CELL: contains one primary BLOCK (full or pointer-only).</t>
+  <t id="T_CACHE">CACHE_CELL: contains replicated BLOCK IDs or compact block headers + pointers.</t>
+  <t id="T_INDEX">INDEX_CELL: contains pointer tables (BY_LINE / BY_BLOCK / BY_TAG) and scan hints.</t>
+  <t id="T_ARCHIVE">ARCHIVE_CELL: dense payload arrays storing overflow bodies/fragments.</t>
+  <t id="T_NOISE">NOISE_CELL: truncated payload + pointers + checksum mismatch marker.</t>
+</cell_types>
+
+<success_criteria>
+  <s>Coverage: 100% of LINES mapped to ≥2 addresses.</s>
+  <s>Addressability: every BLOCK has a primary address + checksum; replicas recorded.</s>
+  <s>Retrievability: index cells allow stanza-order reconstruction without “meaning.”</s>
+  <s>Legibility: scan output always hits a stanza header within first 1–2 strips of any block.</s>
+  <s>Honesty: overflow/noise visible and indexable (not silently “fixed”).</s>
+</success_criteria>
+```
+
+</urn_mapping_directive>
+
+  <!-- ================================================= -->
+
+  <!-- OUTPUT SCHEMA (MANIFEST DATA CONTRACT) -->
+
+  <!-- ================================================= -->
+
+<output_schema> <json name="urn_grid_manifest">
+{
+"gridSize": 24,
+"config": {
+"charsPerStrip": 96,
+"bytesPerCell": 640,
+"encoding": "utf-8",
+"panelSep": " ⟦⟦PANEL⟧⟧ ",
+"lineSep": " / ",
+"crcAlgo": "crc32",
+"bands": 12,
+"entropyTau": 2.75
+},
+
+```
+    "lines": [
+      {
+        "id": "URN-L001",
+        "stanza": 1,
+        "raw": "Thou still unravish'd bride of quietness,",
+        "norm": "⟪INDENT:0⟫THOU STILL UNRAVISH'D BRIDE OF QUIETNESS,",
+        "sig": { "punct": ",'", "entropy": 1.42, "length": 46 }
+      }
+    ],
+
+    "blocks": [
+      {
+        "id": "URN-B0001",
+        "header": "⟦URN|STANZA-1⟧",
+        "stanza": 1,
+        "sourceLines": ["URN-L001","URN-L002"],
+        "strips": [
+          "⟦URN|STANZA-1⟧ / ⟪INDENT:0⟫THOU STILL UNRAVISH'D BRIDE OF QUIETNESS, / ⟪INDENT:7⟫THOU FOSTER-CHILD OF SILENCE AND SLOW TIME,"
+        ],
+        "bytes": 198,
+        "crc": "0xA1B2C3D4",
+        "flags": { "overflow": false, "pointerOnly": false, "truncated": false }
+      }
+    ],
+
+    "cells": [
+      {
+        "x": 0, "y": 0, "addr": 0,
+        "type": "INDEX",
+        "payload": [
+          { "kind": "BY_LINE", "line": "URN-L001", "addrs": [155, 388] },
+          { "kind": "BY_BLOCK", "block": "URN-B0001", "primary": 155, "replicas": [12, 388] },
+          { "kind": "BY_TAG", "tag": "STANZA-1", "addrs": [155,156,157] }
+        ],
+        "blocks": [],
+        "tags": ["URN","INDEX","DIRECTORY"],
+        "bytes": 512,
+        "crc": "0x0F00BA11",
+        "neighbors": [1,24],
+        "retrieval_bias": { "scanHint": "SERPENTINE", "preferTag": "STANZA-1" }
+      },
+
+      {
+        "x": 11, "y": 6, "addr": 155,
+        "type": "TEXT",
+        "payload": ["⟦URN|STANZA-1⟧ / ..."],
+        "blocks": ["URN-B0001"],
+        "tags": ["URN","STANZA-1","PRIMARY"],
+        "bytes": 198,
+        "crc": "0xA1B2C3D4",
+        "neighbors": [154,156,131,179],
+        "retrieval_bias": { "preferBlock": "URN-B0001", "ttl": 0 }
+      }
+    ],
+
+    "indices": {
+      "byLine":  { "URN-L001": [155, 388] },
+      "byBlock": { "URN-B0001": { "primary": 155, "replicas": [12, 388], "archive": [] } },
+      "byTag":   { "URN": [0,24,48], "STANZA-1": [155,156,157], "NOISE": [503,504] }
+    },
+
+    "routes": {
+      "scanModes": ["RASTER_LTR_TTB","SERPENTINE","RING_BANDS"],
+      "neighborsRule": "4-neighborhood (N,E,S,W) with edge wrap disabled unless configured"
+    }
+  }
+</json>
+```
+
+</output_schema>
+
+<execution_note>
+Protocol + schema only.
+Full 24×24 filled manifest is withheld by default.
+If requested: output chunked JSON (rows 0–7, 8–15, 16–23) with stable IDs and no omissions.
+</execution_note>
+
+</prompt>
+::contentReference[oaicite:0]{index=0}

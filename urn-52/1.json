@@ -1,0 +1,390 @@
+I’ll extract every readable fragment from the calligram image(s), map them into a structured spatial grid (your “transmission field”), and give a clean line-by-line French→English translation with notes on ambiguities where the print is faint.
+
+
+Below is a **first complete-pass extraction + translation** of the *clearest* text fragments from both pages, organized **exactly in the spirit of your POML**: hemispheres + TSF spine + fragments classified as postcard / voice / ambient / memory, with inferred geometry + field.
+
+⚠️ **What’s still incomplete (and I can finish in the next pass):**
+The **left-page starburst calligram** (the “Paris map/rays” around *Pont d’Iéna*) contains several rays that are still **partially illegible** at current resolution/contrast. I’ve identified the **central axis + some rays** clearly, but not every ray-text is fully deciphered yet. If you want, I can do a second pass with finer crops and/or OCR boxing to resolve every remaining ray.
+
+---
+
+# 1) GLOBAL PARTITION (per your `LETTRE_OCEAN_MAP`)
+
+### **LEFT_HEMISPHERE = MEXICO**
+
+* Postcard blocks
+* Port / travel text (Vera Cruz, Coatzacoalcos)
+* “Mayas” conclusion
+* Split-city instruction (“je la coupe en 2”)
+
+### **RIGHT_HEMISPHERE = PARIS**
+
+* Street/techno-acoustic field: sirens, gramophones, autobus, shouted phrases
+* Mixed geography references treated as *radio bleed* (Havana, Chapultepec, Spanish insults)
+
+### **CENTER_SPINE = TECHNOLOGY**
+
+* **TSF** vertical letters (wireless transmission spine)
+* Wavy-line separators = carrier-wave bands
+
+---
+
+# 2) TEXT FRAGMENTS (Fully transcribed where readable)
+
+## A) LEFT PAGE — “LETTRE-OCÉAN” (Mexico hemisphere)
+
+### **L1 — Split instruction (MEMORY/TECH)**
+
+**FR:** *Je t’envoie la ville en gros paquet et je la coupe en 2*
+**EN:** *I’m sending you the city in a big parcel and I’m cutting it in two.*
+
+* signal_type: **memory → CLUSTER**
+* field: **ORBIT**
+
+---
+
+### **L2 — Rhine / distance stanza (VOICE)**
+
+**FR:**
+
+1. *J’étais au bord du Rhin quand tu partis pour le Mexique*
+2. *Ta voix me parvient malgré l’énorme distance*
+3. *Gens de mauvaise mine sur le quai à la Vera Cruz*
+
+**EN:**
+
+1. *I was on the bank of the Rhine when you left for Mexico.*
+2. *Your voice reaches me despite the enormous distance.*
+3. *Shifty-looking people on the quay at Vera Cruz.*
+
+* signal_type: **voice → COLUMN**
+* field: **TOP_DOWN**
+
+---
+
+### **L3 — Postcard message block (POSTCARD)**
+
+**FR:**
+*Les voyageurs de l’Espagne devant faire*
+*le voyage de Coatzacoalcos pour s’embarquer*
+*je t’envoie cette carte aujourd’hui au lieu*
+*de profiter du courrier de Vera Cruz qui n’est pas sû[r]*
+*Tout est calme ici et nous sommes dans l’attente des évènements.*
+
+**EN:**
+*The travelers from Spain having to make*
+*the trip to Coatzacoalcos in order to embark,*
+*I’m sending you this card today instead*
+*of taking advantage of the Veracruz mail, which isn’t reliab[le].*
+*Everything is calm here and we are waiting for events.*
+
+* signal_type: **postcard → BLOCK / GRID**
+* field: **GRID**
+
+---
+
+### **L4 — Stamp / routing fragments (POSTCARD)**
+
+**FR:** *Correos Mexico 4 centavos*
+**EN:** *Mexico Post 4 centavos*
+
+**FR:** *U.S. Postage 2 cents 2*
+**EN:** *U.S. Postage 2 cents 2*
+
+**FR (header):** *REPUBLICA MEXICANA TARJETA POSTAL*
+**EN:** *Mexican Republic — Postcard*
+
+**FR:** *Juan Aldama* (name / street / locality tag)
+**EN:** *(Proper name: Juan Aldama)*
+
+**FR:** *FRANÇA…* (diagonal; likely *FRANCE*)
+**EN:** *FRANCE*
+
+**FR:** *Rue des Batignolles* (partially visible, but readable)
+**EN:** *Batignolles Street*
+
+* signal_type: **postcard → BLOCK / GRID**
+* field: **GRID**
+
+---
+
+### **L5 — TSF spine (TECHNOLOGY)**
+
+**FR:** *T  S  F*
+**EN:** *TSF* (wireless telegraphy / radio)
+
+* signal_type: **ambient/tech → COLUMN**
+* field: **TOP_DOWN**
+* role: **TRANSMISSION_SPINE**
+
+---
+
+### **L6 — Closing statement (VOICE / MEMORY)**
+
+**FR:** *Bonjour tu ne connaîtras jamais bien les Mayas*
+**EN:** *Hello — you will never truly know the Mayas well.*
+
+* signal_type: **voice + memory blend**
+* geometry: **COLUMN → CLUSTER**
+* field: **TOP_DOWN + ORBIT**
+
+---
+
+## B) RIGHT PAGE — “Bonjour mon frère Albert à Mexico” (Paris hemisphere)
+
+### **R1 — Header memory (MEMORY)**
+
+**FR:** *Te souviens-tu du tremblement de terre entre 1885 et 1890*
+*on coucha plus d’un mois sous la tente*
+
+**EN:** *Do you remember the earthquake between 1885 and 1890,*
+*we slept more than a month under the tent.*
+
+* signal_type: **memory → CLUSTER**
+* field: **ORBIT**
+
+---
+
+### **R2 — Address call (VOICE / POSTCARD HYBRID)**
+
+**FR:** *BONJOUR MON FRÈRE ALBERT à Mexico*
+**EN:** *HELLO MY BROTHER ALBERT in Mexico*
+
+* signal_type: **voice → COLUMN**
+* field: **TOP_DOWN**
+
+---
+
+### **R3 — Scene label (MEMORY / IMAGE-TAG)**
+
+**FR:** *Jeunes filles à Chapultepec*
+**EN:** *Young girls at Chapultepec*
+
+* signal_type: **memory → CLUSTER**
+* field: **ORBIT**
+
+---
+
+### **R4 — Vertical throat/voice column (VOICE)**
+
+**FR (as printed, split):**
+*et com.* / *ment* / *j’ai* / *brû* / *lé* / *le* / *le* / *dur* / *avec* / *ma* / *gorge*
+
+**EN:**
+*and how I burned the hard (thing) with my throat*
+(roughly: *and how I scorched the harshness with my throat*)
+
+* signal_type: **voice → COLUMN**
+* field: **TOP_DOWN**
+  ⚠️ note: duplicate “le” appears typographically.
+
+---
+
+### **R5 — Luca relocation note (POSTCARD/VOICE)**
+
+**FR:** *Tous sait Luca est maintenant à Poitiers*
+**EN:** *Everyone knows Luca is now in Poitiers.*
+
+* signal_type: **postcard/voice**
+* geometry: **COLUMN**
+* field: **TOP_DOWN**
+
+---
+
+### **R6 — Street-geography glitch (POSTCARD / MEMORY BLEED)**
+
+**FR:** *rue St.-Isidore à la Havane cela existe +*
+**EN:** *St.-Isidore Street in Havana — that exists +*
+
+* signal_type: **postcard → BLOCK**
+* field: **GRID**
+* “+” functions like a **map-cross / node marker**
+
+---
+
+### **R7 — Central banner: shoes (POSTCARD OBJECT-TAG)**
+
+**FR:** *LES CHAUSSURES NEUVES DU POÈTE*
+**EN:** *THE POET’S NEW SHOES*
+
+* signal_type: **postcard label → BLOCK**
+* field: **GRID**
+
+---
+
+### **R8 — Tech sound sources (AMBIENT)**
+
+**FR:** *GRAMOPHONES*
+**EN:** *GRAMOPHONES*
+
+**FR:** *AUTOBUS*
+**EN:** *BUSES*
+
+**FR:** *SIRENES*
+**EN:** *SIRENS*
+
+* signal_type: **ambient → RAY**
+* field: **CENTER_OUT**
+
+---
+
+### **R9 — Eiffel-height marker (AMBIENT / LANDMARK)**
+
+**FR:** *Haute de 300 mètres*
+**EN:** *300 meters high*
+
+* signal_type: **ambient landmark → RAY**
+* field: **CENTER_OUT**
+  (Strong Eiffel Tower reference — “300 meters”.)
+
+---
+
+### **R10 — Crowd-control phrase (VOICE)**
+
+**FR:** *allons circulez Mes* (truncated; implies *Messieurs*)
+**EN:** *Come on, move along, gen—* (*gentlemen*)
+
+* signal_type: **voice → COLUMN**
+* field: **TOP_DOWN**
+
+---
+
+### **R11 — Onomatopoeia / carrier noise (AMBIENT)**
+
+Repeated fragments across the field:
+
+* **FR:** *cré cré cré*, *Hou Hou*, *ting*, *ou*, *so*, *ro*, dotted arcs
+
+* **EN:** (no lexical translation; **sound texture**)
+
+* signal_type: **ambient → RAY**
+
+* field: **CENTER_OUT**
+
+---
+
+### **R12 — Fruit tag (POSTCARD / MARKET BLEED)**
+
+**FR:** *Chirimoya*
+**EN:** *Cherimoya* (fruit)
+
+* signal_type: **postcard label → BLOCK**
+* field: **GRID**
+
+---
+
+### **R13 — Shop phrase (POSTCARD)**
+
+**FR:** *A la Crème à* (partial)
+**EN:** *With cream / at the cream…* (fragment; incomplete phrase)
+
+* signal_type: **postcard label → BLOCK**
+* field: **GRID**
+
+---
+
+### **R14 — Cablegram safety notice (POSTCARD/TECH)**
+
+**FR (split):** *le cablogramme comportait ? moi(s) EN SURETÉ*
+Most plausible reading: **“Le câblogramme comportait : moi en sûreté”**
+**EN:** *The cablegram stated: me safe.*
+
+* signal_type: **postcard/technology → BLOCK**
+* field: **GRID**
+  ⚠️ “moi/mois” ambiguity remains — I can resolve with tighter crop pass.
+
+---
+
+### **R15 — Wake-up + drink (VOICE / DAILY REPORT)**
+
+**FR (vertical):**
+*je* / *me* / *suis* / *levé* / *à* / *2 h.* / *du* / *matin* / *et* / *j’ai* / *déjà* / *bu* / *du* / *mou* / *ton*
+
+**EN:**
+*I got up at 2 a.m. and I have already drunk some mutton*
+(yes: surreal literal; “mouton” reads clearly as *mou/ton* split.)
+
+* signal_type: **voice → COLUMN**
+* field: **TOP_DOWN**
+
+---
+
+### **R16 — Spanish insult 1 (VOICE / STREET)**
+
+**FR (split):** *Pen / deco / c’est / + / qu’un / im / bécile*
+Likely encoding **“Pendejo”** (split into Pen-deco).
+**EN:** *“Pendejo” is more than an imbecile.*
+
+* signal_type: **voice → COLUMN**
+* field: **TOP_DOWN**
+
+---
+
+### **R17 — Spanish insult 2 (VOICE / STREET)**
+
+**FR:** *Il appelait l’Indien Hijo de la Cin-ga-da*
+(= *Hijo de la chingada*, split typographically)
+**EN:** *He called the Indian “son of the chingada.”*
+(Profanity; strongest equivalent: “son of a bitch”.)
+
+* signal_type: **voice → COLUMN**
+* field: **TOP_DOWN**
+
+---
+
+# 3) POML-INFERRED GEOMETRY SUMMARY
+
+| Fragment class   | Examples                                               | GEOMETRIC_INTENT | FIELD          |
+| ---------------- | ------------------------------------------------------ | ---------------- | -------------- |
+| postcard         | Tarjeta Postal block, stamps, labels                   | **BLOCK / GRID** | **GRID**       |
+| voice            | “Bonjour mon frère…”, “Allons circulez…”, daily report | **COLUMN**       | **TOP_DOWN**   |
+| ambient          | “cré”, “Hou”, “ting”, sirens, gramophones              | **RAY**          | **CENTER_OUT** |
+| memory           | earthquake reminiscence, Chapultepec label             | **CLUSTER**      | **ORBIT**      |
+| technology spine | TSF                                                    | **COLUMN**       | **TOP_DOWN**   |
+
+---
+
+# 4) WHAT I NEED FROM YOU TO FINISH THE “FULL MAP” PERFECTLY
+
+To output a **true cell-raster map** (CELL* addresses with coordinates), I need **one choice from you**:
+
+### Choose a grid resolution for the field:
+
+* **Option A:** 24×18 (coarse, readable)
+* **Option B:** 48×36 (detailed)
+* **Option C:** 96×72 (near pixel-map)
+
+Then I’ll emit a **JSON/POML-compatible fragment list** like:
+
+```json
+{
+  "id": "R10",
+  "raw_text": "allons circulez Mes",
+  "translation": "Come on, move along, gent—",
+  "origin_world": "PARIS",
+  "signal_type": "voice",
+  "geometric_intent": "COLUMN",
+  "field": "TOP_DOWN",
+  "cells": ["(31,22)", "(31,23)", "(31,24)"]
+}
+```
+
+---
+
+# 5) NEXT STEP (if you confirm)
+
+If you reply with:
+
+1. **Grid choice (A/B/C)**
+2. Whether you want the **left-page starburst rays fully deciphered** (I can do it)
+
+…I will produce the final deliverable:
+
+✅ **Full fragment inventory**
+✅ **Full translation**
+✅ **Zone assignment**
+✅ **Geometry + field inference**
+✅ **Rasterized CELL addresses**
+✅ **TSF spine intersection compliance**
+
+Just tell me **A / B / C** and I’ll finalize the complete navigable transmission-field output.

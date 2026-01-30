@@ -1,0 +1,1681 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Carey Ritual-First World Model — Keats: Ode on a Grecian Urn</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f1620;
+      --panel2:#0d131b;
+      --ink:#e9eef7;
+      --muted:#a9b4c4;
+      --faint:#6d7a8f;
+      --line:#223041;
+      --accent:#7dd3fc; /* sky */
+      --accent2:#a7f3d0; /* mint */
+      --warn:#fca5a5;
+      --ok:#86efac;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      --serif: ui-serif, Georgia, "Times New Roman", Times, serif;
+      --tap: rgba(125, 211, 252, 0.18);
+    }
+
+    [data-theme="light"]{
+      --bg:#f6f7fb;
+      --panel:#ffffff;
+      --panel2:#fbfcff;
+      --ink:#101622;
+      --muted:#445068;
+      --faint:#6b7893;
+      --line:#dde3ef;
+      --accent:#0ea5e9;
+      --accent2:#10b981;
+      --warn:#ef4444;
+      --ok:#16a34a;
+      --shadow: 0 12px 30px rgba(16,22,34,.12);
+      --tap: rgba(14,165,233,.12);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      background: radial-gradient(1200px 800px at 18% 10%, rgba(125,211,252,.08), transparent 60%),
+                  radial-gradient(1200px 800px at 82% 18%, rgba(167,243,208,.06), transparent 60%),
+                  var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* Layout */
+    .app{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 14px 14px 18px;
+      padding-bottom: calc(18px + env(safe-area-inset-bottom));
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 10px 8px 14px;
+    }
+
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width: 0;
+    }
+    .brand .title{
+      font-size: 16px;
+      letter-spacing: .2px;
+      font-weight: 760;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .brand .subtitle{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+
+    .controls{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      color: var(--ink);
+      border-radius: 999px;
+      box-shadow: var(--shadow);
+      cursor:pointer;
+      user-select:none;
+      font-size: 12px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .chip:active{ transform: translateY(1px); }
+    .chip .dot{
+      width:8px;height:8px;border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(125,211,252,.18);
+    }
+    .chip.secondary .dot{ background: var(--accent2); box-shadow: 0 0 0 4px rgba(167,243,208,.16); }
+    .chip.warn .dot{ background: var(--warn); box-shadow: 0 0 0 4px rgba(252,165,165,.16); }
+
+    .search{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 999px;
+      box-shadow: var(--shadow);
+      min-width: min(360px, 56vw);
+    }
+    .search input{
+      border:0;
+      outline:0;
+      background: transparent;
+      color: var(--ink);
+      width: 100%;
+      font-size: 12.5px;
+    }
+    .search input::placeholder{ color: var(--faint); }
+    .kbd{
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      border:1px solid var(--line);
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: var(--panel2);
+    }
+
+    /* Tabs */
+    .tabs{
+      display:flex;
+      gap:8px;
+      flex-wrap: wrap;
+      padding: 0 8px 12px;
+    }
+    .tab{
+      border:1px solid var(--line);
+      background: var(--panel);
+      color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      box-shadow: var(--shadow);
+      font-size: 12px;
+      line-height: 1;
+      user-select:none;
+    }
+    .tab[aria-selected="true"]{
+      color: var(--ink);
+      border-color: rgba(125,211,252,.55);
+      box-shadow: 0 0 0 3px rgba(125,211,252,.18), var(--shadow);
+    }
+    .tab:active{ transform: translateY(1px); }
+
+    /* Main panels */
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 12px;
+      align-items: start;
+    }
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+      .search{ min-width: 0; width: 100%; }
+      header{ flex-direction:column; align-items:stretch; }
+      .controls{ justify-content:space-between; }
+    }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panel .head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      padding: 14px 14px 10px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), transparent);
+    }
+    .panel .head h2{
+      margin:0;
+      font-size: 14px;
+      line-height: 1.2;
+      font-weight: 760;
+      letter-spacing: .2px;
+    }
+    .panel .head p{
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.35;
+      max-width: 62ch;
+    }
+    .panel .body{
+      padding: 12px 14px 14px;
+    }
+
+    /* Stanza list */
+    .stanzas{
+      display:flex;
+      gap:10px;
+      flex-wrap: wrap;
+      padding: 8px 0 2px;
+    }
+    .stanzaBtn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: var(--panel);
+      cursor:pointer;
+      user-select:none;
+      font-size: 12.5px;
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+    .stanzaBtn[aria-pressed="true"]{
+      border-color: rgba(167,243,208,.62);
+      box-shadow: 0 0 0 3px rgba(167,243,208,.18), var(--shadow);
+    }
+    .badge{
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      border:1px solid var(--line);
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: var(--panel2);
+    }
+    .opsPills{
+      display:flex;
+      gap:6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .pill{
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: var(--panel2);
+      color: var(--muted);
+      line-height:1;
+    }
+    .pill.produce{ border-color: rgba(125,211,252,.55); color: var(--ink); }
+    .pill.maintain{ border-color: rgba(167,243,208,.55); color: var(--ink); }
+    .pill.repair{ border-color: rgba(252,165,165,.55); color: var(--ink); }
+    .pill.transform{ border-color: rgba(253,224,71,.55); color: var(--ink); }
+    [data-theme="light"] .pill.transform{ border-color: rgba(234,179,8,.55); }
+
+    /* Protocol / Details */
+    details{
+      border:1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      margin-bottom: 10px;
+    }
+    details > summary{
+      list-style:none;
+      cursor:pointer;
+      padding: 12px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    details > summary::-webkit-details-marker{ display:none; }
+    .sumLeft{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .sumLeft .tag{
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      color: var(--muted);
+      background: var(--panel2);
+      white-space: nowrap;
+    }
+    .sumLeft .label{
+      font-weight: 720;
+      font-size: 12.5px;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .chev{
+      width: 18px;
+      height: 18px;
+      flex:0 0 auto;
+      border-radius: 8px;
+      border:1px solid var(--line);
+      background: var(--panel2);
+      display:grid;
+      place-items:center;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height:1;
+    }
+    details[open] .chev{ color: var(--ink); border-color: rgba(125,211,252,.55); }
+
+    .detailsBody{
+      padding: 0 12px 12px;
+      border-top:1px solid var(--line);
+    }
+    .detailsBody p{
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+    .detailsBody ul{
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+    .detailsBody li{ margin: 6px 0; }
+
+    /* Poem */
+    .poem{
+      font-family: var(--serif);
+      line-height: 1.5;
+      font-size: 15.5px;
+      padding: 6px 2px 0;
+    }
+    .poem h3{
+      font-family: var(--sans);
+      font-size: 14px;
+      margin: 0 0 4px;
+      font-weight: 780;
+      letter-spacing:.2px;
+    }
+    .poem .meta{
+      font-family: var(--sans);
+      color: var(--muted);
+      font-size: 12.5px;
+      margin: 0 0 14px;
+    }
+    .stanza{
+      border:1px solid transparent;
+      border-radius: 14px;
+      padding: 10px 10px;
+      margin: 10px 0;
+      background: transparent;
+      transition: border-color .15s ease, background .15s ease;
+    }
+    .stanza:hover{ background: rgba(255,255,255,.03); }
+    [data-theme="light"] .stanza:hover{ background: rgba(14,165,233,.06); }
+
+    .stanza.selected{
+      border-color: rgba(125,211,252,.55);
+      background: rgba(125,211,252,.08);
+    }
+    .stanza .stLabel{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 8px;
+      font-family: var(--sans);
+    }
+    .stLabel .left{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .stLabel .left .snum{
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: var(--panel2);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .stLabel .left .sname{
+      font-size: 12.5px;
+      font-weight: 760;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .stLabel button{
+      border:1px solid var(--line);
+      background: var(--panel);
+      color: var(--muted);
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor:pointer;
+      box-shadow: var(--shadow);
+    }
+    .stLabel button:active{ transform: translateY(1px); }
+    .lines{
+      margin: 0;
+      padding-left: 0;
+      list-style: none;
+    }
+    .lines li{
+      margin: 2px 0;
+    }
+    .indent1{ padding-left: 18px; }
+    .indent2{ padding-left: 34px; }
+
+    /* Right-side analysis cards */
+    .card{
+      border:1px solid var(--line);
+      background: var(--panel);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .card h4{
+      margin:0 0 8px;
+      font-size: 12.5px;
+      font-family: var(--sans);
+      letter-spacing:.2px;
+      font-weight: 780;
+      color: var(--ink);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .card h4 .miniDot{
+      width:8px;height:8px;border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(125,211,252,.16);
+      flex:0 0 auto;
+    }
+    .card p, .card ul{
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+    .card ul{ padding-left: 18px; }
+    .card li{ margin: 6px 0; }
+    .mono{
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--muted);
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      overflow:auto;
+      margin-top: 10px;
+      white-space: pre;
+    }
+
+    /* Ritual circuit SVG */
+    .circuitWrap{
+      display:flex;
+      gap:12px;
+      flex-wrap: wrap;
+      align-items:flex-start;
+    }
+    .circuit{
+      width: 280px;
+      max-width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 18px;
+      border:1px solid var(--line);
+      background: radial-gradient(120px 120px at 50% 50%, rgba(125,211,252,.10), transparent 70%),
+                  radial-gradient(260px 260px at 50% 50%, rgba(167,243,208,.08), transparent 70%),
+                  var(--panel);
+      box-shadow: var(--shadow);
+      padding: 8px;
+    }
+    svg{ width:100%; height:100%; display:block; }
+    .node{
+      cursor:pointer;
+      outline: none;
+    }
+    .node circle{
+      fill: var(--panel2);
+      stroke: var(--line);
+      stroke-width: 2;
+      transition: transform .12s ease, stroke .12s ease;
+    }
+    .node text{
+      font-family: var(--mono);
+      fill: var(--muted);
+      font-size: 12px;
+      user-select:none;
+    }
+    .node:hover circle{ transform: scale(1.04); }
+    .node[aria-current="true"] circle{
+      stroke: rgba(125,211,252,.9);
+      filter: drop-shadow(0 0 8px rgba(125,211,252,.25));
+    }
+    .node[aria-current="true"] text{ fill: var(--ink); }
+
+    /* Notes */
+    textarea{
+      width:100%;
+      min-height: 120px;
+      resize: vertical;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: var(--panel2);
+      color: var(--ink);
+      padding: 10px 10px;
+      font-size: 12.5px;
+      line-height: 1.45;
+      outline:none;
+    }
+    textarea:focus{
+      box-shadow: 0 0 0 3px rgba(125,211,252,.18);
+      border-color: rgba(125,211,252,.55);
+    }
+
+    /* Utility */
+    .row{
+      display:flex;
+      gap:8px;
+      flex-wrap: wrap;
+      align-items:center;
+    }
+    .muted{ color: var(--muted); }
+    .small{ font-size: 12px; }
+    .hr{
+      height:1px;
+      background: var(--line);
+      margin: 12px 0;
+    }
+    .hidden{ display:none !important; }
+
+    /* Tap feedback */
+    button, .tab, .chip, .stanzaBtn, summary, .node{
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tap{
+      position:relative;
+      overflow:hidden;
+    }
+    .tap:after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: transparent;
+      transition: background .08s ease;
+      pointer-events:none;
+    }
+    .tap:active:after{
+      background: var(--tap);
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="brand">
+        <div class="title">Carey Ritual-First World Model</div>
+        <div class="subtitle">Communication as symbolic world-production — executed on Keats’s <span style="font-style:italic;">Ode on a Grecian Urn</span></div>
+      </div>
+
+      <div class="controls">
+        <div class="search" role="search">
+          <span class="kbd">/</span>
+          <input id="q" type="search" placeholder="Search: urn, ritual, forever, sacrifice, town, beauty…" aria-label="Search content" />
+          <span class="kbd" title="Clear">esc</span>
+        </div>
+
+        <button class="chip tap" id="themeBtn" type="button" aria-pressed="false" title="Toggle theme">
+          <span class="dot"></span>
+          Theme
+        </button>
+
+        <button class="chip secondary tap" id="copyManifestBtn" type="button" title="Copy world-manifest JSON">
+          <span class="dot"></span>
+          Copy Manifest
+        </button>
+
+        <button class="chip warn tap" id="resetNotesBtn" type="button" title="Clear your saved notes">
+          <span class="dot"></span>
+          Reset Notes
+        </button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Views">
+      <button class="tab tap" data-tab="protocol" aria-selected="true">Protocol</button>
+      <button class="tab tap" data-tab="map" aria-selected="false">Ritual Map</button>
+      <button class="tab tap" data-tab="manifest" aria-selected="false">World Manifest</button>
+      <button class="tab tap" data-tab="notes" aria-selected="false">Notes</button>
+    </nav>
+
+    <main class="grid" id="mainGrid">
+      <!-- LEFT -->
+      <section class="panel" id="leftPanel">
+        <div class="head">
+          <div>
+            <h2 id="leftTitle">Protocol (Ritual-First)</h2>
+            <p id="leftDesc">A ritual-first executable framing: world-making, not message-transfer. Use the stations to select a stanza; the analysis will update on the right.</p>
+          </div>
+          <div class="row">
+            <span class="badge" id="modeBadge">RITUAL PRIMARY</span>
+          </div>
+        </div>
+
+        <div class="body" id="leftBody">
+          <!-- Filled by JS -->
+        </div>
+      </section>
+
+      <!-- RIGHT -->
+      <aside class="panel" id="rightPanel">
+        <div class="head">
+          <div>
+            <h2 id="rightTitle">Selected Station</h2>
+            <p id="rightDesc">Click a stanza (or a node in the ritual circuit) to view the Carey ritual operations and ethical profile for that station.</p>
+          </div>
+          <div class="row">
+            <span class="badge" id="selectedBadge">S1</span>
+          </div>
+        </div>
+        <div class="body" id="rightBody">
+          <!-- Filled by JS -->
+        </div>
+      </aside>
+    </main>
+  </div>
+
+<script>
+(function(){
+  const DATA = {
+    meta: {
+      prompt_id: "CAREY-CULTURAL-APPROACH-POML-v1",
+      ontology_lock: [
+        "Communication is world-activity: artifacts are worlds to inhabit, not containers to decode.",
+        "Meaning is enacted, not transmitted: interpretation is participation.",
+        "Every communication model is an ethical instrument: it builds the world it claims to describe."
+      ],
+      priority_rule: "RITUAL is primary; TRANSMISSION effects may be acknowledged only secondarily."
+    },
+
+    protocol: [
+      {
+        id: "O0",
+        label: "Ontological Lock",
+        tag: "LOCK",
+        bullets: [
+          "Treat the artifact as a symbolic world-production practice.",
+          "Interpretation = participation, not extraction.",
+          "Model-building is ethical world-building."
+        ]
+      },
+      {
+        id: "R1",
+        label: "Identify the Ceremonial Object",
+        tag: "STEP R1",
+        bullets: [
+          "Locate the altar/center of gravity: the object that organizes attention.",
+          "Name its sacred qualities (silence, endurance, simultaneity).",
+          "State access rules (how one approaches / circles / re-enters)."
+        ]
+      },
+      {
+        id: "R2",
+        label: "Extract the Participation Contract",
+        tag: "STEP R2",
+        bullets: [
+          "List what the artifact makes participants do: address, question, behold, repeat, submit to constraint.",
+          "Enumerate roles (officiant, witness, oracle, chorus).",
+          "Mark prohibitions (no simple decoding; no final closure without traversal)."
+        ]
+      },
+      {
+        id: "R3",
+        label: "Build Symbolic Architecture (Space + Time)",
+        tag: "STEP R3",
+        bullets: [
+          "Map geometry: center/periphery; circuit vs line.",
+          "Map temporality: recurrence, frozen action, eternal present.",
+          "Specify what repeats as liturgy (e.g., 'for ever')."
+        ]
+      },
+      {
+        id: "R4",
+        label: "Map the Four Ritual Operations",
+        tag: "STEP R4",
+        bullets: [
+          "PRODUCE: bring a world into being.",
+          "MAINTAIN: keep a world coherent across time.",
+          "REPAIR: restore a damaged world (manage contradiction).",
+          "TRANSFORM: replace an exhausted world with a new settlement."
+        ]
+      },
+      {
+        id: "R5",
+        label: "Enforce Displacement + Productivity",
+        tag: "STEP R5",
+        bullets: [
+          "DISPLACEMENT: the world works even when referents are absent.",
+          "PRODUCTIVITY: finite symbols generate infinite inhabitable variants."
+        ]
+      },
+      {
+        id: "R6",
+        label: "Ethical Instrument Test",
+        tag: "STEP R6",
+        bullets: [
+          "Ask: what kind of world does this model build?",
+          "Name drift risks: control, administration, commodification, therapy (transmission-dominant hazards).",
+          "Name ritual aspirations: community, continuity, shared meaning, cultural responsibility."
+        ]
+      }
+    ],
+
+    ritual_core: {
+      core_definition: "Communication is a symbolic process whereby reality is produced, maintained, repaired, transformed.",
+      two_models: {
+        transmission: {
+          def: "Sending information across space for purposes of control.",
+          metaphor: "Transportation / Signal Flow",
+          values: ["Speed", "Reach", "Efficiency", "Influence", "Control"]
+        },
+        ritual: {
+          def: "Shared participation in symbolic forms that maintain a world.",
+          metaphor: "Ceremony / Mass / Drama",
+          values: ["Continuity", "Belonging", "Shared meaning", "Temporal endurance"]
+        }
+      }
+    },
+
+    poem: {
+      title: "Ode on a Grecian Urn",
+      author: "John Keats",
+      stanzas: [
+        {
+          id: "S1",
+          name: "Invocation + World-Seeding",
+          ops: ["PRODUCE"],
+          why: "Inaugurates the ritual relation (address + questions) and produces a populated mythic field by interrogation.",
+          contract: [
+            "Direct address installs a ceremonial relation (speaking-to, not reading-about).",
+            "Questions compel participatory completion: the world appears by being questioned into being."
+          ],
+          lines: [
+            {t:"Thou still unravish'd bride of quietness,"},
+            {t:"Thou foster-child of silence and slow time,", indent:1},
+            {t:"Sylvan historian, who canst thus express"},
+            {t:"A flowery tale more sweetly than our rhyme:", indent:1},
+            {t:"What leaf-fring'd legend haunts about thy shape"},
+            {t:"Of deities or mortals, or of both,", indent:1},
+            {t:"In Tempe or the dales of Arcady?", indent:2},
+            {t:"What men or gods are these? What maidens loth?", indent:1},
+            {t:"What mad pursuit? What struggle to escape?"},
+            {t:"What pipes and timbrels? What wild ecstasy?", indent:2}
+          ]
+        },
+        {
+          id: "S2",
+          name: "Paradox as Liturgy",
+          ops: ["MAINTAIN"],
+          why: "Stabilizes the world via designed paradox: unheard music, unconsummated desire, perpetual spring.",
+          contract: [
+            "Privilege symbolic participation over sensory receipt (unheard melodies sweeter).",
+            "Freeze consummation to maintain continuity (lover never kisses; youth never leaves)."
+          ],
+          lines: [
+            {t:"Heard melodies are sweet, but those unheard"},
+            {t:"Are sweeter; therefore, ye soft pipes, play on;", indent:1},
+            {t:"Not to the sensual ear, but, more endear'd,", indent:1},
+            {t:"Pipe to the spirit ditties of no tone:", indent:1},
+            {t:"Fair youth, beneath the trees, thou canst not leave"},
+            {t:"Thy song, nor ever can those trees be bare;", indent:1},
+            {t:"Bold Lover, never, never canst thou kiss,", indent:2},
+            {t:"Though winning near the goal yet, do not grieve;", indent:1},
+            {t:"She cannot fade, though thou hast not thy bliss,", indent:1},
+            {t:"For ever wilt thou love, and she be fair!", indent:2}
+          ]
+        },
+        {
+          id: "S3",
+          name: "Ecstasy + Mortal Cost",
+          ops: ["MAINTAIN","REPAIR"],
+          why: "Extends the 'for ever' maintenance spell while acknowledging mortal aftermath (cloying, parching).",
+          contract: [
+            "Intensify recurrence ('For ever...') as ceremonial time.",
+            "Begin repair by metabolizing envy/ache: eternal forms provoke temporal bodies."
+          ],
+          lines: [
+            {t:"Ah, happy, happy boughs! that cannot shed"},
+            {t:"Your leaves, nor ever bid the Spring adieu;", indent:1},
+            {t:"And, happy melodist, unwearied,", indent:1},
+            {t:"For ever piping songs for ever new;", indent:1},
+            {t:"More happy love! more happy, happy love!"},
+            {t:"For ever warm and still to be enjoy'd,", indent:1},
+            {t:"For ever panting, and for ever young;", indent:2},
+            {t:"All breathing human passion far above,"},
+            {t:"That leaves a heart high-sorrowful and cloy'd,", indent:1},
+            {t:"A burning forehead, and a parching tongue.", indent:2}
+          ]
+        },
+        {
+          id: "S4",
+          name: "Sacrifice + Absence",
+          ops: ["REPAIR"],
+          why: "Introduces classic ritual machinery (priest, altar, heifer) and makes absence inhabitable (the emptied town).",
+          contract: [
+            "Convert contradiction into ritual: loss is stabilized as symbolic condition.",
+            "Design absence as an operating feature, not a deficit."
+          ],
+          lines: [
+            {t:"Who are these coming to the sacrifice?"},
+            {t:"To what green altar, O mysterious priest,", indent:1},
+            {t:"Lead'st thou that heifer lowing at the skies,", indent:1},
+            {t:"And all her silken flanks with garlands drest?", indent:1},
+            {t:"What little town by river or sea shore,"},
+            {t:"Or mountain-built with peaceful citadel,", indent:1},
+            {t:"Is emptied of this folk, this pious morn?", indent:2},
+            {t:"And, little town, thy streets for evermore", indent:1},
+            {t:"Will silent be; and not a soul to tell", indent:1},
+            {t:"Why thou art desolate, can e'er return.", indent:2}
+          ]
+        },
+        {
+          id: "S5",
+          name: "Seal (Doctrine After Traversal)",
+          ops: ["TRANSFORM"],
+          why: "Converts encounter into epistemic settlement: the urn teaches by constraint, then seals with an aphorism.",
+          contract: [
+            "Exit transformation is earned by traversal: the seal is residue of ritual, not a standalone slogan.",
+            "The urn becomes an ethical/epistemic agent: it 'teases us out of thought'."
+          ],
+          lines: [
+            {t:"O Attic shape! Fair attitude! with brede"},
+            {t:"Of marble men and maidens overwrought,", indent:1},
+            {t:"With forest branches and the trodden weed;", indent:1},
+            {t:"Thou, silent form, dost tease us out of thought", indent:1},
+            {t:"As doth eternity: Cold Pastoral!"},
+            {t:"When old age shall this generation waste,", indent:1},
+            {t:"Thou shalt remain, in midst of other woe", indent:2},
+            {t:"Than ours, a friend to man, to whom thou say'st,", indent:1},
+            {t:"\"Beauty is truth, truth beauty,—that is all", indent:1},
+            {t:"Ye know on earth, and all ye need to know.\"", indent:2}
+          ]
+        }
+      ]
+    },
+
+    displacement_productivity: {
+      displacement: [
+        "The urn’s scenes are unmoored from recoverable events; their power is precisely their absence from empirical time.",
+        "The emptied town is irretrievable; return is impossible, and absence becomes a stable feature of the world."
+      ],
+      productivity: [
+        "Fixed icons (lover, youth, priest, town) become reusable roles across cultures and times.",
+        "Each re-entry recombines finite symbols into new inner dramas—an engine of inhabitable variants."
+      ]
+    },
+
+    ethics: {
+      builds_well: [
+        "Continuity without control: shared attention as sanctuary against churn.",
+        "A world where pain is not erased but ritualized into form."
+      ],
+      risks: [
+        "Aesthetic administration: beauty as managerial substitute for truth.",
+        "Commodification: quoting the seal instead of enacting the circuit.",
+        "Exclusion: the creed can gatekeep plural truths if detached from ambivalence."
+      ],
+      question: "What kind of world does enduring beauty authorize, and what does it exclude?"
+    },
+
+    design_directives: [
+      "Build a circuit, not a feed: users circle stations around a ceremonial center.",
+      "Prioritize recurrence over novelty: reward re-entry.",
+      "Make absence operational: unanswered questions and silence organize participation.",
+      "Install roles, not content: officiant, witness, chorus, skeptic.",
+      "End with a seal only after enactment: takeaways must be earned by traversal."
+    ],
+
+    manifest: {
+      world_id: "KEATS_URN_RITUAL_WORLD_v1",
+      ceremonial_object: {
+        name: "Grecian Urn",
+        mode: "silent-archive",
+        powers: ["endurance", "simultaneity", "constraint-teaching"]
+      },
+      participants: [
+        { role: "speaker_officiant", verbs: ["address", "question", "praise", "submit", "seal"] },
+        { role: "reader_participant", verbs: ["behold", "complete", "re-enter", "withstand_paradox"] },
+        { role: "urn_oracle", verbs: ["withhold", "persist", "tease_out_of_thought"] }
+      ],
+      ritual_temporality: {
+        logic: "eternal_present",
+        mechanisms: ["for_ever_refrain", "unheard_music", "unconsummated_desire", "irreversible_absence"]
+      },
+      ritual_operations: {
+        PRODUCE: ["invocation + interrogative world-seeding"],
+        MAINTAIN: ["paradox as liturgy", "recurrence cues"],
+        REPAIR: ["sacrifice + absence made inhabitable"],
+        TRANSFORM: ["epistemic seal: beauty/truth creed after traversal"]
+      },
+      ethical_question: "What kind of world does enduring beauty authorize, and what does it exclude?"
+    }
+  };
+
+  /* ----------------- State ----------------- */
+  const els = {
+    app: document.getElementById("app"),
+    q: document.getElementById("q"),
+    leftTitle: document.getElementById("leftTitle"),
+    leftDesc: document.getElementById("leftDesc"),
+    leftBody: document.getElementById("leftBody"),
+    rightTitle: document.getElementById("rightTitle"),
+    rightDesc: document.getElementById("rightDesc"),
+    rightBody: document.getElementById("rightBody"),
+    modeBadge: document.getElementById("modeBadge"),
+    selectedBadge: document.getElementById("selectedBadge"),
+    tabs: Array.from(document.querySelectorAll(".tab")),
+    themeBtn: document.getElementById("themeBtn"),
+    copyManifestBtn: document.getElementById("copyManifestBtn"),
+    resetNotesBtn: document.getElementById("resetNotesBtn"),
+    mainGrid: document.getElementById("mainGrid"),
+  };
+
+  const STORAGE = {
+    theme: "carey_urn_theme",
+    notes: "carey_urn_notes",
+    lastStation: "carey_urn_station",
+    lastTab: "carey_urn_tab",
+    search: "carey_urn_search"
+  };
+
+  const OPS_CLASS = {
+    PRODUCE: "produce",
+    MAINTAIN: "maintain",
+    REPAIR: "repair",
+    TRANSFORM: "transform"
+  };
+
+  let state = {
+    tab: "protocol",
+    stationId: "S1",
+    q: "",
+    theme: "dark",
+    notes: ""
+  };
+
+  /* ----------------- Helpers ----------------- */
+  function escapeHTML(s){
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function setTheme(theme){
+    state.theme = theme;
+    if(theme === "light"){
+      els.app.setAttribute("data-theme","light");
+      els.themeBtn.setAttribute("aria-pressed","true");
+    }else{
+      els.app.removeAttribute("data-theme");
+      els.themeBtn.setAttribute("aria-pressed","false");
+    }
+    localStorage.setItem(STORAGE.theme, theme);
+  }
+
+  function setTab(tab){
+    state.tab = tab;
+    localStorage.setItem(STORAGE.lastTab, tab);
+
+    els.tabs.forEach(b=>{
+      const selected = b.dataset.tab === tab;
+      b.setAttribute("aria-selected", selected ? "true" : "false");
+    });
+
+    renderLeft();
+    renderRight();
+  }
+
+  function setStation(stationId){
+    state.stationId = stationId;
+    localStorage.setItem(STORAGE.lastStation, stationId);
+    renderRight();
+    // also keep poem highlight in protocol tab
+    if(state.tab === "protocol") renderLeft();
+  }
+
+  function currentStation(){
+    return DATA.poem.stanzas.find(s=>s.id===state.stationId) || DATA.poem.stanzas[0];
+  }
+
+  function opPillsHTML(ops){
+    return `<div class="opsPills">${
+      ops.map(op=>`<span class="pill ${OPS_CLASS[op]||""}">${op}</span>`).join("")
+    }</div>`;
+  }
+
+  function matchesQuery(text, q){
+    if(!q) return true;
+    return text.toLowerCase().includes(q.toLowerCase());
+  }
+
+  function copyToClipboard(text){
+    navigator.clipboard?.writeText(text).then(()=>{
+      flash(els.copyManifestBtn, "Copied ✓");
+    }).catch(()=>{
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand("copy"); flash(els.copyManifestBtn, "Copied ✓"); }
+      catch(e){ flash(els.copyManifestBtn, "Copy failed"); }
+      finally{ document.body.removeChild(ta); }
+    });
+  }
+
+  function flash(btn, msg){
+    const original = btn.textContent.trim();
+    btn.textContent = msg;
+    setTimeout(()=>{ btn.textContent = original; }, 900);
+  }
+
+  /* ----------------- Render: Left ----------------- */
+  function renderLeft(){
+    if(state.tab === "protocol"){
+      els.leftTitle.textContent = "Protocol (Ritual-First)";
+      els.leftDesc.textContent = "Executable ritual-first procedure. Use stations to select a stanza; analysis updates on the right.";
+      els.modeBadge.textContent = "RITUAL PRIMARY";
+      renderProtocolTab();
+      return;
+    }
+    if(state.tab === "map"){
+      els.leftTitle.textContent = "Ritual Map";
+      els.leftDesc.textContent = "A circuit (not a feed). Click nodes to traverse stations around the urn.";
+      els.modeBadge.textContent = "CIRCUIT VIEW";
+      renderMapTab();
+      return;
+    }
+    if(state.tab === "manifest"){
+      els.leftTitle.textContent = "World Manifest";
+      els.leftDesc.textContent = "Compact world-model output: entities, roles, temporality, ritual operations, ethical question.";
+      els.modeBadge.textContent = "WORLD MODEL";
+      renderManifestTab();
+      return;
+    }
+    if(state.tab === "notes"){
+      els.leftTitle.textContent = "Notes";
+      els.leftDesc.textContent = "Write your own ritual reading: what did the ceremony do to you? Notes persist locally in your browser.";
+      els.modeBadge.textContent = "LOCAL ONLY";
+      renderNotesTab();
+      return;
+    }
+  }
+
+  function renderProtocolTab(){
+    const s = currentStation();
+    const q = state.q;
+
+    // Protocol blocks
+    const protocolHTML = DATA.protocol.map(step=>{
+      const allText = [step.label, step.tag, ...(step.bullets||[])].join(" ");
+      if(!matchesQuery(allText, q)) return "";
+      return `
+        <details class="tap" ${step.id==="O0" ? "open" : ""}>
+          <summary>
+            <div class="sumLeft">
+              <span class="tag">${escapeHTML(step.tag)}</span>
+              <span class="label">${escapeHTML(step.label)}</span>
+            </div>
+            <span class="chev">›</span>
+          </summary>
+          <div class="detailsBody">
+            <ul>
+              ${(step.bullets||[]).map(b=>`<li>${escapeHTML(b)}</li>`).join("")}
+            </ul>
+          </div>
+        </details>
+      `;
+    }).join("");
+
+    // Stations buttons
+    const stationsHTML = `
+      <div class="card">
+        <h4><span class="miniDot"></span>Stations (Stanzas as Ritual Operations)</h4>
+        <div class="stanzas">
+          ${DATA.poem.stanzas.map(st=>{
+            const pressed = st.id===s.id ? "true":"false";
+            const allText = [st.id, st.name, ...(st.ops||[]), st.why, ...(st.contract||[])].join(" ");
+            if(!matchesQuery(allText, q)) return "";
+            return `
+              <button class="stanzaBtn tap" type="button"
+                data-station="${st.id}" aria-pressed="${pressed}">
+                <span class="badge">${st.id}</span>
+                <span style="font-weight:760">${escapeHTML(st.name)}</span>
+              </button>
+            `;
+          }).join("")}
+        </div>
+        <div class="hr"></div>
+        <p class="small muted">Tip: press <span class="kbd">/</span> to focus search. Click a station to highlight its stanza in the poem and see its operations on the right.</p>
+      </div>
+    `;
+
+    // Poem with highlight for selected station
+    const poemHTML = renderPoemHTML(q, s.id);
+
+    // Add displacement/productivity + ethics + directives as collapsibles
+    const dpText = [...DATA.displacement_productivity.displacement, ...DATA.displacement_productivity.productivity].join(" ");
+    const ethicsText = [...DATA.ethics.builds_well, ...DATA.ethics.risks, DATA.ethics.question].join(" ");
+    const directivesText = DATA.design_directives.join(" ");
+    const extraBlocks = `
+      ${matchesQuery("Displacement Productivity " + dpText, q) ? `
+      <details class="tap">
+        <summary>
+          <div class="sumLeft">
+            <span class="tag">R5</span>
+            <span class="label">Displacement + Productivity</span>
+          </div>
+          <span class="chev">›</span>
+        </summary>
+        <div class="detailsBody">
+          <p><b>DISPLACEMENT</b></p>
+          <ul>${DATA.displacement_productivity.displacement.map(x=>`<li>${escapeHTML(x)}</li>`).join("")}</ul>
+          <p><b>PRODUCTIVITY</b></p>
+          <ul>${DATA.displacement_productivity.productivity.map(x=>`<li>${escapeHTML(x)}</li>`).join("")}</ul>
+        </div>
+      </details>` : ""}
+
+      ${matchesQuery("Ethics " + ethicsText, q) ? `
+      <details class="tap">
+        <summary>
+          <div class="sumLeft">
+            <span class="tag">R6</span>
+            <span class="label">Ethical Instrument Profile</span>
+          </div>
+          <span class="chev">›</span>
+        </summary>
+        <div class="detailsBody">
+          <p><b>Builds well</b></p>
+          <ul>${DATA.ethics.builds_well.map(x=>`<li>${escapeHTML(x)}</li>`).join("")}</ul>
+          <p><b>Risks / drift</b></p>
+          <ul>${DATA.ethics.risks.map(x=>`<li>${escapeHTML(x)}</li>`).join("")}</ul>
+          <p><b>Primary question</b></p>
+          <p>${escapeHTML(DATA.ethics.question)}</p>
+        </div>
+      </details>` : ""}
+
+      ${matchesQuery("Design Directives " + directivesText, q) ? `
+      <details class="tap">
+        <summary>
+          <div class="sumLeft">
+            <span class="tag">D1–D5</span>
+            <span class="label">Design Directives (Ritual-First Systems)</span>
+          </div>
+          <span class="chev">›</span>
+        </summary>
+        <div class="detailsBody">
+          <ul>${DATA.design_directives.map(x=>`<li>${escapeHTML(x)}</li>`).join("")}</ul>
+        </div>
+      </details>` : ""}
+    `;
+
+    els.leftBody.innerHTML = `
+      ${stationsHTML}
+      ${protocolHTML}
+      ${extraBlocks}
+      <div class="card">
+        <h4><span class="miniDot"></span>Poem (Selectable Stanzas)</h4>
+        ${poemHTML}
+      </div>
+    `;
+
+    // Wire station buttons
+    els.leftBody.querySelectorAll("[data-station]").forEach(btn=>{
+      btn.addEventListener("click", ()=> setStation(btn.dataset.station));
+    });
+
+    // Wire stanza "Select" buttons inside poem
+    els.leftBody.querySelectorAll("[data-select-stanza]").forEach(btn=>{
+      btn.addEventListener("click", ()=> setStation(btn.dataset.selectStanza));
+    });
+  }
+
+  function renderPoemHTML(q, selectedId){
+    const poem = DATA.poem;
+    const stanzaHTML = poem.stanzas.map(st=>{
+      const stanzaText = st.lines.map(x=>x.t).join(" ") + " " + st.name + " " + st.why + " " + (st.ops||[]).join(" ");
+      if(!matchesQuery(stanzaText, q)) return "";
+
+      const cls = st.id===selectedId ? "stanza selected" : "stanza";
+      return `
+        <section class="${cls}" id="poem-${st.id}">
+          <div class="stLabel">
+            <div class="left">
+              <span class="snum">${st.id}</span>
+              <span class="sname">${escapeHTML(st.name)}</span>
+            </div>
+            <button class="tap" type="button" data-select-stanza="${st.id}">Select</button>
+          </div>
+          ${opPillsHTML(st.ops)}
+          <ul class="lines">
+            ${st.lines.map(line=>{
+              const ind = line.indent===2 ? "indent2" : (line.indent===1 ? "indent1" : "");
+              return `<li class="${ind}">${escapeHTML(line.t)}</li>`;
+            }).join("")}
+          </ul>
+        </section>
+      `;
+    }).join("");
+
+    return `
+      <div class="poem">
+        <h3>${escapeHTML(poem.title)}</h3>
+        <div class="meta">By ${escapeHTML(poem.author)}</div>
+        ${stanzaHTML || `<p class="muted small">No poem matches your search.</p>`}
+      </div>
+    `;
+  }
+
+  function renderMapTab(){
+    const s = currentStation();
+    const q = state.q;
+
+    // Circuit + a compact station list
+    const listHTML = `
+      <div class="card">
+        <h4><span class="miniDot"></span>Stations</h4>
+        ${DATA.poem.stanzas.map(st=>{
+          const allText = [st.id, st.name, st.why, ...(st.ops||[])].join(" ");
+          if(!matchesQuery(allText, q)) return "";
+          const active = st.id===s.id ? `style="border-color: rgba(125,211,252,.55);"` : "";
+          return `
+            <div class="card" ${active}>
+              <div class="row" style="justify-content:space-between">
+                <div class="row">
+                  <span class="badge">${st.id}</span>
+                  <b style="font-size:12.5px">${escapeHTML(st.name)}</b>
+                </div>
+                <button class="stanzaBtn tap" type="button" data-station="${st.id}" aria-pressed="${st.id===s.id}">
+                  Select
+                </button>
+              </div>
+              ${opPillsHTML(st.ops)}
+              <p>${escapeHTML(st.why)}</p>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+
+    const circuitHTML = renderCircuitSVG(s.id);
+
+    els.leftBody.innerHTML = `
+      <div class="card">
+        <h4><span class="miniDot"></span>Ritual Circuit (Not a Feed)</h4>
+        <div class="circuitWrap">
+          <div class="circuit" aria-label="Ritual circuit diagram">
+            ${circuitHTML}
+          </div>
+          <div style="flex:1; min-width: min(320px, 100%);">
+            <p class="muted small" style="margin-top:0">
+              This diagram encodes Carey’s ritual-first geometry: reading becomes traversal, traversal becomes reading.
+              Click a node to move stations; the right panel will update.
+            </p>
+            <div class="hr"></div>
+            <p class="small muted"><b>Ceremonial object:</b> the Urn as silent archive; access is a circuit of attention.</p>
+            <p class="small muted"><b>Temporal logic:</b> “eternal present” produced by recurrence and suspended action.</p>
+          </div>
+        </div>
+      </div>
+      ${listHTML}
+    `;
+
+    // Wire station buttons
+    els.leftBody.querySelectorAll("[data-station]").forEach(btn=>{
+      btn.addEventListener("click", ()=> setStation(btn.dataset.station));
+    });
+
+    // Wire SVG nodes
+    els.leftBody.querySelectorAll(".node").forEach(node=>{
+      node.addEventListener("click", ()=> setStation(node.dataset.station));
+      node.addEventListener("keydown", (e)=>{
+        if(e.key==="Enter" || e.key===" "){
+          e.preventDefault();
+          setStation(node.dataset.station);
+        }
+      });
+    });
+  }
+
+  function renderCircuitSVG(selectedId){
+    // 5 nodes around a ring
+    // positions in a 300x300 viewBox
+    const cx=150, cy=150, r=96;
+    const nodes = DATA.poem.stanzas.map((st, i)=>{
+      const angle = (-90 + i*(360/DATA.poem.stanzas.length)) * Math.PI/180;
+      const x = cx + r*Math.cos(angle);
+      const y = cy + r*Math.sin(angle);
+      return { id: st.id, x, y };
+    });
+
+    const ring = `
+      <circle cx="${cx}" cy="${cy}" r="108" fill="none" stroke="rgba(125,211,252,.25)" stroke-width="10"></circle>
+      <circle cx="${cx}" cy="${cy}" r="62" fill="none" stroke="rgba(167,243,208,.22)" stroke-width="10"></circle>
+      <circle cx="${cx}" cy="${cy}" r="18" fill="rgba(255,255,255,.03)" stroke="rgba(125,211,252,.35)" stroke-width="2"></circle>
+      <text x="${cx}" y="${cy+4}" text-anchor="middle" style="font-family: var(--mono); fill: var(--muted); font-size: 12px;">URN</text>
+    `;
+
+    const nodeEls = nodes.map(n=>{
+      const current = n.id===selectedId ? "true":"false";
+      return `
+        <g class="node" role="button" tabindex="0" aria-current="${current}" data-station="${n.id}">
+          <circle cx="${n.x}" cy="${n.y}" r="16"></circle>
+          <text x="${n.x}" y="${n.y+4}" text-anchor="middle">${n.id}</text>
+        </g>
+      `;
+    }).join("");
+
+    // connector lines
+    const lines = nodes.map((n,i)=>{
+      const next = nodes[(i+1)%nodes.length];
+      return `<line x1="${n.x}" y1="${n.y}" x2="${next.x}" y2="${next.y}" stroke="rgba(255,255,255,.08)" stroke-width="2"></line>`;
+    }).join("");
+
+    return `
+      <svg viewBox="0 0 300 300" aria-hidden="true">
+        ${lines}
+        ${ring}
+        ${nodeEls}
+      </svg>
+    `;
+  }
+
+  function renderManifestTab(){
+    const q = state.q;
+    const manifestText = JSON.stringify(DATA.manifest, null, 2);
+    const coreText = [
+      DATA.ritual_core.core_definition,
+      DATA.ritual_core.two_models.ritual.def,
+      DATA.ritual_core.two_models.transmission.def
+    ].join(" ");
+
+    const showCore = matchesQuery(coreText, q);
+    const showManifest = matchesQuery(manifestText, q);
+
+    els.leftBody.innerHTML = `
+      ${showCore ? `
+      <div class="card">
+        <h4><span class="miniDot"></span>Core Definition</h4>
+        <p>${escapeHTML(DATA.ritual_core.core_definition)}</p>
+        <div class="hr"></div>
+        <p class="small muted"><b>RITUAL:</b> ${escapeHTML(DATA.ritual_core.two_models.ritual.def)}</p>
+        <p class="small muted"><b>TRANSMISSION (secondary):</b> ${escapeHTML(DATA.ritual_core.two_models.transmission.def)}</p>
+      </div>` : ""}
+
+      ${showManifest ? `
+      <div class="card">
+        <h4><span class="miniDot"></span>World Manifest JSON</h4>
+        <div class="mono" id="manifestBox">${escapeHTML(manifestText)}</div>
+        <p class="small muted">Use “Copy Manifest” (top right) to copy to clipboard.</p>
+      </div>` : `<p class="muted small">No manifest content matches your search.</p>`}
+    `;
+  }
+
+  function renderNotesTab(){
+    const q = state.q;
+    const hintText = "Write your own ritual reading";
+    const show = matchesQuery(state.notes + " " + hintText, q) || !q;
+
+    els.leftBody.innerHTML = `
+      <div class="card">
+        <h4><span class="miniDot"></span>Your Ritual Reading (Local Notes)</h4>
+        <p class="small muted" style="margin-top:0">
+          Prompts: What did the ceremony make you do? Where did it “tease you out of thought”? What world did it build, repair, or replace?
+        </p>
+        ${show ? `
+          <textarea id="notesBox" placeholder="Write here… (saved automatically)">${escapeHTML(state.notes)}</textarea>
+        ` : `<p class="muted small">Your notes are hidden by the current search filter.</p>`}
+        <div class="hr"></div>
+        <p class="small muted"><b>Ethical question:</b> ${escapeHTML(DATA.ethics.question)}</p>
+      </div>
+    `;
+
+    const notesBox = document.getElementById("notesBox");
+    if(notesBox){
+      notesBox.addEventListener("input", ()=>{
+        state.notes = notesBox.value;
+        localStorage.setItem(STORAGE.notes, state.notes);
+      });
+    }
+  }
+
+  /* ----------------- Render: Right ----------------- */
+  function renderRight(){
+    const s = currentStation();
+    els.selectedBadge.textContent = s.id;
+
+    if(state.tab === "manifest"){
+      els.rightTitle.textContent = "Manifest Reader";
+      els.rightDesc.textContent = "A quick human-readable view of the world-model fields.";
+      renderRightManifest();
+      return;
+    }
+
+    if(state.tab === "notes"){
+      els.rightTitle.textContent = "Station Prompts";
+      els.rightDesc.textContent = "Use these prompts to write a ritual-first reading for the selected station.";
+      renderRightNotesPrompts();
+      return;
+    }
+
+    // default: station analysis
+    els.rightTitle.textContent = `${s.id} — ${s.name}`;
+    els.rightDesc.textContent = "Ritual operations, participation contract, displacement/productivity hooks, and ethical instrument checks.";
+    renderRightStation();
+  }
+
+  function renderRightStation(){
+    const s = currentStation();
+
+    const ops = `
+      <div class="card">
+        <h4><span class="miniDot"></span>Ritual Operations</h4>
+        ${opPillsHTML(s.ops)}
+        <p>${escapeHTML(s.why)}</p>
+      </div>
+    `;
+
+    const contract = `
+      <div class="card">
+        <h4><span class="miniDot"></span>Participation Contract</h4>
+        <ul>${(s.contract||[]).map(x=>`<li>${escapeHTML(x)}</li>`).join("")}</ul>
+      </div>
+    `;
+
+    const dp = `
+      <div class="card">
+        <h4><span class="miniDot"></span>Displacement + Productivity (Hooks)</h4>
+        <p class="small muted" style="margin-top:0"><b>DISPLACEMENT</b> (world works when referents are absent)</p>
+        <ul>${DATA.displacement_productivity.displacement.map(x=>`<li>${escapeHTML(x)}</li>`).join("")}</ul>
+        <div class="hr"></div>
+        <p class="small muted" style="margin-top:0"><b>PRODUCTIVITY</b> (finite symbols → infinite variants)</p>
+        <ul>${DATA.displacement_productivity.productivity.map(x=>`<li>${escapeHTML(x)}</li>`).join("")}</ul>
+      </div>
+    `;
+
+    const ethics = `
+      <div class="card">
+        <h4><span class="miniDot"></span>Ethical Instrument Test</h4>
+        <p class="small muted" style="margin-top:0"><b>Question</b></p>
+        <p>${escapeHTML(DATA.ethics.question)}</p>
+        <div class="hr"></div>
+        <p class="small muted" style="margin-top:0"><b>Builds well</b></p>
+        <ul>${DATA.ethics.builds_well.map(x=>`<li>${escapeHTML(x)}</li>`).join("")}</ul>
+        <div class="hr"></div>
+        <p class="small muted" style="margin-top:0"><b>Risks / drift</b></p>
+        <ul>${DATA.ethics.risks.map(x=>`<li>${escapeHTML(x)}</li>`).join("")}</ul>
+      </div>
+    `;
+
+    const directives = `
+      <div class="card">
+        <h4><span class="miniDot"></span>Design Directives (If You Build Systems From This)</h4>
+        <ul>${DATA.design_directives.map(x=>`<li>${escapeHTML(x)}</li>`).join("")}</ul>
+      </div>
+    `;
+
+    els.rightBody.innerHTML = ops + contract + dp + ethics + directives;
+
+    // Scroll poem to stanza if in protocol tab
+    if(state.tab === "protocol"){
+      const target = document.getElementById(`poem-${currentStation().id}`);
+      if(target){
+        // keep it gentle; avoid jarring on mobile
+        target.scrollIntoView({behavior:"smooth", block:"nearest"});
+      }
+    }
+  }
+
+  function renderRightManifest(){
+    const m = DATA.manifest;
+    els.rightBody.innerHTML = `
+      <div class="card">
+        <h4><span class="miniDot"></span>World ID</h4>
+        <div class="mono">${escapeHTML(m.world_id)}</div>
+      </div>
+
+      <div class="card">
+        <h4><span class="miniDot"></span>Ceremonial Object</h4>
+        <ul>
+          <li><b>Name:</b> ${escapeHTML(m.ceremonial_object.name)}</li>
+          <li><b>Mode:</b> <span class="badge">${escapeHTML(m.ceremonial_object.mode)}</span></li>
+          <li><b>Powers:</b> ${escapeHTML(m.ceremonial_object.powers.join(", "))}</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4><span class="miniDot"></span>Participants (Roles)</h4>
+        <ul>
+          ${m.participants.map(p=>`
+            <li>
+              <span class="badge">${escapeHTML(p.role)}</span>
+              <span class="muted small">verbs:</span> ${escapeHTML(p.verbs.join(", "))}
+            </li>
+          `).join("")}
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4><span class="miniDot"></span>Ritual Temporality</h4>
+        <ul>
+          <li><b>Logic:</b> <span class="badge">${escapeHTML(m.ritual_temporality.logic)}</span></li>
+          <li><b>Mechanisms:</b> ${escapeHTML(m.ritual_temporality.mechanisms.join(", "))}</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4><span class="miniDot"></span>Ritual Operations (Top-Level)</h4>
+        <ul>
+          <li><b>PRODUCE</b>: ${escapeHTML(m.ritual_operations.PRODUCE.join("; "))}</li>
+          <li><b>MAINTAIN</b>: ${escapeHTML(m.ritual_operations.MAINTAIN.join("; "))}</li>
+          <li><b>REPAIR</b>: ${escapeHTML(m.ritual_operations.REPAIR.join("; "))}</li>
+          <li><b>TRANSFORM</b>: ${escapeHTML(m.ritual_operations.TRANSFORM.join("; "))}</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4><span class="miniDot"></span>Ethical Question</h4>
+        <p>${escapeHTML(m.ethical_question)}</p>
+      </div>
+    `;
+  }
+
+  function renderRightNotesPrompts(){
+    const s = currentStation();
+    els.rightBody.innerHTML = `
+      <div class="card">
+        <h4><span class="miniDot"></span>${escapeHTML(s.id)} Prompt Pack</h4>
+        ${opPillsHTML(s.ops)}
+        <ul>
+          <li><b>What actions did this station require of you?</b> (address / question / behold / repeat / submit)</li>
+          <li><b>What world did it PRODUCE / MAINTAIN / REPAIR / TRANSFORM?</b> Name the “world rule.”</li>
+          <li><b>Where does absence do work?</b> Identify a displacement mechanism.</li>
+          <li><b>What repeats like liturgy?</b> Find the recurrence cue.</li>
+          <li><b>Ethical instrument:</b> What kind of world does this make easier to live in—and what does it make harder?</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4><span class="miniDot"></span>Primary Ethical Question</h4>
+        <p>${escapeHTML(DATA.ethics.question)}</p>
+      </div>
+    `;
+  }
+
+  /* ----------------- Search ----------------- */
+  function applySearch(q){
+    state.q = q || "";
+    localStorage.setItem(STORAGE.search, state.q);
+    renderLeft();
+    renderRight();
+  }
+
+  /* ----------------- Events ----------------- */
+  els.tabs.forEach(btn=>{
+    btn.addEventListener("click", ()=> setTab(btn.dataset.tab));
+  });
+
+  els.themeBtn.addEventListener("click", ()=>{
+    setTheme(state.theme === "light" ? "dark" : "light");
+  });
+
+  els.copyManifestBtn.addEventListener("click", ()=>{
+    copyToClipboard(JSON.stringify(DATA.manifest, null, 2));
+  });
+
+  els.resetNotesBtn.addEventListener("click", ()=>{
+    state.notes = "";
+    localStorage.removeItem(STORAGE.notes);
+    renderLeft(); // if notes tab visible, clears textarea
+    flash(els.resetNotesBtn, "Cleared ✓");
+  });
+
+  els.q.addEventListener("input", (e)=> applySearch(e.target.value));
+
+  // Keyboard shortcuts: "/" focus search; Esc clears search
+  window.addEventListener("keydown", (e)=>{
+    const isTyping = ["INPUT","TEXTAREA"].includes(document.activeElement?.tagName || "");
+    if(e.key === "/" && !isTyping){
+      e.preventDefault();
+      els.q.focus();
+      return;
+    }
+    if(e.key === "Escape"){
+      // if focus is in search, clear it; else clear anyway
+      if(els.q.value){
+        els.q.value = "";
+        applySearch("");
+      }else if(document.activeElement === els.q){
+        els.q.blur();
+      }
+      return;
+    }
+  });
+
+  /* ----------------- Init from storage ----------------- */
+  function init(){
+    const theme = localStorage.getItem(STORAGE.theme) || "dark";
+    const notes = localStorage.getItem(STORAGE.notes) || "";
+    const station = localStorage.getItem(STORAGE.lastStation) || "S1";
+    const tab = localStorage.getItem(STORAGE.lastTab) || "protocol";
+    const q = localStorage.getItem(STORAGE.search) || "";
+
+    state.notes = notes;
+    setTheme(theme);
+    state.stationId = station;
+    els.selectedBadge.textContent = station;
+
+    els.q.value = q;
+    state.q = q;
+
+    setTab(tab);
+    setStation(station);
+  }
+
+  init();
+
+})();
+</script>
+</body>
+</html>

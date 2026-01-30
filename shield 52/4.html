@@ -1,0 +1,1359 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Carey Ritual World — The Shield of Achilles</title>
+  <style>
+    :root{
+      --paper:#f4f3ef;
+      --ink:#111;
+      --muted:#5b5b5b;
+      --hair:#d9d6cd;
+      --accent:#151515;
+      --glow:#2bd673;
+      --warn:#ff3b30;
+
+      --zone-cosmos:#0f172a;
+      --zone-peace:#163b2a;
+      --zone-war:#3b1212;
+      --zone-field:#3a2a16;
+      --zone-vine:#2a163a;
+      --zone-herd:#2b2b2b;
+      --zone-dance:#0d3a3a;
+      --zone-ocean:#0b2940;
+
+      --cell-gap: 1px;
+      --radius:16px;
+      --shadow: 0 14px 40px rgba(0,0,0,.12);
+      --shadow2: 0 8px 24px rgba(0,0,0,.10);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(0,0,0,.06), transparent 60%),
+                  radial-gradient(1000px 500px at 100% 0%, rgba(0,0,0,.05), transparent 55%),
+                  var(--paper);
+      color:var(--ink);
+      font-family:var(--sans);
+      -webkit-tap-highlight-color: transparent;
+      overflow:hidden;
+    }
+
+    /* --- layout --- */
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+    }
+
+    header{
+      padding:12px 12px 8px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid var(--hair);
+      background: rgba(244,243,239,.86);
+      backdrop-filter: blur(10px);
+      position:sticky;
+      top:0;
+      z-index:20;
+    }
+
+    .title{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .title h1{
+      font-size:14px;
+      margin:0;
+      letter-spacing:.2px;
+      font-weight:800;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .title .sub{
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .controls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      display:inline-flex;
+      border:1px solid var(--hair);
+      border-radius:999px;
+      overflow:hidden;
+      box-shadow: 0 2px 0 rgba(0,0,0,.03);
+      background:#fff;
+    }
+    .pill button{
+      border:0;
+      background:transparent;
+      padding:8px 10px;
+      font-size:12px;
+      font-weight:700;
+      color:var(--muted);
+      cursor:pointer;
+      min-width:64px;
+    }
+    .pill button.active{
+      color:var(--paper);
+      background:var(--accent);
+    }
+
+    .btn{
+      border:1px solid var(--hair);
+      background:#fff;
+      color:var(--ink);
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:12px;
+      font-weight:800;
+      cursor:pointer;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      box-shadow: 0 2px 0 rgba(0,0,0,.03);
+    }
+    .btn:active{transform: translateY(1px)}
+    .btn.small{padding:7px 9px; font-size:12px}
+    .btn.ghost{background:transparent}
+    .btn.warn{border-color: rgba(255,59,48,.35); color: var(--warn)}
+    .dot{
+      width:8px;height:8px;border-radius:999px;background:var(--muted);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.15);
+    }
+    .dot.on{background:var(--glow)}
+
+    main{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+
+    /* --- grid --- */
+    .stage{
+      flex:1;
+      display:flex;
+      padding:12px;
+      gap:12px;
+      min-height:0;
+      align-items:stretch;
+      justify-content:center;
+    }
+
+    .gridWrap{
+      flex:1;
+      max-width:980px;
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:0;
+    }
+
+    .metaRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--muted);
+    }
+    .metaRow .left{
+      display:flex; gap:10px; align-items:center; min-width:0;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .metaRow .right{
+      display:flex; gap:8px; align-items:center;
+    }
+
+    .grid{
+      flex:1;
+      min-height:0;
+      display:grid;
+      grid-template-columns: repeat(24, 1fr);
+      gap: var(--cell-gap);
+      background: var(--hair);
+      border-radius: var(--radius);
+      overflow:hidden;
+      box-shadow: var(--shadow2);
+      border:1px solid rgba(0,0,0,.08);
+      touch-action: manipulation;
+    }
+
+    .cell{
+      aspect-ratio:1/1;
+      background: #fff;
+      position:relative;
+      cursor:pointer;
+      user-select:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family:var(--mono);
+      font-size:10px;
+      color:rgba(255,255,255,.75);
+    }
+    .cell::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: rgba(255,255,255,.08);
+      opacity:0;
+      transition: opacity .12s ease;
+    }
+    .cell:hover::after{opacity:1}
+    .cell:active{filter:brightness(.96)}
+    .cell.sel{
+      outline: 2px solid rgba(43,214,115,.95);
+      outline-offset:-2px;
+      z-index:2;
+    }
+    .cell.hot{
+      box-shadow: inset 0 0 0 2px rgba(43,214,115,.65);
+      z-index:1;
+    }
+    .cell .mini{
+      position:absolute;
+      inset:auto 2px 2px auto;
+      font-size:9px;
+      opacity:.9;
+    }
+
+    .z-cosmos{background: linear-gradient(180deg, rgba(255,255,255,.10), transparent 40%), var(--zone-cosmos)}
+    .z-peace{background: linear-gradient(180deg, rgba(255,255,255,.10), transparent 40%), var(--zone-peace)}
+    .z-war{background: linear-gradient(180deg, rgba(255,255,255,.10), transparent 40%), var(--zone-war)}
+    .z-field{background: linear-gradient(180deg, rgba(255,255,255,.10), transparent 40%), var(--zone-field)}
+    .z-vine{background: linear-gradient(180deg, rgba(255,255,255,.10), transparent 40%), var(--zone-vine)}
+    .z-herd{background: linear-gradient(180deg, rgba(255,255,255,.10), transparent 40%), var(--zone-herd)}
+    .z-dance{background: linear-gradient(180deg, rgba(255,255,255,.10), transparent 40%), var(--zone-dance)}
+    .z-ocean{background: linear-gradient(180deg, rgba(255,255,255,.08), transparent 45%), var(--zone-ocean)}
+    .z-frame{background: linear-gradient(180deg, rgba(0,0,0,.06), transparent 45%), #fbfaf6; color: rgba(0,0,0,.55)}
+    .z-void{background:#fff; color: rgba(0,0,0,.35)}
+
+    /* --- bottom sheet / panel --- */
+    .sheet{
+      position:relative;
+      border-top:1px solid var(--hair);
+      background: rgba(255,255,255,.78);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      z-index:30;
+    }
+
+    .sheetInner{
+      max-width:980px;
+      margin:0 auto;
+      padding:10px 12px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .handle{
+      width:48px;height:5px;border-radius:999px;
+      background: rgba(0,0,0,.18);
+      margin:0 auto 2px;
+    }
+
+    .sheetTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .sceneTitle{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .sceneTitle h2{
+      margin:0;
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .sceneTitle .tags{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .tag{
+      font-family:var(--mono);
+      font-size:10px;
+      font-weight:800;
+      letter-spacing:.4px;
+      border:1px solid rgba(0,0,0,.14);
+      padding:3px 7px;
+      border-radius:999px;
+      background:#fff;
+      color:var(--ink);
+      text-transform:uppercase;
+    }
+    .tag.ritual{border-color: rgba(21,21,21,.25)}
+    .tag.op{border-color: rgba(43,214,115,.45)}
+    .tag.shadow{border-color: rgba(255,59,48,.35); color: var(--warn)}
+
+    .sheetBody{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+
+    .card{
+      border:1px solid rgba(0,0,0,.10);
+      border-radius: 14px;
+      background: rgba(255,255,255,.86);
+      padding:10px 10px;
+      box-shadow: 0 2px 0 rgba(0,0,0,.03);
+    }
+    .card h3{
+      margin:0 0 6px 0;
+      font-size:12px;
+      font-weight:950;
+      letter-spacing:.2px;
+    }
+    .card p{
+      margin:0;
+      line-height:1.35;
+      color: var(--ink);
+      font-size:12px;
+    }
+    .card .mono{
+      font-family:var(--mono);
+      font-size:11px;
+      color: var(--muted);
+      line-height:1.4;
+      white-space:pre-wrap;
+    }
+
+    .tabs{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .tabbtn{
+      border:1px solid var(--hair);
+      background:#fff;
+      border-radius:999px;
+      padding:7px 10px;
+      font-size:12px;
+      font-weight:900;
+      cursor:pointer;
+      color: var(--muted);
+    }
+    .tabbtn.active{
+      background: var(--accent);
+      border-color: rgba(0,0,0,.15);
+      color: var(--paper);
+    }
+
+    .scroll{
+      max-height: 26vh;
+      overflow:auto;
+      padding-right:4px;
+    }
+
+    .scroll::-webkit-scrollbar{width:10px}
+    .scroll::-webkit-scrollbar-thumb{background: rgba(0,0,0,.15); border-radius:999px; border:3px solid transparent; background-clip: content-box}
+    .scroll::-webkit-scrollbar-track{background: transparent}
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom: calc(18vh + 12px);
+      transform: translateX(-50%);
+      background: rgba(17,17,17,.92);
+      color: #fff;
+      border-radius: 999px;
+      padding:8px 12px;
+      font-family:var(--mono);
+      font-size:11px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.25);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      z-index:80;
+      max-width:min(92vw, 760px);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .toast.on{
+      opacity:1;
+      transform: translateX(-50%) translateY(-4px);
+    }
+
+    /* tiny screens: keep it clean */
+    @media (max-width:520px){
+      header{padding:10px 10px 7px}
+      .pill button{min-width:60px; padding:8px 9px}
+      .btn{padding:8px 9px}
+      .metaRow{display:none;}
+      .sheetInner{padding:10px 10px 14px}
+      .scroll{max-height: 30vh;}
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      *{scroll-behavior:auto !important; transition:none !important; animation:none !important}
+    }
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <header>
+    <div class="title">
+      <h1>CAREY RITUAL WORLD — SHIELD OF ACHILLES</h1>
+      <div class="sub">grid = world • navigation = reading • meaning = enacted</div>
+    </div>
+
+    <div class="controls">
+      <div class="pill" role="tablist" aria-label="Lens">
+        <button id="lensR" class="active" aria-selected="true">RITUAL</button>
+        <button id="lensT" aria-selected="false">TRANSMIT</button>
+      </div>
+
+      <button id="btnProcession" class="btn small" title="Auto-walk the rite (tap again to stop)">
+        <span class="dot" id="procDot"></span>
+        Procession
+      </button>
+
+      <button id="btnLegend" class="btn small ghost" title="Legend / help">Legend</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="stage">
+      <div class="gridWrap">
+        <div class="metaRow">
+          <div class="left" id="statusLeft">Tap any cell. The grid is a ceremonial world.</div>
+          <div class="right" id="statusRight">Address: <span id="addr">--,--</span></div>
+        </div>
+
+        <div id="grid" class="grid" aria-label="24 by 24 ritual grid"></div>
+      </div>
+    </div>
+
+    <section class="sheet" aria-label="Scene panel">
+      <div class="sheetInner">
+        <div class="handle" aria-hidden="true"></div>
+
+        <div class="sheetTop">
+          <div class="sceneTitle">
+            <h2 id="sceneH2">Select a site</h2>
+            <div class="tags" id="sceneTags"></div>
+          </div>
+
+          <div class="tabs" aria-label="Panel tabs">
+            <button class="tabbtn active" data-tab="ritual">Ritual</button>
+            <button class="tabbtn" data-tab="text">Text</button>
+            <button class="tabbtn" data-tab="protocol">Protocol</button>
+          </div>
+        </div>
+
+        <div class="sheetBody">
+          <div id="tab-ritual" class="card">
+            <h3>Ritual Reading (world-production)</h3>
+            <div class="scroll">
+              <div class="mono" id="ritualBody">A site is not a container. A site stages an act.</div>
+            </div>
+          </div>
+
+          <div id="tab-text" class="card" style="display:none">
+            <h3>Surface Text (what appears)</h3>
+            <div class="scroll">
+              <div class="mono" id="textBody">—</div>
+            </div>
+          </div>
+
+          <div id="tab-protocol" class="card" style="display:none">
+            <h3>Code-Text (Carey protocol excerpt)</h3>
+            <div class="scroll">
+              <div class="mono" id="protocolBody">—</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============================================================
+   CAREY-CULTURAL-APPROACH-POML (embedded as “code-text”)
+   ============================================================ */
+const CAREY = {
+  intent: [
+    "Operationalize James W. Carey’s Cultural Approach to Communication as a generative world-model.",
+    "Treat communication not as message transfer, but as symbolic world-production.",
+    "All design proceeds ritual-first."
+  ],
+  ontological_commitment: "Communication is the primary human activity by which reality becomes experienceable.",
+  axioms: [
+    {id:"A1", text:"Society does not merely survive by communication. Society exists in communication."},
+    {id:"A2", text:"Communication is not secondary to reality. Communication produces reality."},
+    {id:"A3", text:"Symbols are simultaneously symbols-of reality and symbols-for reality."},
+    {id:"A4", text:"All communication models are ethical instruments. They create the worlds they claim to describe."},
+    {id:"A5", text:"Meaning is not transmitted. Meaning is enacted."}
+  ],
+  core_definition: "Communication is a symbolic process whereby reality is produced, maintained, repaired, transformed.",
+  models: {
+    TRANSMISSION: {
+      definition:"Sending information across space for purposes of control.",
+      metaphor:"Transportation / Signal Flow",
+      values:["Speed","Reach","Efficiency","Influence","Control"]
+    },
+    RITUAL: {
+      definition:"Shared participation in symbolic forms that maintain a world.",
+      metaphor:"Ceremony / Mass / Drama",
+      values:["Continuity","Belonging","Shared meaning","Temporal endurance"]
+    }
+  },
+  priority_rule: "All analyses are framed primarily through the RITUAL model; transmission is secondary.",
+  design_directives: [
+    "Build communication systems as worlds, not pipelines.",
+    "Prioritize recurrence over novelty.",
+    "Design for participation, not consumption.",
+    "Treat spatial layout as ceremonial architecture.",
+    "Make symbolic order visible."
+  ],
+  evaluation_criteria: [
+    "Can users inhabit a world?",
+    "Does it maintain shared meanings over time?",
+    "Does it support repair and transformation?",
+    "Does it avoid reducing communication to control?"
+  ],
+  terminal_thesis: "Communication is not a tool inside the world. Communication is the activity by which worlds exist."
+};
+
+const CAREY_PROTOCOL_SNIPPET =
+`CAREY-CULTURAL-APPROACH-POML-v1
+— ${CAREY.ontological_commitment}
+
+AXIOMS
+${CAREY.axioms.map(a=>`${a.id}: ${a.text}`).join("\n")}
+
+CORE DEFINITION
+${CAREY.core_definition}
+
+PRIORITY RULE
+${CAREY.priority_rule}
+
+DESIGN DIRECTIVES
+- ${CAREY.design_directives.join("\n- ")}
+
+EVALUATION
+- ${CAREY.evaluation_criteria.join("\n- ")}
+
+THESIS
+${CAREY.terminal_thesis}`;
+
+/* ============================================================
+   SHIELD WORLD: zones, scenes, rites
+   - The grid is ADDRESS SPACE.
+   - A “scene” is a ritual site: an act-staging.
+   ============================================================ */
+
+const GRID = { cols:24, rows:24 };
+
+const OPS = ["PRODUCE","MAINTAIN","REPAIR","TRANSFORM"];
+
+// A simple “ceremonial map”: rectangular zones (x,y,w,h)
+// coordinate system: x 0..23, y 0..23
+// This is not “illustration” — it’s an ADDRESSING REGIME.
+const SCENES = [
+  {
+    id:"FRAME_0",
+    title:"Invocation: Thetis enters Vulcan’s hall",
+    zone:{x:0,y:0,w:24,h:4},
+    kind:"frame",
+    ops:["PRODUCE","REPAIR"],
+    ritual: {
+      enactment:"A mother petitions an artisan-god: grief becomes procedure; loss becomes commission.",
+      world_built:[
+        "Sorrow is made publicly real by being spoken inside a sanctuary of craft.",
+        "A future is authorized through a request and a vow.",
+        "Power is re-routed: not by force, but by rite (petition → promise → making)."
+      ],
+      roles:[
+        "Thetis = petitioner / mourner",
+        "Vulcan = artificer-priest of matter",
+        "Forge = altar of transformation"
+      ],
+      transmission_shadow:[
+        "A request as logistics: acquire equipment to restore battlefield advantage."
+      ]
+    },
+    text:`"O Vulcan!... Grace with immortal arms this short-lived son..."`,
+    full:`"Thee, welcome, goddess!... (Thetis) ... 'Grace with immortal arms this short-lived son...'"`,
+    styleClass:"z-frame"
+  },
+
+  {
+    id:"FRAME_1",
+    title:"Forge: bellows, anvils, metal, command",
+    zone:{x:0,y:4,w:24,h:4},
+    kind:"frame",
+    ops:["TRANSFORM"],
+    ritual: {
+      enactment:"Matter is convened; breath becomes fire; fire becomes form. The forge is a liturgy of constraints.",
+      world_built:[
+        "Authority is expressed as rhythm (loud/low), not as explanation.",
+        "Time becomes audible: the doubling vaults rebound; the rite repeats.",
+        "Materials become a public grammar: silver/brass/tin/gold as symbolic registers."
+      ],
+      roles:[
+        "Bellows = communal breath",
+        "Anvil = law / boundary",
+        "Hammer = sentence / judgment"
+      ],
+      transmission_shadow:[
+        "Manufacturing pipeline: inputs → process → outputs (arms) for control across space."
+      ]
+    },
+    text:`"At once the blast expires, / And twenty forges catch at once the fires..."`,
+    full:`"Soon as he bade them blow, the bellows turn'd... and thick, strong strokes, the doubling vaults rebound."`,
+    styleClass:"z-frame"
+  },
+
+  {
+    id:"COSMOS",
+    title:"Cosmos: earth, heaven, ocean, sun, moon, stars",
+    zone:{x:2,y:8,w:20,h:4},
+    kind:"shield",
+    ops:["PRODUCE","MAINTAIN"],
+    ritual: {
+      enactment:"A world is made credible by being pictured; order is renewed by being re-shown.",
+      world_built:[
+        "A shared roof of reality: heaven’s convex crown.",
+        "Orientation: constellations become public coordinates.",
+        "Continuity: the Bear revolves; the world re-asserts its loop."
+      ],
+      roles:[
+        "Shield = portable cosmology",
+        "Stars = shared address system",
+        "Ocean = boundary condition"
+      ],
+      transmission_shadow:[
+        "A navigation chart: cosmology as guidance tech."
+      ]
+    },
+    text:`"There earth, there heaven, there ocean he design'd..."`,
+    full:`"There shone the image of the master-mind... The unwearied sun, the moon completely round..."`,
+    styleClass:"z-cosmos"
+  },
+
+  {
+    id:"CITY_PEACE_WEDDING",
+    title:"City of Peace: wedding procession & dance",
+    zone:{x:0,y:12,w:12,h:6},
+    kind:"shield",
+    ops:["MAINTAIN"],
+    ritual: {
+      enactment:"Community maintains itself by repeating its forms: marriage, music, procession, porch-witnessing.",
+      world_built:[
+        "Belonging is staged as movement through streets (publicness as glue).",
+        "The crowd is not audience; it is the world verifying itself.",
+        "Joy is infrastructure: flute/cithern as civic continuity engines."
+      ],
+      roles:[
+        "Brides = future-makers",
+        "Matrons in porches = guardians of recurrence",
+        "Dance circle = social loop"
+      ],
+      transmission_shadow:[
+        "Event broadcast: information about a marriage spreads to manage alliances."
+      ]
+    },
+    text:`"Here sacred pomp and genial feast delight..."`,
+    full:`"Here sacred pomp and genial feast delight... Through the fair streets the matrons... enjoy the show."`,
+    styleClass:"z-peace"
+  },
+
+  {
+    id:"CITY_PEACE_TRIAL",
+    title:"City of Peace: the forum trial (law as rite)",
+    zone:{x:12,y:12,w:12,h:6},
+    kind:"shield",
+    ops:["REPAIR","MAINTAIN"],
+    ritual: {
+      enactment:"Damage to the world is repaired by staged speech and sanctioned judgment.",
+      world_built:[
+        "Conflict is contained inside a ring (heralds form the boundary).",
+        "Authority is distributed: elders alternate; the sceptre circulates.",
+        "Truth is not found; it is adjudicated, then made livable."
+      ],
+      roles:[
+        "Heralds = boundary-keepers",
+        "Elders = custodians of coherence",
+        "Two talents = proof that judgment is valued"
+      ],
+      transmission_shadow:[
+        "Dispute resolution as administration: reduce uncertainty for governance."
+      ]
+    },
+    text:`"The subject of debate, a townsman slain..."`,
+    full:`"There in the forum swarm a numerous train... Two golden talents lay amidst, in sight..."`,
+    styleClass:"z-peace"
+  },
+
+  {
+    id:"CITY_WAR",
+    title:"City of War: siege, ambush, slaughter by the silver flood",
+    zone:{x:0,y:18,w:24,h:4},
+    kind:"shield",
+    ops:["TRANSFORM","REPAIR"],
+    ritual: {
+      enactment:"War is not merely violence; it is a competing ceremony that re-orders who counts, who stands, who falls.",
+      world_built:[
+        "Fear is made visible on turrets: children/parents become a public chorus.",
+        "Divine endorsement appears as gold-clad gods: violence claims sanctity.",
+        "Blood at the silver flood marks the collapse of boundaries."
+      ],
+      roles:[
+        "Ambush = hidden ritual (secret preparation)",
+        "Tumult/Contention/Fate = named forces (mythic operators)",
+        "Silver flood = witness/boundary turned stain"
+      ],
+      transmission_shadow:[
+        "Strategic deception: information asymmetry for control."
+      ]
+    },
+    text:`"Two mighty hosts a leaguer'd town embrace..."`,
+    full:`"Glow'd with refulgent arms, and horrid war... Fate stalk'd amidst them, grim with human gore."`,
+    styleClass:"z-war"
+  },
+
+  {
+    id:"FIELD_PLOUGH",
+    title:"Field: ploughing (labor rhythm, renewal)",
+    zone:{x:2,y:10,w:10,h:2},
+    kind:"shield",
+    ops:["MAINTAIN"],
+    ritual: {
+      enactment:"Work is a ceremony of recurrence: turn → cleave → ridge → reward → turn again.",
+      world_built:[
+        "The goblet-crowned master is a priest of rhythm (reward as sacrament).",
+        "Soil becomes visible law: furrows are public time.",
+        "Molten gold imitates earth: art claims reality by reenacting it."
+      ],
+      roles:[
+        "Ploughmen = maintainers",
+        "Master with goblet = distributor of endurance",
+        "Ridges = archive of repetition"
+      ],
+      transmission_shadow:[
+        "Production line efficiency: optimize toil, maximize yield."
+      ]
+    },
+    text:`"A field deep furrow'd... The third time labour'd..."`,
+    full:`"A field deep furrow'd next the god design'd... And sable look'd, though form'd of molten gold."`,
+    styleClass:"z-field"
+  },
+
+  {
+    id:"FIELD_HARVEST",
+    title:"Field: harvest (banquet under oak)",
+    zone:{x:12,y:10,w:10,h:2},
+    kind:"shield",
+    ops:["MAINTAIN","REPAIR"],
+    ritual: {
+      enactment:"Reaping becomes a public reassurance: food, shade, victim ox, shared meal.",
+      world_built:[
+        "Abundance is not private—heaps thicken up the ground for all to see.",
+        "Children participate: continuity is trained by carrying what is too large.",
+        "Sacrifice + feast = repair of fatigue into meaning."
+      ],
+      roles:[
+        "Children = continuity agents",
+        "Oak = canopy of commonness",
+        "Victim ox = cost that binds the group"
+      ],
+      transmission_shadow:[
+        "Supply chain: harvest as resource extraction."
+      ]
+    },
+    text:`"Another field rose high with waving grain..."`,
+    full:`"With bended sickles stand the reaper train... The victim ox the sturdy youth prepare..."`,
+    styleClass:"z-field"
+  },
+
+  {
+    id:"VINEYARD",
+    title:"Vineyard: baskets, song of Linus, measured dance",
+    zone:{x:6,y:14,w:12,h:4},
+    kind:"shield",
+    ops:["PRODUCE","MAINTAIN"],
+    ritual: {
+      enactment:"Song makes harvest into festival; festival makes harvest into culture.",
+      world_built:[
+        "A pathway is a doctrine: it leads bodies into shared time.",
+        "Music holds the group in measure; meaning becomes tempo.",
+        "The purple product becomes public proof of season."
+      ],
+      roles:[
+        "Youth with strings = ritual conductor",
+        "Baskets = portable abundance",
+        "Measured dance = social synchronization"
+      ],
+      transmission_shadow:[
+        "Entertainment layer: stabilize morale, coordinate labor."
+      ]
+    },
+    text:`"Next, ripe in yellow gold, a vineyard shines..."`,
+    full:`"To this, one pathway gently winding leads... Tune soft the voice, and answer to the strain."`,
+    styleClass:"z-vine"
+  },
+
+  {
+    id:"HERDS_LIONS",
+    title:"Herds: lions seize the bull; dogs bay at distance",
+    zone:{x:0,y:8,w:10,h:4},
+    kind:"shield",
+    ops:["TRANSFORM"],
+    ritual: {
+      enactment:"Nature is an uncompromising rite: dominance, fear, distance, failure to intervene.",
+      world_built:[
+        "Violence precedes law: the pack recoils; the prey is decided.",
+        "Courage has limits; limits become visible in retreat.",
+        "The herd still moves—life continues under threat."
+      ],
+      roles:[
+        "Lions = interruption operators",
+        "Dogs = boundary of bravery",
+        "Torrent shore = sounding witness"
+      ],
+      transmission_shadow:[
+        "Threat model: risk event overwhelms defenses."
+      ]
+    },
+    text:`"Two lions rushing from the wood appear'd..."`,
+    full:`"Here herds of oxen march... They tore his flesh, and drank his sable blood."`,
+    styleClass:"z-herd"
+  },
+
+  {
+    id:"PASTURE_FOLDS",
+    title:"Pastures & folds: forests, meads, cots, whitening flocks",
+    zone:{x:10,y:8,w:14,h:4},
+    kind:"shield",
+    ops:["MAINTAIN"],
+    ritual: {
+      enactment:"Ordinariness is sacred: stalls, folds, cots—the quiet infrastructure that keeps a world intact.",
+      world_built:[
+        "A pastoral grid of care replaces the siege grid of fear.",
+        "Boundaries (folds) are not cages; they are promises.",
+        "Whitened fields are a visible measure of continuity."
+      ],
+      roles:[
+        "Folds = maintained limits",
+        "Cots = distributed life-sites",
+        "Fleecy flocks = living inventory of endurance"
+      ],
+      transmission_shadow:[
+        "Asset management: maintain herds, secure property."
+      ]
+    },
+    text:`"Deep through fair forests... And fleecy flocks, that whiten all the scene."`,
+    full:`"Next this, the eye the art of Vulcan leads... And fleecy flocks, that whiten all the scene."`,
+    styleClass:"z-field"
+  },
+
+  {
+    id:"DANCE_MAZE",
+    title:"Dance: Daedalean maze, ring-blend, tumblers in the center",
+    zone:{x:4,y:20,w:16,h:4},
+    kind:"shield",
+    ops:["PRODUCE","MAINTAIN","TRANSFORM"],
+    ritual: {
+      enactment:"The social body becomes geometry: oblique ways, confusedly regular—order that admits motion.",
+      world_built:[
+        "The maze is not confusion; it is learned complexity.",
+        "The ring blends individuals into a temporary common being.",
+        "The center hosts risk (tumblers) so the perimeter can endure."
+      ],
+      roles:[
+        "Daedalean art = rule-set for movement",
+        "Ring = collective identity",
+        "Tumblers = sanctioned chaos"
+      ],
+      transmission_shadow:[
+        "Choreography as control: synchronize bodies for cohesion."
+      ]
+    },
+    text:`"Now shape in oblique ways, / Confusedly regular, the moving maze..."`,
+    full:`"A figured dance succeeds... And general songs the sprightly revel end."`,
+    styleClass:"z-dance"
+  },
+
+  {
+    id:"OCEAN_RIM",
+    title:"Ocean rim: living silver waves bound the whole",
+    zone:{x:0,y:23,w:24,h:1},
+    kind:"shield",
+    ops:["MAINTAIN"],
+    ritual: {
+      enactment:"A boundary is a vow. The ocean is the last hand: it seals the world by circling it.",
+      world_built:[
+        "Containment without closure: the waves ‘beat the verge’ yet hold the form.",
+        "A world needs edges to be inhabitable.",
+        "The rim is recurrence: wave after wave = continuity."
+      ],
+      roles:[
+        "Ocean = limit-condition",
+        "Verge = border-law",
+        "Silver waves = visible maintenance"
+      ],
+      transmission_shadow:[
+        "Perimeter security: keep the system stable by hardening edges."
+      ]
+    },
+    text:`"And pour'd the ocean round: / In living silver seem'd the waves to roll..."`,
+    full:`"Thus the broad shield complete... And beat the buckler's verge, and bound the whole."`,
+    styleClass:"z-ocean"
+  }
+];
+
+// Legend / zone classes
+const ZONE_CLASS = {
+  frame:"z-frame",
+  cosmos:"z-cosmos",
+  peace:"z-peace",
+  war:"z-war",
+  field:"z-field",
+  vine:"z-vine",
+  herd:"z-herd",
+  dance:"z-dance",
+  ocean:"z-ocean",
+  void:"z-void"
+};
+
+// Cell classification by which scene zone contains it
+function sceneFor(x,y){
+  return SCENES.find(s =>
+    x >= s.zone.x && x < s.zone.x + s.zone.w &&
+    y >= s.zone.y && y < s.zone.y + s.zone.h
+  );
+}
+
+// Give a scene an “aesthetic zone” class
+function classForScene(s){
+  if(!s) return ZONE_CLASS.void;
+  return s.styleClass || ZONE_CLASS.void;
+}
+
+// Build a short scene code for the cell (so geography “speaks”)
+function glyphForScene(s){
+  if(!s) return "";
+  const map = {
+    FRAME_0:"TH",
+    FRAME_1:"FG",
+    COSMOS:"☆",
+    CITY_PEACE_WEDDING:"PW",
+    CITY_PEACE_TRIAL:"PT",
+    CITY_WAR:"WR",
+    FIELD_PLOUGH:"PL",
+    FIELD_HARVEST:"HV",
+    VINEYARD:"VN",
+    HERDS_LIONS:"HL",
+    PASTURE_FOLDS:"PF",
+    DANCE_MAZE:"DZ",
+    OCEAN_RIM:"≈"
+  };
+  return map[s.id] || "•";
+}
+
+/* ============================================================
+   UI state
+   ============================================================ */
+let lens = "RITUAL"; // or TRANSMISSION
+let selected = {x:0,y:0};
+let selectedSceneId = null;
+
+let processionOn = false;
+let processionTimer = null;
+let processionIndex = 0;
+
+// A “procession” is a reading path that enacts recurrence.
+const PROCESSION = [
+  "FRAME_0",
+  "FRAME_1",
+  "COSMOS",
+  "CITY_PEACE_WEDDING",
+  "CITY_PEACE_TRIAL",
+  "CITY_WAR",
+  "FIELD_PLOUGH",
+  "FIELD_HARVEST",
+  "VINEYARD",
+  "HERDS_LIONS",
+  "PASTURE_FOLDS",
+  "DANCE_MAZE",
+  "OCEAN_RIM"
+];
+
+const gridEl = document.getElementById("grid");
+const addrEl = document.getElementById("addr");
+const statusLeft = document.getElementById("statusLeft");
+const sceneH2 = document.getElementById("sceneH2");
+const sceneTags = document.getElementById("sceneTags");
+const ritualBody = document.getElementById("ritualBody");
+const textBody = document.getElementById("textBody");
+const protocolBody = document.getElementById("protocolBody");
+const toastEl = document.getElementById("toast");
+
+protocolBody.textContent = CAREY_PROTOCOL_SNIPPET;
+
+/* ============================================================
+   Render grid
+   ============================================================ */
+function renderGrid(){
+  gridEl.innerHTML = "";
+  for(let y=0; y<GRID.rows; y++){
+    for(let x=0; x<GRID.cols; x++){
+      const s = sceneFor(x,y);
+      const cell = document.createElement("div");
+      cell.className = `cell ${classForScene(s)}`;
+      cell.dataset.x = x;
+      cell.dataset.y = y;
+      cell.setAttribute("role","button");
+      cell.setAttribute("aria-label", `Cell ${x},${y}`);
+
+      // A tiny “calligram” hint: glyph + micro coordinate
+      const g = document.createElement("span");
+      g.textContent = glyphForScene(s);
+      cell.appendChild(g);
+
+      const mini = document.createElement("span");
+      mini.className = "mini";
+      mini.textContent = `${x.toString().padStart(2,"0")}`;
+      cell.appendChild(mini);
+
+      cell.addEventListener("click", () => selectCell(x,y, true));
+      gridEl.appendChild(cell);
+    }
+  }
+}
+
+/* ============================================================
+   Selection + panel
+   ============================================================ */
+function selectCell(x,y, announce){
+  selected = {x,y};
+  addrEl.textContent = `${x.toString().padStart(2,"0")},${y.toString().padStart(2,"0")}`;
+
+  // update grid selection
+  const cells = gridEl.querySelectorAll(".cell");
+  cells.forEach(c => c.classList.remove("sel","hot"));
+
+  const idx = y*GRID.cols + x;
+  const selCell = cells[idx];
+  if(selCell) selCell.classList.add("sel");
+
+  const s = sceneFor(x,y);
+  if(s){
+    selectedSceneId = s.id;
+    highlightZone(s.id);
+    updatePanel(s);
+    if(announce) toast(`${s.title}`);
+    statusLeft.textContent = `Site: ${s.id} • “${s.title}”`;
+  } else {
+    selectedSceneId = null;
+    sceneH2.textContent = "Void / unassigned site";
+    sceneTags.innerHTML = "";
+    ritualBody.textContent = "No rite staged here yet. (In Carey’s terms: the world has not been symbolically produced at this address.)";
+    textBody.textContent = "—";
+    statusLeft.textContent = "Void: no staged act at this address.";
+    if(announce) toast("Void: no staged act");
+  }
+}
+
+function highlightZone(sceneId){
+  const s = SCENES.find(z=>z.id===sceneId);
+  if(!s) return;
+  const cells = gridEl.querySelectorAll(".cell");
+  for(let y=s.zone.y; y<s.zone.y+s.zone.h; y++){
+    for(let x=s.zone.x; x<s.zone.x+s.zone.w; x++){
+      const i = y*GRID.cols + x;
+      if(cells[i]) cells[i].classList.add("hot");
+    }
+  }
+}
+
+function updatePanel(s){
+  sceneH2.textContent = s.title;
+
+  // tags
+  sceneTags.innerHTML = "";
+  const t1 = tagEl(lens === "RITUAL" ? "RITUAL VIEW" : "TRANSMISSION VIEW", "ritual");
+  sceneTags.appendChild(t1);
+
+  s.ops.forEach(op=>{
+    sceneTags.appendChild(tagEl(op, "op"));
+  });
+
+  // body depends on lens (but ritual is always primary)
+  if(lens === "RITUAL"){
+    ritualBody.textContent = formatRitual(s);
+  } else {
+    ritualBody.textContent = formatTransmission(s);
+  }
+
+  // text + protocol tabs always available
+  textBody.textContent = s.full || s.text || "—";
+}
+
+function tagEl(text, cls){
+  const el = document.createElement("span");
+  el.className = `tag ${cls||""}`.trim();
+  el.textContent = text;
+  return el;
+}
+
+function formatRitual(s){
+  const r = s.ritual || {};
+  const opsLine = `OPERATIONS: ${s.ops.join(" • ")}`;
+
+  const enact = r.enactment ? `ENACTMENT:\n- ${r.enactment}\n` : "";
+  const world = (r.world_built && r.world_built.length)
+    ? `WORLD IT BUILDS:\n${r.world_built.map(x=>`- ${x}`).join("\n")}\n`
+    : "";
+  const roles = (r.roles && r.roles.length)
+    ? `ROLES:\n${r.roles.map(x=>`- ${x}`).join("\n")}\n`
+    : "";
+  const shadow = (r.transmission_shadow && r.transmission_shadow.length)
+    ? `TRANSMISSION SHADOW (secondary):\n${r.transmission_shadow.map(x=>`- ${x}`).join("\n")}\n`
+    : "";
+
+  return `${opsLine}\n\n${enact}\n${world}\n${roles}\n${shadow}`.trim();
+}
+
+function formatTransmission(s){
+  const r = s.ritual || {};
+  const t = (r.transmission_shadow && r.transmission_shadow.length)
+    ? r.transmission_shadow
+    : ["This site can be reduced to a control problem — but that reduction is the ethical instrument Carey warns against."];
+
+  const ritualReminder =
+`RITUAL-PRIORITY REMINDER:
+- This interface defaults to ritual-first.
+- Transmission here is shown only as a secondary “shadow” model.`;
+
+  return `TRANSMISSION (shadow model):\n${t.map(x=>`- ${x}`).join("\n")}\n\n${ritualReminder}`;
+}
+
+/* ============================================================
+   Tabs
+   ============================================================ */
+document.querySelectorAll(".tabbtn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    const tab = btn.dataset.tab;
+    document.getElementById("tab-ritual").style.display = (tab==="ritual") ? "" : "none";
+    document.getElementById("tab-text").style.display   = (tab==="text") ? "" : "none";
+    document.getElementById("tab-protocol").style.display = (tab==="protocol") ? "" : "none";
+  });
+});
+
+/* ============================================================
+   Lens toggle
+   ============================================================ */
+const lensR = document.getElementById("lensR");
+const lensT = document.getElementById("lensT");
+
+lensR.addEventListener("click", ()=>{
+  lens = "RITUAL";
+  lensR.classList.add("active");
+  lensT.classList.remove("active");
+  lensR.setAttribute("aria-selected","true");
+  lensT.setAttribute("aria-selected","false");
+  if(selectedSceneId){
+    updatePanel(SCENES.find(s=>s.id===selectedSceneId));
+  }
+  toast("Lens: RITUAL (primary)");
+});
+
+lensT.addEventListener("click", ()=>{
+  lens = "TRANSMISSION";
+  lensT.classList.add("active");
+  lensR.classList.remove("active");
+  lensT.setAttribute("aria-selected","true");
+  lensR.setAttribute("aria-selected","false");
+  if(selectedSceneId){
+    updatePanel(SCENES.find(s=>s.id===selectedSceneId));
+  }
+  toast("Lens: TRANSMISSION (shadow)");
+});
+
+/* ============================================================
+   Procession (auto traversal)
+   ============================================================ */
+const btnProcession = document.getElementById("btnProcession");
+const procDot = document.getElementById("procDot");
+
+btnProcession.addEventListener("click", ()=>{
+  if(!processionOn) startProcession();
+  else stopProcession();
+});
+
+function startProcession(){
+  processionOn = true;
+  procDot.classList.add("on");
+  btnProcession.classList.add("active");
+  toast("Procession: ON (tap again to stop)");
+
+  // jump to current index
+  stepProcession(true);
+
+  processionTimer = setInterval(()=>{
+    stepProcession(false);
+  }, 1350);
+}
+
+function stopProcession(){
+  processionOn = false;
+  procDot.classList.remove("on");
+  btnProcession.classList.remove("active");
+  if(processionTimer) clearInterval(processionTimer);
+  processionTimer = null;
+  toast("Procession: OFF");
+}
+
+function stepProcession(initial){
+  const id = PROCESSION[processionIndex % PROCESSION.length];
+  const s = SCENES.find(x=>x.id===id);
+  if(s){
+    // pick a representative address: center of the zone
+    const cx = s.zone.x + Math.floor(s.zone.w/2);
+    const cy = s.zone.y + Math.floor(s.zone.h/2);
+    selectCell(cx, cy, !initial);
+  }
+  processionIndex = (processionIndex + 1) % PROCESSION.length;
+}
+
+/* ============================================================
+   Legend / help
+   ============================================================ */
+document.getElementById("btnLegend").addEventListener("click", ()=>{
+  const msg =
+`LEGEND (Carey ritual-first)
+- The grid is ADDRESS SPACE: each cell is a ritual site.
+- Tap a cell: you are not “opening content” — you are ATTENDING an act.
+- Green outline: your current site. Green inset: the scene-zone (a ceremonial district).
+- Lens:
+  • RITUAL = primary model (world-production).
+  • TRANSMIT = secondary “shadow” model (control across space).
+- Procession = auto-traversal: recurrence makes the world endure.
+
+TIP
+Try Procession on a phone: it reads like a moving mass.`;
+  toast(msg, 4200);
+});
+
+/* ============================================================
+   Toast
+   ============================================================ */
+let toastTimer = null;
+function toast(text, ms=1700){
+  toastEl.textContent = text;
+  toastEl.classList.add("on");
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>toastEl.classList.remove("on"), ms);
+}
+
+/* ============================================================
+   Swipe navigation (mobile-friendly reading-as-traversal)
+   ============================================================ */
+let touchStartX=null, touchStartY=null;
+gridEl.addEventListener("touchstart", (e)=>{
+  if(!e.touches || !e.touches.length) return;
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+},{passive:true});
+
+gridEl.addEventListener("touchend", (e)=>{
+  if(touchStartX===null || touchStartY===null) return;
+  const t = e.changedTouches && e.changedTouches[0];
+  if(!t) return;
+  const dx = t.clientX - touchStartX;
+  const dy = t.clientY - touchStartY;
+
+  // threshold
+  if(Math.abs(dx) < 28 && Math.abs(dy) < 28){
+    touchStartX=null; touchStartY=null;
+    return;
+  }
+
+  // swipe left/right to move procession (manual)
+  if(Math.abs(dx) > Math.abs(dy)){
+    // left = next, right = prev
+    if(dx < 0){
+      processionIndex = (processionIndex + 1) % PROCESSION.length;
+    } else {
+      processionIndex = (processionIndex - 1 + PROCESSION.length) % PROCESSION.length;
+    }
+    const id = PROCESSION[processionIndex];
+    const s = SCENES.find(x=>x.id===id);
+    if(s){
+      const cx = s.zone.x + Math.floor(s.zone.w/2);
+      const cy = s.zone.y + Math.floor(s.zone.h/2);
+      selectCell(cx, cy, true);
+    }
+  } else {
+    // vertical swipe: switch lens (up ritual / down transmit)
+    if(dy < 0) lensR.click();
+    else lensT.click();
+  }
+
+  touchStartX=null; touchStartY=null;
+},{passive:true});
+
+/* ============================================================
+   Boot
+   ============================================================ */
+renderGrid();
+
+// select a meaningful starting site: Thetis
+selectCell(12, 1, false);
+
+// small first toast (keep it terse on mobile)
+setTimeout(()=>toast("Tap sites. Procession turns reading into ceremony.", 1600), 250);
+</script>
+</body>
+</html>

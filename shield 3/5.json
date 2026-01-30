@@ -1,0 +1,205 @@
+{
+  "system_meta": {
+    "project": "VULCAN_MEM_ARCHIVE",
+    "target_text": "Iliad, Book XVIII (Pope Trans.) - The Shield of Achilles",
+    "input_correction": "User prompt label 'Ode on a Grecian Urn' ignored; processing pasted text 'The Shield of Achilles'.",
+    "grid_dim": "24x24",
+    "total_cells": 576,
+    "encoding_density": "High"
+  },
+  "o1_line_index": {
+    "schema": "uid | stanza_ref | line_num | text | modality | entities",
+    "sample_entries": [
+      {
+        "uid": "L001",
+        "section": "FRAME_THETIS",
+        "line_num": 1,
+        "text": "Thee, welcome, goddess! what occasion calls",
+        "modality": "dialogue_entry",
+        "entities": ["Thetis", "Vulcan"]
+      },
+      {
+        "uid": "L067",
+        "section": "LAYER_1_COSMOS",
+        "line_num": 57,
+        "text": "Then first he form'd the immense and solid shield;",
+        "modality": "object_creation",
+        "entities": ["Shield", "Earth", "Heaven", "Ocean"]
+      },
+      {
+        "uid": "L077",
+        "section": "LAYER_2_CITIES",
+        "line_num": 67,
+        "text": "Two cities radiant on the shield appear,",
+        "modality": "visual_survey",
+        "entities": ["City_Peace", "City_War"]
+      },
+      {
+        "uid": "L118",
+        "section": "LAYER_2_CITIES",
+        "line_num": 108,
+        "text": "In arms the glittering squadron rising round / Rush sudden",
+        "modality": "kinetic_action",
+        "entities": ["Ambush", "Shepherds", "Soldiers"]
+      },
+      {
+        "uid": "L153",
+        "section": "LAYER_3_AGRI",
+        "line_num": 143,
+        "text": "A field deep furrow'd next the god design'd,",
+        "modality": "cyclic_labor",
+        "entities": ["Ploughman", "Soil", "Goblet"]
+      },
+      {
+        "uid": "L236",
+        "section": "LAYER_5_OCEAN",
+        "line_num": 224,
+        "text": "In living silver seem'd the waves to roll,",
+        "modality": "boundary_fluid",
+        "entities": ["River_Ocean"]
+      }
+    ]
+  },
+  "o2_panel_model": {
+    "concept": "Concentric Memory Bands",
+    "rationale": "The Shield is an object of circular topology. Linear reading is an artifact of the codex. The grid must restore the concentricity. The 'Frame' (Thetis/Vulcan) exists in the corners (the workshop space), while the Shield occupies the circular center.",
+    "panels": [
+      {
+        "id": "P00_WORKSHOP",
+        "title": "The Frame",
+        "ekphrasis_type": "procedural",
+        "lines": ["1-56", "227-234"],
+        "tagset": ["REQUEST", "GRIEF", "FORGE_NOISE", "DELIVERY"],
+        "geometry": "corners_and_edges"
+      },
+      {
+        "id": "P01_COSMOS",
+        "title": "The Umbo (Center)",
+        "ekphrasis_type": "static_iconography",
+        "lines": ["57-66"],
+        "tagset": ["EARTH", "SKY", "CONSTELLATIONS", "AXIS_MUNDI"],
+        "geometry": "center_2x2"
+      },
+      {
+        "id": "P02_CIVILIZATION",
+        "title": "The Two Cities",
+        "ekphrasis_type": "narrative_contrast",
+        "lines": ["67-142"],
+        "tagset": ["WEDDING", "LAW", "AMBUSH", "SLAUGHTER", "HATE"],
+        "geometry": "inner_ring_radius_3_to_6"
+      },
+      {
+        "id": "P03_AGRICULTURE",
+        "title": "The Seasons of Labor",
+        "ekphrasis_type": "cyclic_ritual",
+        "lines": ["143-182"],
+        "tagset": ["PLOUGHING", "REAPING", "FEASTING", "VINEYARD"],
+        "geometry": "middle_ring_radius_7_to_9"
+      },
+      {
+        "id": "P04_PASTORAL",
+        "title": "Nature and Artifice",
+        "ekphrasis_type": "kinetic_disruption",
+        "lines": ["183-222"],
+        "tagset": ["LIONS", "BULLS", "DANCE_FLOOR", "MAZE"],
+        "geometry": "outer_ring_radius_10_to_11"
+      },
+      {
+        "id": "P05_OCEAN",
+        "title": "The Boundary",
+        "ekphrasis_type": "enclosure",
+        "lines": ["223-226"],
+        "tagset": ["RIVER", "BOUNDS", "SILVER", "FLOW"],
+        "geometry": "perimeter_ring_radius_12"
+      }
+    ]
+  },
+  "o3_grid_allocation": {
+    "description": "24x24 Coordinate Space mapping. (0,0) is Top-Left. Center is (11.5, 11.5). Calculation: distance d = sqrt((x-11.5)^2 + (y-11.5)^2).",
+    "cells": [
+      {
+        "zone": "WORKSHOP_CORNERS",
+        "condition": "d > 12.0",
+        "panel_id": "P00_WORKSHOP",
+        "content_strategy": "The narrative of Thetis and Vulcan surrounds the shield. Corner (0,0) initiates the Request. Corner (23,23) finalizes the Delivery.",
+        "beacon": "[[FORGE]]"
+      },
+      {
+        "zone": "OCEAN_RIM",
+        "condition": "11.0 < d <= 12.0",
+        "panel_id": "P05_OCEAN",
+        "content_strategy": "High redundancy. The text 'living silver... waves to roll' repeats effectively to form a fluid boundary.",
+        "beacon": "~~OCEAN~~"
+      },
+      {
+        "zone": "PASTORAL_BAND",
+        "condition": "9.0 < d <= 11.0",
+        "panel_id": "P04_PASTORAL",
+        "content_strategy": "Interleaved segments: The Dance (Daedalus) alternates with The Lions attacking the Bull.",
+        "beacon": ">>DANCE<<"
+      },
+      {
+        "zone": "AGRICULTURE_BAND",
+        "condition": "6.0 < d <= 9.0",
+        "panel_id": "P03_AGRICULTURE",
+        "content_strategy": "Split into quadrants: Q1=Ploughing, Q2=Reaping, Q3=Feast, Q4=Vineyard. Cyclic reading direction.",
+        "beacon": "++HARVEST++"
+      },
+      {
+        "zone": "CIVILIZATION_BAND",
+        "condition": "2.5 < d <= 6.0",
+        "panel_id": "P02_CIVILIZATION",
+        "content_strategy": "Binary split. Top Hemisphere = City of Peace (Weddings/Law). Bottom Hemisphere = City of War (Ambush/Tumult).",
+        "beacon": "!!CONFLICT!!"
+      },
+      {
+        "zone": "COSMOS_CORE",
+        "condition": "d <= 2.5",
+        "panel_id": "P01_COSMOS",
+        "content_strategy": "Dense packing. Every cell contains the full cosmology list (Earth, Sky, Sea, Sun, Moon, Stars) to ensure the axis is unmissable.",
+        "beacon": "**AXIS**"
+      }
+    ]
+  },
+  "o4_retrieval_ruleset": {
+    "intent": "Defines how a read-head (raycaster) extracts meaning from the grid.",
+    "rules": [
+      {
+        "id": "R1_BEACON_LOCK",
+        "description": "If ray hits a cell containing a Beacon pattern (e.g., '[[FORGE]]'), the parser enters 'Panel_Lock' mode for 5 subsequent steps.",
+        "logic": "Prevents flickering between semantic layers when traversing boundaries."
+      },
+      {
+        "id": "R2_RADIAL_PRECEDENCE",
+        "description": "When multiple panels are sampled in a single wide-beam query, precedence is given to Inner Rings over Outer Rings.",
+        "logic": "Simulates the eye drawn to the center of the shield first, then scanning outward."
+      },
+      {
+        "id": "R3_QUADRANT_BIAS",
+        "description": "In P02 (Cities) and P03 (Agri), the raycaster applies semantic filtering based on polar angle.",
+        "formula": "if angle(0-180) -> prioritize 'PEACE/GROWTH'; if angle(180-360) -> prioritize 'WAR/HARVEST'."
+      },
+      {
+        "id": "R4_ERROR_HANDLING",
+        "description": "If a cell is empty or corrupted (noise), return content from the nearest neighbor towards the Center (11.5, 11.5).",
+        "logic": "Gravity-based error recovery."
+      }
+    ]
+  },
+  "o5_compiler_plan": {
+    "strategy": "Serialization with Topology Headers",
+    "steps": [
+      "1. Normalize text: Strip archaic punctuation, standardize whitespace.",
+      "2. Tokenize: Break into atomic semantic units (lines or half-lines).",
+      "3. Map: Assign tokens to Grid Coordinates (x,y) based on 'o3_grid_allocation' logic.",
+      "4. Pad: Fill remaining space in designated cells with 'Echo' tokens (repeated keywords) to saturate the address space.",
+      "5. Serialize: Output a single stream by scanning the grid row-by-row (0..23).",
+      "6. Delimit: Insert non-printable separators <ROW_END> and <PANEL_SHIFT> to allow reconstruction of the 2D manifold from the 1D stream."
+    ],
+    "seam_markers": {
+      "panel_entry": "{[",
+      "panel_exit": "]}",
+      "line_break": "¶"
+    }
+  }
+}

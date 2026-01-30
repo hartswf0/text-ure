@@ -1,0 +1,869 @@
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Keats Urn — 24×24 Calligram Poem-Engine</title>
+<style>
+  :root {
+    --bg: #0b0d10;
+    --panel: #10141b;
+    --ink: #e9eef7;
+    --muted: #9aa6b2;
+    --line: rgba(255,255,255,.08);
+    --cell: 22px; /* overridden by slider */
+    --radius: 14px;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; background: radial-gradient(1200px 600px at 50% -10%, rgba(120,150,255,.12), transparent 60%), var(--bg); color: var(--ink); margin: 0; }
+  .app { height: 100%; display: grid; grid-template-rows: auto 1fr; gap: 10px; padding: 10px; }
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: linear-gradient(to bottom, rgba(11,13,16,.92), rgba(11,13,16,.75));
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 10px;
+    backdrop-filter: blur(10px);
+  }
+  .toprow { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+  .title {
+    font-family: var(--sans);
+    font-weight: 800;
+    letter-spacing: .2px;
+    line-height: 1.05;
+  }
+  .subtitle { font-family: var(--sans); color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .tabs { display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap: wrap; }
+  .tab {
+    font-family: var(--sans);
+    font-size: 12px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    background: rgba(255,255,255,.02);
+    cursor: pointer;
+    user-select: none;
+  }
+  .tab.active { color: var(--ink); border-color: rgba(120,150,255,.55); background: rgba(120,150,255,.12); }
+  .controls {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .controlsRow {
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap: wrap;
+  }
+  .pill {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 7px 9px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    background: rgba(255,255,255,.02);
+  }
+  input[type="range"] { width: 180px; }
+  button {
+    appearance: none;
+    border: 1px solid rgba(120,150,255,.45);
+    background: rgba(120,150,255,.12);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  button:active { transform: translateY(1px); }
+
+  main {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    min-height: 0;
+  }
+
+  .panel {
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.02);
+    border-radius: var(--radius);
+    overflow: hidden;
+    min-height: 0;
+  }
+  .panelHeader {
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(16,20,27,.65);
+  }
+  .panelHeader h2 {
+    font-family: var(--sans);
+    font-size: 13px;
+    margin: 0;
+    letter-spacing: .2px;
+  }
+  .panelHeader .hint {
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Grid */
+  .gridWrap {
+    padding: 10px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(24, var(--cell));
+    grid-auto-rows: var(--cell);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    width: max-content;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .cell {
+    position: relative;
+    background: rgba(0,0,0,.35);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1;
+    padding: 2px;
+    user-select: none;
+    cursor: pointer;
+  }
+  .cell.blank { background: rgba(0,0,0,.18); cursor: default; }
+
+  /* Stroke weight as typographic presence */
+  .w-HAIRLINE { font-weight: 300; opacity: .65; }
+  .w-LIGHT { font-weight: 400; opacity: .85; }
+  .w-REGULAR { font-weight: 500; opacity: .95; }
+  .w-BOLD { font-weight: 700; opacity: 1; }
+  .w-BLACK { font-weight: 800; opacity: 1; }
+
+  /* Gravity */
+  .g-TOP { align-items: flex-start; padding-top: 3px; }
+  .g-BOTTOM { align-items: flex-end; padding-bottom: 3px; }
+  .g-LEFT { justify-content: flex-start; padding-left: 3px; }
+  .g-RIGHT { justify-content: flex-end; padding-right: 3px; }
+  .g-CENTER { align-items: center; justify-content: center; }
+  .g-FLOAT { align-items: center; justify-content: center; }
+
+  /* Letter materials */
+  .m-INK { color: #e9eef7; text-shadow: none; }
+  .m-STONE { color: #d3d7de; text-shadow: 0 0 0 rgba(0,0,0,0); }
+  .m-ASH { color: rgba(233,238,247,.65); filter: blur(.0px); }
+  .m-BONE { color: #f6f1e8; }
+  .m-LIGHT { color: #ffffff; text-shadow: 0 0 6px rgba(255,255,255,.22); }
+  .m-NEON { color: #c9ffde; text-shadow: 0 0 6px rgba(0,255,120,.22), 0 0 14px rgba(0,255,120,.18); }
+  .m-STATIC {
+    color: rgba(233,238,247,.38);
+    text-shadow: 0 0 1px rgba(255,255,255,.2);
+  }
+
+  /* Zone shading */
+  .z-Z1_LIP_HANDLES { background: rgba(190,190,190,.08); }
+  .z-Z2_UPPER_BODY { background: rgba(255,255,255,.06); }
+  .z-Z3_SPIRAL_EYE { background: rgba(0,255,120,.08); }
+  .z-Z4_LOWER_BODY_RIVER { background: rgba(255,200,160,.05); }
+  .z-Z5_PLINTH_SEAL { background: rgba(246,241,232,.08); }
+  .z-Z0_VOID { background: rgba(0,0,0,.18); }
+
+  /* Calligram function hint border */
+  .f-IMAGE { outline: 1px solid rgba(120,150,255,.18); outline-offset: -1px; }
+  .f-CONTAINER { outline: 1px solid rgba(255,255,255,.10); outline-offset: -1px; }
+  .f-PATH { outline: 1px solid rgba(0,255,120,.18); outline-offset: -1px; }
+  .f-BARRIER { outline: 1px solid rgba(255,80,80,.18); outline-offset: -1px; }
+  .f-VOID { outline: 1px solid rgba(255,255,255,.05); outline-offset: -1px; }
+
+  .highlight { outline: 2px solid rgba(255,255,255,.65) !important; z-index: 2; }
+  .trail { outline: 2px solid rgba(120,150,255,.75) !important; z-index: 1; }
+
+  /* Content panels */
+  .mono {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--ink);
+    white-space: pre-wrap;
+    word-break: break-word;
+    padding: 12px;
+    overflow: auto;
+    max-height: 55vh;
+  }
+  .lines {
+    padding: 12px;
+    overflow: auto;
+    max-height: 55vh;
+    font-family: var(--sans);
+  }
+  .stanza { margin: 0 0 14px 0; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.02); }
+  .stanza h3 { margin: 0 0 8px 0; font-size: 12px; color: var(--muted); letter-spacing: .2px; }
+  .stanza .line { font-size: 13px; line-height: 1.35; margin: 2px 0; }
+
+  /* Inspector */
+  .toast {
+    position: fixed;
+    left: 10px; right: 10px; bottom: 10px;
+    border: 1px solid rgba(120,150,255,.35);
+    background: rgba(16,20,27,.88);
+    border-radius: 16px;
+    padding: 10px;
+    backdrop-filter: blur(10px);
+    display: none;
+    z-index: 999;
+  }
+  .toast .head {
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+    font-family: var(--sans);
+  }
+  .toast .head .k { font-weight: 800; }
+  .toast .body {
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink);
+    white-space: pre-wrap;
+  }
+  .xbtn {
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.03);
+    color: var(--muted);
+    border-radius: 12px;
+    padding: 6px 8px;
+    font-family: var(--sans);
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  @media (min-width: 980px) {
+    main { grid-template-columns: 1.1fr .9fr; }
+    .mono, .lines { max-height: calc(100vh - 220px); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="toprow">
+      <div>
+        <div class="title">Keats Urn — 24×24 Calligram Poem-Engine</div>
+        <div class="subtitle">CODE‑TEXT manifests a SURFACE‑TEXT grid: language as matter; grid as terrain.</div>
+      </div>
+      <div class="tabs" id="tabs">
+        <div class="tab active" data-tab="surface">Surface</div>
+        <div class="tab" data-tab="code">Code‑Text</div>
+        <div class="tab" data-tab="lines">Poem Lines</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="controlsRow">
+        <span class="pill">Seed: <span id="seedOut"></span></span>
+        <span class="pill">Grid: 24×24</span>
+        <label class="pill">Scale <input id="scale" type="range" min="14" max="40" value="22" /></label>
+        <button id="regen">Regenerate</button>
+        <button id="traverse">Run traversal</button>
+      </div>
+      <div class="controlsRow">
+        <span class="pill">Tap a cell → inspect its CalligramLayer + operators.</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel" id="surfacePanel">
+      <div class="panelHeader"><h2>SURFACE‑TEXT (24×24)</h2><div class="hint">text becomes geometry</div></div>
+      <div class="gridWrap"><div class="grid" id="grid"></div></div>
+    </section>
+
+    <section class="panel" id="codePanel" style="display:none;">
+      <div class="panelHeader"><h2>CODE‑TEXT (Manifest)</h2><div class="hint">deterministic regeneration rules</div></div>
+      <div class="mono" id="code"></div>
+    </section>
+
+    <section class="panel" id="linesPanel" style="display:none;">
+      <div class="panelHeader"><h2>Ode on a Grecian Urn</h2><div class="hint">5 stanza streams</div></div>
+      <div class="lines" id="lines"></div>
+    </section>
+
+    <section class="panel" id="rightPanel">
+      <div class="panelHeader"><h2>Schema + Rules</h2><div class="hint">OPS‑SCHEMAS v2</div></div>
+      <div class="mono" id="schemas"></div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast">
+    <div class="head">
+      <div class="k" id="toastTitle">Cell</div>
+      <button class="xbtn" id="toastClose">Close</button>
+    </div>
+    <div class="body" id="toastBody"></div>
+  </div>
+</div>
+
+<script>
+/* ========= Embedded OPS-SCHEMAS + generator (single-file) ========= */
+
+const SCHEMAS = {
+  enums: {
+    GlyphFlow: ["LINEAR","SPIRAL","COLUMN","FRACTURE","RADIATE","CLUSTER","SCATTER","WAVE"],
+    StrokeWeight: ["HAIRLINE","LIGHT","REGULAR","BOLD","BLACK"],
+    TypographicGravity: ["TOP","BOTTOM","LEFT","RIGHT","CENTER","FLOAT"],
+    CalligramFunction: ["IMAGE","CONTAINER","BARRIER","PATH","VOID"],
+    LetterMaterial: ["INK","STONE","ASH","NEON","BONE","LIGHT","STATIC"]
+  }
+};
+
+const RULES = {
+  M1: "PRODUCE → IMAGE",
+  M2: "MAINTAIN → CONTAINER",
+  M3: "REPAIR → PATH",
+  M4: "TRANSFORM → VOID",
+  M5: "INVOCATION → RADIATE"
+};
+
+const MANIFEST = {
+  meta: { seed: 0xCAFE },
+  zones: [
+    { id: "Z0_VOID", stanza_index: null, defaults: { glyph_flow: "SCATTER", stroke_weight: "HAIRLINE", gravity: "FLOAT", shape_outline: null, calligram_function: "VOID", letter_material: "STATIC", negative_space_ratio: 0.85, wrap_rule: "continuous", line_tension: 0, mirroring: false }},
+    { id: "Z1_LIP_HANDLES", stanza_index: 0, defaults: { glyph_flow: "LINEAR", stroke_weight: "BOLD", gravity: "CENTER", shape_outline: "urn_lip", calligram_function: "CONTAINER", letter_material: "INK", negative_space_ratio: 0.15, wrap_rule: "break_on_breath", line_tension: 0.3, mirroring: true }},
+    { id: "Z2_UPPER_BODY", stanza_index: 1, defaults: { glyph_flow: "WAVE", stroke_weight: "REGULAR", gravity: "CENTER", shape_outline: "urn_body", calligram_function: "CONTAINER", letter_material: "INK", negative_space_ratio: 0.2, wrap_rule: "break_on_concept", line_tension: 0.2, mirroring: false }},
+    { id: "Z3_SPIRAL_EYE", stanza_index: 2, defaults: { glyph_flow: "SPIRAL", stroke_weight: "BOLD", gravity: "CENTER", shape_outline: "spiral_eye", calligram_function: "PATH", letter_material: "NEON", negative_space_ratio: 0.1, wrap_rule: "continuous", line_tension: 0.6, mirroring: false }},
+    { id: "Z4_LOWER_BODY_RIVER", stanza_index: 3, defaults: { glyph_flow: "COLUMN", stroke_weight: "REGULAR", gravity: "BOTTOM", shape_outline: "river", calligram_function: "PATH", letter_material: "INK", negative_space_ratio: 0.25, wrap_rule: "break_on_breath", line_tension: 0.4, mirroring: false }},
+    { id: "Z5_PLINTH_SEAL", stanza_index: 4, defaults: { glyph_flow: "COLUMN", stroke_weight: "BLACK", gravity: "CENTER", shape_outline: "plinth", calligram_function: "BARRIER", letter_material: "BONE", negative_space_ratio: 0.05, wrap_rule: "break_on_concept", line_tension: 0.1, mirroring: false }}
+  ]
+};
+
+const POEM = {
+  title: "Ode on a Grecian Urn",
+  author: "John Keats",
+  stanzas: [
+    "Thou still unravsatisfied bride of quietness,\nThou foster-child of silence and slow time,\nSylvan historian, who canst thus express\nA flowery tale more sweetly than our rhyme:\nWhat leaf-fringed legend haunts about thy shape\nOf deities or mortals, or of both,\nIn Tempe or the dales of Arcady?\nWhat men or gods are these? What maidens loth?\nWhat mad pursuit? What struggle to escape?\nWhat pipes and timbrels? What wild ecstasy?",
+    "Heard melodies are sweet, but those unheard\nAre sweeter; therefore, ye soft pipes, play on;\nNot to the sensual ear, but, more endeared,\nPipe to the spirit ditties of no tone:\nFair youth, beneath the trees, thou canst not leave\nThy song, nor ever can those trees be bare;\nBold Lover, never, never canst thou kiss,\nThough winning near the goal yet, do not grieve;\nShe cannot fade, though thou hast not thy bliss,\nFor ever wilt thou love, and she be fair!",
+    "Ah, happy, happy boughs! that cannot shed\nYour leaves, nor ever bid the Spring adieu;\nAnd, happy melodist, unwearied,\nFor ever piping songs for ever new;\nMore happy love! more happy, happy love!\nFor ever warm and still to be enjoyed,\nFor ever panting, and for ever young;\nAll breathing human passion far above,\nThat leaves a heart high-sorrowful and cloyed,\nA burning forehead, and a parching tongue.",
+    "Who are these coming to the sacrifice?\nTo what green altar, O mysterious priest,\nLeadest thou that heifer lowing at the skies,\nAnd all her silken flanks with garlands dressed?\nWhat little town by river or sea shore,\nOr mountain-built with peaceful citadel,\nIs emptied of this folk, this pious morn?\nAnd, little town, thy streets for evermore\nWill silent be; and not a soul to tell\nWhy thou art desolate, can e'er return.",
+    "O Attic shape! Fair attitude! with brede\nOf marble men and maidens overwrought,\nWith forest branches and the trodden weed;\nThou, silent form, dost tease us out of thought\nAs doth eternity: Cold Pastoral!\nWhen old age shall this generation waste,\nThou shalt remain, in midst of other woe\nThan ours, a friend to man, to whom thou sayest,\n\"Beauty is truth, truth beauty,\"—that is all\nYe know on earth, and all ye need to know."
+  ]
+};
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function() {
+    a += 0x6D2B79F5;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function tokenize(text) {
+  // words + punctuation as tokens
+  return (text.match(/[A-Za-z]+'[A-Za-z]+|[A-Za-z]+|—|–|[0-9]+|[""\\"']|[.,;:!?()]/g) || []);
+}
+
+function keyMotifs(stanzaIndex) {
+  const motifs = [
+    ["quietness","silence","slow","legend","shape","ecstasy"],
+    ["unheard","pipes","spirit","youth","lover","fair","for","ever"],
+    ["happy","boughs","piping","warm","panting","young","burning"],
+    ["sacrifice","priest","heifer","altar","town","silent","return"],
+    ["attic","marble","eternity","pastoral","beauty","truth","know"]
+  ];
+  return motifs[stanzaIndex] || ["urn","still","for","ever"];
+}
+
+function strokeStep(weight) {
+  const order = SCHEMAS.enums.StrokeWeight;
+  const idx = order.indexOf(weight);
+  return Math.max(0, idx);
+}
+
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+// --- Masks (procedural geometry) ---
+const W=24, H=24;
+const CX=11.5, CY=12.0;
+
+function urnWidthAtY(y) {
+  // y from 3..19
+  const t = (y - 3) / 16.0; // 0..1
+  // urn profile: narrow at top/bottom, wide mid; a smooth "vase" curve
+  const belly = Math.sin(Math.PI * clamp(t,0,1)); // 0..1..0
+  const pinched = Math.pow(Math.sin(Math.PI * clamp(t,0,1)), 0.65);
+  const base = 4.2 + 5.2 * belly;
+  const lip = (y < 6) ? 0.8 : 0.0;
+  const foot = (y > 17) ? 1.0 : 0.0;
+  return base - lip - foot + 0.8 * pinched;
+}
+
+function inUrn(x,y) {
+  if (y < 3 || y > 19) return false;
+  const w = urnWidthAtY(y);
+  return Math.abs(x - CX) <= w;
+}
+
+function inHandles(x,y) {
+  if (y < 3 || y > 7) return false;
+  // two arcs outside the urn body
+  const left = (x < CX - 6.0) && (Math.abs(y - 5.0) <= 2.3) && (x > 1);
+  const right = (x > CX + 6.0) && (Math.abs(y - 5.0) <= 2.3) && (x < 22);
+  // soften via distance
+  return left || right;
+}
+
+function inPlinth(x,y) {
+  return (y >= 20 && y <= 23 && x >= 5 && x <= 18);
+}
+
+function inSpiralEye(x,y) {
+  // center spiral region; mask forms a "spiral eye" path
+  const dx = x - 12, dy = y - 12;
+  const r = Math.sqrt(dx*dx + dy*dy);
+  if (r > 5.3) return false;
+  const ang = Math.atan2(dy, dx);
+  const a = (ang + Math.PI) / (2*Math.PI); // 0..1
+  const target = 0.5 + 0.75 * r; // rough spiral relation
+  const band = Math.abs((a*8.0) - (target % 8.0));
+  return band < 0.55;
+}
+
+function inRiver(x,y) {
+  // a diagonal "river" path inside lower urn body
+  if (y < 12 || y > 19) return false;
+  const target = 0.55*(y - 12) + 7.5;
+  return inUrn(x,y) && Math.abs(x - target) <= 0.6;
+}
+
+function inKnot(x,y) {
+  // knot = intersection of spiral and river near midline
+  return (x === 10 || x === 11 || x === 12) && (y === 13 || y === 14);
+}
+
+function boundaryOf(maskFn, x,y) {
+  if (!maskFn(x,y)) return false;
+  const n = [[1,0],[-1,0],[0,1],[0,-1]];
+  for (const [dx,dy] of n) {
+    const nx=x+dx, ny=y+dy;
+    if (nx<0||nx>=W||ny<0||ny>=H) return true;
+    if (!maskFn(nx,ny)) return true;
+  }
+  return false;
+}
+
+function zoneFor(x,y) {
+  // precedence: plinth → spiral → urn bands → void; handles included in Z1
+  if (inPlinth(x,y)) return "Z5_PLINTH_SEAL";
+  if (inSpiralEye(x,y)) return "Z3_SPIRAL_EYE";
+  if (inUrn(x,y) || inHandles(x,y)) {
+    if (y>=3 && y<=6) return "Z1_LIP_HANDLES";
+    if (y>=7 && y<=10) return "Z2_UPPER_BODY";
+    if (y>=11 && y<=19) return "Z4_LOWER_BODY_RIVER";
+  }
+  return "Z0_VOID";
+}
+
+function zoneDefaults(zoneId) {
+  const z = MANIFEST.zones.find(z => z.id === zoneId);
+  return JSON.parse(JSON.stringify(z.defaults));
+}
+
+function stanzaIndexForZone(zoneId) {
+  const z = MANIFEST.zones.find(z => z.id === zoneId);
+  return (z && (z.stanza_index !== null && z.stanza_index !== undefined)) ? z.stanza_index : null;
+}
+
+function traversalOrder(zoneId) {
+  // Deterministic traversal per zone: returns list of {x,y}
+  const pts = [];
+  if (zoneId === "Z1_LIP_HANDLES") {
+    // boundary carve around top urn + handles
+    const maskFn = (x,y)=> (inUrn(x,y)||inHandles(x,y)) && y>=3 && y<=6;
+    for (let y=3; y<=6; y++) {
+      for (let x=0; x<W; x++) {
+        if (boundaryOf(maskFn,x,y)) pts.push({x,y});
+      }
+    }
+  } else if (zoneId === "Z2_UPPER_BODY") {
+    // wave rows
+    for (let y=7; y<=10; y++) {
+      const dir = (y%2===0) ? -1 : 1;
+      if (dir===1) {
+        for (let x=0; x<W; x++) if (zoneFor(x,y)===zoneId) pts.push({x,y});
+      } else {
+        for (let x=W-1; x>=0; x--) if (zoneFor(x,y)===zoneId) pts.push({x,y});
+      }
+    }
+  } else if (zoneId === "Z3_SPIRAL_EYE") {
+    // sort by spiral parameter (radius then angle)
+    const temp = [];
+    for (let y=0; y<H; y++) for (let x=0; x<W; x++) if (zoneFor(x,y)===zoneId) {
+      const dx=x-12, dy=y-12;
+      const r=Math.sqrt(dx*dx+dy*dy);
+      const a=(Math.atan2(dy,dx)+Math.PI)/(2*Math.PI);
+      temp.push({x,y, k: r*10 + a});
+    }
+    temp.sort((a,b)=>a.k-b.k);
+    for (const p of temp) pts.push({x:p.x,y:p.y});
+  } else if (zoneId === "Z4_LOWER_BODY_RIVER") {
+    // fracture: alternate between urn fill and river path emphasis
+    const riverFirst = [];
+    const rest = [];
+    for (let y=11; y<=19; y++) {
+      const xs = [];
+      for (let x=0; x<W; x++) if (zoneFor(x,y)===zoneId) xs.push(x);
+      // break into segments: left->right then right->left every row
+      const dir = (y%2===0) ? -1 : 1;
+      const ordered = (dir===1) ? xs : xs.slice().reverse();
+      for (const x of ordered) {
+        if (inRiver(x,y)) riverFirst.push({x,y});
+        else rest.push({x,y});
+      }
+    }
+    // interleave
+    const m = Math.max(riverFirst.length, rest.length);
+    for (let i=0; i<m; i++) {
+      if (i<riverFirst.length) pts.push(riverFirst[i]);
+      if (i<rest.length) pts.push(rest[i]);
+    }
+  } else if (zoneId === "Z5_PLINTH_SEAL") {
+    // stack as columns (COLUMN flow)
+    for (let x=5; x<=18; x++) {
+      for (let y=20; y<=23; y++) pts.push({x,y});
+    }
+  }
+  return pts;
+}
+
+function buildGrid(seed) {
+  const rand = mulberry32(seed);
+  const cells = [];
+  const zoneOrders = {
+    "Z1_LIP_HANDLES": traversalOrder("Z1_LIP_HANDLES"),
+    "Z2_UPPER_BODY": traversalOrder("Z2_UPPER_BODY"),
+    "Z3_SPIRAL_EYE": traversalOrder("Z3_SPIRAL_EYE"),
+    "Z4_LOWER_BODY_RIVER": traversalOrder("Z4_LOWER_BODY_RIVER"),
+    "Z5_PLINTH_SEAL": traversalOrder("Z5_PLINTH_SEAL"),
+  };
+
+  // token streams per stanza
+  const stanzaStreams = POEM.stanzas.map(s => tokenize(s));
+  const stanzaCursors = stanzaStreams.map(_ => 0);
+
+  function nextToken(stanzaIdx) {
+    const toks = stanzaStreams[stanzaIdx] || [];
+    const i = stanzaCursors[stanzaIdx] || 0;
+    if (toks.length === 0) return "";
+    if (i < toks.length) {
+      stanzaCursors[stanzaIdx] = i + 1;
+      return toks[i];
+    }
+    // exhausted: repeat motifs with low probability of blank
+    const motifs = keyMotifs(stanzaIdx);
+    const choice = motifs[Math.floor(rand()*motifs.length)];
+    return choice;
+  }
+
+  function maybeBlank(defaults) {
+    // negative_space_ratio is a probability threshold for blanks in a zone
+    return rand() < defaults.negative_space_ratio;
+  }
+
+  // Pre-compute boundary weights to satisfy ZC3 (adjacent step <= 1)
+  function pickStroke(zoneId, x,y, defaults) {
+    // baseline: boundary heavier
+    let w = defaults.stroke_weight;
+    const isVoid = zoneId === "Z0_VOID";
+    if (isVoid) return "HAIRLINE";
+    const urnMask = (a,b)=> (zoneFor(a,b)!=="Z0_VOID" && !inPlinth(a,b)); // rough
+    const isBoundary = boundaryOf((a,b)=>zoneFor(a,b)===zoneId, x,y);
+    if (isBoundary) w = "BLACK";
+    else w = defaults.stroke_weight;
+
+    // soften around neighbors to keep step <=1
+    // We'll later clamp in post-pass, but here reduce extremes inside.
+    if (zoneId === "Z4_LOWER_BODY_RIVER" && inRiver(x,y)) w = "BOLD";
+    if (zoneId === "Z3_SPIRAL_EYE") w = "BOLD";
+    if (zoneId === "Z2_UPPER_BODY") w = isBoundary ? "BOLD" : "REGULAR";
+    if (zoneId === "Z1_LIP_HANDLES") w = isBoundary ? "BLACK" : "BOLD";
+    if (zoneId === "Z5_PLINTH_SEAL") w = "BLACK";
+    return w;
+  }
+
+  // Initial fill: build all cells with blanks
+  for (let y=0; y<H; y++) for (let x=0; x<W; x++) {
+    const zone_id = zoneFor(x,y);
+    const defaults = zoneDefaults(zone_id);
+    const stanzaIdx = stanzaIndexForZone(zone_id);
+    const isSilence = (zone_id === "Z0_VOID");
+    const blank = isSilence || (stanzaIdx !== null && maybeBlank(defaults));
+    let text = blank ? "" : (stanzaIdx !== null ? nextToken(stanzaIdx) : "");
+    // normalize token display: keep small footprint in cells
+    if (text.length > 8) text = text.slice(0,8);
+    const calligram = {
+      glyph_flow: defaults.glyph_flow,
+      stroke_weight: pickStroke(zone_id, x,y, defaults),
+      gravity: defaults.gravity,
+      shape_outline: defaults.shape_outline,
+      calligram_function: defaults.calligram_function,
+      letter_material: defaults.letter_material,
+      negative_space_ratio: (isSilence ? Math.max(defaults.negative_space_ratio, 0.82) : defaults.negative_space_ratio),
+      wrap_rule: defaults.wrap_rule,
+      line_tension: defaults.line_tension,
+      mirroring: defaults.mirroring
+    };
+
+    const ops = [];
+    // Operators by shape / role
+    if (zone_id === "Z1_LIP_HANDLES" && boundaryOf((a,b)=>zoneFor(a,b)===zone_id, x,y)) ops.push("CARVE_SILHOUETTE","MIRROR_AXIS");
+    if (zone_id === "Z2_UPPER_BODY") ops.push("FLOW_TO_SHAPE");
+    if (zone_id === "Z3_SPIRAL_EYE") ops.push("FLOW_TO_SHAPE","COMPRESS_TO_POINT");
+    if (zone_id === "Z4_LOWER_BODY_RIVER" && inRiver(x,y)) ops.push("STACK_AS_COLUMN");
+    if (zone_id === "Z0_VOID") ops.push("DISSOLVE_TO_VOID","ERODE_STROKE");
+    if (inKnot(x,y)) ops.push("KNOT_BIND");
+
+    // calligram function adjustments
+    if (zone_id === "Z4_LOWER_BODY_RIVER" && inRiver(x,y)) calligram.calligram_function = "PATH";
+    if (zone_id === "Z3_SPIRAL_EYE") calligram.calligram_function = "PATH";
+    if (zone_id === "Z5_PLINTH_SEAL") calligram.calligram_function = "BARRIER";
+    if (zone_id === "Z0_VOID") calligram.calligram_function = "VOID";
+
+    // Silence cells rule M8
+    if (zone_id === "Z0_VOID") calligram.negative_space_ratio = Math.max(calligram.negative_space_ratio, 0.82);
+
+    cells.push({
+      x, y,
+      zone_id,
+      text,
+      tags: [
+        zone_id,
+        calligram.shape_outline || "none",
+        calligram.calligram_function,
+        calligram.glyph_flow
+      ],
+      calligram,
+      typographic_operators: ops
+    });
+  }
+
+  // Post-pass ZC3: adjacent stroke weight differs by at most 1 step
+  const idx = (x,y)=> y*W + x;
+  const order = SCHEMAS.enums.StrokeWeight;
+  const stepOf = (w)=> order.indexOf(w);
+  const clampWeight = (step)=> order[clamp(step, 0, order.length-1)];
+
+  for (let y=0; y<H; y++) for (let x=0; x<W; x++) {
+    const c = cells[idx(x,y)];
+    if (c.zone_id === "Z0_VOID") continue;
+    const neighbors = [];
+    if (x>0) neighbors.push(cells[idx(x-1,y)]);
+    if (x<W-1) neighbors.push(cells[idx(x+1,y)]);
+    if (y>0) neighbors.push(cells[idx(x,y-1)]);
+    if (y<H-1) neighbors.push(cells[idx(x,y+1)]);
+    let s = stepOf(c.calligram.stroke_weight);
+    for (const n of neighbors) {
+      if (n.zone_id !== c.zone_id) continue;
+      const ns = stepOf(n.calligram.stroke_weight);
+      if (Math.abs(ns - s) > 1) {
+        // nudge towards neighbor
+        s = ns + (s > ns ? 1 : -1);
+      }
+    }
+    c.calligram.stroke_weight = clampWeight(s);
+  }
+
+  // Guarantee "at least one CARVE_SILHOUETTE per zone" (ZC2)
+  const zonesNeeding = ["Z1_LIP_HANDLES","Z2_UPPER_BODY","Z3_SPIRAL_EYE","Z4_LOWER_BODY_RIVER","Z5_PLINTH_SEAL"];
+  for (const zid of zonesNeeding) {
+    const candidates = cells.filter(c => c.zone_id===zid);
+    if (!candidates.some(c=>c.typographic_operators.includes("CARVE_SILHOUETTE"))) {
+      // pick a boundary-most cell
+      let best = candidates[0], bestScore=-1;
+      for (const c of candidates) {
+        const isB = boundaryOf((a,b)=>zoneFor(a,b)===zid, c.x, c.y) ? 1 : 0;
+        const score = isB*10 + (inRiver(c.x,c.y)?2:0) + (inSpiralEye(c.x,c.y)?2:0);
+        if (score > bestScore) { bestScore=score; best=c; }
+      }
+      best.typographic_operators.push("CARVE_SILHOUETTE");
+    }
+  }
+
+  return cells;
+}
+
+// --- Rendering ---
+const gridEl = document.getElementById("grid");
+const codeEl = document.getElementById("code");
+const schemasEl = document.getElementById("schemas");
+const linesEl = document.getElementById("lines");
+const seedOut = document.getElementById("seedOut");
+const toast = document.getElementById("toast");
+const toastTitle = document.getElementById("toastTitle");
+const toastBody = document.getElementById("toastBody");
+
+let currentSeed = MANIFEST.meta.seed;
+let cells = [];
+
+function render() {
+  seedOut.textContent = currentSeed;
+  document.documentElement.style.setProperty('--cell', document.getElementById("scale").value + 'px');
+
+  gridEl.innerHTML = "";
+  const byXY = new Map();
+  for (const c of cells) byXY.set(c.x + "," + c.y, c);
+
+  for (let y=0; y<H; y++) for (let x=0; x<W; x++) {
+    const c = byXY.get(x + "," + y);
+    const div = document.createElement("div");
+    div.className = "cell " +
+      "z-" + c.zone_id + " " +
+      "w-" + c.calligram.stroke_weight + " " +
+      "g-" + c.calligram.gravity + " " +
+      "m-" + c.calligram.letter_material + " " +
+      "f-" + c.calligram.calligram_function +
+      (c.text ? "" : " blank");
+    div.textContent = c.text || "";
+    div.dataset.x = c.x;
+    div.dataset.y = c.y;
+    div.dataset.zone = c.zone_id;
+    div.addEventListener("click", () => {
+      if (!c.text && c.zone_id === "Z0_VOID") return;
+      toastTitle.textContent = `Cell (${c.x},${c.y}) • ${c.zone_id}`;
+      toastBody.textContent = JSON.stringify(c, null, 2);
+      toast.style.display = "block";
+    });
+    gridEl.appendChild(div);
+  }
+
+  codeEl.textContent = JSON.stringify({...MANIFEST, generated_at: new Date().toISOString(), seed: currentSeed}, null, 2);
+  schemasEl.textContent = JSON.stringify({SCHEMAS, RULES}, null, 2);
+
+  linesEl.innerHTML = "";
+  POEM.stanzas.forEach((st, i) => {
+    const box = document.createElement("div");
+    box.className = "stanza";
+    const h3 = document.createElement("h3");
+    h3.textContent = `Stanza ${i+1}`;
+    box.appendChild(h3);
+    st.split("\\n").forEach(line => {
+      const p = document.createElement("div");
+      p.className = "line";
+      p.textContent = line;
+      box.appendChild(p);
+    });
+    linesEl.appendChild(box);
+  });
+}
+
+function regenerate() {
+  cells = buildGrid(currentSeed);
+  render();
+}
+
+document.getElementById("scale").addEventListener("input", render);
+document.getElementById("regen").addEventListener("click", () => {
+  // deterministic "new" seed: jump via xorshift
+  currentSeed = (currentSeed ^ 0x9E3779B9) >>> 0;
+  regenerate();
+});
+
+document.getElementById("toastClose").addEventListener("click", ()=> toast.style.display="none");
+toast.addEventListener("click", (e)=> {
+  if (e.target === toast) toast.style.display="none";
+});
+
+// Tabs
+document.getElementById("tabs").addEventListener("click", (e) => {
+  const t = e.target.closest(".tab");
+  if (!t) return;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");
+  const tab = t.dataset.tab;
+  document.getElementById("surfacePanel").style.display = (tab==="surface") ? "" : "none";
+  document.getElementById("codePanel").style.display = (tab==="code") ? "" : "none";
+  document.getElementById("linesPanel").style.display = (tab==="lines") ? "" : "none";
+});
+
+// Traversal demo (TP1-TP4)
+let traversalRunning = false;
+document.getElementById("traverse").addEventListener("click", async () => {
+  if (traversalRunning) return;
+  traversalRunning = true;
+
+  // path: start in Z2 (CONTAINER), pass Z3 (SPIRAL), scrape Z1 boundary (BLACK), exit into VOID (HAIRLINE)
+  const byXY = new Map(cells.map(c => [c.x + "," + c.y, c]));
+  const path = [];
+
+  function pickFirst(filterFn) {
+    for (const c of cells) if (filterFn(c)) return c;
+    return null;
+  }
+
+  const start = pickFirst(c => c.zone_id==="Z2_UPPER_BODY" && c.calligram.calligram_function!=="VOID" && c.text);
+  if (start) path.push(start);
+
+  // spiral segment
+  const spiral = traversalOrder("Z3_SPIRAL_EYE").slice(0, 24).map(p => byXY.get(p.x + "," + p.y)).filter(Boolean);
+  path.push(...spiral);
+
+  // boundary scrape
+  const lip = traversalOrder("Z1_LIP_HANDLES").slice(0, 20).map(p => byXY.get(p.x + "," + p.y)).filter(Boolean);
+  path.push(...lip);
+
+  // fall into void: diagonal outwards
+  let x = 0, y = 0;
+  for (let i=0;i<20;i++) {
+    const c = byXY.get(x + "," + y);
+    if (c) path.push(c);
+    x = clamp(x+1,0,23); y = clamp(y+1,0,23);
+  }
+
+  // Clear old highlights
+  document.querySelectorAll(".cell").forEach(el=>{ el.classList.remove("trail","highlight"); });
+
+  // Apply TP4 style trend: LIGHT->BLACK->HAIRLINE (visual only via class swap)
+  function forceWeight(el, w) {
+    const order = ["HAIRLINE","LIGHT","REGULAR","BOLD","BLACK"];
+    order.forEach(k => el.classList.remove("w-" + k));
+    el.classList.add("w-" + w);
+  }
+
+  for (let i=0; i<path.length; i++) {
+    const c = path[i];
+    const el = gridEl.children[c.y*W + c.x];
+    if (!el) continue;
+
+    el.classList.add("trail");
+    el.classList.add("highlight");
+    // TP4 trend by phase
+    if (i < path.length*0.33) forceWeight(el, "LIGHT");
+    else if (i < path.length*0.66) forceWeight(el, "BLACK");
+    else forceWeight(el, "HAIRLINE");
+
+    await new Promise(r => setTimeout(r, 25));
+    el.classList.remove("highlight");
+  }
+
+  traversalRunning = false;
+});
+
+// Boot
+regenerate();
+</script>
+</body>
+</html>

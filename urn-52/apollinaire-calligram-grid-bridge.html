@@ -1,0 +1,1222 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Calligram Grid — Ode on a Grecian Urn (Keats)</title>
+  <style>
+    :root{
+      --bg:#0b0d10;
+      --panel:#121722;
+      --panel2:#0f1420;
+      --text:#e9eef7;
+      --muted:#a8b3c7;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --border:rgba(255,255,255,.10);
+      --cell:20px; /* base cell size before zoom */
+      --gap:1px;
+      --radius:14px;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 800px at 20% 0%, rgba(125,211,252,.10), transparent 55%),
+                  radial-gradient(900px 700px at 90% 20%, rgba(167,139,250,.10), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      overflow:hidden;
+    }
+
+    /* App layout */
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+    }
+    header{
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(18,23,34,.92), rgba(18,23,34,.60));
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    .titleRow{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    h1{
+      font-size: 16px;
+      margin:0;
+      letter-spacing:.2px;
+      line-height:1.2;
+    }
+    .sub{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+      max-width: 70ch;
+    }
+    .controls{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      color:var(--text);
+    }
+    .chip input[type="checkbox"]{
+      width:16px;height:16px;
+      accent-color: var(--accent);
+      margin:0;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color:var(--text);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active{transform: translateY(1px)}
+    .btn.primary{
+      border-color: rgba(125,211,252,.35);
+      background: rgba(125,211,252,.12);
+    }
+    .btn.ghost{
+      background: transparent;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:10px;
+    }
+    .search{
+      flex: 1 1 240px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      padding: 8px 10px;
+    }
+    .search input{
+      flex:1;
+      border:0;
+      outline:0;
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      min-width: 140px;
+    }
+    .search .hint{color:var(--muted); font-size:12px; white-space:nowrap}
+    .zoomWrap{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex: 0 0 auto;
+    }
+    input[type="range"]{
+      width: 150px;
+      accent-color: var(--accent2);
+    }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: rgba(255,255,255,.03);
+    }
+
+    main{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+      padding: 12px 12px 0;
+      gap: 12px;
+    }
+
+    /* Grid area */
+    .gridCard{
+      flex:1;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(18,23,34,.75), rgba(18,23,34,.40));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height: 280px;
+    }
+    .gridHeader{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      padding: 10px 12px;
+      border-bottom:1px solid var(--border);
+    }
+    .gridHeader .meta{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+    .legend{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .legend .dot{
+      width:10px;height:10px;border-radius:3px;
+      background: rgba(125,211,252,.35);
+      border:1px solid rgba(255,255,255,.10);
+      display:inline-block;
+      margin-right:6px;
+    }
+    .legend .dot2{background: rgba(167,139,250,.35)}
+    .legend .dot3{background: rgba(34,197,94,.28)}
+    .gridViewport{
+      flex:1;
+      overflow:auto;
+      overscroll-behavior: contain;
+      background:
+        radial-gradient(900px 600px at 25% 10%, rgba(125,211,252,.08), transparent 55%),
+        radial-gradient(900px 600px at 80% 70%, rgba(167,139,250,.08), transparent 55%);
+      touch-action: pan-x pan-y;
+    }
+    .gridWrap{
+      padding: 14px;
+      width: max-content;
+      margin: 0 auto;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(32, calc(var(--cell) * var(--zoom)));
+      grid-template-rows: repeat(20, calc(var(--cell) * var(--zoom)));
+      gap: var(--gap);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 12px;
+      padding: var(--gap);
+      width: max-content;
+    }
+    .cell{
+      width: calc(var(--cell) * var(--zoom));
+      height: calc(var(--cell) * var(--zoom));
+      background: rgba(0,0,0,.18);
+      border-radius: 3px;
+      border: 1px solid rgba(255,255,255,.06);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      position:relative;
+      overflow:hidden;
+    }
+    .cell.occupied{
+      background: rgba(125,211,252,.10);
+      border-color: rgba(125,211,252,.18);
+    }
+    .cell.occupied.heat2{ background: rgba(125,211,252,.14); }
+    .cell.occupied.heat3{ background: rgba(167,139,250,.13); border-color: rgba(167,139,250,.22); }
+    .cell.occupied.heat4{ background: rgba(34,197,94,.12); border-color: rgba(34,197,94,.22); }
+    .cell.occupied.heat5{ background: rgba(251,191,36,.12); border-color: rgba(251,191,36,.22); }
+    .cell .label{
+      font-size: calc(10px * var(--zoom));
+      line-height:1;
+      color: rgba(233,238,247,.88);
+      text-shadow: 0 1px 0 rgba(0,0,0,.25);
+      padding: 0 2px;
+      transform: translateY(-.2px);
+      white-space:nowrap;
+    }
+    .cell .mini{
+      position:absolute;
+      bottom:2px;
+      right:2px;
+      font-size: calc(8px * var(--zoom));
+      color: rgba(168,179,199,.8);
+    }
+    .cell.selected{
+      outline: 2px solid rgba(125,211,252,.75);
+      outline-offset: 1px;
+      box-shadow: 0 0 0 3px rgba(125,211,252,.15);
+      z-index:2;
+    }
+    .cell.hit{
+      outline: 2px solid rgba(251,191,36,.9);
+      outline-offset: 1px;
+    }
+
+    /* Bottom sheet */
+    .sheet{
+      position:fixed;
+      inset: auto 0 0 0;
+      background: linear-gradient(180deg, rgba(18,23,34,.90), rgba(18,23,34,.98));
+      border-top: 1px solid var(--border);
+      border-radius: 18px 18px 0 0;
+      box-shadow: var(--shadow);
+      transform: translateY(105%);
+      transition: transform .22s ease;
+      z-index: 20;
+      max-height: 78vh;
+      display:flex;
+      flex-direction:column;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .sheet.open{ transform: translateY(0) }
+    .grab{
+      width: 40px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.22);
+      margin: 8px auto 0;
+    }
+    .sheetHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px 8px;
+    }
+    .sheetHeader .left{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      min-width:0;
+    }
+    .sheetTitle{
+      font-size: 13px;
+      margin:0;
+      color: var(--text);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .sheetSub{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .sheetBody{
+      padding: 10px 12px 12px;
+      overflow:auto;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+    .card{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      border-radius: 14px;
+      padding: 10px 10px;
+    }
+    .lineList{
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .lineBtn{
+      width:100%;
+      text-align:left;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.12);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:baseline;
+    }
+    .lineBtn:hover{border-color: rgba(125,211,252,.25)}
+    .lineBtn .id{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      color: rgba(125,211,252,.95);
+      flex: 0 0 auto;
+    }
+    .lineBtn .snip{
+      font-size: 12px;
+      color: rgba(233,238,247,.88);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      flex:1;
+      min-width:0;
+    }
+    .pill{
+      font-size: 11px;
+      color: var(--muted);
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      padding: 2px 7px;
+      border-radius: 999px;
+      flex:0 0 auto;
+      white-space:nowrap;
+    }
+    .bigLine{
+      font-size: 16px;
+      line-height:1.35;
+      margin:0;
+      letter-spacing:.1px;
+    }
+    .metaGrid{
+      margin-top: 8px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .metaGrid div{
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.10);
+      border-radius: 12px;
+      padding: 8px 10px;
+    }
+    .metaGrid b{color: rgba(233,238,247,.92)}
+    .tags{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .tag{
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      color: rgba(233,238,247,.88);
+    }
+
+    /* Overlay modal (help) */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 16px;
+      z-index: 30;
+    }
+    .overlay.show{display:flex}
+    .modal{
+      width:min(720px, 100%);
+      max-height: 80vh;
+      overflow:auto;
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(18,23,34,.95), rgba(18,23,34,.98));
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+    .modal h2{margin:0 0 8px; font-size:15px}
+    .modal p{margin:6px 0; color:var(--muted); font-size:13px; line-height:1.5}
+    .modal pre{
+      margin:10px 0 0;
+      padding: 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.18);
+      color: rgba(233,238,247,.90);
+      overflow:auto;
+      font-size:12px;
+      line-height:1.3;
+    }
+
+    /* Small screens */
+    @media (max-width: 520px){
+      header{padding: 12px 12px 10px}
+      .sub{display:none}
+      input[type="range"]{width: 120px}
+    }
+
+    /* Respect reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      .sheet{transition:none}
+      .btn:active{transform:none}
+    }
+  </style>
+</head>
+<body>
+<div class="app" id="app" style="--zoom: 1.0;">
+  <header>
+    <div class="titleRow">
+      <div>
+        <h1>Apollinaire Calligram Grid — <span style="color:var(--accent)">Ode on a Grecian Urn</span></h1>
+        <div class="sub">Geometry precedes reading: tap a cell to reveal layered line-refs, then tap a line to read it. Pan the grid; zoom if the cells are too small.</div>
+      </div>
+      <div class="controls">
+        <button class="btn ghost" id="helpBtn" aria-label="Help">Help</button>
+        <button class="btn primary" id="fitBtn" aria-label="Fit grid">Fit</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="search" role="search">
+        <input id="searchInput" placeholder="Search… (e.g. L49, forever, silence)" inputmode="search" />
+        <span class="hint"><span class="kbd">Enter</span> to jump</span>
+      </div>
+
+      <div class="zoomWrap chip" aria-label="Zoom">
+        <span>Zoom</span>
+        <input id="zoom" type="range" min="0.75" max="2.8" step="0.05" value="1.0" />
+        <span id="zoomVal" style="min-width:40px; text-align:right; color:var(--muted)">1.00×</span>
+      </div>
+
+      <label class="chip"><input type="checkbox" id="toggleLetters" checked /> letters</label>
+      <label class="chip"><input type="checkbox" id="toggleLineNo" /> line #</label>
+      <label class="chip"><input type="checkbox" id="toggleHeat" checked /> heat</label>
+    </div>
+  </header>
+
+  <main>
+    <section class="gridCard" aria-label="Grid">
+      <div class="gridHeader">
+        <div class="meta" id="gridMeta">
+          32×20 grid · tap cells · <span class="kbd">←</span><span class="kbd">↑</span><span class="kbd">→</span><span class="kbd">↓</span> to move selection · <span class="kbd">Space</span> to open
+        </div>
+        <div class="legend" aria-label="Legend">
+          <span><span class="dot"></span>occupied</span>
+          <span><span class="dot dot2"></span>overlap</span>
+          <span><span class="dot dot3"></span>dense</span>
+        </div>
+      </div>
+
+      <div class="gridViewport" id="viewport">
+        <div class="gridWrap">
+          <div class="grid" id="grid" role="grid" aria-label="Calligram grid"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom sheet -->
+  <div class="sheet" id="sheet" aria-hidden="true">
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheetHeader">
+      <div class="left">
+        <div class="sheetTitle" id="sheetTitle">Cell</div>
+        <div class="sheetSub" id="sheetSub">Tap a line to read it.</div>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="btn" id="prevOcc">Prev</button>
+        <button class="btn" id="nextOcc">Next</button>
+        <button class="btn ghost" id="closeSheet" aria-label="Close">Close</button>
+      </div>
+    </div>
+    <div class="sheetBody" id="sheetBody">
+      <div class="card" id="cellCard">
+        <div style="color:var(--muted); font-size:12px;">This cell contains:</div>
+        <div class="lineList" id="lineList"></div>
+      </div>
+
+      <div class="card" id="lineCard" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+          <div>
+            <div style="color:var(--muted); font-size:12px; margin-bottom:6px;">Selected line</div>
+            <p class="bigLine" id="bigLine"></p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn" id="prevLine">◀</button>
+            <button class="btn" id="nextLine">▶</button>
+          </div>
+        </div>
+        <div class="metaGrid" id="lineMeta"></div>
+        <div class="tags" id="tags"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help overlay -->
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <h2>How to use</h2>
+        <button class="btn" id="closeHelp">Close</button>
+      </div>
+      <p>
+        This is a mobile-friendly, single-file calligram grid for Keats’ <i>Ode on a Grecian Urn</i>.
+        Each poem line is mapped onto a declared “track” (a shape), then “rasterized” into grid cells.
+        Cells store <b>references</b> (line IDs) as layers; you reveal language by traversing geometry.
+      </p>
+      <p>
+        Controls: toggle <b>letters</b> (geometry initials), <b>line #</b> (top layer), and <b>heat</b> (overlap density).
+        Search supports <span class="kbd">L49</span>, <span class="kbd">49</span>, or any word (e.g. “forever”).
+      </p>
+      <pre aria-label="Legend">
+Letters derive from the top layer in each cell:
+C=Cluster · R=Radial · S=Spiral · G=Grid · |=Column · L=Line · ~=Wave
+
+Tip: on small screens, zoom to ~2× and pan.
+      </pre>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const ROWS = 20, COLS = 32;
+
+  // --- Poem lines (1..50) ---
+  const poem = {
+    1: "Thou still unravish'd bride of quietness,",
+    2: "Thou foster-child of silence and slow time,",
+    3: "Sylvan historian, who canst thus express",
+    4: "A flowery tale more sweetly than our rhyme:",
+    5: "What leaf-fring'd legend haunts about thy shape",
+    6: "Of deities or mortals, or of both,",
+    7: "In Tempe or the dales of Arcady?",
+    8: "What men or gods are these? What maidens loth?",
+    9: "What mad pursuit? What struggle to escape?",
+    10: "What pipes and timbrels? What wild ecstasy?",
+
+    11: "Heard melodies are sweet, but those unheard",
+    12: "Are sweeter; therefore, ye soft pipes, play on;",
+    13: "Not to the sensual ear, but, more endear'd,",
+    14: "Pipe to the spirit ditties of no tone:",
+    15: "Fair youth, beneath the trees, thou canst not leave",
+    16: "Thy song, nor ever can those trees be bare;",
+    17: "Bold Lover, never, never canst thou kiss,",
+    18: "Though winning near the goal yet, do not grieve;",
+    19: "She cannot fade, though thou hast not thy bliss,",
+    20: "For ever wilt thou love, and she be fair!",
+
+    21: "Ah, happy, happy boughs! that cannot shed",
+    22: "Your leaves, nor ever bid the Spring adieu;",
+    23: "And, happy melodist, unwearied,",
+    24: "For ever piping songs for ever new;",
+    25: "More happy love! more happy, happy love!",
+    26: "For ever warm and still to be enjoy'd,",
+    27: "For ever panting, and for ever young;",
+    28: "All breathing human passion far above,",
+    29: "That leaves a heart high-sorrowful and cloy'd,",
+    30: "A burning forehead, and a parching tongue.",
+
+    31: "Who are these coming to the sacrifice?",
+    32: "To what green altar, O mysterious priest,",
+    33: "Lead'st thou that heifer lowing at the skies,",
+    34: "And all her silken flanks with garlands drest?",
+    35: "What little town by river or sea shore,",
+    36: "Or mountain-built with peaceful citadel,",
+    37: "Is emptied of this folk, this pious morn?",
+    38: "And, little town, thy streets for evermore",
+    39: "Will silent be; and not a soul to tell",
+    40: "Why thou art desolate, can e'er return.",
+
+    41: "O Attic shape! Fair attitude! with brede",
+    42: "Of marble men and maidens overwrought,",
+    43: "With forest branches and the trodden weed;",
+    44: "Thou, silent form, dost tease us out of thought",
+    45: "As doth eternity: Cold Pastoral!",
+    46: "When old age shall this generation waste,",
+    47: "Thou shalt remain, in midst of other woe",
+    48: "Than ours, a friend to man, to whom thou say'st,",
+    49: "\"Beauty is truth, truth beauty,—that is all\"",
+    50: "Ye know on earth, and all ye need to know."
+  };
+
+  // --- Track bank: each is a list of (x,y) coordinates ---
+  const tracks = {
+    "S1_COL1": [[15,0],[15,1],[15,2],[15,3],[16,3],[16,2],[16,1],[16,0],[17,0],[17,1]],
+    "S1_COL2": [[16,0],[16,1],[16,2],[16,3],[15,3],[15,2],[15,1],[15,0],[14,0],[14,1]],
+    "S1_RAD1": [[16,2],[17,2],[18,2],[17,1],[16,1],[15,1],[14,2],[15,3],[16,3],[17,3]],
+    "S1_T2":   [[13,1],[14,1],[15,1],[16,1],[17,1],[18,1],[19,2],[18,2],[17,2],[16,2]],
+    "S1_T4":   [[11,3],[12,3],[13,3],[14,3],[15,3],[16,3],[17,3],[18,3],[19,3],[20,3]],
+    "S1_T5":   [[15,1],[14,2],[13,3],[14,3],[15,3],[16,3],[17,2],[18,1],[17,1],[16,1]],
+    "S1_T6":   [[14,2],[13,2],[12,2],[11,3],[12,3],[13,3],[14,3],[15,2],[16,1],[17,1]],
+    "S1_T7":   [[16,2],[15,3],[14,3],[13,3],[12,3],[11,3],[12,2],[13,1],[14,1],[15,1]],
+    "S1_T8":   [[18,2],[17,2],[16,2],[15,2],[14,2],[13,2],[12,2],[13,3],[14,3],[15,3]],
+    "S1_T9":   [[17,0],[16,1],[15,2],[14,3],[13,3],[12,2],[13,1],[14,1],[15,1],[16,2]],
+
+    "S2_T1":   [[16,6],[15,6],[14,6],[13,6],[12,6],[11,6],[10,6],[9,6],[8,6],[9,5]],
+    "S2_T2":   [[16,6],[17,6],[18,6],[19,6],[20,6],[21,6],[22,6],[23,6],[22,5],[21,5]],
+    "S2_T3":   [[16,6],[16,5],[16,4],[15,4],[14,4],[13,4],[12,4],[11,4],[10,4],[11,5]],
+    "S2_T4":   [[16,6],[16,7],[16,7],[15,7],[14,7],[13,7],[12,7],[11,7],[10,7],[9,7]],
+    "S2_T5":   [[16,6],[17,5],[18,4],[19,4],[20,4],[21,4],[21,5],[22,5],[21,6],[20,6]],
+    "S2_T6":   [[16,6],[17,7],[18,7],[19,7],[20,7],[21,7],[22,7],[23,7],[24,7],[23,6]],
+    "S2_T7":   [[12,5],[13,5],[14,5],[15,5],[16,5],[17,5],[18,5],[19,5],[20,5],[21,5]],
+    "S2_T8":   [[10,4],[11,5],[12,6],[13,7],[14,7],[15,7],[16,7],[17,6],[18,5],[19,4]],
+    "S2_T9":   [[21,4],[20,5],[19,6],[18,7],[17,7],[16,7],[15,7],[14,6],[13,5],[12,4]],
+    "S2_T11":  [[10,6],[11,6],[12,6],[13,6],[14,6],[15,6],[16,6],[17,6],[18,6],[19,6]],
+
+    "S3_T1":   [[6,8],[7,8],[8,8],[9,8],[10,9],[9,10],[8,11],[7,12],[6,12],[6,11]],
+    "S3_T2":   [[25,8],[24,8],[23,8],[22,8],[21,9],[22,10],[23,11],[24,12],[25,12],[25,11]],
+    "S3_T3":   [[8,9],[9,9],[10,9],[11,9],[12,9],[13,9],[14,9],[15,9],[16,9],[17,9]],
+    "S3_T4":   [[14,10],[13,10],[12,10],[11,10],[10,10],[9,10],[8,10],[7,10],[6,10],[5,9]],
+    "S3_T5":   [[17,10],[18,10],[19,10],[20,10],[21,10],[22,10],[23,10],[24,10],[25,10],[26,9]],
+    "S3_T6":   [[5,9],[6,9],[7,10],[8,11],[9,12],[10,12],[11,12],[12,12],[13,12],[14,11]],
+    "S3_T8":   [[12,11],[13,11],[14,11],[15,11],[16,11],[17,11],[18,11],[19,11],[20,11],[21,11]],
+    "S3_SINK1":[[11,8],[11,9],[11,10],[11,11],[11,12],[10,12],[9,12],[8,12],[7,12],[6,12]],
+    "S3_SINK2":[[20,8],[20,9],[20,10],[20,11],[20,12],[21,12],[22,12],[23,12],[24,12],[25,12]],
+
+    "S4_T1":   [[6,13],[7,13],[8,13],[9,13],[10,14],[11,15],[12,16],[13,16],[14,15],[15,15]],
+    "S4_T2":   [[25,13],[24,13],[23,13],[22,13],[21,14],[20,15],[19,16],[18,16],[17,15],[16,15]],
+    "S4_T3":   [[10,16],[11,15],[12,14],[13,13],[14,13],[15,13],[16,14],[17,15],[18,16],[19,16]],
+    "S4_T4":   [[22,16],[21,15],[20,14],[19,13],[18,13],[17,13],[16,14],[15,15],[14,16],[13,16]],
+    "S4_T5":   [[9,14],[10,14],[11,14],[12,14],[13,14],[14,14],[15,14],[16,14],[17,14],[18,14]],
+    "S4_T6":   [[9,15],[10,15],[11,15],[12,15],[13,15],[14,15],[15,15],[16,15],[17,15],[18,15]],
+    "S4_T7":   [[9,16],[10,16],[11,16],[12,16],[13,16],[14,16],[15,16],[16,16],[17,16],[18,16]],
+    "S4_T8":   [[18,14],[19,14],[20,14],[21,14],[22,14],[23,14],[24,14],[23,15],[22,16],[21,16]],
+    "S4_T9":   [[7,13],[8,14],[9,15],[10,16],[11,16],[12,16],[13,15],[14,14],[15,13],[16,13]],
+    "S4_T10":  [[24,13],[23,14],[22,15],[21,16],[20,16],[19,16],[18,15],[17,14],[16,13],[15,13]],
+
+    "S5_T1":   [[10,17],[11,17],[12,17],[13,17],[14,17],[15,17],[16,17],[17,17],[18,17],[19,17]],
+    "S5_T2":   [[21,17],[20,17],[19,17],[18,17],[17,17],[16,17],[15,17],[14,17],[13,17],[12,17]],
+    "S5_T3":   [[12,18],[13,18],[14,18],[15,18],[16,18],[17,18],[18,18],[19,18],[18,19],[17,19]],
+    "S5_T4":   [[19,18],[18,18],[17,18],[16,18],[15,18],[14,18],[13,18],[12,18],[13,19],[14,19]],
+    "S5_T5":   [[13,19],[14,19],[15,19],[16,19],[17,19],[18,19],[17,18],[16,18],[15,18],[14,18]],
+    "S5_T6":   [[14,18],[15,18],[16,18],[17,18],[18,18],[19,18],[18,17],[17,17],[16,17],[15,17]],
+    "S5_T7":   [[10,17],[11,17],[12,18],[13,18],[14,18],[15,18],[16,18],[17,18],[18,17],[19,17]],
+    "S5_T8":   [[21,17],[20,17],[19,18],[18,18],[17,18],[16,18],[15,18],[14,18],[13,17],[12,17]],
+    "S5_T9":   [[12,18],[13,18],[14,18],[15,18],[16,18],[17,18],[18,18],[19,18],[18,18],[17,18]],
+    "S5_T10":  [[13,19],[14,19],[15,19],[16,19],[17,19],[18,19],[17,19],[16,19],[15,19],[14,19]],
+  };
+
+  // --- Chunk metadata (derived mapping) ---
+  const chunks = [
+    {line:1,  stanza:1, density:7, geometry:"COLUMN", field:"TOP_DOWN", track:"S1_COL1", tags:["SILENCE","STILLNESS","PURITY"]},
+    {line:2,  stanza:1, density:6, geometry:"COLUMN", field:"TOP_DOWN", track:"S1_COL2", tags:["SILENCE","TIME","SLOWNESS"]},
+    {line:3,  stanza:1, density:6, geometry:"LINE",   field:"LEFT_RIGHT", track:"S1_T4", tags:["HISTORY","NATURE","TESTIMONY"]},
+    {line:4,  stanza:1, density:5, geometry:"WAVE",   field:"LEFT_RIGHT", track:"S1_T5", tags:["STORY","SWEETNESS","ART"]},
+    {line:5,  stanza:1, density:7, geometry:"CLUSTER",field:"FLOAT", track:"S1_T6", tags:["LEGEND","ORNAMENT","HAUNTING"]},
+    {line:6,  stanza:1, density:6, geometry:"CLUSTER",field:"FLOAT", track:"S1_T7", tags:["GODS","MORTALS","AMBIGUITY"]},
+    {line:7,  stanza:1, density:5, geometry:"CLUSTER",field:"FLOAT", track:"S1_T8", tags:["PLACE","MYTH","ARCADY"]},
+    {line:8,  stanza:1, density:6, geometry:"CLUSTER",field:"FLOAT", track:"S1_T2", tags:["QUESTION","FIGURES","DESIRE"]},
+    {line:9,  stanza:1, density:7, geometry:"SPIRAL", field:"EDGE_IN", track:"S1_T9", tags:["PURSUIT","ESCAPE","STRUGGLE"]},
+    {line:10, stanza:1, density:7, geometry:"RADIAL", field:"CENTER_OUT", track:"S1_RAD1", tags:["MUSIC","RITUAL","ECSTASY"]},
+
+    {line:11, stanza:2, density:5, geometry:"RADIAL", field:"CENTER_OUT", track:"S2_T5", tags:["MUSIC","HEARING","PARADOX"]},
+    {line:12, stanza:2, density:6, geometry:"RADIAL", field:"CENTER_OUT", track:"S2_T2", tags:["UNHEARD","IMAGINATION","MUSIC"]},
+    {line:13, stanza:2, density:5, geometry:"WAVE",   field:"RIGHT_LEFT", track:"S2_T1", tags:["SENSE","RENUNCIATION","SPIRIT"]},
+    {line:14, stanza:2, density:6, geometry:"RADIAL", field:"CENTER_OUT", track:"S2_T6", tags:["SPIRIT","MUSIC","INVOCATION"]},
+    {line:15, stanza:2, density:6, geometry:"LINE",   field:"LEFT_RIGHT", track:"S2_T7", tags:["YOUTH","NATURE","STILLNESS"]},
+    {line:16, stanza:2, density:5, geometry:"LINE",   field:"LEFT_RIGHT", track:"S2_T11", tags:["SONG","ETERNITY","NATURE"]},
+    {line:17, stanza:2, density:7, geometry:"SPIRAL", field:"EDGE_IN", track:"S2_T8", tags:["DESIRE","FRUSTRATION","NEARNESS"]},
+    {line:18, stanza:2, density:5, geometry:"SPIRAL", field:"EDGE_IN", track:"S2_T9", tags:["ANTICIPATION","RESTRAINT","DRAMA"]},
+    {line:19, stanza:2, density:6, geometry:"RADIAL", field:"ORBIT", track:"S2_T3", tags:["BEAUTY","IMMORTALITY","CONSTANCY"]},
+    {line:20, stanza:2, density:7, geometry:"RADIAL", field:"ORBIT", track:"S2_T4", tags:["FOREVER","LOVE","BEAUTY"]},
+
+    {line:21, stanza:3, density:7, geometry:"RADIAL", field:"ORBIT", track:"S3_T1", tags:["JOY","IMMORTALITY","NATURE"]},
+    {line:22, stanza:3, density:6, geometry:"RADIAL", field:"ORBIT", track:"S3_T2", tags:["SEASON","IMMORTALITY","LEAVES"]},
+    {line:23, stanza:3, density:6, geometry:"RADIAL", field:"CENTER_OUT", track:"S3_T8", tags:["MUSIC","LABOR","JOY"]},
+    {line:24, stanza:3, density:6, geometry:"RADIAL", field:"ORBIT", track:"S3_T3", tags:["FOREVER","SONG","RENEWAL"]},
+    {line:25, stanza:3, density:7, geometry:"RADIAL", field:"ORBIT", track:"S3_T4", tags:["LOVE","INTENSITY","JOY"]},
+    {line:26, stanza:3, density:7, geometry:"RADIAL", field:"ORBIT", track:"S3_T5", tags:["FOREVER","WARMTH","ENJOYMENT"]},
+    {line:27, stanza:3, density:7, geometry:"SPIRAL", field:"ORBIT", track:"S3_T6", tags:["FOREVER","DESIRE","YOUTH"]},
+    {line:28, stanza:3, density:6, geometry:"LINE",   field:"LEFT_RIGHT", track:"S3_T8", tags:["PASSION","TRANSCENDENCE","BREATH"]},
+    {line:29, stanza:3, density:6, geometry:"COLUMN", field:"SINK", track:"S3_SINK1", tags:["AFTERMATH","SADNESS","SATIETY"]},
+    {line:30, stanza:3, density:6, geometry:"COLUMN", field:"SINK", track:"S3_SINK2", tags:["BODILY_HEAT","THIRST","BURNING"]},
+
+    {line:31, stanza:4, density:6, geometry:"SPIRAL", field:"EDGE_IN", track:"S4_T1", tags:["SACRIFICE","PROCESSION","QUESTION"]},
+    {line:32, stanza:4, density:6, geometry:"SPIRAL", field:"EDGE_IN", track:"S4_T2", tags:["ALTAR","PRIEST","MYSTERY"]},
+    {line:33, stanza:4, density:7, geometry:"SPIRAL", field:"EDGE_IN", track:"S4_T3", tags:["HEIFER","RITUAL","SKY"]},
+    {line:34, stanza:4, density:6, geometry:"WAVE",   field:"LEFT_RIGHT", track:"S4_T4", tags:["GARLANDS","BODY","ORNAMENT"]},
+    {line:35, stanza:4, density:6, geometry:"GRID",   field:"LEFT_RIGHT", track:"S4_T5", tags:["TOWN","RIVER","SEA"]},
+    {line:36, stanza:4, density:5, geometry:"GRID",   field:"BOTTOM_UP", track:"S4_T6", tags:["MOUNTAIN","CITADEL","PEACE"]},
+    {line:37, stanza:4, density:6, geometry:"GRID",   field:"SINK", track:"S4_T7", tags:["ABSENCE","PIOUS","MORNING"]},
+    {line:38, stanza:4, density:6, geometry:"GRID",   field:"SINK", track:"S4_T8", tags:["STREETS","FOREVER","SILENCE"]},
+    {line:39, stanza:4, density:7, geometry:"COLUMN", field:"TOP_DOWN", track:"S4_T9", tags:["SILENCE","NOBODY","TESTIMONY"]},
+    {line:40, stanza:4, density:7, geometry:"COLUMN", field:"SINK", track:"S4_T10", tags:["DESOLATION","IRREVERSIBILITY","LOSS"]},
+
+    {line:41, stanza:5, density:8, geometry:"LINE",   field:"LEFT_RIGHT", track:"S5_T1", tags:["ATTIC","FORM","PRAISE"]},
+    {line:42, stanza:5, density:6, geometry:"GRID",   field:"LEFT_RIGHT", track:"S5_T2", tags:["MARBLE","FIGURES","LABOR"]},
+    {line:43, stanza:5, density:5, geometry:"WAVE",   field:"LEFT_RIGHT", track:"S5_T7", tags:["FOREST","GROUND","PASTORAL"]},
+    {line:44, stanza:5, density:7, geometry:"SPIRAL", field:"EDGE_IN", track:"S5_T3", tags:["SILENCE","THOUGHT","TEASING"]},
+    {line:45, stanza:5, density:6, geometry:"RADIAL", field:"ORBIT", track:"S5_T5", tags:["ETERNITY","COLD","PASTORAL"]},
+    {line:46, stanza:5, density:6, geometry:"COLUMN", field:"TOP_DOWN", track:"S5_T4", tags:["AGE","WASTING","TIME"]},
+    {line:47, stanza:5, density:7, geometry:"RADIAL", field:"ORBIT", track:"S5_T6", tags:["ENDURANCE","OTHER_WOE","PRESENCE"]},
+    {line:48, stanza:5, density:6, geometry:"LINE",   field:"LEFT_RIGHT", track:"S5_T8", tags:["FRIEND","ADDRESS","SPEECH"]},
+    {line:49, stanza:5, density:9, geometry:"LINE",   field:"LEFT_RIGHT", track:"S5_T10", tags:["BEAUTY","TRUTH","AXIOM"]},
+    {line:50, stanza:5, density:8, geometry:"LINE",   field:"LEFT_RIGHT", track:"S5_T9", tags:["KNOWLEDGE","EARTH","LIMIT"]},
+  ].map((c, idx) => ({
+    ...c,
+    id: `L${String(c.line).padStart(2,'0')}`,
+    raw_text: poem[c.line]
+  }));
+
+  const chunkById = Object.fromEntries(chunks.map(c => [c.id, c]));
+
+  // --- Build grid cell layers ---
+  const grid = Array.from({length: ROWS}, () =>
+    Array.from({length: COLS}, () => ({ layers: [] }))
+  );
+
+  function uniqueCoords(coords){
+    const seen = new Set();
+    const out = [];
+    for (const [x,y] of coords){
+      const k = x + "," + y;
+      if (!seen.has(k)){
+        seen.add(k);
+        out.push([x,y]);
+      }
+    }
+    return out;
+  }
+
+  for (const chunk of chunks){
+    const coordsRaw = tracks[chunk.track];
+    if (!coordsRaw) continue;
+    const coords = uniqueCoords(coordsRaw).slice(0, chunk.density);
+    for (const [x,y] of coords){
+      if (x < 0 || x >= COLS || y < 0 || y >= ROWS) continue;
+      grid[y][x].layers.push(chunk.id);
+    }
+  }
+
+  // --- Helpers ---
+  const geomLetter = (geom) => ({
+    "CLUSTER":"C",
+    "RADIAL":"R",
+    "SPIRAL":"S",
+    "GRID":"G",
+    "COLUMN":"|",
+    "LINE":"L",
+    "WAVE":"~",
+    "SPIRAL/ORBIT":"S",
+  }[geom] || "•");
+
+  function layerSort(aId, bId){
+    const a = chunkById[aId], b = chunkById[bId];
+    // Practical reveal: higher density first, then lower line number
+    if (b.density !== a.density) return b.density - a.density;
+    return a.line - b.line;
+  }
+
+  function topLayerId(cell){
+    if (!cell.layers.length) return null;
+    return [...cell.layers].sort(layerSort)[0];
+  }
+
+  // --- DOM ---
+  const app = document.getElementById("app");
+  const gridEl = document.getElementById("grid");
+  const viewport = document.getElementById("viewport");
+  const searchInput = document.getElementById("searchInput");
+  const toggleLetters = document.getElementById("toggleLetters");
+  const toggleLineNo = document.getElementById("toggleLineNo");
+  const toggleHeat = document.getElementById("toggleHeat");
+  const zoom = document.getElementById("zoom");
+  const zoomVal = document.getElementById("zoomVal");
+  const fitBtn = document.getElementById("fitBtn");
+
+  const sheet = document.getElementById("sheet");
+  const sheetTitle = document.getElementById("sheetTitle");
+  const sheetSub = document.getElementById("sheetSub");
+  const lineList = document.getElementById("lineList");
+  const closeSheet = document.getElementById("closeSheet");
+  const prevOcc = document.getElementById("prevOcc");
+  const nextOcc = document.getElementById("nextOcc");
+
+  const lineCard = document.getElementById("lineCard");
+  const bigLine = document.getElementById("bigLine");
+  const lineMeta = document.getElementById("lineMeta");
+  const tagsEl = document.getElementById("tags");
+  const prevLine = document.getElementById("prevLine");
+  const nextLine = document.getElementById("nextLine");
+
+  const helpBtn = document.getElementById("helpBtn");
+  const overlay = document.getElementById("overlay");
+  const closeHelp = document.getElementById("closeHelp");
+
+  let selected = {x: 16, y: 10};   // start roughly center
+  let selectedLineId = null;
+  let hitLineId = null;
+
+  function setZoom(z){
+    const zz = Math.max(0.75, Math.min(2.8, z));
+    app.style.setProperty("--zoom", String(zz));
+    zoom.value = String(zz);
+    zoomVal.textContent = zz.toFixed(2) + "×";
+  }
+
+  function renderGrid(){
+    gridEl.innerHTML = "";
+    for (let y=0; y<ROWS; y++){
+      for (let x=0; x<COLS; x++){
+        const cell = grid[y][x];
+        const btn = document.createElement("div");
+        btn.className = "cell";
+        btn.setAttribute("role","gridcell");
+        btn.dataset.x = x;
+        btn.dataset.y = y;
+
+        if (cell.layers.length){
+          btn.classList.add("occupied");
+          const count = cell.layers.length;
+          if (toggleHeat.checked){
+            const heat = Math.min(5, count);
+            btn.classList.add("heat"+heat);
+          }
+          const tId = topLayerId(cell);
+          const tChunk = tId ? chunkById[tId] : null;
+
+          const label = document.createElement("div");
+          label.className = "label";
+
+          let text = "";
+          if (toggleLineNo.checked && tChunk){
+            text = String(tChunk.line);
+          } else if (toggleLetters.checked && tChunk){
+            text = geomLetter(tChunk.geometry);
+          } else if (tChunk){
+            text = geomLetter(tChunk.geometry);
+          }
+          label.textContent = text;
+          btn.appendChild(label);
+
+          const mini = document.createElement("div");
+          mini.className = "mini";
+          mini.textContent = count > 1 ? String(count) : "";
+          btn.appendChild(mini);
+        }
+
+        btn.addEventListener("click", () => {
+          selectCell(x,y, true);
+          openSheetForCell(x,y);
+        });
+
+        gridEl.appendChild(btn);
+      }
+    }
+    updateSelectionUI();
+    if (hitLineId) highlightHits(hitLineId);
+  }
+
+  function updateSelectionUI(){
+    document.querySelectorAll(".cell.selected").forEach(el => el.classList.remove("selected"));
+    const sel = cellEl(selected.x, selected.y);
+    if (sel) sel.classList.add("selected");
+  }
+
+  function cellEl(x,y){
+    return gridEl.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
+  }
+
+  function selectCell(x,y, scrollIntoView=false){
+    selected = {x: Math.max(0, Math.min(COLS-1,x)), y: Math.max(0, Math.min(ROWS-1,y))};
+    updateSelectionUI();
+    if (scrollIntoView){
+      const el = cellEl(selected.x, selected.y);
+      if (el) el.scrollIntoView({block:"nearest", inline:"nearest"});
+    }
+  }
+
+  function getOccupiedCells(){
+    const out = [];
+    for (let y=0; y<ROWS; y++){
+      for (let x=0; x<COLS; x++){
+        if (grid[y][x].layers.length) out.push({x,y});
+      }
+    }
+    return out;
+  }
+  const occupied = getOccupiedCells();
+
+  function idxOfCoord(x,y){
+    return occupied.findIndex(c => c.x===x && c.y===y);
+  }
+  function stepOccupied(delta){
+    const i = idxOfCoord(selected.x, selected.y);
+    const cur = i >= 0 ? i : 0;
+    const next = (cur + delta + occupied.length) % occupied.length;
+    const c = occupied[next];
+    selectCell(c.x, c.y, true);
+    openSheetForCell(c.x, c.y);
+  }
+
+  function openSheetForCell(x,y){
+    const cell = grid[y][x];
+    const layerIds = [...cell.layers].sort(layerSort);
+    sheetTitle.textContent = `Cell (x=${x}, y=${y})`;
+    sheetSub.textContent = layerIds.length ? `${layerIds.length} layer${layerIds.length===1?"":"s"} — tap to read` : "Empty cell";
+    lineList.innerHTML = "";
+
+    if (!layerIds.length){
+      const empty = document.createElement("div");
+      empty.style.color = "var(--muted)";
+      empty.style.fontSize = "13px";
+      empty.textContent = "No lines mapped here.";
+      lineList.appendChild(empty);
+      lineCard.style.display = "none";
+      selectedLineId = null;
+    } else {
+      for (const id of layerIds){
+        const c = chunkById[id];
+        const b = document.createElement("button");
+        b.className = "lineBtn";
+        b.innerHTML = `
+          <span class="id">${id}</span>
+          <span class="snip" title="${escapeHtml(c.raw_text)}">${escapeHtml(c.raw_text)}</span>
+          <span class="pill">d${c.density} · ${c.geometry}</span>
+        `;
+        b.addEventListener("click", () => openLine(id));
+        lineList.appendChild(b);
+      }
+      // default: open top layer
+      openLine(layerIds[0], false);
+    }
+
+    sheet.classList.add("open");
+    sheet.setAttribute("aria-hidden","false");
+  }
+
+  function openLine(id, ensureVisible=true){
+    const c = chunkById[id];
+    if (!c) return;
+    selectedLineId = id;
+    lineCard.style.display = "block";
+    bigLine.textContent = c.raw_text;
+    lineMeta.innerHTML = `
+      <div><b>${id}</b><br/>Line ${c.line} · Stanza ${c.stanza}</div>
+      <div><b>Shape</b><br/>${c.geometry} · ${c.field}</div>
+      <div><b>Density</b><br/>${c.density} (cells used)</div>
+      <div><b>Track</b><br/>${c.track}</div>
+    `;
+    tagsEl.innerHTML = "";
+    for (const t of c.tags){
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = t;
+      tagsEl.appendChild(tag);
+    }
+    if (ensureVisible) lineCard.scrollIntoView({block:"nearest", behavior:"smooth"});
+  }
+
+  function closeSheetNow(){
+    sheet.classList.remove("open");
+    sheet.setAttribute("aria-hidden","true");
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, ch => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+    }[ch]));
+  }
+
+  // Highlight all cells used by a given line id
+  function highlightHits(lineId){
+    document.querySelectorAll(".cell.hit").forEach(el => el.classList.remove("hit"));
+    hitLineId = lineId;
+    for (let y=0; y<ROWS; y++){
+      for (let x=0; x<COLS; x++){
+        if (grid[y][x].layers.includes(lineId)){
+          const el = cellEl(x,y);
+          if (el) el.classList.add("hit");
+        }
+      }
+    }
+  }
+  function clearHits(){
+    document.querySelectorAll(".cell.hit").forEach(el => el.classList.remove("hit"));
+    hitLineId = null;
+  }
+
+  // --- Search / Jump ---
+  function normalizeLineId(q){
+    const m = q.trim().match(/^L?\s*(\d{1,2})$/i);
+    if (!m) return null;
+    const n = parseInt(m[1], 10);
+    if (n < 1 || n > 50) return null;
+    return `L${String(n).padStart(2,'0')}`;
+  }
+
+  function findFirstCellForLine(lineId){
+    for (let y=0; y<ROWS; y++){
+      for (let x=0; x<COLS; x++){
+        if (grid[y][x].layers.includes(lineId)) return {x,y};
+      }
+    }
+    return null;
+  }
+
+  function doSearch(){
+    const q = searchInput.value.trim();
+    if (!q){
+      clearHits();
+      return;
+    }
+
+    const lineId = normalizeLineId(q);
+    if (lineId){
+      highlightHits(lineId);
+      const c = findFirstCellForLine(lineId);
+      if (c){
+        selectCell(c.x, c.y, true);
+        openSheetForCell(c.x, c.y);
+        openLine(lineId);
+      }
+      return;
+    }
+
+    // Text search through poem lines
+    const low = q.toLowerCase();
+    const found = chunks.find(ch => ch.raw_text.toLowerCase().includes(low) || ch.tags.some(t => t.toLowerCase().includes(low)));
+    if (found){
+      highlightHits(found.id);
+      const c = findFirstCellForLine(found.id);
+      if (c){
+        selectCell(c.x, c.y, true);
+        openSheetForCell(c.x, c.y);
+        openLine(found.id);
+      }
+    }
+  }
+
+  // --- Fit grid to viewport ---
+  function fitToViewport(){
+    // Aim: make grid width fit within viewport width with a small margin.
+    const padding = 60; // rough
+    const vw = viewport.clientWidth - padding;
+    const vh = viewport.clientHeight - padding;
+    const baseW = (COLS * 20) + (COLS+1); // cell base + gaps/border approx
+    const baseH = (ROWS * 20) + (ROWS+1);
+    const scaleW = vw / baseW;
+    const scaleH = vh / baseH;
+    const z = Math.max(0.75, Math.min(2.8, Math.min(scaleW, scaleH)));
+    setZoom(z);
+    // Center-ish
+    requestAnimationFrame(() => {
+      viewport.scrollLeft = Math.max(0, (gridEl.scrollWidth - viewport.clientWidth) / 2);
+      viewport.scrollTop  = Math.max(0, (gridEl.scrollHeight - viewport.clientHeight) / 2);
+    });
+  }
+
+  // --- Events ---
+  toggleLetters.addEventListener("change", renderGrid);
+  toggleLineNo.addEventListener("change", renderGrid);
+  toggleHeat.addEventListener("change", renderGrid);
+
+  zoom.addEventListener("input", () => setZoom(parseFloat(zoom.value)));
+  zoom.addEventListener("change", () => setZoom(parseFloat(zoom.value)));
+
+  fitBtn.addEventListener("click", fitToViewport);
+
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter"){
+      doSearch();
+    }
+    if (e.key === "Escape"){
+      searchInput.value = "";
+      clearHits();
+    }
+  });
+
+  closeSheet.addEventListener("click", closeSheetNow);
+  prevOcc.addEventListener("click", () => stepOccupied(-1));
+  nextOcc.addEventListener("click", () => stepOccupied(+1));
+
+  prevLine.addEventListener("click", () => {
+    if (!selectedLineId) return;
+    const n = chunkById[selectedLineId].line - 1;
+    if (n >= 1) openLine(`L${String(n).padStart(2,'0')}`);
+  });
+  nextLine.addEventListener("click", () => {
+    if (!selectedLineId) return;
+    const n = chunkById[selectedLineId].line + 1;
+    if (n <= 50) openLine(`L${String(n).padStart(2,'0')}`);
+  });
+
+  helpBtn.addEventListener("click", () => {
+    overlay.classList.add("show");
+    overlay.setAttribute("aria-hidden","false");
+  });
+  closeHelp.addEventListener("click", () => {
+    overlay.classList.remove("show");
+    overlay.setAttribute("aria-hidden","true");
+  });
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay){
+      overlay.classList.remove("show");
+      overlay.setAttribute("aria-hidden","true");
+    }
+  });
+
+  // Keyboard traversal
+  window.addEventListener("keydown", (e) => {
+    if (overlay.classList.contains("show")) return;
+    if (document.activeElement === searchInput) return;
+
+    if (e.key === "ArrowLeft"){ selectCell(selected.x-1, selected.y, true); }
+    else if (e.key === "ArrowRight"){ selectCell(selected.x+1, selected.y, true); }
+    else if (e.key === "ArrowUp"){ selectCell(selected.x, selected.y-1, true); }
+    else if (e.key === "ArrowDown"){ selectCell(selected.x, selected.y+1, true); }
+    else if (e.key === " " || e.key === "Enter"){
+      e.preventDefault();
+      openSheetForCell(selected.x, selected.y);
+    }
+    else if (e.key === "Escape"){
+      closeSheetNow();
+      clearHits();
+    }
+  });
+
+  // Drag down to close sheet (simple touch gesture)
+  let startY = null;
+  sheet.addEventListener("touchstart", (e) => {
+    if (!sheet.classList.contains("open")) return;
+    startY = e.touches[0].clientY;
+  }, {passive:true});
+  sheet.addEventListener("touchmove", (e) => {
+    if (startY == null) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 70){
+      closeSheetNow();
+      startY = null;
+    }
+  }, {passive:true});
+  sheet.addEventListener("touchend", () => { startY = null; }, {passive:true});
+
+  // Initial render
+  setZoom(1.0);
+  renderGrid();
+  // Start centered and fit-ish
+  requestAnimationFrame(() => {
+    fitToViewport();
+    selectCell(16,10,true);
+  });
+
+})();
+</script>
+</body>
+</html>

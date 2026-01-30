@@ -1,0 +1,1731 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>24×24 Ritual Grid Artifact (OPS-SCHEMAS)</title>
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --panel:#10121a;
+      --panel2:#0e1016;
+      --ink:#e9ecff;
+      --muted:#a6aac3;
+      --faint:#2a2f45;
+      --line:#222843;
+      --accent:#7aa2ff;
+      --ok:#6ee7b7;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+
+      --radius:16px;
+      --pad:12px;
+
+      /* grid sizing */
+      --gridMax: 560px;
+      --gridW: min(96vw, var(--gridMax));
+      --cell: calc(var(--gridW) / 24);
+      --cellMin: 11px;
+      --cellSize: max(var(--cellMin), var(--cell));
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background: radial-gradient(1200px 900px at 30% 20%, #131834 0%, var(--bg) 55%, #07070a 100%);
+      color:var(--ink);
+      font: 14px/1.35 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .wrap{
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+      min-height:100%;
+    }
+
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background: color-mix(in srgb, #0b0c10 70%, transparent);
+      border-bottom:1px solid color-mix(in srgb, var(--line) 75%, transparent);
+    }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      padding: 12px max(12px, env(safe-area-inset-left)) 12px max(12px, env(safe-area-inset-right));
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .brand{
+      display:flex; flex-direction:column; gap:2px;
+      min-width: 190px;
+    }
+    .brand .t{
+      font-weight:700; letter-spacing:.02em;
+      font-size:14px;
+    }
+    .brand .s{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .toolbar{
+      display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:flex-end;
+    }
+
+    .pill{
+      border:1px solid color-mix(in srgb, var(--line) 75%, transparent);
+      background: color-mix(in srgb, var(--panel) 70%, transparent);
+      color:var(--ink);
+      border-radius:999px;
+      padding:8px 10px;
+      display:flex; gap:8px; align-items:center;
+    }
+    .pill label{ color:var(--muted); font-size:12px; }
+    select, input[type="text"], textarea{
+      border:1px solid color-mix(in srgb, var(--line) 75%, transparent);
+      background: color-mix(in srgb, var(--panel2) 80%, transparent);
+      color:var(--ink);
+      border-radius:10px;
+      padding:8px 10px;
+      outline:none;
+      width: 100%;
+    }
+    select{ padding:8px 10px; }
+    .btn{
+      border:1px solid color-mix(in srgb, var(--line) 75%, transparent);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 86%, transparent), color-mix(in srgb, #0b0c10 85%, transparent));
+      color:var(--ink);
+      border-radius:999px;
+      padding:9px 12px;
+      cursor:pointer;
+      user-select:none;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      transition: transform .06s ease, border-color .15s ease, background .15s ease;
+      white-space:nowrap;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+    }
+    .btn.ghost{
+      background: color-mix(in srgb, var(--panel2) 75%, transparent);
+    }
+
+    main{
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 14px max(12px, env(safe-area-inset-left)) 18px max(12px, env(safe-area-inset-right));
+      display:grid;
+      grid-template-columns: 1fr 380px;
+      gap: 14px;
+    }
+
+    /* Mobile layout: panel becomes a bottom sheet-ish stack */
+    @media (max-width: 980px){
+      main{
+        grid-template-columns: 1fr;
+        padding-bottom: 96px; /* space for footer */
+      }
+      .side{
+        position: fixed;
+        left: 10px; right: 10px;
+        bottom: 10px;
+        max-height: 60dvh;
+        z-index: 30;
+        box-shadow: 0 25px 60px rgba(0,0,0,.55);
+      }
+      .gridShell{
+        padding-bottom: 14px;
+      }
+    }
+
+    .gridShell{
+      border:1px solid color-mix(in srgb, var(--line) 75%, transparent);
+      background: color-mix(in srgb, var(--panel2) 62%, transparent);
+      border-radius: var(--radius);
+      overflow:hidden;
+    }
+    .gridHead{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding: 12px;
+      border-bottom:1px solid color-mix(in srgb, var(--line) 75%, transparent);
+      background: color-mix(in srgb, var(--panel) 62%, transparent);
+      flex-wrap:wrap;
+    }
+    .gridHead .left{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    }
+    .gridHead .right{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    }
+    .legend{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .chip{
+      display:inline-flex; align-items:center; gap:6px;
+      border:1px solid color-mix(in srgb, var(--line) 75%, transparent);
+      background: color-mix(in srgb, var(--panel2) 75%, transparent);
+      padding:6px 8px;
+      border-radius:999px;
+      color:var(--ink);
+      font-size:12px;
+      max-width: 100%;
+    }
+    .dot{ width:9px; height:9px; border-radius:99px; display:inline-block; background: var(--muted); }
+    .dot.core{ background:#ffd166; }
+    .dot.inner{ background:#6ee7b7; }
+    .dot.middle{ background:#fbbf24; }
+    .dot.outer{ background:#7aa2ff; }
+    .dot.ocean{ background:#cbd5e1; }
+
+    .grid{
+      width: var(--gridW);
+      max-width: var(--gridMax);
+      margin: 12px auto;
+      display:grid;
+      grid-template-columns: repeat(24, var(--cellSize));
+      grid-template-rows: repeat(24, var(--cellSize));
+      gap: 0;
+      border:1px solid color-mix(in srgb, var(--line) 60%, transparent);
+      border-radius: 14px;
+      overflow:hidden;
+      touch-action: manipulation;
+    }
+
+    .cell{
+      position:relative;
+      border-right:1px solid color-mix(in srgb, var(--line) 40%, transparent);
+      border-bottom:1px solid color-mix(in srgb, var(--line) 40%, transparent);
+      background: rgba(255,255,255,0.02);
+      cursor:pointer;
+    }
+    /* remove last borders */
+    .cell:nth-child(24n){ border-right:none; }
+    .cell:nth-last-child(-n + 24){ border-bottom:none; }
+
+    .cell:hover{ outline: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); outline-offset:-1px; }
+    .cell.selected{ outline: 2px solid var(--accent); outline-offset:-2px; z-index:2; }
+    .cell.bad{ box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--bad) 70%, transparent); }
+
+    /* View modes */
+    .vz-core{ background: color-mix(in srgb, #ffd166 10%, rgba(255,255,255,0.02)); }
+    .vz-inner{ background: color-mix(in srgb, #6ee7b7 8%, rgba(255,255,255,0.02)); }
+    .vz-middle{ background: color-mix(in srgb, #fbbf24 9%, rgba(255,255,255,0.02)); }
+    .vz-outer{ background: color-mix(in srgb, #7aa2ff 9%, rgba(255,255,255,0.02)); }
+    .vz-ocean{ background: color-mix(in srgb, #cbd5e1 8%, rgba(255,255,255,0.02)); }
+
+    .vw-PRODUCE{ background: color-mix(in srgb, #ffd166 12%, rgba(255,255,255,0.02)); }
+    .vw-MAINTAIN{ background: color-mix(in srgb, #6ee7b7 10%, rgba(255,255,255,0.02)); }
+    .vw-REPAIR{ background: color-mix(in srgb, #fbbf24 12%, rgba(255,255,255,0.02)); }
+    .vw-TRANSFORM{ background: color-mix(in srgb, #7aa2ff 12%, rgba(255,255,255,0.02)); }
+
+    .va-INVOCATION{ background: color-mix(in srgb, #7aa2ff 12%, rgba(255,255,255,0.02)); }
+    .va-CHANT{ background: color-mix(in srgb, #6ee7b7 10%, rgba(255,255,255,0.02)); }
+    .va-WITNESS{ background: color-mix(in srgb, #cbd5e1 10%, rgba(255,255,255,0.02)); }
+    .va-QUESTION{ background: color-mix(in srgb, #fbbf24 12%, rgba(255,255,255,0.02)); }
+    .va-SEAL{ background: color-mix(in srgb, #ffd166 14%, rgba(255,255,255,0.02)); }
+
+    .stateTag{
+      position:absolute;
+      right:2px; top:2px;
+      width:8px; height:8px;
+      border-radius:999px;
+      opacity:.9;
+      background: transparent;
+      border:1px solid rgba(255,255,255,.15);
+    }
+    .st-ACTIVE{ background: color-mix(in srgb, var(--ok) 80%, transparent); border-color: color-mix(in srgb, var(--ok) 60%, transparent); }
+    .st-SEALED{ background: color-mix(in srgb, #ffd166 85%, transparent); border-color: color-mix(in srgb, #ffd166 65%, transparent); }
+    .st-BROKEN{ background: color-mix(in srgb, var(--bad) 85%, transparent); border-color: color-mix(in srgb, var(--bad) 65%, transparent); }
+    .st-QUARANTINED{ background: color-mix(in srgb, var(--warn) 90%, transparent); border-color: color-mix(in srgb, var(--warn) 65%, transparent); }
+    .st-DORMANT{ background: color-mix(in srgb, var(--muted) 70%, transparent); border-color: color-mix(in srgb, var(--muted) 45%, transparent); }
+
+    .silence{
+      background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255,255,255,0.00) 0px,
+        rgba(255,255,255,0.00) 6px,
+        rgba(255,255,255,0.07) 6px,
+        rgba(255,255,255,0.07) 7px
+      );
+    }
+
+    .side{
+      border:1px solid color-mix(in srgb, var(--line) 75%, transparent);
+      background: color-mix(in srgb, var(--panel) 68%, transparent);
+      border-radius: var(--radius);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height: 420px;
+    }
+    .tabs{
+      display:flex;
+      gap:6px;
+      padding:10px;
+      border-bottom:1px solid color-mix(in srgb, var(--line) 75%, transparent);
+      background: color-mix(in srgb, var(--panel2) 62%, transparent);
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tab{
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid color-mix(in srgb, var(--line) 65%, transparent);
+      background: color-mix(in srgb, var(--panel2) 70%, transparent);
+      color: var(--muted);
+      cursor:pointer;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .tab.active{
+      color:var(--ink);
+      border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+    }
+    .panel{
+      padding: 12px;
+      overflow:auto;
+      max-height: 100%;
+    }
+    .h{
+      font-weight:700;
+      letter-spacing:.02em;
+      margin: 0 0 6px;
+      font-size: 13px;
+    }
+    .p{ color:var(--muted); margin:0 0 10px; }
+    .kv{
+      display:grid;
+      grid-template-columns: 120px 1fr;
+      gap:8px 10px;
+      padding:10px;
+      border-radius:14px;
+      border:1px solid color-mix(in srgb, var(--line) 75%, transparent);
+      background: color-mix(in srgb, var(--panel2) 68%, transparent);
+      margin-bottom:10px;
+    }
+    .k{ color:var(--muted); font-size:12px; }
+    .v{ color:var(--ink); font-size:13px; word-break:break-word; }
+    .row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-bottom:10px;
+    }
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      font-size: 12px;
+      color: color-mix(in srgb, var(--ink) 90%, var(--muted));
+    }
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .issue{
+      border:1px solid color-mix(in srgb, var(--line) 75%, transparent);
+      background: color-mix(in srgb, var(--panel2) 68%, transparent);
+      border-radius:14px;
+      padding:10px;
+      cursor:pointer;
+    }
+    .issue .id{ font-weight:700; letter-spacing:.02em; }
+    .issue .msg{ color:var(--muted); margin-top:4px; }
+    .issue.bad{ border-color: color-mix(in srgb, var(--bad) 60%, var(--line)); }
+    .issue.warn{ border-color: color-mix(in srgb, var(--warn) 60%, var(--line)); }
+
+    .footer{
+      padding: 12px max(12px, env(safe-area-inset-left)) 14px max(12px, env(safe-area-inset-right));
+      color: var(--muted);
+      font-size: 12px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .hr{
+      height:1px;
+      background: color-mix(in srgb, var(--line) 70%, transparent);
+      margin: 10px 0;
+    }
+    .small{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    textarea{
+      min-height: 240px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .badge{
+      font-size:11px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid color-mix(in srgb, var(--line) 70%, transparent);
+      background: color-mix(in srgb, var(--panel2) 70%, transparent);
+      color: var(--muted);
+    }
+    .badge.ok{ color: color-mix(in srgb, var(--ok) 85%, white); border-color: color-mix(in srgb, var(--ok) 35%, var(--line)); }
+    .badge.bad{ color: color-mix(in srgb, var(--bad) 85%, white); border-color: color-mix(in srgb, var(--bad) 40%, var(--line)); }
+    .badge.warn{ color: color-mix(in srgb, var(--warn) 90%, white); border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); }
+
+    .range{
+      width: 140px;
+      accent-color: var(--accent);
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <div class="t">24×24 Executable Ritual Grid</div>
+        <div class="s">OPS-SCHEMAS • Carey rings • enforceable validation • mobile-first</div>
+      </div>
+
+      <div class="toolbar">
+        <div class="pill">
+          <label for="viewMode">View</label>
+          <select id="viewMode">
+            <option value="zone">Zone</option>
+            <option value="worldop">WorldOp</option>
+            <option value="act">RitualAct</option>
+            <option value="state">CellState</option>
+            <option value="silence">Silence</option>
+          </select>
+        </div>
+
+        <div class="pill" style="min-width:220px;">
+          <label for="motifFilter">Motif</label>
+          <input id="motifFilter" type="text" placeholder="e.g., OCEAN, LAW…" />
+        </div>
+
+        <button class="btn primary" id="runValidateBtn" title="Run validator (V1–V5 + adjacency)">
+          <span>Validate</span>
+          <span class="badge" id="statusBadge">idle</span>
+        </button>
+
+        <button class="btn ghost" id="resetBtn" title="Reset selection & filters">Reset</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="gridShell">
+      <div class="gridHead">
+        <div class="left">
+          <div class="legend">
+            <span class="chip"><span class="dot core"></span>CORE</span>
+            <span class="chip"><span class="dot inner"></span>INNER</span>
+            <span class="chip"><span class="dot middle"></span>MIDDLE</span>
+            <span class="chip"><span class="dot outer"></span>OUTER</span>
+            <span class="chip"><span class="dot ocean"></span>OCEAN</span>
+          </div>
+        </div>
+        <div class="right">
+          <span class="badge" id="selBadge">selected: none</span>
+          <span class="badge" id="issuesBadge">issues: 0</span>
+          <span class="badge" id="silenceBadge">silence: —</span>
+        </div>
+      </div>
+
+      <div class="grid" id="grid" aria-label="24 by 24 grid"></div>
+
+      <div class="footer small" style="padding-top:0;">
+        Tap a cell to inspect. On mobile, the panel floats at the bottom.
+        <span class="mono">Shift-click</span> (desktop) toggles multi-highlight for issues.
+      </div>
+    </section>
+
+    <aside class="side" id="side">
+      <div class="tabs">
+        <div class="tab active" data-tab="cell">Cell</div>
+        <div class="tab" data-tab="traversal">Traversal</div>
+        <div class="tab" data-tab="validate">Validate</div>
+        <div class="tab" data-tab="manifest">Manifest</div>
+      </div>
+
+      <div class="panel" id="panel-cell"></div>
+      <div class="panel" id="panel-traversal" style="display:none;"></div>
+      <div class="panel" id="panel-validate" style="display:none;"></div>
+      <div class="panel" id="panel-manifest" style="display:none;"></div>
+    </aside>
+  </main>
+
+  <div class="footer">
+    Binding note: this artifact treats the grid as <span class="mono">address space</span> and each cell as a
+    <span class="mono">ritual site</span>. Silence is mandatory. Motifs must recur across zones. Diagonals must create tension.
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DEFAULT MANIFEST (Shield of Achilles starter)
+   - sparse_mode enabled: unlisted cells become implicit silence.
+   - ring zoning is computed for full coverage (Carey rings).
+   ============================================================ */
+
+const DEFAULT_MANIFEST = {
+  grid: {
+    grid_id: "SHIELD_ACHILLES_24x24",
+    version: "1.0",
+    dims: { rows: 24, cols: 24 },
+    axioms: {
+      G1_world_not_page: true,
+      G2_position_performs_meaning: true,
+      G3_cells_stage_acts_not_store: true,
+      G4_traversal_produces_understanding: true,
+      G5_repetition_manufactures_reality: true
+    },
+    zone_index: ["CENTER_CORE","INNER_RING","MIDDLE_RING","OUTER_RING","OCEAN_RIM"],
+    cell_index: [], // computed
+    traversal_index: ["TETIS_SPIRAL_FORGE"],
+    sparse_mode: true,
+    implicit_cell_defaults: { cell_state: "DORMANT", silence_kind: "VEIL" },
+    global_constraints: {
+      min_silence_cells_pct: 0.12,
+      min_motif_reuse: 2,
+      motifs_must_cross_zones: true,
+      no_singleton_motifs: true
+    }
+  },
+
+  zones: [
+    {
+      zone_id:"CENTER_CORE",
+      name:"Cosmic Plate",
+      bounds:{ coord_set: coordsRect(10,13,10,13) },
+      world_operation:"PRODUCE",
+      allowed_acts:["INVOCATION","SEAL"],
+      dominant_roles:["ARCHIVIST","JUDGE"],
+      ritual_purpose:"Declare the world-frame (earth/heaven/ocean; lights; recurrence).",
+      zone_motifs_required:["COSMOS","OCEAN","LIGHTS"],
+      zone_constraints:{ max_broken_cells_pct:0.05, silence_cells_pct:0.05, must_include_seal_gate:true, must_include_question_gate:true },
+      entry_gates:[
+        { gate_id:"CORE_INVOCATION", gate_cells:["(10,10)"], required_act:"INVOCATION", required_token:null },
+        { gate_id:"CORE_QUESTION", gate_cells:["(13,10)"], required_act:"QUESTION", required_token:null },
+        { gate_id:"CORE_SEAL", gate_cells:["(12,13)"], required_act:"SEAL", required_token:"SEAL_WITNESS" }
+      ],
+      exit_gates:[
+        { gate_id:"CORE_TO_INNER", gate_cells:["(10,13)"], leads_to_zone_id:"INNER_RING", handoff_rule:"ROLE_SHIFT→CONGREGANT; REPEAT_MOTIF(LIGHTS)." }
+      ]
+    },
+    {
+      zone_id:"INNER_RING",
+      name:"Civic Continuities",
+      bounds:{ coord_set: [] }, // ring zoning computed; bounds still accepted
+      world_operation:"MAINTAIN",
+      allowed_acts:["CHANT","WITNESS"],
+      dominant_roles:["CONGREGANT","WITNESS"],
+      ritual_purpose:"Maintain shared order: marriage, dance, adjudication as repeating machinery of togetherness.",
+      zone_motifs_required:["RITE","MUSIC","LAW"],
+      zone_constraints:{ max_broken_cells_pct:0.05, silence_cells_pct:0.05, must_include_seal_gate:true, must_include_question_gate:true },
+      entry_gates:[
+        { gate_id:"INNER_INVOCATION", gate_cells:["(9,9)"], required_act:"INVOCATION", required_token:null },
+        { gate_id:"INNER_QUESTION", gate_cells:["(9,11)"], required_act:"QUESTION", required_token:null },
+        { gate_id:"INNER_SEAL", gate_cells:["(15,9)"], required_act:"SEAL", required_token:null }
+      ],
+      exit_gates:[
+        { gate_id:"INNER_TO_MIDDLE", gate_cells:["(8,14)"], leads_to_zone_id:"MIDDLE_RING", handoff_rule:"OPEN_GAP; STAGE_CONFLICT." }
+      ]
+    },
+    {
+      zone_id:"MIDDLE_RING",
+      name:"Repairs & Ruptures",
+      bounds:{ coord_set: [] },
+      world_operation:"REPAIR",
+      allowed_acts:["QUESTION","WITNESS"],
+      dominant_roles:["ARCHIVIST","PILGRIM"],
+      ritual_purpose:"Expose the break: siege, ambush, blood, contention; route the reader to repair paths instead of closure.",
+      zone_motifs_required:["WAR","BLOOD","CONTENTTION"],
+      zone_constraints:{ max_broken_cells_pct:0.05, silence_cells_pct:0.05, must_include_seal_gate:true, must_include_question_gate:true },
+      entry_gates:[
+        { gate_id:"MID_INVOCATION", gate_cells:["(8,14)"], required_act:"INVOCATION", required_token:null },
+        { gate_id:"MID_QUESTION", gate_cells:["(12,14)"], required_act:"QUESTION", required_token:null },
+        { gate_id:"MID_SEAL", gate_cells:["(15,14)"], required_act:"SEAL", required_token:null }
+      ],
+      exit_gates:[
+        { gate_id:"MID_TO_OUTER", gate_cells:["(6,18)"], leads_to_zone_id:"OUTER_RING", handoff_rule:"TRANSPOSE_MODEL_OF_FOR." }
+      ]
+    },
+    {
+      zone_id:"OUTER_RING",
+      name:"Labors / Seasons / Beasts",
+      bounds:{ coord_set: [] },
+      world_operation:"TRANSFORM",
+      allowed_acts:["QUESTION"],
+      dominant_roles:["PILGRIM","HERALD"],
+      ritual_purpose:"Transform civic into material: ploughing, harvest, vineyard song, lions, herds, forests; the world as worked.",
+      zone_motifs_required:["LABOR","GRAIN","VINE","BEAST"],
+      zone_constraints:{ max_broken_cells_pct:0.05, silence_cells_pct:0.10, must_include_seal_gate:true, must_include_question_gate:true },
+      entry_gates:[
+        { gate_id:"OUT_INVOCATION", gate_cells:["(3,6)"], required_act:"INVOCATION", required_token:null },
+        { gate_id:"OUT_QUESTION", gate_cells:["(17,18)"], required_act:"QUESTION", required_token:null },
+        { gate_id:"OUT_SEAL", gate_cells:["(20,18)"], required_act:"SEAL", required_token:null }
+      ],
+      exit_gates:[
+        { gate_id:"OUT_TO_OCEAN", gate_cells:["(12,0)"], leads_to_zone_id:"OCEAN_RIM", handoff_rule:"DECLARE_WORLD(OCEAN_RIM); REPEAT_MOTIF(OCEAN)." }
+      ]
+    },
+    {
+      zone_id:"OCEAN_RIM",
+      name:"Encircling Sea",
+      bounds:{ coord_set: [] }, // computed: edges
+      world_operation:"TRANSFORM",
+      allowed_acts:["CHANT","SEAL","QUESTION"],
+      dominant_roles:["HERALD","PILGRIM"],
+      ritual_purpose:"Bind all scenes by a surrounding boundary; the sea is the final operator: enclosure.",
+      zone_motifs_required:["OCEAN"],
+      zone_constraints:{ max_broken_cells_pct:0.05, silence_cells_pct:0.20, must_include_seal_gate:true, must_include_question_gate:true },
+      entry_gates:[
+        { gate_id:"SEA_INVOCATION", gate_cells:["(12,0)"], required_act:"INVOCATION", required_token:null },
+        { gate_id:"SEA_QUESTION", gate_cells:["(0,12)"], required_act:"QUESTION", required_token:null },
+        { gate_id:"SEA_SEAL", gate_cells:["(23,12)"], required_act:"SEAL", required_token:"SEAL_WITNESS" }
+      ],
+      exit_gates:[
+        { gate_id:"SEA_TO_CORE", gate_cells:["(12,23)"], leads_to_zone_id:"CENTER_CORE", handoff_rule:"SPIRAL inward; ROLE_SHIFT→ARCHIVIST." }
+      ]
+    }
+  ],
+
+  operator_library: {
+    ops: [
+      { id:"DECLARE_WORLD", description:"Creates local reality claims for this zone/cell." },
+      { id:"REPEAT_MOTIF", description:"Replays motif with slight variation; strengthens MAINTAIN." },
+      { id:"STAGE_CONFLICT", description:"Introduces contending force; must produce TENSION adjacency." },
+      { id:"ASK_PREPOSITION_SHIFT", description:"Forces Dewey by/in shift as a question operator." },
+      { id:"SEAL_PREMISE", description:"Locks a claim; marks cell SEALED; forbids expansion beyond it." },
+      { id:"OPEN_GAP", description:"Converts certainty into a QUESTION; may mark a silence cell." },
+      { id:"REPAIR_BREAK", description:"Routes to repair path; converts BROKEN → ACTIVE." },
+      { id:"TRANSPOSE_MODEL_OF_FOR", description:"Forces symbol-of ↔ symbol-for switch; can trigger TRANSFORM." },
+      { id:"ROLE_SHIFT", description:"Changes reader_role; must be justified by neighboring cells." }
+    ]
+  },
+
+  // Explicit "scene-cells" (everything else implicit silence)
+  cells: [
+    mkCell("(10,10)","CENTER_CORE","ACTIVE","PRODUCE","INVOCATION",["COSMOS","LIGHTS","OCEAN"],"ARCHIVIST",
+      { title:"Frame: Earth/Heaven/Ocean", text_fragment:"There earth, there heaven, there ocean he design'd;", symbolic_form:"quote",
+        evidence_level:"QUOTE", source_ref:"Iliad XVIII (Shield)", time_signature:"epochal",
+        claims:["WORLD_IS_MADE"], contradicts:[] },
+      { enter:["DECLARE_WORLD"], perform:["REPEAT_MOTIF"], exit:["ROLE_SHIFT"] }
+    ),
+    mkCell("(12,13)","CENTER_CORE","SEALED","PRODUCE","SEAL",["COSMOS","LAW"],"JUDGE",
+      { title:"Seal: World as Buckler-Law", text_fragment:"Thus the broad shield complete the artist crown'd…", symbolic_form:"gesture",
+        evidence_level:"PARAPHRASE", source_ref:"Iliad XVIII (Shield)", time_signature:"epochal",
+        claims:["ORDER_ENCLOSES"], contradicts:[] },
+      { enter:["SEAL_PREMISE"], perform:[], exit:[] }
+    ),
+    mkCell("(9,9)","INNER_RING","ACTIVE","MAINTAIN","WITNESS",["RITE","MUSIC","LAW"],"CONGREGANT",
+      { title:"Peace City: Hymeneal Rite", text_fragment:"Here sacred pomp… and hymeneal rite;", symbolic_form:"quote",
+        evidence_level:"QUOTE", source_ref:"Iliad XVIII (Shield)", time_signature:"daily",
+        claims:["RITE_MAKES_COMMON"], contradicts:[] },
+      { enter:["REPEAT_MOTIF"], perform:["DECLARE_WORLD"], exit:["ROLE_SHIFT"] }
+    ),
+    mkCell("(6,11)","INNER_RING","ACTIVE","MAINTAIN","WITNESS",["LAW","CONTENTTION"],"WITNESS",
+      { title:"Forum: Dispute & Decision", text_fragment:"The subject of debate, a townsman slain…", symbolic_form:"quote",
+        evidence_level:"QUOTE", source_ref:"Iliad XVIII (Shield)", time_signature:"weekly",
+        claims:["LAW_ADJUDICATES"], contradicts:[] },
+      { enter:["DECLARE_WORLD"], perform:["OPEN_GAP"], exit:["STAGE_CONFLICT"] }
+    ),
+    mkCell("(12,14)","MIDDLE_RING","ACTIVE","REPAIR","QUESTION",["WAR","BLOOD","CONTENTTION","OCEAN"],"PILGRIM",
+      { title:"War City: Siege & Ambush", text_fragment:"Two mighty hosts a leaguer'd town embrace…", symbolic_form:"quote",
+        evidence_level:"QUOTE", source_ref:"Iliad XVIII (Shield)", time_signature:"daily",
+        claims:["WAR_DEVOURS"], contradicts:["RITE_MAKES_COMMON"] },
+      { enter:["STAGE_CONFLICT"], perform:["OPEN_GAP"], exit:["REPAIR_BREAK"] },
+      { failure_modes:[{ id:"BLOOD_STUCK", trigger:"3 consecutive QUESTION acts without REPAIR_BREAK", block:true,
+        repair_path:["(6,11)","(9,9)","(15,9)"] }] }
+    ),
+    mkCell("(3,6)","OUTER_RING","ACTIVE","TRANSFORM","WITNESS",["LABOR","GRAIN"],"HERALD",
+      { title:"Ploughing: Third Turned Field", text_fragment:"A field deep furrow'd… The third time labour'd…", symbolic_form:"quote",
+        evidence_level:"QUOTE", source_ref:"Iliad XVIII (Shield)", time_signature:"seasonal",
+        claims:["WORK_MAKES_WORLD"], contradicts:[] },
+      { enter:["DECLARE_WORLD"], perform:["TRANSPOSE_MODEL_OF_FOR"], exit:["REPEAT_MOTIF"] }
+    ),
+    mkCell("(20,6)","OUTER_RING","ACTIVE","TRANSFORM","CHANT",["VINE","MUSIC"],"CONGREGANT",
+      { title:"Vineyard: Linus Song", text_fragment:"Whose tender lay the fate of Linus sings…", symbolic_form:"quote",
+        evidence_level:"QUOTE", source_ref:"Iliad XVIII (Shield)", time_signature:"seasonal",
+        claims:["SONG_BINDS_LABOR"], contradicts:[] },
+      { enter:["REPEAT_MOTIF"], perform:["DECLARE_WORLD"], exit:["OPEN_GAP"] }
+    ),
+    mkCell("(17,18)","OUTER_RING","ACTIVE","TRANSFORM","QUESTION",["BEAST","BLOOD"],"PILGRIM",
+      { title:"Lions: Bull Taken", text_fragment:"Two lions… seized a bull… drank his sable blood.", symbolic_form:"quote",
+        evidence_level:"QUOTE", source_ref:"Iliad XVIII (Shield)", time_signature:"daily",
+        claims:["NATURE_IS_WAR"], contradicts:["LAW_ADJUDICATES"] },
+      { enter:["STAGE_CONFLICT"], perform:["OPEN_GAP"], exit:["REPAIR_BREAK"] }
+    ),
+    mkCell("(0,12)","OCEAN_RIM","ACTIVE","TRANSFORM","QUESTION",["OCEAN","BOUNDARY"],"PILGRIM",
+      { title:"Rim: Sea as Enclosure", text_fragment:"…and pour'd the ocean round…", symbolic_form:"quote",
+        evidence_level:"QUOTE", source_ref:"Iliad XVIII (Shield)", time_signature:"epochal",
+        claims:["BOUNDARY_MAKES_TOTAL"], contradicts:[] },
+      { enter:["DECLARE_WORLD"], perform:["REPEAT_MOTIF"], exit:["ROLE_SHIFT"] },
+      { silence:{ is_silence_cell:true, silence_kind:"BREATH", silence_rule:"Pause before re-entering the world-core." } }
+    )
+  ],
+
+  traversals: [
+    {
+      traversal_id:"TETIS_SPIRAL_FORGE",
+      name:"Thetis’s Spiral to the Buckler",
+      mode:"SPIRAL",
+      start_cells:["(0,12)"],
+      end_cells:["(23,12)"],
+      entry_conditions:[
+        { requires_token:null },
+        { requires_role:"PILGRIM" },
+        { requires_act:"QUESTION" }
+      ],
+      step_rule:{
+        max_steps:144,
+        allowed_moves:["N","S","E","W","NE","NW","SE","SW"],
+        disallow_backtrack_pct:0.35
+      },
+      path_constraints:{
+        must_enter_zones:["OCEAN_RIM","OUTER_RING","MIDDLE_RING","INNER_RING","CENTER_CORE"],
+        must_touch_acts:["INVOCATION","CHANT","WITNESS","QUESTION","SEAL"],
+        min_silence_encounters:3,
+        min_role_shifts:2,
+        min_tension_diagonals:4
+      },
+      checkpoints:[
+        { checkpoint_id:"CP_FORUM", at_cell:"(6,11)", required_operator:"OPEN_GAP", validation:"must assert LAW_ADJUDICATES" },
+        { checkpoint_id:"CP_CORE_SEAL", at_cell:"(12,13)", required_operator:"SEAL_PREMISE", validation:"cell_state must be SEALED" }
+      ],
+      completion:{
+        seal_required:true,
+        seal_cells:["(12,13)","(23,12)"],
+        completion_artifact:"chorus: THE_SHIELD_ENCLOSES"
+      },
+      failure:{
+        if_stuck:"route_to_repair",
+        repair_zone_id:"MIDDLE_RING",
+        repair_steps:["(12,14)","(6,11)","(9,9)"]
+      }
+    }
+  ],
+
+  ruleset: {
+    adjacency_inference: [
+      { id:"A1", meaning:"ASSOCIATION", when:"horizontal_neighbor", must:"share ≥1 motif_id OR share ritual_act" },
+      { id:"A2", meaning:"DEVELOPMENT", when:"vertical_neighbor", must:"EvidenceLevel increases OR WorldOp deepens toward center" },
+      { id:"A3", meaning:"TENSION", when:"diagonal_neighbor", must:"contradict act OR role OR payload.claims via payload.contradicts" }
+    ],
+    validation_rules: [
+      { id:"V1", scope:"zone", severity:"error", message:"Zone must include INVOCATION/QUESTION/SEAL gates." },
+      { id:"V2", scope:"traversal", severity:"error", message:"Traversal must encounter all four WorldOps." },
+      { id:"V3", scope:"traversal", severity:"error", message:"Traversal not single-axis (must include both axis changes)." },
+      { id:"V4", scope:"grid", severity:"error", message:"Min silence % satisfied." },
+      { id:"V5", scope:"grid", severity:"error", message:"Motif reuse across ≥2 cells and ≥2 zones." }
+    ]
+  }
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let manifest = deepClone(DEFAULT_MANIFEST);
+let cellMap = new Map();            // coord -> cell (explicit)
+let zoneByCoord = new Map();        // coord -> zone_id (computed rings)
+let issues = [];                    // validation issues
+let selected = null;                // coord string
+let multiSel = new Set();           // for issue highlight multi
+let traversalSteps = [];            // computed path
+let traversalTimer = null;
+let traversalIdx = 0;
+
+/* ============================================================
+   HELPERS (coords, cloning)
+   ============================================================ */
+function deepClone(x){ return JSON.parse(JSON.stringify(x)); }
+
+function normCoord(c){ return String(c).replace(/\s+/g,""); }
+function parseCoord(c){
+  const m = normCoord(c).match(/^\((\d+),(\d+)\)$/);
+  if(!m) throw new Error("Bad coord: "+c);
+  return [Number(m[1]), Number(m[2])];
+}
+function key(x,y){ return `(${x},${y})`; }
+function inBounds(x,y){ return x>=0 && x<24 && y>=0 && y<24; }
+
+function coordsRect(xMin,xMax,yMin,yMax){
+  const out=[];
+  for(let y=yMin;y<=yMax;y++) for(let x=xMin;x<=xMax;x++) out.push(key(x,y));
+  return out;
+}
+
+function mkCell(coord, zone_id, cell_state, world_operation, ritual_act, motif_ids, reader_role, payload, operators, extra={}){
+  return {
+    coord: normCoord(coord),
+    zone_id,
+    cell_state,
+    world_operation,
+    ritual_act,
+    motif_ids: motif_ids||[],
+    reader_role,
+    payload: Object.assign({
+      title:"",
+      text_fragment:"",
+      symbolic_form:"quote",
+      evidence_level:"NONE",
+      source_ref:null,
+      time_signature:null,
+      claims:[],
+      contradicts:[]
+    }, payload||{}),
+    operators: Object.assign({ enter:[], perform:[], exit:[] }, operators||{}),
+    continuity_hooks: { preferred_next:[], avoid_next:[], loop_to:null },
+    silence: Object.assign({ is_silence_cell:false, silence_kind:null, silence_rule:null }, extra.silence||{}),
+    failure_modes: extra.failure_modes || []
+  };
+}
+
+/* ============================================================
+   COMPUTED ZONING (Carey rings + ocean rim)
+   Full coverage regardless of zone.bounds.coord_set.
+   ============================================================ */
+function computeCareyZone(coord){
+  const [x,y]=parseCoord(coord);
+
+  const isOcean = (x===0||x===23||y===0||y===23);
+  if(isOcean) return "OCEAN_RIM";
+
+  const inCore = (x>=10 && x<=13 && y>=10 && y<=13);
+  if(inCore) return "CENTER_CORE";
+
+  // Define rings by bounding boxes expanding from core
+  const inInner = (x>=8 && x<=15 && y>=8 && y<=15);
+  if(inInner) return "INNER_RING";
+
+  const inMiddle = (x>=6 && x<=17 && y>=6 && y<=17);
+  if(inMiddle) return "MIDDLE_RING";
+
+  return "OUTER_RING";
+}
+
+function ensureGridIndex(){
+  const idx=[];
+  for(let y=0;y<24;y++) for(let x=0;x<24;x++) idx.push(key(x,y));
+  manifest.grid.cell_index = idx;
+}
+
+function rebuildMaps(){
+  ensureGridIndex();
+  cellMap = new Map();
+  for(const c of (manifest.cells||[])){
+    cellMap.set(normCoord(c.coord), c);
+  }
+  zoneByCoord = new Map();
+  for(const coord of manifest.grid.cell_index){
+    zoneByCoord.set(coord, computeCareyZone(coord));
+  }
+}
+
+function getExplicitCell(coord){
+  return cellMap.get(normCoord(coord)) || null;
+}
+
+function getCell(coord){
+  const c = getExplicitCell(coord);
+  if(c) return c;
+
+  // implicit cell if sparse_mode
+  if(manifest.grid?.sparse_mode){
+    const zone_id = zoneByCoord.get(normCoord(coord)) || "UNZONED";
+    const silenceKind = manifest.grid.implicit_cell_defaults?.silence_kind || "VEIL";
+    const cell_state = manifest.grid.implicit_cell_defaults?.cell_state || "DORMANT";
+
+    // derive zone defaults for implicit
+    const zone = (manifest.zones||[]).find(z => z.zone_id===zone_id);
+    const world_operation = zone?.world_operation || "MAINTAIN";
+    const ritual_act = zone?.allowed_acts?.includes("WITNESS") ? "WITNESS" : (zone?.allowed_acts?.[0] || "WITNESS");
+    const role = zone?.dominant_roles?.[0] || "PILGRIM";
+
+    return {
+      coord: normCoord(coord),
+      zone_id,
+      cell_state,
+      world_operation,
+      ritual_act,
+      motif_ids: [],
+      reader_role: role,
+      payload: {
+        title: "Implicit Silence",
+        text_fragment: "",
+        symbolic_form: "void",
+        evidence_level: "NONE",
+        source_ref: null,
+        time_signature: null,
+        claims: [],
+        contradicts: []
+      },
+      operators: { enter: [], perform: ["OPEN_GAP"], exit: [] },
+      continuity_hooks: { preferred_next: [], avoid_next: [], loop_to: null },
+      silence: { is_silence_cell: true, silence_kind: silenceKind, silence_rule: "implicit" },
+      failure_modes: []
+    };
+  }
+
+  return null;
+}
+
+/* ============================================================
+   RENDER GRID
+   ============================================================ */
+const gridEl = document.getElementById("grid");
+const viewModeEl = document.getElementById("viewMode");
+const motifFilterEl = document.getElementById("motifFilter");
+const selBadge = document.getElementById("selBadge");
+const issuesBadge = document.getElementById("issuesBadge");
+const silenceBadge = document.getElementById("silenceBadge");
+const statusBadge = document.getElementById("statusBadge");
+
+function classForZone(z){
+  if(z==="CENTER_CORE") return "vz-core";
+  if(z==="INNER_RING") return "vz-inner";
+  if(z==="MIDDLE_RING") return "vz-middle";
+  if(z==="OUTER_RING") return "vz-outer";
+  if(z==="OCEAN_RIM") return "vz-ocean";
+  return "";
+}
+
+function renderGrid(){
+  gridEl.innerHTML = "";
+  const frag = document.createDocumentFragment();
+
+  const viewMode = viewModeEl.value;
+  const motifNeedle = motifFilterEl.value.trim().toUpperCase();
+
+  for(let y=0;y<24;y++){
+    for(let x=0;x<24;x++){
+      const coord = key(x,y);
+      const c = getCell(coord);
+      const div = document.createElement("div");
+      div.className = "cell";
+      div.dataset.coord = coord;
+
+      // view mode classes
+      if(viewMode==="zone"){
+        div.classList.add(classForZone(zoneByCoord.get(coord)));
+      } else if(viewMode==="worldop"){
+        div.classList.add("vw-"+(c.world_operation||"MAINTAIN"));
+      } else if(viewMode==="act"){
+        div.classList.add("va-"+(c.ritual_act||"WITNESS"));
+      } else if(viewMode==="state"){
+        // minimal: keep dark; state dot will show
+      } else if(viewMode==="silence"){
+        if(c.silence?.is_silence_cell) div.classList.add("silence");
+      }
+
+      // motif filter highlight / dim
+      if(motifNeedle){
+        const has = (c.motif_ids||[]).some(m => String(m).toUpperCase().includes(motifNeedle));
+        if(!has) div.style.opacity = 0.22;
+      }
+
+      // state indicator
+      const st = document.createElement("div");
+      st.className = "stateTag st-"+(c.cell_state||"DORMANT");
+      div.appendChild(st);
+
+      // silence overlay always visible if explicit silence cell
+      if(c.silence?.is_silence_cell && viewMode!=="silence"){
+        div.classList.add("silence");
+      }
+
+      // selected / multi selection
+      if(selected === coord) div.classList.add("selected");
+      if(multiSel.has(coord) && selected !== coord) div.classList.add("selected");
+
+      // issue highlight
+      if(hasIssueAt(coord)) div.classList.add("bad");
+
+      div.addEventListener("click", (e)=>{
+        const isShift = e.shiftKey;
+        if(isShift){
+          if(multiSel.has(coord)) multiSel.delete(coord);
+          else multiSel.add(coord);
+        } else {
+          multiSel.clear();
+          selected = coord;
+        }
+        updateSelectedUI();
+        renderGrid();
+      }, { passive:true });
+
+      frag.appendChild(div);
+    }
+  }
+
+  gridEl.appendChild(frag);
+  updateBadges();
+}
+
+function hasIssueAt(coord){
+  const c = normCoord(coord);
+  return issues.some(it => (it.at||[]).map(normCoord).includes(c) || normCoord(it.coord||"")===c);
+}
+
+function updateBadges(){
+  selBadge.textContent = "selected: " + (selected || "none");
+  issuesBadge.textContent = "issues: " + issues.length;
+
+  // silence %
+  const total = 24*24;
+  let silenceCount = 0;
+  for(const coord of manifest.grid.cell_index){
+    const c = getCell(coord);
+    if(c?.silence?.is_silence_cell) silenceCount++;
+  }
+  const pct = silenceCount/total;
+  silenceBadge.textContent = "silence: " + Math.round(pct*100) + "%";
+}
+
+viewModeEl.addEventListener("change", ()=>renderGrid());
+motifFilterEl.addEventListener("input", ()=>renderGrid());
+
+/* ============================================================
+   PANELS + TABS
+   ============================================================ */
+const tabs = document.querySelectorAll(".tab");
+const panels = {
+  cell: document.getElementById("panel-cell"),
+  traversal: document.getElementById("panel-traversal"),
+  validate: document.getElementById("panel-validate"),
+  manifest: document.getElementById("panel-manifest")
+};
+
+tabs.forEach(t=>{
+  t.addEventListener("click", ()=>{
+    tabs.forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    const tab = t.dataset.tab;
+    for(const k in panels) panels[k].style.display = (k===tab) ? "block" : "none";
+    if(tab==="traversal") renderTraversalPanel();
+    if(tab==="validate") renderValidatePanel();
+    if(tab==="manifest") renderManifestPanel();
+    if(tab==="cell") renderCellPanel();
+  });
+});
+
+function pill(s){ return `<span class="chip">${escapeHtml(s)}</span>`; }
+function chips(arr){ return (arr||[]).length ? (arr||[]).map(m=>pill(m)).join("") : `<span class="small">none</span>`; }
+
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+
+/* ============================================================
+   CELL PANEL
+   ============================================================ */
+function updateSelectedUI(){
+  renderCellPanel();
+}
+
+function renderCellPanel(){
+  const c = selected ? getCell(selected) : null;
+  const zoneComputed = selected ? zoneByCoord.get(selected) : null;
+
+  if(!c){
+    panels.cell.innerHTML = `
+      <div class="h">Cell Inspector</div>
+      <p class="p">Select a cell in the grid. Explicit scene-cells are rare; most cells are implicit silence (sparse mode).</p>
+      <div class="kv">
+        <div class="k">Grid</div><div class="v mono">${escapeHtml(manifest.grid.grid_id)} v${escapeHtml(manifest.grid.version)}</div>
+        <div class="k">Mode</div><div class="v mono">${manifest.grid.sparse_mode ? "sparse_mode=true" : "sparse_mode=false"}</div>
+        <div class="k">Silence rule</div><div class="v mono">min_silence_cells_pct=${manifest.grid.global_constraints.min_silence_cells_pct}</div>
+      </div>
+      <div class="small">Tip: type a motif (e.g., <span class="mono">OCEAN</span>) in the top bar to spotlight motif-bearing cells.</div>
+    `;
+    return;
+  }
+
+  const isExplicit = !!getExplicitCell(selected);
+  panels.cell.innerHTML = `
+    <div class="row" style="justify-content:space-between;">
+      <div class="h" style="margin:0;">Cell</div>
+      <span class="badge ${isExplicit ? "ok":"warn"}">${isExplicit ? "explicit" : "implicit"}</span>
+    </div>
+
+    <div class="kv">
+      <div class="k">coord</div><div class="v mono">${escapeHtml(c.coord)}</div>
+      <div class="k">zone</div><div class="v mono">${escapeHtml(c.zone_id)} <span class="small">(computed: ${escapeHtml(zoneComputed||"—")})</span></div>
+      <div class="k">state</div><div class="v mono">${escapeHtml(c.cell_state)}</div>
+      <div class="k">WorldOp</div><div class="v mono">${escapeHtml(c.world_operation)}</div>
+      <div class="k">RitualAct</div><div class="v mono">${escapeHtml(c.ritual_act)}</div>
+      <div class="k">Role</div><div class="v mono">${escapeHtml(c.reader_role)}</div>
+    </div>
+
+    <div class="h">Motifs</div>
+    <div class="row">${chips(c.motif_ids)}</div>
+
+    <div class="h">Payload</div>
+    <div class="kv">
+      <div class="k">title</div><div class="v">${escapeHtml(c.payload?.title||"")}</div>
+      <div class="k">fragment</div><div class="v">${escapeHtml(c.payload?.text_fragment||"")}</div>
+      <div class="k">form</div><div class="v mono">${escapeHtml(c.payload?.symbolic_form||"")}</div>
+      <div class="k">evidence</div><div class="v mono">${escapeHtml(c.payload?.evidence_level||"")}</div>
+      <div class="k">source</div><div class="v mono">${escapeHtml(c.payload?.source_ref||"")}</div>
+      <div class="k">time</div><div class="v mono">${escapeHtml(c.payload?.time_signature||"")}</div>
+      <div class="k">claims</div><div class="v mono">${escapeHtml((c.payload?.claims||[]).join(", ") || "—")}</div>
+      <div class="k">contradicts</div><div class="v mono">${escapeHtml((c.payload?.contradicts||[]).join(", ") || "—")}</div>
+    </div>
+
+    <div class="h">Operators</div>
+    <div class="kv">
+      <div class="k">enter</div><div class="v mono">${escapeHtml((c.operators?.enter||[]).join(" · ")||"—")}</div>
+      <div class="k">perform</div><div class="v mono">${escapeHtml((c.operators?.perform||[]).join(" · ")||"—")}</div>
+      <div class="k">exit</div><div class="v mono">${escapeHtml((c.operators?.exit||[]).join(" · ")||"—")}</div>
+    </div>
+
+    <div class="h">Silence</div>
+    <div class="kv">
+      <div class="k">is_silence</div><div class="v mono">${c.silence?.is_silence_cell ? "true" : "false"}</div>
+      <div class="k">kind</div><div class="v mono">${escapeHtml(c.silence?.silence_kind||"—")}</div>
+      <div class="k">rule</div><div class="v mono">${escapeHtml(c.silence?.silence_rule||"—")}</div>
+    </div>
+
+    <div class="small">
+      Ritual law: horizontals must associate; verticals must develop; diagonals must contradict.
+      Validation marks violations in <span class="mono">pink</span>.
+    </div>
+  `;
+}
+
+/* ============================================================
+   VALIDATION (V1–V5 + adjacency A1–A3)
+   ============================================================ */
+
+const WORLD_OP_ORDER = { TRANSFORM:0, REPAIR:1, MAINTAIN:2, PRODUCE:3 };
+const EVIDENCE_RANK = { NONE:0, TRACE:1, QUOTE:2, PARAPHRASE:3, SOURCELOCK:4 };
+
+function neighborsOf(coord){
+  const [x,y]=parseCoord(coord);
+  const horiz = [[x-1,y],[x+1,y]].filter(([a,b])=>inBounds(a,b)).map(([a,b])=>key(a,b));
+  const vert  = [[x,y-1],[x,y+1]].filter(([a,b])=>inBounds(a,b)).map(([a,b])=>key(a,b));
+  const diag  = [[x-1,y-1],[x+1,y-1],[x-1,y+1],[x+1,y+1]].filter(([a,b])=>inBounds(a,b)).map(([a,b])=>key(a,b));
+  return { horiz, vert, diag };
+}
+
+function sharesMotif(a,b){
+  const A=new Set(a.motif_ids||[]);
+  return (b.motif_ids||[]).some(m=>A.has(m));
+}
+function diagonalContradiction(a,b){
+  if(a.ritual_act !== b.ritual_act) return true;
+  if(a.reader_role !== b.reader_role) return true;
+
+  const claimsA = new Set(a.payload?.claims||[]);
+  const claimsB = new Set(b.payload?.claims||[]);
+  const contraA = new Set(a.payload?.contradicts||[]);
+  const contraB = new Set(b.payload?.contradicts||[]);
+
+  for(const c of contraA) if(claimsB.has(c)) return true;
+  for(const c of contraB) if(claimsA.has(c)) return true;
+  return false;
+}
+
+function validateAll(){
+  const out = [];
+
+  // V1: zone gate presence
+  for(const z of (manifest.zones||[])){
+    const acts = new Set((z.entry_gates||[]).map(g=>g.required_act));
+    if(!acts.has("INVOCATION")) out.push(issue("V1","error",`Zone ${z.zone_id} missing INVOCATION gate.`,{ zone:z.zone_id }));
+    if(z.zone_constraints?.must_include_question_gate && !acts.has("QUESTION")) out.push(issue("V1","error",`Zone ${z.zone_id} missing QUESTION gate.`,{ zone:z.zone_id }));
+    if(z.zone_constraints?.must_include_seal_gate && !acts.has("SEAL")) out.push(issue("V1","error",`Zone ${z.zone_id} missing SEAL gate.`,{ zone:z.zone_id }));
+  }
+
+  // V4: silence %
+  const total = 24*24;
+  let silenceCount = 0;
+  for(const coord of manifest.grid.cell_index){
+    const c = getCell(coord);
+    if(c?.silence?.is_silence_cell) silenceCount++;
+  }
+  const pct = silenceCount/total;
+  if(pct < (manifest.grid.global_constraints?.min_silence_cells_pct ?? 0.10)){
+    out.push(issue("V4","error",`Silence too low: ${(pct*100).toFixed(1)}% < ${(manifest.grid.global_constraints.min_silence_cells_pct*100).toFixed(1)}%`,{}));
+  }
+
+  // V5: motif reuse across cells and zones (explicit motifs only)
+  const motifCells = new Map(); // motif -> Set(coord)
+  const motifZones = new Map(); // motif -> Set(zone_id)
+  for(const c of (manifest.cells||[])){
+    for(const m of (c.motif_ids||[])){
+      if(!motifCells.has(m)) motifCells.set(m,new Set());
+      if(!motifZones.has(m)) motifZones.set(m,new Set());
+      motifCells.get(m).add(c.coord);
+      motifZones.get(m).add(c.zone_id);
+    }
+  }
+  const minReuse = manifest.grid.global_constraints?.min_motif_reuse ?? 2;
+  const mustCross = manifest.grid.global_constraints?.motifs_must_cross_zones ?? true;
+  for(const [m,coords] of motifCells.entries()){
+    if(coords.size < minReuse) out.push(issue("V5","error",`Motif '${m}' appears in only ${coords.size} cell(s).`,{ motif:m }));
+    const zones = motifZones.get(m) || new Set();
+    if(mustCross && zones.size < 2) out.push(issue("V5","error",`Motif '${m}' appears in only ${zones.size} zone(s).`,{ motif:m }));
+  }
+
+  // A1–A3 adjacency (validate explicit cells vs their neighbors)
+  for(const c0 of (manifest.cells||[])){
+    const n = neighborsOf(c0.coord);
+
+    // A1 horizontal: share motif OR ritual_act
+    for(const hc of n.horiz){
+      const c1 = getCell(hc);
+      const ok = sharesMotif(c0,c1) || (c0.ritual_act === c1.ritual_act);
+      if(!ok){
+        out.push(issue("A1","warn",`Horizontal ASSOCIATION violated between ${c0.coord} and ${hc}.`,{ at:[c0.coord,hc] }));
+      }
+    }
+
+    // A2 vertical: evidence increases OR worldop deepens
+    for(const vc of n.vert){
+      const c1 = getCell(vc);
+      const ev0 = EVIDENCE_RANK[c0.payload?.evidence_level] ?? 0;
+      const ev1 = EVIDENCE_RANK[c1.payload?.evidence_level] ?? 0;
+      const ok = (ev1 >= ev0) || ((WORLD_OP_ORDER[c1.world_operation] ?? 0) >= (WORLD_OP_ORDER[c0.world_operation] ?? 0));
+      if(!ok){
+        out.push(issue("A2","warn",`Vertical DEVELOPMENT violated between ${c0.coord} and ${vc}.`,{ at:[c0.coord,vc] }));
+      }
+    }
+
+    // A3 diagonal: must contradict
+    for(const dc of n.diag){
+      const c1 = getCell(dc);
+      const ok = diagonalContradiction(c0,c1);
+      if(!ok){
+        out.push(issue("A3","warn",`Diagonal TENSION violated between ${c0.coord} and ${dc}.`,{ at:[c0.coord,dc] }));
+      }
+    }
+  }
+
+  return out;
+}
+
+function issue(id, severity, msg, extra){
+  return Object.assign({ id, severity, msg }, extra||{});
+}
+
+function runValidate(){
+  statusBadge.textContent = "running…";
+  statusBadge.className = "badge warn";
+
+  issues = validateAll();
+
+  if(issues.length===0){
+    statusBadge.textContent = "ok";
+    statusBadge.className = "badge ok";
+  } else {
+    const hasErr = issues.some(i=>i.severity==="error");
+    statusBadge.textContent = hasErr ? "errors" : "warn";
+    statusBadge.className = "badge " + (hasErr ? "bad" : "warn");
+  }
+
+  renderValidatePanel();
+  renderGrid();
+}
+
+/* ============================================================
+   VALIDATE PANEL
+   ============================================================ */
+function renderValidatePanel(){
+  const errCount = issues.filter(i=>i.severity==="error").length;
+  const warnCount = issues.filter(i=>i.severity!=="error").length;
+
+  const list = issues.length ? issues.map((it, idx)=>{
+    const cls = it.severity==="error" ? "issue bad" : "issue warn";
+    const meta = it.at ? `at ${it.at.join(" ↔ ")}` : (it.zone ? `zone ${it.zone}` : (it.motif ? `motif ${it.motif}` : ""));
+    return `
+      <div class="${cls}" data-idx="${idx}">
+        <div class="id">${escapeHtml(it.id)} <span class="badge ${it.severity==="error"?"bad":"warn"}">${escapeHtml(it.severity)}</span></div>
+        <div class="msg">${escapeHtml(it.msg)}</div>
+        <div class="small mono" style="margin-top:6px;">${escapeHtml(meta)}</div>
+      </div>
+    `;
+  }).join("") : `<div class="small">No issues. The grid is legally quiet (for now).</div>`;
+
+  panels.validate.innerHTML = `
+    <div class="row" style="justify-content:space-between;">
+      <div class="h" style="margin:0;">Validation</div>
+      <div class="row" style="margin:0;">
+        <span class="badge bad">errors: ${errCount}</span>
+        <span class="badge warn">warn: ${warnCount}</span>
+      </div>
+    </div>
+
+    <p class="p">Runs V1–V5 + adjacency A1–A3 on explicit cells (implicit silence fills the rest).</p>
+
+    <div class="row">
+      <button class="btn primary" id="reRunBtn">Re-run</button>
+      <button class="btn ghost" id="clearIssuesBtn">Clear highlights</button>
+    </div>
+
+    <div class="hr"></div>
+    <div class="list" id="issueList">${list}</div>
+  `;
+
+  const reRunBtn = document.getElementById("reRunBtn");
+  reRunBtn?.addEventListener("click", ()=>runValidate());
+
+  const clearBtn = document.getElementById("clearIssuesBtn");
+  clearBtn?.addEventListener("click", ()=>{
+    multiSel.clear();
+    renderGrid();
+  });
+
+  document.querySelectorAll("#issueList .issue").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const idx = Number(el.dataset.idx);
+      const it = issues[idx];
+      multiSel.clear();
+
+      if(it.at && it.at.length){
+        // multi highlight those coords; select first
+        it.at.forEach(c=>multiSel.add(normCoord(c)));
+        selected = normCoord(it.at[0]);
+      } else if(it.coord){
+        selected = normCoord(it.coord);
+      } else {
+        // for zone/motif issues, spotlight matching explicit cells
+        if(it.zone){
+          (manifest.cells||[]).filter(c=>c.zone_id===it.zone).forEach(c=>multiSel.add(c.coord));
+          selected = (manifest.cells||[]).find(c=>c.zone_id===it.zone)?.coord || selected;
+        }
+        if(it.motif){
+          (manifest.cells||[]).filter(c=>(c.motif_ids||[]).includes(it.motif)).forEach(c=>multiSel.add(c.coord));
+          selected = (manifest.cells||[]).find(c=>(c.motif_ids||[]).includes(it.motif))?.coord || selected;
+        }
+      }
+      updateSelectedUI();
+      renderGrid();
+      // jump to Cell tab on mobile
+      if(window.matchMedia("(max-width: 980px)").matches){
+        document.querySelector('.tab[data-tab="cell"]').click();
+      }
+    }, { passive:true });
+  });
+}
+
+/* ============================================================
+   TRAVERSAL (compute a path via waypoints + BFS)
+   ============================================================ */
+const MOVES = {
+  N:[0,-1], S:[0,1], E:[1,0], W:[-1,0],
+  NE:[1,-1], NW:[-1,-1], SE:[1,1], SW:[-1,1]
+};
+
+function bfs(start, goal, allowedMoves){
+  const s = parseCoord(start);
+  const g = parseCoord(goal);
+  const queue = [s];
+  const came = new Map(); // "x,y" -> "px,py"
+  const seen = new Set([s.join(",")]);
+
+  function push(nx,ny,px,py){
+    const k = nx+","+ny;
+    if(seen.has(k)) return;
+    seen.add(k);
+    came.set(k, px+","+py);
+    queue.push([nx,ny]);
+  }
+
+  while(queue.length){
+    const [x,y] = queue.shift();
+    if(x===g[0] && y===g[1]) break;
+
+    for(const mv of allowedMoves){
+      const [dx,dy] = MOVES[mv] || [0,0];
+      const nx=x+dx, ny=y+dy;
+      if(!inBounds(nx,ny)) continue;
+
+      // avoid quarantined/broken explicit cells (treat as blocked)
+      const c = getCell(key(nx,ny));
+      if(c && (c.cell_state==="QUARANTINED" || c.cell_state==="BROKEN")) continue;
+
+      push(nx,ny,x,y);
+    }
+  }
+
+  const goalKey = g.join(",");
+  if(!came.has(goalKey) && !(s[0]===g[0] && s[1]===g[1])) return null;
+
+  // reconstruct
+  const path = [];
+  let cur = goalKey;
+  path.push(key(g[0],g[1]));
+  while(cur !== s.join(",")){
+    const prev = came.get(cur);
+    if(!prev) break;
+    const [px,py]=prev.split(",").map(Number);
+    path.push(key(px,py));
+    cur = prev;
+  }
+  path.reverse();
+  return path;
+}
+
+function computeTraversalSteps(trav){
+  // Waypoints: start -> key explicit scenes -> core seal -> ocean seal endpoint
+  const allowed = trav.step_rule?.allowed_moves || ["N","S","E","W","NE","NW","SE","SW"];
+  const wps = [];
+
+  const start = trav.start_cells?.[0] || "(0,12)";
+  const end = trav.end_cells?.[0] || "(23,12)";
+  wps.push(start);
+
+  // choose explicit cell waypoints that represent zones in order
+  const want = [
+    "(3,6)",   // outer labor
+    "(12,14)", // middle war
+    "(6,11)",  // inner forum
+    "(10,10)", // core invocation
+    "(12,13)"  // core seal
+  ];
+
+  for(const c of want) wps.push(c);
+  wps.push(end);
+
+  // stitch BFS paths
+  let steps = [wps[0]];
+  for(let i=0;i<wps.length-1;i++){
+    const a = wps[i], b = wps[i+1];
+    const seg = bfs(a,b,allowed);
+    if(!seg) return { steps: [], reason: `No path from ${a} to ${b} under constraints.` };
+    // avoid duplicating junction coord
+    steps = steps.concat(seg.slice(1));
+    if(steps.length > (trav.step_rule?.max_steps || 144)) break;
+  }
+  return { steps };
+}
+
+function traversalStats(steps){
+  const stats = {
+    steps: steps.length,
+    zones: new Set(),
+    acts: new Set(),
+    worldops: new Set(),
+    silence: 0,
+    roleShifts: 0,
+    diagonals: 0,
+    backtracks: 0
+  };
+  let prev = null;
+  let prevRole = null;
+  const visited = new Set();
+
+  for(let i=0;i<steps.length;i++){
+    const coord = steps[i];
+    const c = getCell(coord);
+    stats.zones.add(zoneByCoord.get(coord) || c.zone_id);
+    stats.acts.add(c.ritual_act);
+    stats.worldops.add(c.world_operation);
+    if(c.silence?.is_silence_cell) stats.silence++;
+
+    if(prev){
+      const [x1,y1]=parseCoord(prev);
+      const [x2,y2]=parseCoord(coord);
+      if(Math.abs(x2-x1)===1 && Math.abs(y2-y1)===1) stats.diagonals++;
+      const k = coord;
+      if(visited.has(k)) stats.backtracks++;
+    }
+    visited.add(coord);
+
+    if(prevRole !== null && c.reader_role !== prevRole) stats.roleShifts++;
+    prevRole = c.reader_role;
+    prev = coord;
+  }
+  return stats;
+}
+
+function renderTraversalPanel(){
+  const trav = (manifest.traversals||[])[0] || null;
+  if(!trav){
+    panels.traversal.innerHTML = `<div class="h">Traversal</div><p class="p">No traversal in manifest.</p>`;
+    return;
+  }
+
+  const { steps, reason } = computeTraversalSteps(trav);
+  traversalSteps = steps || [];
+  const st = traversalSteps.length ? traversalStats(traversalSteps) : null;
+
+  const ok = (msg)=>`<span class="badge ok">${escapeHtml(msg)}</span>`;
+  const warn = (msg)=>`<span class="badge warn">${escapeHtml(msg)}</span>`;
+  const bad = (msg)=>`<span class="badge bad">${escapeHtml(msg)}</span>`;
+
+  const req = trav.path_constraints || {};
+  const touchesAllWorldOps = st ? (["PRODUCE","MAINTAIN","REPAIR","TRANSFORM"].every(x=>st.worldops.has(x))) : false;
+  const touchesActs = st ? (new Set(req.must_touch_acts||[])).size===0 ? true : (req.must_touch_acts||[]).every(a=>st.acts.has(a)) : false;
+  const entersZones = st ? (req.must_enter_zones||[]).every(z=>st.zones.has(z)) : false;
+
+  const line = (label, val)=>`<div class="k">${escapeHtml(label)}</div><div class="v mono">${escapeHtml(val)}</div>`;
+
+  panels.traversal.innerHTML = `
+    <div class="row" style="justify-content:space-between;">
+      <div class="h" style="margin:0;">Traversal</div>
+      ${traversalSteps.length ? ok("path built") : bad("no path")}
+    </div>
+
+    <p class="p">${escapeHtml(trav.name)} • mode=${escapeHtml(trav.mode)} • max_steps=${trav.step_rule?.max_steps}</p>
+
+    ${reason ? `<div class="issue bad"><div class="id">blocked</div><div class="msg">${escapeHtml(reason)}</div></div>` : ""}
+
+    <div class="kv">
+      ${line("start", (trav.start_cells||[])[0] || "—")}
+      ${line("end", (trav.end_cells||[])[0] || "—")}
+      ${line("steps", traversalSteps.length ? String(traversalSteps.length) : "0")}
+      ${line("zones hit", st ? Array.from(st.zones).join(", ") : "—")}
+      ${line("acts hit", st ? Array.from(st.acts).join(", ") : "—")}
+      ${line("worldops hit", st ? Array.from(st.worldops).join(", ") : "—")}
+      ${line("silence", st ? String(st.silence) : "—")}
+      ${line("role shifts", st ? String(st.roleShifts) : "—")}
+      ${line("diagonals", st ? String(st.diagonals) : "—")}
+    </div>
+
+    <div class="h">Constraint check (best-effort)</div>
+    <div class="row">
+      ${entersZones ? ok("zones") : warn("zones")}
+      ${touchesActs ? ok("acts") : warn("acts")}
+      ${touchesAllWorldOps ? ok("WorldOps") : warn("WorldOps")}
+      ${st && st.silence >= (req.min_silence_encounters||0) ? ok("silence") : warn("silence")}
+      ${st && st.roleShifts >= (req.min_role_shifts||0) ? ok("role shifts") : warn("role shifts")}
+      ${st && st.diagonals >= (req.min_tension_diagonals||0) ? ok("diagonals") : warn("diagonals")}
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="h">Playback</div>
+    <div class="row">
+      <button class="btn primary" id="playBtn">${traversalTimer ? "Pause" : "Play"}</button>
+      <button class="btn ghost" id="stepBtn">Step</button>
+      <button class="btn ghost" id="restartBtn">Restart</button>
+      <label class="chip" style="gap:10px;">
+        <span class="small">speed</span>
+        <input class="range" id="speedRange" type="range" min="70" max="900" value="240">
+      </label>
+    </div>
+
+    <div class="small">Playback selects cells along the computed path; you can watch the spiral “read” the world.</div>
+
+    <div class="hr"></div>
+    <div class="h">Export steps</div>
+    <div class="row">
+      <button class="btn ghost" id="copyStepsBtn">Copy JSON</button>
+      <span class="small mono">[{coord…}]</span>
+    </div>
+  `;
+
+  const speedEl = document.getElementById("speedRange");
+  let speed = Number(speedEl?.value || 240);
+
+  speedEl?.addEventListener("input", ()=>{ speed = Number(speedEl.value); });
+
+  document.getElementById("playBtn")?.addEventListener("click", ()=>{
+    if(!traversalSteps.length) return;
+    if(traversalTimer){
+      clearInterval(traversalTimer);
+      traversalTimer = null;
+      renderTraversalPanel();
+      return;
+    }
+    traversalTimer = setInterval(()=>{
+      if(traversalIdx >= traversalSteps.length){
+        clearInterval(traversalTimer);
+        traversalTimer = null;
+        renderTraversalPanel();
+        return;
+      }
+      selected = traversalSteps[traversalIdx];
+      traversalIdx++;
+      updateSelectedUI();
+      renderGrid();
+    }, speed);
+    renderTraversalPanel();
+  });
+
+  document.getElementById("stepBtn")?.addEventListener("click", ()=>{
+    if(!traversalSteps.length) return;
+    selected = traversalSteps[Math.min(traversalIdx, traversalSteps.length-1)];
+    traversalIdx = Math.min(traversalIdx+1, traversalSteps.length);
+    updateSelectedUI();
+    renderGrid();
+  });
+
+  document.getElementById("restartBtn")?.addEventListener("click", ()=>{
+    traversalIdx = 0;
+    if(traversalSteps.length){
+      selected = traversalSteps[0];
+      updateSelectedUI();
+      renderGrid();
+    }
+  });
+
+  document.getElementById("copyStepsBtn")?.addEventListener("click", async ()=>{
+    const payload = JSON.stringify({ traversal_id: trav.traversal_id, steps: traversalSteps }, null, 2);
+    try{
+      await navigator.clipboard.writeText(payload);
+      toast("Copied traversal steps.");
+    }catch{
+      toast("Copy failed (clipboard blocked).");
+    }
+  });
+}
+
+/* ============================================================
+   MANIFEST PANEL (edit/load/export)
+   ============================================================ */
+function renderManifestPanel(){
+  panels.manifest.innerHTML = `
+    <div class="row" style="justify-content:space-between;">
+      <div class="h" style="margin:0;">Manifest</div>
+      <span class="badge">${escapeHtml(manifest.grid.grid_id)} v${escapeHtml(manifest.grid.version)}</span>
+    </div>
+
+    <p class="p">Paste a manifest JSON and load it. The app will compute full Carey ring zoning (core/inner/middle/outer + ocean rim).</p>
+
+    <div class="row">
+      <button class="btn primary" id="loadManifestBtn">Load JSON</button>
+      <button class="btn ghost" id="exportManifestBtn">Copy Current</button>
+      <button class="btn ghost" id="restoreDefaultBtn">Restore Default</button>
+    </div>
+
+    <textarea id="manifestTA" spellcheck="false"></textarea>
+
+    <div class="small">
+      Tip: keep <span class="mono">grid.sparse_mode=true</span> unless you want to explicitly author all 576 cells.
+    </div>
+  `;
+
+  const ta = document.getElementById("manifestTA");
+  ta.value = JSON.stringify(manifest, null, 2);
+
+  document.getElementById("loadManifestBtn")?.addEventListener("click", ()=>{
+    try{
+      const obj = JSON.parse(ta.value);
+      manifest = obj;
+      rebuildMaps();
+      selected = null;
+      issues = [];
+      multiSel.clear();
+      statusBadge.textContent = "idle";
+      statusBadge.className = "badge";
+      renderGrid();
+      renderCellPanel();
+      toast("Manifest loaded.");
+    }catch(e){
+      toast("Invalid JSON: "+(e?.message || e));
+    }
+  });
+
+  document.getElementById("exportManifestBtn")?.addEventListener("click", async ()=>{
+    const payload = JSON.stringify(manifest, null, 2);
+    try{
+      await navigator.clipboard.writeText(payload);
+      toast("Copied manifest JSON.");
+    }catch{
+      toast("Copy failed (clipboard blocked).");
+    }
+  });
+
+  document.getElementById("restoreDefaultBtn")?.addEventListener("click", ()=>{
+    manifest = deepClone(DEFAULT_MANIFEST);
+    rebuildMaps();
+    selected = null;
+    issues = [];
+    multiSel.clear();
+    statusBadge.textContent = "idle";
+    statusBadge.className = "badge";
+    renderGrid();
+    renderCellPanel();
+    toast("Restored default manifest.");
+    renderManifestPanel();
+  });
+}
+
+/* ============================================================
+   TOP BUTTONS
+   ============================================================ */
+document.getElementById("runValidateBtn").addEventListener("click", ()=>{
+  runValidate();
+  document.querySelector('.tab[data-tab="validate"]').click();
+});
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  selected = null;
+  issues = [];
+  multiSel.clear();
+  motifFilterEl.value = "";
+  viewModeEl.value = "zone";
+  statusBadge.textContent = "idle";
+  statusBadge.className = "badge";
+  traversalIdx = 0;
+  if(traversalTimer){ clearInterval(traversalTimer); traversalTimer=null; }
+  renderGrid();
+  renderCellPanel();
+  toast("Reset.");
+});
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+let toastTimer=null;
+function toast(msg){
+  let el = document.getElementById("toast");
+  if(!el){
+    el = document.createElement("div");
+    el.id = "toast";
+    el.style.position = "fixed";
+    el.style.left = "50%";
+    el.style.bottom = "18px";
+    el.style.transform = "translateX(-50%)";
+    el.style.zIndex = "999";
+    el.style.padding = "10px 12px";
+    el.style.borderRadius = "999px";
+    el.style.border = "1px solid rgba(255,255,255,.12)";
+    el.style.background = "rgba(15,17,26,.86)";
+    el.style.backdropFilter = "blur(10px)";
+    el.style.color = "var(--ink)";
+    el.style.boxShadow = "0 20px 50px rgba(0,0,0,.45)";
+    el.style.maxWidth = "92vw";
+    el.style.whiteSpace = "nowrap";
+    el.style.overflow = "hidden";
+    el.style.textOverflow = "ellipsis";
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = "1";
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ el.style.opacity="0"; }, 1400);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+rebuildMaps();
+renderGrid();
+renderCellPanel();
+renderTraversalPanel();
+renderValidatePanel(); // prebuild for quick tab switch
+
+</script>
+</body>
+</html>

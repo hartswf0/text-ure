@@ -1,0 +1,190 @@
+PROTOCOL INITIALIZED.
+SYSTEM: 24x24 GRID [URN_MAPPING].
+MODE: KITTLER_ARCHAEOLOGY.
+STATUS: READY.
+
+---
+
+### **0.0 SYSTEM AXIOMS**
+
+We do not interpret the Urn; we store it. The poem is a signal transmission intercepted from 1819. Our task is to etch this signal onto a silicon wafer (the 24x24 grid) with sufficient redundancy to survive the decay of the medium.
+
+* **The Grid is not a page.** It is a random-access storage device.
+* **The Line is not a verse.** It is a byte-stream delimited by carriage returns.
+* **The Reader is not a human.** It is a scan-head moving across coordinates .
+
+---
+
+### **1.0 SEGMENTATION PIPELINE (D2)**
+
+The input text (Keats) is normalized into discrete inscription units (`BLOCKS`). Meaning is stripped; structure is encoded.
+
+**1.1 Normalization (The Signal)**
+Input is stripped of "soft" formatting (variable indentation) and hardened into a stream.
+
+* **Case:** UPPERCASE (Telegraphic standard).
+* **Line Break:** Replaced by glyph `/` (Visual separator).
+* **Stanza Break:** Replaced by `⟦STOP⟧`.
+
+**1.2 Block Compilation Strategy**
+The 24x24 grid contains 576 cells. The poem contains 50 lines.
+To maximize addressability under the **Hybrid Regime (R3)**, we define the `BLOCK` size as **2 lines of source text**.
+
+* **Total Source Lines:** 50.
+* **Primary Blocks:** 25 (Lines 1-2, 3-4, ..., 49-50).
+* **Header Format:** `⟦S{stanza}.L{start}-{end}⟧`.
+* **Payload Capacity:** 96 chars per strip (fits approx 2 lines + header).
+
+**Example Processing (Stanza 1):**
+
+> *Source:* "Thou still unravish'd bride of quietness, / Thou foster-child of silence and slow time,"
+> *Encoded:* `⟦S1.L01-02⟧ THOU STILL UNRAVISH'D BRIDE OF QUIETNESS, / THOU FOSTER-CHILD OF SILENCE AND SLOW TIME,`
+
+---
+
+### **2.0 ALLOCATION REGIME: HYBRID (R3)**
+
+We reject the "organic" flow of reading top-to-bottom. The grid is an address space managed by the `ALLOC` process.
+
+**Total Address Space:** 576 Cells ( to ).
+
+**2.1 Partitioning**
+
+1. **Primary Storage (TEXT_CELL):** 150 cells.
+* Stores the 25 unique blocks.
+* *High Redundancy:* Each primary block is stored ~6 times in distinct clusters. This mimics the "permanence" of the marble urn.
+
+
+2. **Routing Layer (INDEX_CELL):** 100 cells.
+* Contains lookup tables (Stanza pointers, Line pointers).
+* Allows the scan-head to "jump" to specific segments.
+
+
+3. **The Real/Noise (NOISE_CELL):** 326 cells.
+* Unused space is not empty; it is filled with `0x00` (silence) or corrupted fragments of the text ("unheard melodies").
+* Kittlerian Note: This noise is the medium asserting itself.
+
+
+
+**2.2 Placement Algorithm (The Mapping)**
+
+* **Step 1 (Anchors):** Place the 5 Stanza Start Blocks at coordinates derived from their CRC hash (pseudo-random but deterministic).
+* **Step 2 (Linearity):** Place subsequent blocks in a *strided* pattern (e.g., ) to prevent contiguous reading without a lookup table. This forces the use of the apparatus (index) to reconstruct the poem.
+* **Step 3 (Echoes):** Copy every block to 3 distinct quadrants.
+* *Quadrant 1:* The "Archive" (Density-Stack).
+* *Quadrant 4:* The "Broadcast" (Redundancy-Spread).
+
+
+
+---
+
+### **3.0 DISCOURSE NETWORK ANNOTATION (D4)**
+
+**3.1 What is Stored**
+
+* **Alphanumeric Sequence:** The ASCII codes are preserved perfectly.
+* **Topological Adjacency:** We create new neighbors. "Beauty is truth" (Stanza 5) might physically sit next to "struggle to escape" (Stanza 1) on the silicon die, creating accidental interference patterns.
+
+**3.2 What is Lost**
+
+* **Breath:** The pauses intended by commas are now merely byte separators.
+* **Aura:** The unique existence of the text is destroyed by the `REDUNDANCY` algorithm. There is no longer *one* poem; there are *six* identical copies distributed across the grid.
+
+**3.3 The Noise**
+
+* The "Silken flanks" and "Empty town" generate checksums. If a bit flips in a `TEXT_CELL`, the Urn "cracks." The system detects this via CRC and routes the scan-head to a backup cell. The glitch is structural.
+
+---
+
+### **4.0 OUTPUT SCHEMA: THE JSON MANIFEST**
+
+The following schema defines the protocol for the machine reading the grid. It does not contain the full filled grid, but the *structure* to hold it.
+
+```json
+{
+  "$schema": "http://kittler-media-archaeology.org/schemas/v1/grid-manifest",
+  "meta": {
+    "artifact": "ODE_ON_A_GRECIAN_URN",
+    "medium": "24x24_ADDRESS_SPACE",
+    "regime": "R3_HYBRID",
+    "timestamp": "1819-2024_TRANSCODE"
+  },
+  "grid_specs": {
+    "rows": 24,
+    "cols": 24,
+    "total_cells": 576,
+    "cell_types": ["TEXT", "CACHE", "INDEX", "NOISE"]
+  },
+  "decoding_logic": {
+    "header_regex": "^\\[\\[(S\\d+)\\.(L\\d+-\\d+)\\]\\]",
+    "panel_separator": " ⟦⟦PANEL⟧⟧ ",
+    "line_separator": " / "
+  },
+  "source_map": {
+    "description": "Mapping of original line numbers to generated BLOCK IDs",
+    "lines": [
+      { "line_id": 1, "text_snippet": "THOU STILL UNRAVISH'D...", "assigned_block": "BLK_01" }
+    ],
+    "blocks": [
+      {
+        "block_id": "BLK_01",
+        "content_raw": "⟦S1.L01-02⟧ THOU STILL UNRAVISH'D BRIDE OF QUIETNESS, / THOU FOSTER-CHILD OF SILENCE AND SLOW TIME,",
+        "byte_size": 102,
+        "replication_count": 6
+      }
+    ]
+  },
+  "address_space": {
+    "description": "Sparse array of occupied cells. Unlisted cells are NOISE/VOID.",
+    "cells": [
+      {
+        "addr_linear": 0,
+        "coords": {"x": 0, "y": 0},
+        "type": "INDEX",
+        "data": {
+          "target": "STANZA_ROOT",
+          "pointers": [
+            {"tag": "S1", "addr": 45},
+            {"tag": "S2", "addr": 112},
+            {"tag": "S3", "addr": 201},
+            {"tag": "S4", "addr": 355},
+            {"tag": "S5", "addr": 490}
+          ]
+        }
+      },
+      {
+        "addr_linear": 45,
+        "coords": {"x": 21, "y": 1},
+        "type": "TEXT",
+        "block_ref": "BLK_01",
+        "payload": "⟦S1.L01-02⟧ THOU STILL UNRAVISH'D BRIDE OF QUIETNESS...",
+        "crc32": "a1b2c3d4",
+        "status": "PRIMARY"
+      },
+      {
+        "addr_linear": 500,
+        "coords": {"x": 20, "y": 20},
+        "type": "CACHE",
+        "block_ref": "BLK_01",
+        "payload": "⟦S1.L01-02⟧ THOU STILL UNRAVISH'D BRIDE OF QUIETNESS...",
+        "crc32": "a1b2c3d4",
+        "status": "REPLICA"
+      }
+    ]
+  }
+}
+
+```
+
+---
+
+### **5.0 EXECUTION DIRECTIVE**
+
+The protocol is established.
+To proceed with the **Inscription Phase**, command the system to:
+
+1. **COMPILE**: Generate the full list of 25 BLOCKS from the provided text.
+2. **SPATIALIZE**: Calculate the specific  coordinates for the Hybrid allocation (Primary + Replicas + Indices).
+3. **RENDER**: Output the JSON chunk for Rows 0-7 (The Header/Index Band).
+
+*Awaiting instruction.*

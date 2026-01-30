@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>KEATS_URN_24 — Operative Ekphrasis Cartographer</title>
+<style>
+:root{
+  --ink:#0f1115;
+  --paper:#f5f4ef;
+  --paper2:#eeeae0;
+  --muted:#6b7280;
+  --line:#d7d2c6;
+  --accent:#2a7fff;
+  --accent2:#ff3b30;
+  --good:#16a34a;
+  --warn:#f59e0b;
+  --bg: var(--paper);
+  --panel: #ffffffcc;
+  --shadow: 0 12px 35px rgba(0,0,0,.10);
+  --radius: 16px;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+}
+*{box-sizing:border-box}
+html,body{height:100%; margin:0; background:linear-gradient(180deg,var(--paper),var(--paper2)); color:var(--ink); font-family:var(--sans);}
+a{color:var(--accent); text-decoration:none}
+a:hover{text-decoration:underline}
+kbd{font-family:var(--mono); font-size:.9em; background:#0000000a; border:1px solid #00000012; padding:.1em .35em; border-radius:8px}
+
+.header{
+  position:sticky; top:0; z-index:20;
+  backdrop-filter: blur(10px);
+  background:#ffffffcc;
+  border-bottom:1px solid var(--line);
+}
+.header-inner{
+  max-width:1200px; margin:0 auto; padding:10px 12px;
+  display:flex; gap:12px; align-items:center; justify-content:space-between;
+}
+.brand{
+  display:flex; flex-direction:column; gap:2px; min-width:0;
+}
+.brand .t{font-weight:750; letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.brand .s{font-family:var(--mono); font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+.controls{display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:flex-end}
+.btn{
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--ink);
+  padding:7px 10px;
+  border-radius:999px;
+  box-shadow: 0 2px 0 rgba(0,0,0,.03);
+  font-size:13px;
+  cursor:pointer;
+  user-select:none;
+}
+.btn:hover{border-color:#c8c2b5}
+.btn.primary{background:var(--accent); color:white; border-color:transparent}
+.btn.danger{background:var(--accent2); color:white; border-color:transparent}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.5; cursor:not-allowed; transform:none}
+.select, .input, .range{
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:999px;
+  padding:7px 10px;
+  font-size:13px;
+}
+.input{min-width:220px}
+.range{padding:6px 10px}
+.pill{
+  font-family:var(--mono);
+  font-size:12px;
+  padding:4px 9px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--muted);
+}
+
+.shell{
+  max-width:1200px; margin:0 auto; padding:12px;
+  display:grid;
+  grid-template-columns: 380px 1fr;
+  gap:12px;
+}
+@media (max-width: 980px){
+  .shell{grid-template-columns: 1fr;}
+}
+.panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+.panel .hd{
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  background:#ffffffd6;
+}
+.panel .hd .h{font-weight:700;}
+.panel .bd{padding:10px 12px;}
+.small{font-size:12px; color:var(--muted); font-family:var(--mono); line-height:1.35}
+
+.gridWrap{display:flex; flex-direction:column; gap:10px;}
+.gridStage{padding:12px;}
+.grid{
+  display:grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap:2px;
+  background:#00000010;
+  padding:2px;
+  border-radius:14px;
+}
+.cell{
+  aspect-ratio: 1 / 1;
+  border:1px solid #00000012;
+  border-radius:8px;
+  background:#fff;
+  position:relative;
+  overflow:hidden;
+  cursor:pointer;
+  padding:4px;
+  display:flex; align-items:flex-start; justify-content:flex-start;
+}
+.cell .txt{
+  font-family:var(--mono);
+  font-size:10px;
+  line-height:1.05;
+  white-space:pre-wrap;
+  word-break:break-word;
+  opacity:.95;
+}
+.cell.blank .txt{opacity:.22}
+.cell.blank{background:#ffffffa6}
+.cell:hover{outline:2px solid #0000002b; outline-offset:0}
+.cell.active{outline:3px solid var(--accent); z-index:2}
+.cell.hit{outline:3px solid #111111aa; z-index:2}
+.cell .badge{
+  position:absolute; bottom:3px; right:3px;
+  font-family:var(--mono);
+  font-size:9px;
+  padding:1px 4px;
+  border-radius:999px;
+  border:1px solid #00000014;
+  background:#ffffffd8;
+  color:#00000080;
+}
+
+.legend{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+.sw{
+  display:flex; gap:6px; align-items:center;
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--muted);
+  border:1px solid var(--line);
+  padding:4px 8px;
+  border-radius:999px;
+  background:#fff;
+}
+.dot{width:10px; height:10px; border-radius:3px; border:1px solid #00000018}
+
+.split{display:grid; grid-template-columns: 1fr; gap:10px;}
+.list{
+  max-height: 44vh;
+  overflow:auto;
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:14px;
+}
+.item{
+  padding:8px 10px;
+  border-bottom:1px solid #0000000b;
+  cursor:pointer;
+}
+.item:last-child{border-bottom:none}
+.item:hover{background:#00000006}
+.item.sel{background:#eaf2ff}
+.item .top{display:flex; align-items:center; justify-content:space-between; gap:10px}
+.item .id{font-family:var(--mono); font-size:12px; color:var(--muted)}
+.item .fn{font-family:var(--mono); font-size:11px; color:var(--muted)}
+.item .ln{margin-top:4px; font-size:13px; line-height:1.25}
+
+.detail pre{
+  margin:0;
+  white-space:pre-wrap;
+  word-break:break-word;
+  font-family:var(--mono);
+  font-size:12px;
+  line-height:1.35;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:10px;
+}
+.row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+hr.sep{border:none; border-top:1px solid var(--line); margin:10px 0}
+.note{font-size:13px; line-height:1.35; color:#1f2937}
+
+.transcript{
+  height: 160px;
+  overflow:auto;
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:14px;
+  padding:10px;
+  font-family:var(--mono);
+  font-size:12px;
+  line-height:1.35;
+}
+
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:14px;
+  transform:translateX(-50%);
+  background:#111827;
+  color:white;
+  padding:10px 12px;
+  border-radius:14px;
+  font-size:13px;
+  opacity:0;
+  pointer-events:none;
+  transition: opacity .2s ease, transform .2s ease;
+  box-shadow: 0 18px 45px rgba(0,0,0,.25);
+  z-index:50;
+}
+.toast.on{opacity:1; transform:translateX(-50%) translateY(-2px)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="t">KEATS_URN_24 — Operative Ekphrasis Cartographer</div>
+      <div class="s">code-text → surface-text · 24×24 calligram grid · “read by walking”</div>
+    </div>
+    <div class="controls">
+      <select id="viewMode" class="select" title="Render mode">
+        <option value="chunk">Chunks</option>
+        <option value="zone">Zones</option>
+        <option value="density">Density</option>
+        <option value="line">Line heat</option>
+      </select>
+
+      <select id="walkMode" class="select" title="Traversal mode">
+        <option value="none">Walk: Off</option>
+        <option value="row">Walk: Row scan</option>
+        <option value="col">Walk: Column scan</option>
+        <option value="spiral">Walk: Spiral to Seal</option>
+        <option value="zones">Walk: Rim→Frieze→Belly→Seal</option>
+      </select>
+
+      <button id="playBtn" class="btn primary">Play</button>
+      <button id="stepBtn" class="btn">Step</button>
+      <button id="stopBtn" class="btn danger">Stop</button>
+
+      <input id="speed" class="range" type="range" min="60" max="900" value="240" />
+      <span class="pill"><span id="speedLabel">240</span> ms</span>
+
+      <input id="q" class="input" placeholder="Search motifs/text (e.g., for ever, silence, town)"/>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+  <!-- LEFT -->
+  <div class="panel">
+    <div class="hd">
+      <div class="h">Index</div>
+      <div class="small" id="metaSmall"></div>
+    </div>
+    <div class="bd split">
+      <div class="row">
+        <span class="pill" id="checkPill">checks: —</span>
+        <span class="pill" id="cellPill">cells: 576</span>
+        <span class="pill" id="selPill">selected: —</span>
+      </div>
+
+      <div class="legend" id="legend"></div>
+
+      <div>
+        <div class="small" style="margin-bottom:6px">LINES (click to highlight its footprint; <kbd>Esc</kbd> clears)</div>
+        <div class="list" id="lineList"></div>
+      </div>
+
+      <div class="detail">
+        <div class="small" style="margin-bottom:6px">CELL / LINE DETAIL</div>
+        <pre id="detailPre">Click a cell to inspect. Click a line to highlight all its cells.</pre>
+      </div>
+
+      <div>
+        <div class="small" style="margin-bottom:6px">TRANSCRIPT (walk output)</div>
+        <div class="transcript" id="transcript"></div>
+        <div class="row" style="margin-top:8px">
+          <button id="copyBtn" class="btn">Copy transcript</button>
+          <button id="dlJsonBtn" class="btn">Download manifest JSON</button>
+          <button id="dlTxtBtn" class="btn">Download transcript TXT</button>
+        </div>
+      </div>
+
+      <div>
+        <hr class="sep"/>
+        <div class="small">REGENERATION RULES (deterministic)</div>
+        <pre id="regenPre"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="panel gridWrap">
+    <div class="hd">
+      <div class="h">Surface Text (24×24)</div>
+      <div class="row">
+        <span class="pill" id="hoverPill">hover: —</span>
+        <span class="pill" id="walkPill">walk: off</span>
+      </div>
+    </div>
+
+    <div class="bd gridStage">
+      <div class="note">
+        Tip: switch <b>View</b> to Zones/Density to see the urn architecture.
+        Turn on <b>Walk</b>, then <b>Play</b> to read the poem by traversal.
+      </div>
+      <div style="height:10px"></div>
+      <div id="grid" class="grid" aria-label="24 by 24 calligram grid"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast">—</div>
+
+<script>
+const MANIFEST = {"world": "KEATS_URN_24", "lines": [{"line_id": "K-01", "text": "Ode on a Grecian Urn — By John Keats", "function": "transition", "motifs": ["ode", "urn", "keats"], "weight": 1, "zone": "RIM_TOP"}, {"line_id": "K-02", "text": "Thou still unravish'd bride of quietness,", "function": "invocation", "motifs": ["unravish'd", "bride", "quietness"], "weight": 6, "zone": "RIM_TOP"}, {"line_id": "K-03", "text": "Thou foster-child of silence and slow time,", "function": "invocation", "motifs": ["silence", "slow", "time"], "weight": 6, "zone": "RIM_TOP"}, {"line_id": "K-04", "text": "Sylvan historian, who canst thus express", "function": "invocation", "motifs": ["sylvan", "historian", "express"], "weight": 6, "zone": "RIM_TOP"}, {"line_id": "K-05", "text": "A flowery tale more sweetly than our rhyme:", "function": "invocation", "motifs": ["flowery", "tale", "sweet"], "weight": 6, "zone": "RIM_TOP"}, {"line_id": "K-06", "text": "What leaf-fring'd legend haunts about thy shape", "function": "question", "motifs": ["leaf-fring'd", "legend", "shape"], "weight": 5, "zone": "UPPER_FRIEZE"}, {"line_id": "K-07", "text": "Of deities or mortals, or of both,", "function": "question", "motifs": ["deities", "mortals", "both"], "weight": 5, "zone": "UPPER_FRIEZE"}, {"line_id": "K-08", "text": "In Tempe or the dales of Arcady?", "function": "question", "motifs": ["Tempe", "Arcady", "dales"], "weight": 4, "zone": "UPPER_FRIEZE"}, {"line_id": "K-09", "text": "What men or gods are these? What maidens loth?", "function": "question", "motifs": ["men", "gods", "maidens"], "weight": 5, "zone": "UPPER_FRIEZE"}, {"line_id": "K-10", "text": "What mad pursuit? What struggle to escape?", "function": "question", "motifs": ["mad", "pursuit", "escape"], "weight": 5, "zone": "UPPER_FRIEZE"}, {"line_id": "K-11", "text": "What pipes and timbrels? What wild ecstasy?", "function": "question", "motifs": ["pipes", "timbrels", "ecstasy"], "weight": 5, "zone": "UPPER_FRIEZE"}, {"line_id": "K-12", "text": "Heard melodies are sweet, but those unheard", "function": "eternity", "motifs": ["heard", "unheard", "melodies"], "weight": 6, "zone": "UPPER_FRIEZE"}, {"line_id": "K-13", "text": "Are sweeter; therefore, ye soft pipes, play on;", "function": "eternity", "motifs": ["softer", "pipes", "play"], "weight": 6, "zone": "UPPER_FRIEZE"}, {"line_id": "K-14", "text": "Not to the sensual ear, but, more endear'd,", "function": "meta", "motifs": ["sensual", "ear", "endear'd"], "weight": 4, "zone": "CENTER_APPROACH"}, {"line_id": "K-15", "text": "Pipe to the spirit ditties of no tone:", "function": "meta", "motifs": ["spirit", "ditties", "tone"], "weight": 4, "zone": "CENTER_APPROACH"}, {"line_id": "K-16", "text": "Fair youth, beneath the trees, thou canst not leave", "function": "scene", "motifs": ["fair", "youth", "trees"], "weight": 5, "zone": "UPPER_FRIEZE"}, {"line_id": "K-17", "text": "Thy song, nor ever can those trees be bare;", "function": "eternity", "motifs": ["song", "trees", "bare"], "weight": 4, "zone": "BELLY"}, {"line_id": "K-18", "text": "Bold Lover, never, never canst thou kiss,", "function": "scene", "motifs": ["bold", "lover", "kiss"], "weight": 5, "zone": "UPPER_FRIEZE"}, {"line_id": "K-19", "text": "Though winning near the goal yet, do not grieve;", "function": "transition", "motifs": ["goal", "grieve", "winning"], "weight": 4, "zone": "CENTER_APPROACH"}, {"line_id": "K-20", "text": "She cannot fade, though thou hast not thy bliss,", "function": "eternity", "motifs": ["fade", "bliss", "fair"], "weight": 7, "zone": "BELLY"}, {"line_id": "K-21", "text": "For ever wilt thou love, and she be fair!", "function": "eternity", "motifs": ["for", "ever", "love"], "weight": 7, "zone": "BELLY"}, {"line_id": "K-22", "text": "Ah, happy, happy boughs! that cannot shed", "function": "eternity", "motifs": ["happy", "boughs", "spring"], "weight": 7, "zone": "BELLY"}, {"line_id": "K-23", "text": "Your leaves, nor ever bid the Spring adieu;", "function": "eternity", "motifs": ["leaves", "adieu", "spring"], "weight": 6, "zone": "BELLY"}, {"line_id": "K-24", "text": "And, happy melodist, unwearied,", "function": "eternity", "motifs": ["melodist", "unwearied", "piping"], "weight": 6, "zone": "BELLY"}, {"line_id": "K-25", "text": "For ever piping songs for ever new;", "function": "eternity", "motifs": ["for", "ever", "new"], "weight": 6, "zone": "BELLY"}, {"line_id": "K-26", "text": "More happy love! more happy, happy love!", "function": "eternity", "motifs": ["more", "happy", "love"], "weight": 7, "zone": "BELLY"}, {"line_id": "K-27", "text": "For ever warm and still to be enjoy'd,", "function": "eternity", "motifs": ["warm", "enjoy'd", "still"], "weight": 6, "zone": "BELLY"}, {"line_id": "K-28", "text": "For ever panting, and for ever young;", "function": "eternity", "motifs": ["panting", "young", "for ever"], "weight": 6, "zone": "BELLY"}, {"line_id": "K-29", "text": "All breathing human passion far above,", "function": "meta", "motifs": ["passion", "far above", "breathing"], "weight": 5, "zone": "CENTER_APPROACH"}, {"line_id": "K-30", "text": "That leaves a heart high-sorrowful and cloy'd,", "function": "absence", "motifs": ["heart", "sorrowful", "cloy'd"], "weight": 5, "zone": "ABSENCE_FIELD"}, {"line_id": "K-31", "text": "A burning forehead, and a parching tongue.", "function": "absence", "motifs": ["burning", "parching", "tongue"], "weight": 5, "zone": "ABSENCE_FIELD"}, {"line_id": "K-32", "text": "Who are these coming to the sacrifice?", "function": "question", "motifs": ["coming", "sacrifice", "who"], "weight": 5, "zone": "LOWER_FRIEZE"}, {"line_id": "K-33", "text": "To what green altar, O mysterious priest,", "function": "question", "motifs": ["altar", "mysterious", "priest"], "weight": 5, "zone": "LOWER_FRIEZE"}, {"line_id": "K-34", "text": "Lead'st thou that heifer lowing at the skies,", "function": "scene", "motifs": ["heifer", "lowing", "skies"], "weight": 5, "zone": "LOWER_FRIEZE"}, {"line_id": "K-35", "text": "And all her silken flanks with garlands drest?", "function": "scene", "motifs": ["garlands", "silken", "drest"], "weight": 5, "zone": "LOWER_FRIEZE"}, {"line_id": "K-36", "text": "What little town by river or sea shore,", "function": "absence", "motifs": ["little town", "river", "sea shore"], "weight": 6, "zone": "ABSENCE_FIELD"}, {"line_id": "K-37", "text": "Or mountain-built with peaceful citadel,", "function": "absence", "motifs": ["mountain-built", "citadel", "peaceful"], "weight": 6, "zone": "ABSENCE_FIELD"}, {"line_id": "K-38", "text": "Is emptied of this folk, this pious morn?", "function": "absence", "motifs": ["emptied", "folk", "pious morn"], "weight": 7, "zone": "ABSENCE_FIELD"}, {"line_id": "K-39", "text": "And, little town, thy streets for evermore", "function": "absence", "motifs": ["streets", "for evermore", "silent"], "weight": 7, "zone": "ABSENCE_FIELD"}, {"line_id": "K-40", "text": "Will silent be; and not a soul to tell", "function": "absence", "motifs": ["not a soul", "tell", "silent"], "weight": 7, "zone": "ABSENCE_FIELD"}, {"line_id": "K-41", "text": "Why thou art desolate, can e'er return.", "function": "absence", "motifs": ["desolate", "return", "why"], "weight": 7, "zone": "ABSENCE_FIELD"}, {"line_id": "K-42", "text": "O Attic shape! Fair attitude! with brede", "function": "invocation", "motifs": ["Attic", "shape", "attitude"], "weight": 6, "zone": "RIM_BOTTOM"}, {"line_id": "K-43", "text": "Of marble men and maidens overwrought,", "function": "scene", "motifs": ["marble", "men", "maidens"], "weight": 5, "zone": "BELLY"}, {"line_id": "K-44", "text": "With forest branches and the trodden weed;", "function": "scene", "motifs": ["forest", "branches", "weed"], "weight": 5, "zone": "BELLY"}, {"line_id": "K-45", "text": "Thou, silent form, dost tease us out of thought", "function": "meta", "motifs": ["silent form", "tease", "thought"], "weight": 7, "zone": "CENTER_APPROACH"}, {"line_id": "K-46", "text": "As doth eternity: Cold Pastoral!", "function": "eternity", "motifs": ["eternity", "cold", "pastoral"], "weight": 7, "zone": "CENTER_APPROACH"}, {"line_id": "K-47", "text": "When old age shall this generation waste,", "function": "transition", "motifs": ["old age", "generation", "waste"], "weight": 6, "zone": "CENTER_APPROACH"}, {"line_id": "K-48", "text": "Thou shalt remain, in midst of other woe", "function": "eternity", "motifs": ["remain", "woe", "midst"], "weight": 6, "zone": "CENTER_APPROACH"}, {"line_id": "K-49", "text": "Than ours, a friend to man, to whom thou say'st,", "function": "meta", "motifs": ["friend", "man", "say'st"], "weight": 7, "zone": "CENTER_APPROACH"}, {"line_id": "K-50", "text": "\"Beauty is truth, truth beauty,—that is all", "function": "axiom", "motifs": ["beauty", "truth", "all"], "weight": 9, "zone": "SEAL"}, {"line_id": "K-51", "text": "Ye know on earth, and all ye need to know.\"", "function": "axiom", "motifs": ["earth", "need", "know"], "weight": 8, "zone": "SEAL"}], "allocation": {"K-01": 6, "K-02": 14, "K-03": 14, "K-04": 14, "K-05": 14, "K-06": 10, "K-07": 8, "K-08": 8, "K-09": 10, "K-10": 10, "K-11": 10, "K-12": 14, "K-13": 12, "K-14": 9, "K-15": 9, "K-16": 8, "K-17": 4, "K-18": 4, "K-19": 5, "K-20": 16, "K-21": 16, "K-22": 20, "K-23": 10, "K-24": 10, "K-25": 10, "K-26": 20, "K-27": 10, "K-28": 8, "K-29": 12, "K-30": 4, "K-31": 4, "K-32": 10, "K-33": 8, "K-34": 8, "K-35": 8, "K-36": 16, "K-37": 14, "K-38": 16, "K-39": 16, "K-40": 18, "K-41": 18, "K-42": 12, "K-43": 10, "K-44": 10, "K-45": 14, "K-46": 14, "K-47": 12, "K-48": 12, "K-49": 14, "K-50": 12, "K-51": 11}, "grid": [[{"x": 0, "y": 0, "zone": "RIM_TOP", "line_id": "K-01", "text_chunk": "Ode on a Grecian Urn — By John Keats", "density": 0.9, "motifs": ["ode"], "function": "transition"}, {"x": 1, "y": 0, "zone": "RIM_TOP", "line_id": "K-01", "text_chunk": "Ode on a Grecian Urn — By John Keats", "density": 0.9, "motifs": ["ode"], "function": "transition"}, {"x": 2, "y": 0, "zone": "RIM_TOP", "line_id": "K-01", "text_chunk": "Ode on a Grecian Urn — By John Keats", "density": 0.9, "motifs": ["ode"], "function": "transition"}, {"x": 3, "y": 0, "zone": "RIM_TOP", "line_id": "K-01", "text_chunk": "Ode on a Grecian Urn — By John Keats", "density": 0.9, "motifs": ["ode"], "function": "transition"}, {"x": 4, "y": 0, "zone": "RIM_TOP", "line_id": "K-01", "text_chunk": "Ode on a Grecian Urn — By John Keats", "density": 0.9, "motifs": ["ode"], "function": "transition"}, {"x": 5, "y": 0, "zone": "RIM_TOP", "line_id": "K-01", "text_chunk": "Ode on a Grecian Urn — By John Keats", "density": 0.9, "motifs": ["ode"], "function": "transition"}, {"x": 6, "y": 0, "zone": "RIM_TOP", "line_id": "K-02", "text_chunk": "Thou still unravish'd bride of quietness,", "density": 0.9, "motifs": ["unravish'd"], "function": "invocation"}, {"x": 7, "y": 0, "zone": "RIM_TOP", "line_id": "K-02", "text_chunk": "Thou still unravish'd bride of quietness,", "density": 0.9, "motifs": ["unravish'd"], "function": "invocation"}, {"x": 8, "y": 0, "zone": "RIM_TOP", "line_id": "K-02", "text_chunk": "Thou still unravish'd bride of quietness,", "density": 0.9, "motifs": ["unravish'd"], "function": "invocation"}, {"x": 9, "y": 0, "zone": "RIM_TOP", "line_id": "K-02", "text_chunk": "Thou still unravish'd bride of quietness,", "density": 0.9, "motifs": ["unravish'd"], "function": "invocation"}, {"x": 10, "y": 0, "zone": "RIM_TOP", "line_id": "K-02", "text_chunk": "Thou still unravish'd bride of quietness,", "density": 0.9, "motifs": ["unravish'd"], "function": "invocation"}, {"x": 11, "y": 0, "zone": "RIM_TOP", "line_id": "K-02", "text_chunk": "Thou still unravish'd bride of quietness,", "density": 0.9, "motifs": ["unravish'd"], "function": "invocation"}, {"x": 12, "y": 0, "zone": "RIM_TOP", "line_id": "K-02", "text_chunk": "Thou still unravish'd bride of quietness,", "density": 0.9, "motifs": ["unravish'd"], "function": "invocation"}, {"x": 13, "y": 0, "zone": "RIM_TOP", "line_id": "K-02", "text_chunk": "Thou still unravish'd bride of quietness,", "density": 0.9, "motifs": ["unravish'd"], "function": "invocation"}, {"x": 14, "y": 0, "zone": "RIM_TOP", "line_id": "K-02", "text_chunk": "Thou still unravish'd bride of quietness,", "density": 0.9, "motifs": ["unravish'd"], "function": "invocation"}, {"x": 15, "y": 0, "zone": "RIM_TOP", "line_id": "K-02", "text_chunk": "Thou still unravish'd bride of quietness,", "density": 0.9, "motifs": ["unravish'd"], "function": "invocation"}, {"x": 16, "y": 0, "zone": "RIM_TOP", "line_id": "K-02", "text_chunk": "Thou still unravish'd bride of quietness,", "density": 0.9, "motifs": ["unravish'd"], "function": "invocation"}, {"x": 17, "y": 0, "zone": "RIM_TOP", "line_id": "K-02", "text_chunk": "Thou still unravish'd bride of quietness,", "density": 0.9, "motifs": ["unravish'd"], "function": "invocation"}, {"x": 18, "y": 0, "zone": "RIM_TOP", "line_id": "K-02", "text_chunk": "Thou still unravish'd bride of quietness,", "density": 0.9, "motifs": ["unravish'd"], "function": "invocation"}, {"x": 19, "y": 0, "zone": "RIM_TOP", "line_id": "K-02", "text_chunk": "Thou still unravish'd bride of quietness,", "density": 0.9, "motifs": ["unravish'd"], "function": "invocation"}, {"x": 20, "y": 0, "zone": "RIM_TOP", "line_id": "K-50", "text_chunk": "truth beauty,—that is all", "density": 0.9, "motifs": ["beauty"], "function": "axiom"}, {"x": 21, "y": 0, "zone": "RIM_TOP", "line_id": "K-50", "text_chunk": "Beauty is truth, truth beauty,—that is all", "density": 0.9, "motifs": ["beauty"], "function": "axiom"}, {"x": 22, "y": 0, "zone": "RIM_TOP", "line_id": "K-50", "text_chunk": "Beauty is truth", "density": 0.88, "motifs": ["beauty"], "function": "axiom"}, {"x": 23, "y": 0, "zone": "RIM_TOP", "line_id": "K-50", "text_chunk": "truth beauty,—that is all", "density": 0.9, "motifs": ["beauty"], "function": "axiom"}], [{"x": 0, "y": 1, "zone": "RIM_TOP", "line_id": "K-03", "text_chunk": "Thou foster-child of silence and slow time,", "density": 0.9, "motifs": ["silence"], "function": "invocation"}, {"x": 1, "y": 1, "zone": "RIM_TOP", "line_id": "K-03", "text_chunk": "Thou foster-child of silence and slow time,", "density": 0.9, "motifs": ["silence"], "function": "invocation"}, {"x": 2, "y": 1, "zone": "RIM_TOP", "line_id": "K-03", "text_chunk": "Thou foster-child of silence and slow time,", "density": 0.9, "motifs": ["silence"], "function": "invocation"}, {"x": 3, "y": 1, "zone": "RIM_TOP", "line_id": "K-03", "text_chunk": "Thou foster-child of silence and slow time,", "density": 0.9, "motifs": ["silence"], "function": "invocation"}, {"x": 4, "y": 1, "zone": "RIM_TOP", "line_id": "K-03", "text_chunk": "Thou foster-child of silence and slow time,", "density": 0.9, "motifs": ["silence"], "function": "invocation"}, {"x": 5, "y": 1, "zone": "RIM_TOP", "line_id": "K-03", "text_chunk": "Thou foster-child of silence and slow time,", "density": 0.9, "motifs": ["silence"], "function": "invocation"}, {"x": 6, "y": 1, "zone": "RIM_TOP", "line_id": "K-03", "text_chunk": "Thou foster-child of silence and slow time,", "density": 0.9, "motifs": ["silence"], "function": "invocation"}, {"x": 7, "y": 1, "zone": "RIM_TOP", "line_id": "K-03", "text_chunk": "Thou foster-child of silence and slow time,", "density": 0.9, "motifs": ["silence"], "function": "invocation"}, {"x": 8, "y": 1, "zone": "RIM_TOP", "line_id": "K-03", "text_chunk": "Thou foster-child of silence and slow time,", "density": 0.9, "motifs": ["silence"], "function": "invocation"}, {"x": 9, "y": 1, "zone": "RIM_TOP", "line_id": "K-03", "text_chunk": "Thou foster-child of silence and slow time,", "density": 0.9, "motifs": ["silence"], "function": "invocation"}, {"x": 10, "y": 1, "zone": "RIM_TOP", "line_id": "K-03", "text_chunk": "Thou foster-child of silence and slow time,", "density": 0.9, "motifs": ["silence"], "function": "invocation"}, {"x": 11, "y": 1, "zone": "RIM_TOP", "line_id": "K-03", "text_chunk": "Thou foster-child of silence and slow time,", "density": 0.9, "motifs": ["silence"], "function": "invocation"}, {"x": 12, "y": 1, "zone": "RIM_TOP", "line_id": "K-03", "text_chunk": "Thou foster-child of silence and slow time,", "density": 0.9, "motifs": ["silence"], "function": "invocation"}, {"x": 13, "y": 1, "zone": "RIM_TOP", "line_id": "K-03", "text_chunk": "Thou foster-child of silence and slow time,", "density": 0.9, "motifs": ["silence"], "function": "invocation"}, {"x": 14, "y": 1, "zone": "RIM_TOP", "line_id": "K-04", "text_chunk": "Sylvan historian, who canst thus express", "density": 0.9, "motifs": ["sylvan"], "function": "invocation"}, {"x": 15, "y": 1, "zone": "RIM_TOP", "line_id": "K-04", "text_chunk": "Sylvan historian, who canst thus express", "density": 0.9, "motifs": ["sylvan"], "function": "invocation"}, {"x": 16, "y": 1, "zone": "RIM_TOP", "line_id": "K-04", "text_chunk": "Sylvan historian, who canst thus express", "density": 0.9, "motifs": ["sylvan"], "function": "invocation"}, {"x": 17, "y": 1, "zone": "RIM_TOP", "line_id": "K-04", "text_chunk": "Sylvan historian, who canst thus express", "density": 0.9, "motifs": ["sylvan"], "function": "invocation"}, {"x": 18, "y": 1, "zone": "RIM_TOP", "line_id": "K-04", "text_chunk": "Sylvan historian, who canst thus express", "density": 0.9, "motifs": ["sylvan"], "function": "invocation"}, {"x": 19, "y": 1, "zone": "RIM_TOP", "line_id": "K-04", "text_chunk": "Sylvan historian, who canst thus express", "density": 0.9, "motifs": ["sylvan"], "function": "invocation"}, {"x": 20, "y": 1, "zone": "RIM_TOP", "line_id": "K-04", "text_chunk": "Sylvan historian, who canst thus express", "density": 0.9, "motifs": ["sylvan"], "function": "invocation"}, {"x": 21, "y": 1, "zone": "RIM_TOP", "line_id": "K-04", "text_chunk": "Sylvan historian, who canst thus express", "density": 0.9, "motifs": ["sylvan"], "function": "invocation"}, {"x": 22, "y": 1, "zone": "RIM_TOP", "line_id": "K-04", "text_chunk": "Sylvan historian, who canst thus express", "density": 0.9, "motifs": ["sylvan"], "function": "invocation"}, {"x": 23, "y": 1, "zone": "RIM_TOP", "line_id": "K-04", "text_chunk": "Sylvan historian, who canst thus express", "density": 0.9, "motifs": ["sylvan"], "function": "invocation"}], [{"x": 0, "y": 2, "zone": "RIM_TOP", "line_id": "K-04", "text_chunk": "Sylvan historian, who canst thus express", "density": 0.9, "motifs": ["sylvan"], "function": "invocation"}, {"x": 1, "y": 2, "zone": "RIM_TOP", "line_id": "K-04", "text_chunk": "Sylvan historian, who canst thus express", "density": 0.9, "motifs": ["sylvan"], "function": "invocation"}, {"x": 2, "y": 2, "zone": "RIM_TOP", "line_id": "K-04", "text_chunk": "Sylvan historian, who canst thus express", "density": 0.9, "motifs": ["sylvan"], "function": "invocation"}, {"x": 3, "y": 2, "zone": "RIM_TOP", "line_id": "K-04", "text_chunk": "Sylvan historian, who canst thus express", "density": 0.9, "motifs": ["sylvan"], "function": "invocation"}, {"x": 4, "y": 2, "zone": "RIM_TOP", "line_id": "K-05", "text_chunk": "A flowery tale more sweetly than our rhyme:", "density": 0.9, "motifs": ["flowery"], "function": "invocation"}, {"x": 5, "y": 2, "zone": "RIM_TOP", "line_id": "K-05", "text_chunk": "A flowery tale more sweetly than our rhyme:", "density": 0.9, "motifs": ["flowery"], "function": "invocation"}, {"x": 6, "y": 2, "zone": "RIM_TOP", "line_id": "K-05", "text_chunk": "A flowery tale more sweetly than our rhyme:", "density": 0.9, "motifs": ["flowery"], "function": "invocation"}, {"x": 7, "y": 2, "zone": "RIM_TOP", "line_id": "K-05", "text_chunk": "A flowery tale more sweetly than our rhyme:", "density": 0.9, "motifs": ["flowery"], "function": "invocation"}, {"x": 8, "y": 2, "zone": "RIM_TOP", "line_id": "K-05", "text_chunk": "A flowery tale more sweetly than our rhyme:", "density": 0.9, "motifs": ["flowery"], "function": "invocation"}, {"x": 9, "y": 2, "zone": "RIM_TOP", "line_id": "K-05", "text_chunk": "A flowery tale more sweetly than our rhyme:", "density": 0.9, "motifs": ["flowery"], "function": "invocation"}, {"x": 10, "y": 2, "zone": "RIM_TOP", "line_id": "K-05", "text_chunk": "A flowery tale more sweetly than our rhyme:", "density": 0.9, "motifs": ["flowery"], "function": "invocation"}, {"x": 11, "y": 2, "zone": "RIM_TOP", "line_id": "K-05", "text_chunk": "A flowery tale more sweetly than our rhyme:", "density": 0.9, "motifs": ["flowery"], "function": "invocation"}, {"x": 12, "y": 2, "zone": "RIM_TOP", "line_id": "K-05", "text_chunk": "A flowery tale more sweetly than our rhyme:", "density": 0.9, "motifs": ["flowery"], "function": "invocation"}, {"x": 13, "y": 2, "zone": "RIM_TOP", "line_id": "K-05", "text_chunk": "A flowery tale more sweetly than our rhyme:", "density": 0.9, "motifs": ["flowery"], "function": "invocation"}, {"x": 14, "y": 2, "zone": "RIM_TOP", "line_id": "K-05", "text_chunk": "A flowery tale more sweetly than our rhyme:", "density": 0.9, "motifs": ["flowery"], "function": "invocation"}, {"x": 15, "y": 2, "zone": "RIM_TOP", "line_id": "K-05", "text_chunk": "A flowery tale more sweetly than our rhyme:", "density": 0.9, "motifs": ["flowery"], "function": "invocation"}, {"x": 16, "y": 2, "zone": "RIM_TOP", "line_id": "K-05", "text_chunk": "A flowery tale more sweetly than our rhyme:", "density": 0.9, "motifs": ["flowery"], "function": "invocation"}, {"x": 17, "y": 2, "zone": "RIM_TOP", "line_id": "K-05", "text_chunk": "A flowery tale more sweetly than our rhyme:", "density": 0.9, "motifs": ["flowery"], "function": "invocation"}, {"x": 18, "y": 2, "zone": "RIM_TOP", "line_id": "K-51", "text_chunk": "all ye need to know.", "density": 0.9, "motifs": ["earth"], "function": "axiom"}, {"x": 19, "y": 2, "zone": "RIM_TOP", "line_id": "K-51", "text_chunk": "Ye know on earth, and all ye need to know.", "density": 0.9, "motifs": ["earth"], "function": "axiom"}, {"x": 20, "y": 2, "zone": "RIM_TOP", "line_id": "K-51", "text_chunk": "Ye know on earth", "density": 0.88, "motifs": ["earth"], "function": "axiom"}, {"x": 21, "y": 2, "zone": "RIM_TOP", "line_id": "K-51", "text_chunk": "all ye need to know.", "density": 0.9, "motifs": ["earth"], "function": "axiom"}, {"x": 22, "y": 2, "zone": "RIM_TOP", "line_id": "K-51", "text_chunk": "Ye know on earth, and all ye need to know.", "density": 0.9, "motifs": ["earth"], "function": "axiom"}, {"x": 23, "y": 2, "zone": "RIM_TOP", "line_id": "K-50", "text_chunk": "Beauty is truth", "density": 0.88, "motifs": ["beauty"], "function": "axiom"}], [{"x": 0, "y": 3, "zone": "BELLY", "line_id": "K-12", "text_chunk": "Heard melodies are sweet, but those unheard", "density": 0.7, "motifs": ["heard"], "function": "eternity"}, {"x": 1, "y": 3, "zone": "BELLY", "line_id": "K-12", "text_chunk": "Heard melodies are sweet, but those unheard", "density": 0.7, "motifs": ["heard"], "function": "eternity"}, {"x": 2, "y": 3, "zone": "BELLY", "line_id": "K-12", "text_chunk": "Heard melodies are sweet, but those unheard", "density": 0.7, "motifs": ["heard"], "function": "eternity"}, {"x": 3, "y": 3, "zone": "BELLY", "line_id": "K-12", "text_chunk": "Heard melodies are sweet, but those unheard", "density": 0.7, "motifs": ["heard"], "function": "eternity"}, {"x": 4, "y": 3, "zone": "BELLY", "line_id": "K-13", "text_chunk": "Are sweeter; therefore, ye soft pipes, play on;", "density": 0.7, "motifs": ["softer"], "function": "eternity"}, {"x": 5, "y": 3, "zone": "BELLY", "line_id": "K-13", "text_chunk": "Are sweeter; therefore, ye soft pipes, play on;", "density": 0.7, "motifs": ["softer"], "function": "eternity"}, {"x": 6, "y": 3, "zone": "BELLY", "line_id": "K-13", "text_chunk": "Are sweeter; therefore, ye soft pipes, play on;", "density": 0.7, "motifs": ["softer"], "function": "eternity"}, {"x": 7, "y": 3, "zone": "BELLY", "line_id": "K-13", "text_chunk": "Are sweeter; therefore, ye soft pipes, play on;", "density": 0.7, "motifs": ["softer"], "function": "eternity"}, {"x": 8, "y": 3, "zone": "BELLY", "line_id": "K-16", "text_chunk": "Fair youth, beneath the trees, thou canst not leave", "density": 0.7, "motifs": ["fair"], "function": "scene"}, {"x": 9, "y": 3, "zone": "BELLY", "line_id": "K-16", "text_chunk": "Fair youth, beneath the trees, thou canst not leave", "density": 0.7, "motifs": ["fair"], "function": "scene"}, {"x": 10, "y": 3, "zone": "CENTER_APPROACH", "line_id": "K-29", "text_chunk": "All breathing human passion far above,", "density": 0.8, "motifs": ["passion"], "function": "meta"}, {"x": 11, "y": 3, "zone": "CENTER_APPROACH", "line_id": "K-29", "text_chunk": "All breathing human passion far above,", "density": 0.8, "motifs": ["passion"], "function": "meta"}, {"x": 12, "y": 3, "zone": "CENTER_APPROACH", "line_id": "K-29", "text_chunk": "All breathing human passion far above,", "density": 0.8, "motifs": ["passion"], "function": "meta"}, {"x": 13, "y": 3, "zone": "CENTER_APPROACH", "line_id": "K-29", "text_chunk": "All breathing human passion far above,", "density": 0.8, "motifs": ["passion"], "function": "meta"}, {"x": 14, "y": 3, "zone": "CENTER_APPROACH", "line_id": "K-29", "text_chunk": "All breathing human passion far above,", "density": 0.8, "motifs": ["passion"], "function": "meta"}, {"x": 15, "y": 3, "zone": "BELLY", "line_id": "K-17", "text_chunk": "Thy song, nor ever can those trees be bare;", "density": 0.7, "motifs": ["song"], "function": "eternity"}, {"x": 16, "y": 3, "zone": "BELLY", "line_id": "K-17", "text_chunk": "Thy song, nor ever can those trees be bare;", "density": 0.7, "motifs": ["song"], "function": "eternity"}, {"x": 17, "y": 3, "zone": "BELLY", "line_id": "K-18", "text_chunk": "Bold Lover, never, never canst thou kiss,", "density": 0.7, "motifs": ["bold"], "function": "scene"}, {"x": 18, "y": 3, "zone": "BELLY", "line_id": "K-18", "text_chunk": "Bold Lover, never, never canst thou kiss,", "density": 0.7, "motifs": ["bold"], "function": "scene"}, {"x": 19, "y": 3, "zone": "BELLY", "line_id": "K-43", "text_chunk": "Of marble men and maidens overwrought,", "density": 0.7, "motifs": ["marble"], "function": "scene"}, {"x": 20, "y": 3, "zone": "BELLY", "line_id": "K-43", "text_chunk": "Of marble men and maidens overwrought,", "density": 0.7, "motifs": ["marble"], "function": "scene"}, {"x": 21, "y": 3, "zone": "BELLY", "line_id": "K-43", "text_chunk": "Of marble men and maidens overwrought,", "density": 0.7, "motifs": ["marble"], "function": "scene"}, {"x": 22, "y": 3, "zone": "BELLY", "line_id": "K-43", "text_chunk": "Of marble men and maidens overwrought,", "density": 0.7, "motifs": ["marble"], "function": "scene"}, {"x": 23, "y": 3, "zone": "BELLY", "line_id": "K-43", "text_chunk": "Of marble men and maidens overwrought,", "density": 0.7, "motifs": ["marble"], "function": "scene"}], [{"x": 0, "y": 4, "zone": "BELLY", "line_id": "K-43", "text_chunk": "Of marble men and maidens overwrought,", "density": 0.7, "motifs": ["marble"], "function": "scene"}, {"x": 1, "y": 4, "zone": "BELLY", "line_id": "K-43", "text_chunk": "Of marble men and maidens overwrought,", "density": 0.7, "motifs": ["marble"], "function": "scene"}, {"x": 2, "y": 4, "zone": "BELLY", "line_id": "K-43", "text_chunk": "Of marble men and maidens overwrought,", "density": 0.7, "motifs": ["marble"], "function": "scene"}, {"x": 3, "y": 4, "zone": "BELLY", "line_id": "K-43", "text_chunk": "Of marble men and maidens overwrought,", "density": 0.7, "motifs": ["marble"], "function": "scene"}, {"x": 4, "y": 4, "zone": "BELLY", "line_id": "K-43", "text_chunk": "Of marble men and maidens overwrought,", "density": 0.7, "motifs": ["marble"], "function": "scene"}, {"x": 5, "y": 4, "zone": "BELLY", "line_id": "K-44", "text_chunk": "With forest branches and the trodden weed;", "density": 0.7, "motifs": ["forest"], "function": "scene"}, {"x": 6, "y": 4, "zone": "BELLY", "line_id": "K-44", "text_chunk": "With forest branches and the trodden weed;", "density": 0.7, "motifs": ["forest"], "function": "scene"}, {"x": 7, "y": 4, "zone": "BELLY", "line_id": "K-30", "text_chunk": "That leaves a heart high-sorrowful and cloy'd,", "density": 0.7, "motifs": ["heart"], "function": "absence"}, {"x": 8, "y": 4, "zone": "BELLY", "line_id": "K-30", "text_chunk": "That leaves a heart high-sorrowful and cloy'd,", "density": 0.7, "motifs": ["heart"], "function": "absence"}, {"x": 9, "y": 4, "zone": "BELLY", "line_id": "K-30", "text_chunk": "That leaves a heart high-sorrowful and cloy'd,", "density": 0.7, "motifs": ["heart"], "function": "absence"}, {"x": 10, "y": 4, "zone": "CENTER_APPROACH", "line_id": "K-29", "text_chunk": "All breathing human passion far above,", "density": 0.8, "motifs": ["passion"], "function": "meta"}, {"x": 11, "y": 4, "zone": "CENTER_APPROACH", "line_id": "K-29", "text_chunk": "All breathing human passion far above,", "density": 0.8, "motifs": ["passion"], "function": "meta"}, {"x": 12, "y": 4, "zone": "CENTER_APPROACH", "line_id": "K-29", "text_chunk": "All breathing human passion far above,", "density": 0.8, "motifs": ["passion"], "function": "meta"}, {"x": 13, "y": 4, "zone": "CENTER_APPROACH", "line_id": "K-29", "text_chunk": "All breathing human passion far above,", "density": 0.8, "motifs": ["passion"], "function": "meta"}, {"x": 14, "y": 4, "zone": "CENTER_APPROACH", "line_id": "K-29", "text_chunk": "All breathing human passion far above,", "density": 0.8, "motifs": ["passion"], "function": "meta"}, {"x": 15, "y": 4, "zone": "BELLY", "line_id": "K-30", "text_chunk": "That leaves a heart high-sorrowful and cloy'd,", "density": 0.7, "motifs": ["heart"], "function": "absence"}, {"x": 16, "y": 4, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}, {"x": 17, "y": 4, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}, {"x": 18, "y": 4, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}, {"x": 19, "y": 4, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}, {"x": 20, "y": 4, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}, {"x": 21, "y": 4, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}, {"x": 22, "y": 4, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}, {"x": 23, "y": 4, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}], [{"x": 0, "y": 5, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}, {"x": 1, "y": 5, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}, {"x": 2, "y": 5, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}, {"x": 3, "y": 5, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}, {"x": 4, "y": 5, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}, {"x": 5, "y": 5, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}, {"x": 6, "y": 5, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}, {"x": 7, "y": 5, "zone": "BELLY", "line_id": "K-20", "text_chunk": "She cannot fade, though thou hast not thy bliss,", "density": 0.7, "motifs": ["fade"], "function": "eternity"}, {"x": 8, "y": 5, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 9, "y": 5, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 10, "y": 5, "zone": "CENTER_APPROACH", "line_id": "K-29", "text_chunk": "All breathing human passion far above,", "density": 0.8, "motifs": ["passion"], "function": "meta"}, {"x": 11, "y": 5, "zone": "CENTER_APPROACH", "line_id": "K-29", "text_chunk": "All breathing human passion far above,", "density": 0.8, "motifs": ["passion"], "function": "meta"}, {"x": 12, "y": 5, "zone": "CENTER_APPROACH", "line_id": "K-14", "text_chunk": "Not to the sensual ear, but, more endear'd,", "density": 0.8, "motifs": ["sensual"], "function": "meta"}, {"x": 13, "y": 5, "zone": "CENTER_APPROACH", "line_id": "K-14", "text_chunk": "Not to the sensual ear, but, more endear'd,", "density": 0.8, "motifs": ["sensual"], "function": "meta"}, {"x": 14, "y": 5, "zone": "CENTER_APPROACH", "line_id": "K-14", "text_chunk": "Not to the sensual ear, but, more endear'd,", "density": 0.8, "motifs": ["sensual"], "function": "meta"}, {"x": 15, "y": 5, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 16, "y": 5, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 17, "y": 5, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 18, "y": 5, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 19, "y": 5, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 20, "y": 5, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 21, "y": 5, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 22, "y": 5, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 23, "y": 5, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}], [{"x": 0, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-06", "text_chunk": "What leaf-fring'd legend haunts about thy shape", "density": 0.85, "motifs": ["leaf-fring'd"], "function": "question"}, {"x": 1, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-06", "text_chunk": "What leaf-fring'd legend haunts about thy shape", "density": 0.85, "motifs": ["leaf-fring'd"], "function": "question"}, {"x": 2, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-06", "text_chunk": "What leaf-fring'd legend haunts about thy shape", "density": 0.85, "motifs": ["leaf-fring'd"], "function": "question"}, {"x": 3, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-06", "text_chunk": "What leaf-fring'd legend haunts about thy shape", "density": 0.85, "motifs": ["leaf-fring'd"], "function": "question"}, {"x": 4, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-06", "text_chunk": "What leaf-fring'd legend haunts about thy shape", "density": 0.85, "motifs": ["leaf-fring'd"], "function": "question"}, {"x": 5, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-06", "text_chunk": "What leaf-fring'd legend haunts about thy shape", "density": 0.85, "motifs": ["leaf-fring'd"], "function": "question"}, {"x": 6, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-06", "text_chunk": "What leaf-fring'd legend haunts about thy shape", "density": 0.85, "motifs": ["leaf-fring'd"], "function": "question"}, {"x": 7, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-06", "text_chunk": "What leaf-fring'd legend haunts about thy shape", "density": 0.85, "motifs": ["leaf-fring'd"], "function": "question"}, {"x": 8, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-06", "text_chunk": "What leaf-fring'd legend haunts about thy shape", "density": 0.85, "motifs": ["leaf-fring'd"], "function": "question"}, {"x": 9, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-06", "text_chunk": "What leaf-fring'd legend haunts about thy shape", "density": 0.85, "motifs": ["leaf-fring'd"], "function": "question"}, {"x": 10, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-07", "text_chunk": "Of deities or mortals, or of both,", "density": 0.85, "motifs": ["deities"], "function": "question"}, {"x": 11, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-07", "text_chunk": "Of deities or mortals, or of both,", "density": 0.85, "motifs": ["deities"], "function": "question"}, {"x": 12, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-07", "text_chunk": "Of deities or mortals, or of both,", "density": 0.85, "motifs": ["deities"], "function": "question"}, {"x": 13, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-07", "text_chunk": "Of deities or mortals, or of both,", "density": 0.85, "motifs": ["deities"], "function": "question"}, {"x": 14, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-07", "text_chunk": "Of deities or mortals, or of both,", "density": 0.85, "motifs": ["deities"], "function": "question"}, {"x": 15, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-07", "text_chunk": "Of deities or mortals, or of both,", "density": 0.85, "motifs": ["deities"], "function": "question"}, {"x": 16, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-07", "text_chunk": "Of deities or mortals, or of both,", "density": 0.85, "motifs": ["deities"], "function": "question"}, {"x": 17, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-07", "text_chunk": "Of deities or mortals, or of both,", "density": 0.85, "motifs": ["deities"], "function": "question"}, {"x": 18, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-08", "text_chunk": "In Tempe or the dales of Arcady?", "density": 0.85, "motifs": ["Tempe"], "function": "question"}, {"x": 19, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-08", "text_chunk": "In Tempe or the dales of Arcady?", "density": 0.85, "motifs": ["Tempe"], "function": "question"}, {"x": 20, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-08", "text_chunk": "In Tempe or the dales of Arcady?", "density": 0.85, "motifs": ["Tempe"], "function": "question"}, {"x": 21, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-08", "text_chunk": "In Tempe or the dales of Arcady?", "density": 0.85, "motifs": ["Tempe"], "function": "question"}, {"x": 22, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-08", "text_chunk": "In Tempe or the dales of Arcady?", "density": 0.85, "motifs": ["Tempe"], "function": "question"}, {"x": 23, "y": 6, "zone": "UPPER_FRIEZE", "line_id": "K-08", "text_chunk": "In Tempe or the dales of Arcady?", "density": 0.85, "motifs": ["Tempe"], "function": "question"}], [{"x": 0, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-08", "text_chunk": "In Tempe or the dales of Arcady?", "density": 0.85, "motifs": ["Tempe"], "function": "question"}, {"x": 1, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-08", "text_chunk": "In Tempe or the dales of Arcady?", "density": 0.85, "motifs": ["Tempe"], "function": "question"}, {"x": 2, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-09", "text_chunk": "What men or gods are these? What maidens loth?", "density": 0.85, "motifs": ["men"], "function": "question"}, {"x": 3, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-09", "text_chunk": "What men or gods are these? What maidens loth?", "density": 0.85, "motifs": ["men"], "function": "question"}, {"x": 4, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-09", "text_chunk": "What men or gods are these? What maidens loth?", "density": 0.85, "motifs": ["men"], "function": "question"}, {"x": 5, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-09", "text_chunk": "What men or gods are these? What maidens loth?", "density": 0.85, "motifs": ["men"], "function": "question"}, {"x": 6, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-09", "text_chunk": "What men or gods are these? What maidens loth?", "density": 0.85, "motifs": ["men"], "function": "question"}, {"x": 7, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-09", "text_chunk": "What men or gods are these? What maidens loth?", "density": 0.85, "motifs": ["men"], "function": "question"}, {"x": 8, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-09", "text_chunk": "What men or gods are these? What maidens loth?", "density": 0.85, "motifs": ["men"], "function": "question"}, {"x": 9, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-09", "text_chunk": "What men or gods are these? What maidens loth?", "density": 0.85, "motifs": ["men"], "function": "question"}, {"x": 10, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-09", "text_chunk": "What men or gods are these? What maidens loth?", "density": 0.85, "motifs": ["men"], "function": "question"}, {"x": 11, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-09", "text_chunk": "What men or gods are these? What maidens loth?", "density": 0.85, "motifs": ["men"], "function": "question"}, {"x": 12, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-10", "text_chunk": "What mad pursuit? What struggle to escape?", "density": 0.85, "motifs": ["mad"], "function": "question"}, {"x": 13, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-10", "text_chunk": "What mad pursuit? What struggle to escape?", "density": 0.85, "motifs": ["mad"], "function": "question"}, {"x": 14, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-10", "text_chunk": "What mad pursuit? What struggle to escape?", "density": 0.85, "motifs": ["mad"], "function": "question"}, {"x": 15, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-10", "text_chunk": "What mad pursuit? What struggle to escape?", "density": 0.85, "motifs": ["mad"], "function": "question"}, {"x": 16, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-10", "text_chunk": "What mad pursuit? What struggle to escape?", "density": 0.85, "motifs": ["mad"], "function": "question"}, {"x": 17, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-10", "text_chunk": "What mad pursuit? What struggle to escape?", "density": 0.85, "motifs": ["mad"], "function": "question"}, {"x": 18, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-10", "text_chunk": "What mad pursuit? What struggle to escape?", "density": 0.85, "motifs": ["mad"], "function": "question"}, {"x": 19, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-10", "text_chunk": "What mad pursuit? What struggle to escape?", "density": 0.85, "motifs": ["mad"], "function": "question"}, {"x": 20, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-10", "text_chunk": "What mad pursuit? What struggle to escape?", "density": 0.85, "motifs": ["mad"], "function": "question"}, {"x": 21, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-10", "text_chunk": "What mad pursuit? What struggle to escape?", "density": 0.85, "motifs": ["mad"], "function": "question"}, {"x": 22, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-11", "text_chunk": "What pipes and timbrels? What wild ecstasy?", "density": 0.85, "motifs": ["pipes"], "function": "question"}, {"x": 23, "y": 7, "zone": "UPPER_FRIEZE", "line_id": "K-11", "text_chunk": "What pipes and timbrels? What wild ecstasy?", "density": 0.85, "motifs": ["pipes"], "function": "question"}], [{"x": 0, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-11", "text_chunk": "What pipes and timbrels? What wild ecstasy?", "density": 0.85, "motifs": ["pipes"], "function": "question"}, {"x": 1, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-11", "text_chunk": "What pipes and timbrels? What wild ecstasy?", "density": 0.85, "motifs": ["pipes"], "function": "question"}, {"x": 2, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-11", "text_chunk": "What pipes and timbrels? What wild ecstasy?", "density": 0.85, "motifs": ["pipes"], "function": "question"}, {"x": 3, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-11", "text_chunk": "What pipes and timbrels? What wild ecstasy?", "density": 0.85, "motifs": ["pipes"], "function": "question"}, {"x": 4, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-11", "text_chunk": "What pipes and timbrels? What wild ecstasy?", "density": 0.85, "motifs": ["pipes"], "function": "question"}, {"x": 5, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-11", "text_chunk": "What pipes and timbrels? What wild ecstasy?", "density": 0.85, "motifs": ["pipes"], "function": "question"}, {"x": 6, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-11", "text_chunk": "What pipes and timbrels? What wild ecstasy?", "density": 0.85, "motifs": ["pipes"], "function": "question"}, {"x": 7, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-11", "text_chunk": "What pipes and timbrels? What wild ecstasy?", "density": 0.85, "motifs": ["pipes"], "function": "question"}, {"x": 8, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-12", "text_chunk": "Heard melodies are sweet, but those unheard", "density": 0.85, "motifs": ["heard"], "function": "eternity"}, {"x": 9, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-12", "text_chunk": "Heard melodies are sweet, but those unheard", "density": 0.85, "motifs": ["heard"], "function": "eternity"}, {"x": 10, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-12", "text_chunk": "Heard melodies are sweet, but those unheard", "density": 0.85, "motifs": ["heard"], "function": "eternity"}, {"x": 11, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-12", "text_chunk": "Heard melodies are sweet, but those unheard", "density": 0.85, "motifs": ["heard"], "function": "eternity"}, {"x": 12, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-12", "text_chunk": "Heard melodies are sweet, but those unheard", "density": 0.85, "motifs": ["heard"], "function": "eternity"}, {"x": 13, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-12", "text_chunk": "Heard melodies are sweet, but those unheard", "density": 0.85, "motifs": ["heard"], "function": "eternity"}, {"x": 14, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-12", "text_chunk": "Heard melodies are sweet, but those unheard", "density": 0.85, "motifs": ["heard"], "function": "eternity"}, {"x": 15, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-12", "text_chunk": "Heard melodies are sweet, but those unheard", "density": 0.85, "motifs": ["heard"], "function": "eternity"}, {"x": 16, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-12", "text_chunk": "Heard melodies are sweet, but those unheard", "density": 0.85, "motifs": ["heard"], "function": "eternity"}, {"x": 17, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-12", "text_chunk": "Heard melodies are sweet, but those unheard", "density": 0.85, "motifs": ["heard"], "function": "eternity"}, {"x": 18, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-13", "text_chunk": "Are sweeter; therefore, ye soft pipes, play on;", "density": 0.85, "motifs": ["softer"], "function": "eternity"}, {"x": 19, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-13", "text_chunk": "Are sweeter; therefore, ye soft pipes, play on;", "density": 0.85, "motifs": ["softer"], "function": "eternity"}, {"x": 20, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-13", "text_chunk": "Are sweeter; therefore, ye soft pipes, play on;", "density": 0.85, "motifs": ["softer"], "function": "eternity"}, {"x": 21, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-13", "text_chunk": "Are sweeter; therefore, ye soft pipes, play on;", "density": 0.85, "motifs": ["softer"], "function": "eternity"}, {"x": 22, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-13", "text_chunk": "Are sweeter; therefore, ye soft pipes, play on;", "density": 0.85, "motifs": ["softer"], "function": "eternity"}, {"x": 23, "y": 8, "zone": "UPPER_FRIEZE", "line_id": "K-13", "text_chunk": "Are sweeter; therefore, ye soft pipes, play on;", "density": 0.85, "motifs": ["softer"], "function": "eternity"}], [{"x": 0, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-13", "text_chunk": "Are sweeter; therefore, ye soft pipes, play on;", "density": 0.85, "motifs": ["softer"], "function": "eternity"}, {"x": 1, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-13", "text_chunk": "Are sweeter; therefore, ye soft pipes, play on;", "density": 0.85, "motifs": ["softer"], "function": "eternity"}, {"x": 2, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-14", "text_chunk": "Not to the sensual ear, but, more endear'd,", "density": 0.85, "motifs": ["sensual"], "function": "meta"}, {"x": 3, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-14", "text_chunk": "Not to the sensual ear, but, more endear'd,", "density": 0.85, "motifs": ["sensual"], "function": "meta"}, {"x": 4, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-14", "text_chunk": "Not to the sensual ear, but, more endear'd,", "density": 0.85, "motifs": ["sensual"], "function": "meta"}, {"x": 5, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-14", "text_chunk": "Not to the sensual ear, but, more endear'd,", "density": 0.85, "motifs": ["sensual"], "function": "meta"}, {"x": 6, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-14", "text_chunk": "Not to the sensual ear, but, more endear'd,", "density": 0.85, "motifs": ["sensual"], "function": "meta"}, {"x": 7, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-14", "text_chunk": "Not to the sensual ear, but, more endear'd,", "density": 0.85, "motifs": ["sensual"], "function": "meta"}, {"x": 8, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-15", "text_chunk": "Pipe to the spirit ditties of no tone:", "density": 0.85, "motifs": ["spirit"], "function": "meta"}, {"x": 9, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-15", "text_chunk": "Pipe to the spirit ditties of no tone:", "density": 0.85, "motifs": ["spirit"], "function": "meta"}, {"x": 10, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-15", "text_chunk": "Pipe to the spirit ditties of no tone:", "density": 0.85, "motifs": ["spirit"], "function": "meta"}, {"x": 11, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-15", "text_chunk": "Pipe to the spirit ditties of no tone:", "density": 0.85, "motifs": ["spirit"], "function": "meta"}, {"x": 12, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-15", "text_chunk": "Pipe to the spirit ditties of no tone:", "density": 0.85, "motifs": ["spirit"], "function": "meta"}, {"x": 13, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-15", "text_chunk": "Pipe to the spirit ditties of no tone:", "density": 0.85, "motifs": ["spirit"], "function": "meta"}, {"x": 14, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-16", "text_chunk": "Fair youth, beneath the trees, thou canst not leave", "density": 0.85, "motifs": ["fair"], "function": "scene"}, {"x": 15, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-16", "text_chunk": "Fair youth, beneath the trees, thou canst not leave", "density": 0.85, "motifs": ["fair"], "function": "scene"}, {"x": 16, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-16", "text_chunk": "Fair youth, beneath the trees, thou canst not leave", "density": 0.85, "motifs": ["fair"], "function": "scene"}, {"x": 17, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-16", "text_chunk": "Fair youth, beneath the trees, thou canst not leave", "density": 0.85, "motifs": ["fair"], "function": "scene"}, {"x": 18, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-16", "text_chunk": "Fair youth, beneath the trees, thou canst not leave", "density": 0.85, "motifs": ["fair"], "function": "scene"}, {"x": 19, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-16", "text_chunk": "Fair youth, beneath the trees, thou canst not leave", "density": 0.85, "motifs": ["fair"], "function": "scene"}, {"x": 20, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-17", "text_chunk": "Thy song, nor ever can those trees be bare;", "density": 0.85, "motifs": ["song"], "function": "eternity"}, {"x": 21, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-17", "text_chunk": "Thy song, nor ever can those trees be bare;", "density": 0.85, "motifs": ["song"], "function": "eternity"}, {"x": 22, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-18", "text_chunk": "Bold Lover, never, never canst thou kiss,", "density": 0.85, "motifs": ["bold"], "function": "scene"}, {"x": 23, "y": 9, "zone": "UPPER_FRIEZE", "line_id": "K-18", "text_chunk": "Bold Lover, never, never canst thou kiss,", "density": 0.85, "motifs": ["bold"], "function": "scene"}], [{"x": 0, "y": 10, "zone": "ABSENCE_FIELD", "line_id": "K-36", "text_chunk": "", "density": 0.02, "motifs": ["little town"], "function": "absence"}, {"x": 1, "y": 10, "zone": "ABSENCE_FIELD", "line_id": "K-36", "text_chunk": "What little town by river or sea shore,", "density": 0.12, "motifs": ["little town"], "function": "absence"}, {"x": 2, "y": 10, "zone": "ABSENCE_FIELD", "line_id": "K-36", "text_chunk": "", "density": 0.02, "motifs": ["little town"], "function": "absence"}, {"x": 3, "y": 10, "zone": "ABSENCE_FIELD", "line_id": "K-36", "text_chunk": "", "density": 0.02, "motifs": ["little town"], "function": "absence"}, {"x": 4, "y": 10, "zone": "ABSENCE_FIELD", "line_id": "K-36", "text_chunk": "What little town by river or sea shore,", "density": 0.12, "motifs": ["little town"], "function": "absence"}, {"x": 5, "y": 10, "zone": "ABSENCE_FIELD", "line_id": "K-36", "text_chunk": "", "density": 0.02, "motifs": ["little town"], "function": "absence"}, {"x": 6, "y": 10, "zone": "ABSENCE_FIELD", "line_id": "K-37", "text_chunk": "", "density": 0.02, "motifs": ["mountain-built"], "function": "absence"}, {"x": 7, "y": 10, "zone": "ABSENCE_FIELD", "line_id": "K-37", "text_chunk": "Or mountain-built with peaceful citadel,", "density": 0.12, "motifs": ["mountain-built"], "function": "absence"}, {"x": 8, "y": 10, "zone": "ABSENCE_FIELD", "line_id": "K-37", "text_chunk": "", "density": 0.02, "motifs": ["mountain-built"], "function": "absence"}, {"x": 9, "y": 10, "zone": "ABSENCE_FIELD", "line_id": "K-37", "text_chunk": "", "density": 0.02, "motifs": ["mountain-built"], "function": "absence"}, {"x": 10, "y": 10, "zone": "CENTER_APPROACH", "line_id": "K-15", "text_chunk": "Pipe to the spirit ditties of no tone:", "density": 0.8, "motifs": ["spirit"], "function": "meta"}, {"x": 11, "y": 10, "zone": "CENTER_APPROACH", "line_id": "K-15", "text_chunk": "Pipe to the spirit ditties of no tone:", "density": 0.8, "motifs": ["spirit"], "function": "meta"}, {"x": 12, "y": 10, "zone": "CENTER_APPROACH", "line_id": "K-15", "text_chunk": "Pipe to the spirit ditties of no tone:", "density": 0.8, "motifs": ["spirit"], "function": "meta"}, {"x": 13, "y": 10, "zone": "CENTER_APPROACH", "line_id": "K-19", "text_chunk": "Though winning near the goal yet, do not grieve;", "density": 0.8, "motifs": ["goal"], "function": "transition"}, {"x": 14, "y": 10, "zone": "CENTER_APPROACH", "line_id": "K-19", "text_chunk": "Though winning near the goal yet, do not grieve;", "density": 0.8, "motifs": ["goal"], "function": "transition"}, {"x": 15, "y": 10, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 16, "y": 10, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 17, "y": 10, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 18, "y": 10, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 19, "y": 10, "zone": "BELLY", "line_id": "K-21", "text_chunk": "For ever wilt thou love, and she be fair!", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 20, "y": 10, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 21, "y": 10, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 22, "y": 10, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 23, "y": 10, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}], [{"x": 0, "y": 11, "zone": "ABSENCE_FIELD", "line_id": "K-38", "text_chunk": "", "density": 0.02, "motifs": ["emptied"], "function": "absence"}, {"x": 1, "y": 11, "zone": "ABSENCE_FIELD", "line_id": "K-38", "text_chunk": "", "density": 0.02, "motifs": ["emptied"], "function": "absence"}, {"x": 2, "y": 11, "zone": "ABSENCE_FIELD", "line_id": "K-38", "text_chunk": "Is emptied of this folk, this pious morn", "density": 0.12, "motifs": ["emptied"], "function": "absence"}, {"x": 3, "y": 11, "zone": "ABSENCE_FIELD", "line_id": "K-38", "text_chunk": "", "density": 0.02, "motifs": ["emptied"], "function": "absence"}, {"x": 4, "y": 11, "zone": "ABSENCE_FIELD", "line_id": "K-38", "text_chunk": "", "density": 0.02, "motifs": ["emptied"], "function": "absence"}, {"x": 5, "y": 11, "zone": "ABSENCE_FIELD", "line_id": "K-38", "text_chunk": "Is emptied of this folk, this pious morn", "density": 0.12, "motifs": ["emptied"], "function": "absence"}, {"x": 6, "y": 11, "zone": "ABSENCE_FIELD", "line_id": "K-39", "text_chunk": "", "density": 0.02, "motifs": ["streets"], "function": "absence"}, {"x": 7, "y": 11, "zone": "ABSENCE_FIELD", "line_id": "K-39", "text_chunk": "", "density": 0.02, "motifs": ["streets"], "function": "absence"}, {"x": 8, "y": 11, "zone": "ABSENCE_FIELD", "line_id": "K-39", "text_chunk": "And, little town, thy streets for evermo", "density": 0.12, "motifs": ["streets"], "function": "absence"}, {"x": 9, "y": 11, "zone": "ABSENCE_FIELD", "line_id": "K-39", "text_chunk": "", "density": 0.02, "motifs": ["streets"], "function": "absence"}, {"x": 10, "y": 11, "zone": "CENTER_APPROACH", "line_id": "K-19", "text_chunk": "Though winning near the goal yet, do not grieve;", "density": 0.8, "motifs": ["goal"], "function": "transition"}, {"x": 11, "y": 11, "zone": "CENTER_APPROACH", "line_id": "K-19", "text_chunk": "Though winning near the goal yet, do not grieve;", "density": 0.8, "motifs": ["goal"], "function": "transition"}, {"x": 12, "y": 11, "zone": "SEAL", "line_id": "K-51", "text_chunk": "Ye know on earth, and all ye need to know.", "density": 0.98, "motifs": ["earth"], "function": "axiom"}, {"x": 13, "y": 11, "zone": "CENTER_APPROACH", "line_id": "K-19", "text_chunk": "Though winning near the goal yet, do not grieve;", "density": 0.8, "motifs": ["goal"], "function": "transition"}, {"x": 14, "y": 11, "zone": "CENTER_APPROACH", "line_id": "K-45", "text_chunk": "Thou, silent form, dost tease us out of thought", "density": 0.8, "motifs": ["silent form"], "function": "meta"}, {"x": 15, "y": 11, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 16, "y": 11, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 17, "y": 11, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 18, "y": 11, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 19, "y": 11, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 20, "y": 11, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 21, "y": 11, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 22, "y": 11, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 23, "y": 11, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}], [{"x": 0, "y": 12, "zone": "ABSENCE_FIELD", "line_id": "K-39", "text_chunk": "And, little town, thy streets for evermo", "density": 0.12, "motifs": ["streets"], "function": "absence"}, {"x": 1, "y": 12, "zone": "ABSENCE_FIELD", "line_id": "K-39", "text_chunk": "", "density": 0.02, "motifs": ["streets"], "function": "absence"}, {"x": 2, "y": 12, "zone": "ABSENCE_FIELD", "line_id": "K-40", "text_chunk": "", "density": 0.02, "motifs": ["not a soul"], "function": "absence"}, {"x": 3, "y": 12, "zone": "ABSENCE_FIELD", "line_id": "K-40", "text_chunk": "Will silent be; and not a soul to tell", "density": 0.12, "motifs": ["not a soul"], "function": "absence"}, {"x": 4, "y": 12, "zone": "ABSENCE_FIELD", "line_id": "K-40", "text_chunk": "", "density": 0.02, "motifs": ["not a soul"], "function": "absence"}, {"x": 5, "y": 12, "zone": "ABSENCE_FIELD", "line_id": "K-40", "text_chunk": "", "density": 0.02, "motifs": ["not a soul"], "function": "absence"}, {"x": 6, "y": 12, "zone": "ABSENCE_FIELD", "line_id": "K-40", "text_chunk": "Will silent be; and not a soul to tell", "density": 0.12, "motifs": ["not a soul"], "function": "absence"}, {"x": 7, "y": 12, "zone": "ABSENCE_FIELD", "line_id": "K-40", "text_chunk": "", "density": 0.02, "motifs": ["not a soul"], "function": "absence"}, {"x": 8, "y": 12, "zone": "ABSENCE_FIELD", "line_id": "K-40", "text_chunk": "", "density": 0.02, "motifs": ["not a soul"], "function": "absence"}, {"x": 9, "y": 12, "zone": "ABSENCE_FIELD", "line_id": "K-41", "text_chunk": "Why thou art desolate, can e'er return.", "density": 0.12, "motifs": ["desolate"], "function": "absence"}, {"x": 10, "y": 12, "zone": "CENTER_APPROACH", "line_id": "K-45", "text_chunk": "Thou, silent form, dost tease us out of thought", "density": 0.8, "motifs": ["silent form"], "function": "meta"}, {"x": 11, "y": 12, "zone": "SEAL", "line_id": "K-50", "text_chunk": "Beauty is truth, truth beauty,—that is all", "density": 0.98, "motifs": ["beauty"], "function": "axiom"}, {"x": 12, "y": 12, "zone": "SEAL", "line_id": "K-50", "text_chunk": "Beauty is truth, truth beauty,—that is all", "density": 0.98, "motifs": ["beauty"], "function": "axiom"}, {"x": 13, "y": 12, "zone": "SEAL", "line_id": "K-51", "text_chunk": "Ye know on earth, and all ye need to know.", "density": 0.98, "motifs": ["earth"], "function": "axiom"}, {"x": 14, "y": 12, "zone": "CENTER_APPROACH", "line_id": "K-46", "text_chunk": "As doth eternity: Cold Pastoral!", "density": 0.8, "motifs": ["eternity"], "function": "eternity"}, {"x": 15, "y": 12, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 16, "y": 12, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 17, "y": 12, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 18, "y": 12, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 19, "y": 12, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 20, "y": 12, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 21, "y": 12, "zone": "BELLY", "line_id": "K-22", "text_chunk": "Ah, happy, happy boughs! that cannot shed", "density": 0.7, "motifs": ["happy"], "function": "eternity"}, {"x": 22, "y": 12, "zone": "BELLY", "line_id": "K-23", "text_chunk": "Your leaves, nor ever bid the Spring adieu;", "density": 0.7, "motifs": ["leaves"], "function": "eternity"}, {"x": 23, "y": 12, "zone": "BELLY", "line_id": "K-23", "text_chunk": "Your leaves, nor ever bid the Spring adieu;", "density": 0.7, "motifs": ["leaves"], "function": "eternity"}], [{"x": 0, "y": 13, "zone": "ABSENCE_FIELD", "line_id": "K-41", "text_chunk": "", "density": 0.02, "motifs": ["desolate"], "function": "absence"}, {"x": 1, "y": 13, "zone": "ABSENCE_FIELD", "line_id": "K-41", "text_chunk": "Why thou art desolate, can e'er return.", "density": 0.12, "motifs": ["desolate"], "function": "absence"}, {"x": 2, "y": 13, "zone": "ABSENCE_FIELD", "line_id": "K-41", "text_chunk": "", "density": 0.02, "motifs": ["desolate"], "function": "absence"}, {"x": 3, "y": 13, "zone": "ABSENCE_FIELD", "line_id": "K-41", "text_chunk": "", "density": 0.02, "motifs": ["desolate"], "function": "absence"}, {"x": 4, "y": 13, "zone": "ABSENCE_FIELD", "line_id": "K-41", "text_chunk": "Why thou art desolate, can e'er return.", "density": 0.12, "motifs": ["desolate"], "function": "absence"}, {"x": 5, "y": 13, "zone": "ABSENCE_FIELD", "line_id": "K-41", "text_chunk": "", "density": 0.02, "motifs": ["desolate"], "function": "absence"}, {"x": 6, "y": 13, "zone": "ABSENCE_FIELD", "line_id": "K-31", "text_chunk": "", "density": 0.02, "motifs": ["burning"], "function": "absence"}, {"x": 7, "y": 13, "zone": "ABSENCE_FIELD", "line_id": "K-31", "text_chunk": "A burning forehead, and a parching tongu", "density": 0.12, "motifs": ["burning"], "function": "absence"}, {"x": 8, "y": 13, "zone": "ABSENCE_FIELD", "line_id": "K-31", "text_chunk": "", "density": 0.02, "motifs": ["burning"], "function": "absence"}, {"x": 9, "y": 13, "zone": "ABSENCE_FIELD", "line_id": "K-31", "text_chunk": "", "density": 0.02, "motifs": ["burning"], "function": "absence"}, {"x": 10, "y": 13, "zone": "CENTER_APPROACH", "line_id": "K-46", "text_chunk": "As doth eternity: Cold Pastoral!", "density": 0.8, "motifs": ["eternity"], "function": "eternity"}, {"x": 11, "y": 13, "zone": "CENTER_APPROACH", "line_id": "K-46", "text_chunk": "As doth eternity: Cold Pastoral!", "density": 0.8, "motifs": ["eternity"], "function": "eternity"}, {"x": 12, "y": 13, "zone": "SEAL", "line_id": "K-50", "text_chunk": "Beauty is truth, truth beauty,—that is all", "density": 0.98, "motifs": ["beauty"], "function": "axiom"}, {"x": 13, "y": 13, "zone": "CENTER_APPROACH", "line_id": "K-46", "text_chunk": "As doth eternity: Cold Pastoral!", "density": 0.8, "motifs": ["eternity"], "function": "eternity"}, {"x": 14, "y": 13, "zone": "CENTER_APPROACH", "line_id": "K-47", "text_chunk": "When old age shall this generation waste,", "density": 0.8, "motifs": ["old age"], "function": "transition"}, {"x": 15, "y": 13, "zone": "BELLY", "line_id": "K-23", "text_chunk": "Your leaves, nor ever bid the Spring adieu;", "density": 0.7, "motifs": ["leaves"], "function": "eternity"}, {"x": 16, "y": 13, "zone": "BELLY", "line_id": "K-23", "text_chunk": "Your leaves, nor ever bid the Spring adieu;", "density": 0.7, "motifs": ["leaves"], "function": "eternity"}, {"x": 17, "y": 13, "zone": "BELLY", "line_id": "K-23", "text_chunk": "Your leaves, nor ever bid the Spring adieu;", "density": 0.7, "motifs": ["leaves"], "function": "eternity"}, {"x": 18, "y": 13, "zone": "BELLY", "line_id": "K-23", "text_chunk": "Your leaves, nor ever bid the Spring adieu;", "density": 0.7, "motifs": ["leaves"], "function": "eternity"}, {"x": 19, "y": 13, "zone": "BELLY", "line_id": "K-23", "text_chunk": "Your leaves, nor ever bid the Spring adieu;", "density": 0.7, "motifs": ["leaves"], "function": "eternity"}, {"x": 20, "y": 13, "zone": "BELLY", "line_id": "K-23", "text_chunk": "Your leaves, nor ever bid the Spring adieu;", "density": 0.7, "motifs": ["leaves"], "function": "eternity"}, {"x": 21, "y": 13, "zone": "BELLY", "line_id": "K-23", "text_chunk": "Your leaves, nor ever bid the Spring adieu;", "density": 0.7, "motifs": ["leaves"], "function": "eternity"}, {"x": 22, "y": 13, "zone": "BELLY", "line_id": "K-23", "text_chunk": "Your leaves, nor ever bid the Spring adieu;", "density": 0.7, "motifs": ["leaves"], "function": "eternity"}, {"x": 23, "y": 13, "zone": "BELLY", "line_id": "K-24", "text_chunk": "And, happy melodist, unwearied,", "density": 0.7, "motifs": ["melodist"], "function": "eternity"}], [{"x": 0, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-32", "text_chunk": "Who are these coming to the sacrifice?", "density": 0.85, "motifs": ["coming"], "function": "question"}, {"x": 1, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-32", "text_chunk": "Who are these coming to the sacrifice?", "density": 0.85, "motifs": ["coming"], "function": "question"}, {"x": 2, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-32", "text_chunk": "Who are these coming to the sacrifice?", "density": 0.85, "motifs": ["coming"], "function": "question"}, {"x": 3, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-32", "text_chunk": "Who are these coming to the sacrifice?", "density": 0.85, "motifs": ["coming"], "function": "question"}, {"x": 4, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-32", "text_chunk": "Who are these coming to the sacrifice?", "density": 0.85, "motifs": ["coming"], "function": "question"}, {"x": 5, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-32", "text_chunk": "Who are these coming to the sacrifice?", "density": 0.85, "motifs": ["coming"], "function": "question"}, {"x": 6, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-32", "text_chunk": "Who are these coming to the sacrifice?", "density": 0.85, "motifs": ["coming"], "function": "question"}, {"x": 7, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-32", "text_chunk": "Who are these coming to the sacrifice?", "density": 0.85, "motifs": ["coming"], "function": "question"}, {"x": 8, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-32", "text_chunk": "Who are these coming to the sacrifice?", "density": 0.85, "motifs": ["coming"], "function": "question"}, {"x": 9, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-32", "text_chunk": "Who are these coming to the sacrifice?", "density": 0.85, "motifs": ["coming"], "function": "question"}, {"x": 10, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-33", "text_chunk": "To what green altar, O mysterious priest,", "density": 0.85, "motifs": ["altar"], "function": "question"}, {"x": 11, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-33", "text_chunk": "To what green altar, O mysterious priest,", "density": 0.85, "motifs": ["altar"], "function": "question"}, {"x": 12, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-33", "text_chunk": "To what green altar, O mysterious priest,", "density": 0.85, "motifs": ["altar"], "function": "question"}, {"x": 13, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-33", "text_chunk": "To what green altar, O mysterious priest,", "density": 0.85, "motifs": ["altar"], "function": "question"}, {"x": 14, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-33", "text_chunk": "To what green altar, O mysterious priest,", "density": 0.85, "motifs": ["altar"], "function": "question"}, {"x": 15, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-33", "text_chunk": "To what green altar, O mysterious priest,", "density": 0.85, "motifs": ["altar"], "function": "question"}, {"x": 16, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-33", "text_chunk": "To what green altar, O mysterious priest,", "density": 0.85, "motifs": ["altar"], "function": "question"}, {"x": 17, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-33", "text_chunk": "To what green altar, O mysterious priest,", "density": 0.85, "motifs": ["altar"], "function": "question"}, {"x": 18, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-34", "text_chunk": "Lead'st thou that heifer lowing at the skies,", "density": 0.85, "motifs": ["heifer"], "function": "scene"}, {"x": 19, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-34", "text_chunk": "Lead'st thou that heifer lowing at the skies,", "density": 0.85, "motifs": ["heifer"], "function": "scene"}, {"x": 20, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-34", "text_chunk": "Lead'st thou that heifer lowing at the skies,", "density": 0.85, "motifs": ["heifer"], "function": "scene"}, {"x": 21, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-34", "text_chunk": "Lead'st thou that heifer lowing at the skies,", "density": 0.85, "motifs": ["heifer"], "function": "scene"}, {"x": 22, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-34", "text_chunk": "Lead'st thou that heifer lowing at the skies,", "density": 0.85, "motifs": ["heifer"], "function": "scene"}, {"x": 23, "y": 14, "zone": "LOWER_FRIEZE", "line_id": "K-34", "text_chunk": "Lead'st thou that heifer lowing at the skies,", "density": 0.85, "motifs": ["heifer"], "function": "scene"}], [{"x": 0, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-34", "text_chunk": "Lead'st thou that heifer lowing at the skies,", "density": 0.85, "motifs": ["heifer"], "function": "scene"}, {"x": 1, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-34", "text_chunk": "Lead'st thou that heifer lowing at the skies,", "density": 0.85, "motifs": ["heifer"], "function": "scene"}, {"x": 2, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-35", "text_chunk": "And all her silken flanks with garlands drest?", "density": 0.85, "motifs": ["garlands"], "function": "scene"}, {"x": 3, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-35", "text_chunk": "And all her silken flanks with garlands drest?", "density": 0.85, "motifs": ["garlands"], "function": "scene"}, {"x": 4, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-35", "text_chunk": "And all her silken flanks with garlands drest?", "density": 0.85, "motifs": ["garlands"], "function": "scene"}, {"x": 5, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-35", "text_chunk": "And all her silken flanks with garlands drest?", "density": 0.85, "motifs": ["garlands"], "function": "scene"}, {"x": 6, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-35", "text_chunk": "And all her silken flanks with garlands drest?", "density": 0.85, "motifs": ["garlands"], "function": "scene"}, {"x": 7, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-35", "text_chunk": "And all her silken flanks with garlands drest?", "density": 0.85, "motifs": ["garlands"], "function": "scene"}, {"x": 8, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-35", "text_chunk": "And all her silken flanks with garlands drest?", "density": 0.85, "motifs": ["garlands"], "function": "scene"}, {"x": 9, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-35", "text_chunk": "And all her silken flanks with garlands drest?", "density": 0.85, "motifs": ["garlands"], "function": "scene"}, {"x": 10, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-36", "text_chunk": "What little town by river or sea shore,", "density": 0.85, "motifs": ["little town"], "function": "absence"}, {"x": 11, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-36", "text_chunk": "What little town by river or sea shore,", "density": 0.85, "motifs": ["little town"], "function": "absence"}, {"x": 12, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-36", "text_chunk": "What little town by river or sea shore,", "density": 0.85, "motifs": ["little town"], "function": "absence"}, {"x": 13, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-36", "text_chunk": "What little town by river or sea shore,", "density": 0.85, "motifs": ["little town"], "function": "absence"}, {"x": 14, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-36", "text_chunk": "What little town by river or sea shore,", "density": 0.85, "motifs": ["little town"], "function": "absence"}, {"x": 15, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-36", "text_chunk": "What little town by river or sea shore,", "density": 0.85, "motifs": ["little town"], "function": "absence"}, {"x": 16, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-36", "text_chunk": "What little town by river or sea shore,", "density": 0.85, "motifs": ["little town"], "function": "absence"}, {"x": 17, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-36", "text_chunk": "What little town by river or sea shore,", "density": 0.85, "motifs": ["little town"], "function": "absence"}, {"x": 18, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-36", "text_chunk": "What little town by river or sea shore,", "density": 0.85, "motifs": ["little town"], "function": "absence"}, {"x": 19, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-36", "text_chunk": "What little town by river or sea shore,", "density": 0.85, "motifs": ["little town"], "function": "absence"}, {"x": 20, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-37", "text_chunk": "Or mountain-built with peaceful citadel,", "density": 0.85, "motifs": ["mountain-built"], "function": "absence"}, {"x": 21, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-37", "text_chunk": "Or mountain-built with peaceful citadel,", "density": 0.85, "motifs": ["mountain-built"], "function": "absence"}, {"x": 22, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-37", "text_chunk": "Or mountain-built with peaceful citadel,", "density": 0.85, "motifs": ["mountain-built"], "function": "absence"}, {"x": 23, "y": 15, "zone": "LOWER_FRIEZE", "line_id": "K-37", "text_chunk": "Or mountain-built with peaceful citadel,", "density": 0.85, "motifs": ["mountain-built"], "function": "absence"}], [{"x": 0, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-37", "text_chunk": "Or mountain-built with peaceful citadel,", "density": 0.85, "motifs": ["mountain-built"], "function": "absence"}, {"x": 1, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-37", "text_chunk": "Or mountain-built with peaceful citadel,", "density": 0.85, "motifs": ["mountain-built"], "function": "absence"}, {"x": 2, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-37", "text_chunk": "Or mountain-built with peaceful citadel,", "density": 0.85, "motifs": ["mountain-built"], "function": "absence"}, {"x": 3, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-37", "text_chunk": "Or mountain-built with peaceful citadel,", "density": 0.85, "motifs": ["mountain-built"], "function": "absence"}, {"x": 4, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-37", "text_chunk": "Or mountain-built with peaceful citadel,", "density": 0.85, "motifs": ["mountain-built"], "function": "absence"}, {"x": 5, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-37", "text_chunk": "Or mountain-built with peaceful citadel,", "density": 0.85, "motifs": ["mountain-built"], "function": "absence"}, {"x": 6, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-38", "text_chunk": "Is emptied of this folk, this pious morn?", "density": 0.85, "motifs": ["emptied"], "function": "absence"}, {"x": 7, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-38", "text_chunk": "Is emptied of this folk, this pious morn?", "density": 0.85, "motifs": ["emptied"], "function": "absence"}, {"x": 8, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-38", "text_chunk": "Is emptied of this folk, this pious morn?", "density": 0.85, "motifs": ["emptied"], "function": "absence"}, {"x": 9, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-38", "text_chunk": "Is emptied of this folk, this pious morn?", "density": 0.85, "motifs": ["emptied"], "function": "absence"}, {"x": 10, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-38", "text_chunk": "Is emptied of this folk, this pious morn?", "density": 0.85, "motifs": ["emptied"], "function": "absence"}, {"x": 11, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-38", "text_chunk": "Is emptied of this folk, this pious morn?", "density": 0.85, "motifs": ["emptied"], "function": "absence"}, {"x": 12, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-38", "text_chunk": "Is emptied of this folk, this pious morn?", "density": 0.85, "motifs": ["emptied"], "function": "absence"}, {"x": 13, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-38", "text_chunk": "Is emptied of this folk, this pious morn?", "density": 0.85, "motifs": ["emptied"], "function": "absence"}, {"x": 14, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-38", "text_chunk": "Is emptied of this folk, this pious morn?", "density": 0.85, "motifs": ["emptied"], "function": "absence"}, {"x": 15, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-38", "text_chunk": "Is emptied of this folk, this pious morn?", "density": 0.85, "motifs": ["emptied"], "function": "absence"}, {"x": 16, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-39", "text_chunk": "And, little town, thy streets for evermore", "density": 0.85, "motifs": ["streets"], "function": "absence"}, {"x": 17, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-39", "text_chunk": "And, little town, thy streets for evermore", "density": 0.85, "motifs": ["streets"], "function": "absence"}, {"x": 18, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-39", "text_chunk": "And, little town, thy streets for evermore", "density": 0.85, "motifs": ["streets"], "function": "absence"}, {"x": 19, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-39", "text_chunk": "And, little town, thy streets for evermore", "density": 0.85, "motifs": ["streets"], "function": "absence"}, {"x": 20, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-39", "text_chunk": "And, little town, thy streets for evermore", "density": 0.85, "motifs": ["streets"], "function": "absence"}, {"x": 21, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-39", "text_chunk": "And, little town, thy streets for evermore", "density": 0.85, "motifs": ["streets"], "function": "absence"}, {"x": 22, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-39", "text_chunk": "And, little town, thy streets for evermore", "density": 0.85, "motifs": ["streets"], "function": "absence"}, {"x": 23, "y": 16, "zone": "LOWER_FRIEZE", "line_id": "K-39", "text_chunk": "And, little town, thy streets for evermore", "density": 0.85, "motifs": ["streets"], "function": "absence"}], [{"x": 0, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-39", "text_chunk": "And, little town, thy streets for evermore", "density": 0.85, "motifs": ["streets"], "function": "absence"}, {"x": 1, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-39", "text_chunk": "And, little town, thy streets for evermore", "density": 0.85, "motifs": ["streets"], "function": "absence"}, {"x": 2, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-40", "text_chunk": "Will silent be; and not a soul to tell", "density": 0.85, "motifs": ["not a soul"], "function": "absence"}, {"x": 3, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-40", "text_chunk": "Will silent be; and not a soul to tell", "density": 0.85, "motifs": ["not a soul"], "function": "absence"}, {"x": 4, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-40", "text_chunk": "Will silent be; and not a soul to tell", "density": 0.85, "motifs": ["not a soul"], "function": "absence"}, {"x": 5, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-40", "text_chunk": "Will silent be; and not a soul to tell", "density": 0.85, "motifs": ["not a soul"], "function": "absence"}, {"x": 6, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-40", "text_chunk": "Will silent be; and not a soul to tell", "density": 0.85, "motifs": ["not a soul"], "function": "absence"}, {"x": 7, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-40", "text_chunk": "Will silent be; and not a soul to tell", "density": 0.85, "motifs": ["not a soul"], "function": "absence"}, {"x": 8, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-40", "text_chunk": "Will silent be; and not a soul to tell", "density": 0.85, "motifs": ["not a soul"], "function": "absence"}, {"x": 9, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-40", "text_chunk": "Will silent be; and not a soul to tell", "density": 0.85, "motifs": ["not a soul"], "function": "absence"}, {"x": 10, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-40", "text_chunk": "Will silent be; and not a soul to tell", "density": 0.85, "motifs": ["not a soul"], "function": "absence"}, {"x": 11, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-40", "text_chunk": "Will silent be; and not a soul to tell", "density": 0.85, "motifs": ["not a soul"], "function": "absence"}, {"x": 12, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-40", "text_chunk": "Will silent be; and not a soul to tell", "density": 0.85, "motifs": ["not a soul"], "function": "absence"}, {"x": 13, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-41", "text_chunk": "Why thou art desolate, can e'er return.", "density": 0.85, "motifs": ["desolate"], "function": "absence"}, {"x": 14, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-41", "text_chunk": "Why thou art desolate, can e'er return.", "density": 0.85, "motifs": ["desolate"], "function": "absence"}, {"x": 15, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-41", "text_chunk": "Why thou art desolate, can e'er return.", "density": 0.85, "motifs": ["desolate"], "function": "absence"}, {"x": 16, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-41", "text_chunk": "Why thou art desolate, can e'er return.", "density": 0.85, "motifs": ["desolate"], "function": "absence"}, {"x": 17, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-41", "text_chunk": "Why thou art desolate, can e'er return.", "density": 0.85, "motifs": ["desolate"], "function": "absence"}, {"x": 18, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-41", "text_chunk": "Why thou art desolate, can e'er return.", "density": 0.85, "motifs": ["desolate"], "function": "absence"}, {"x": 19, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-41", "text_chunk": "Why thou art desolate, can e'er return.", "density": 0.85, "motifs": ["desolate"], "function": "absence"}, {"x": 20, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-41", "text_chunk": "Why thou art desolate, can e'er return.", "density": 0.85, "motifs": ["desolate"], "function": "absence"}, {"x": 21, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-41", "text_chunk": "Why thou art desolate, can e'er return.", "density": 0.85, "motifs": ["desolate"], "function": "absence"}, {"x": 22, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-41", "text_chunk": "Why thou art desolate, can e'er return.", "density": 0.85, "motifs": ["desolate"], "function": "absence"}, {"x": 23, "y": 17, "zone": "LOWER_FRIEZE", "line_id": "K-41", "text_chunk": "Why thou art desolate, can e'er return.", "density": 0.85, "motifs": ["desolate"], "function": "absence"}], [{"x": 0, "y": 18, "zone": "BELLY", "line_id": "K-24", "text_chunk": "And, happy melodist, unwearied,", "density": 0.7, "motifs": ["melodist"], "function": "eternity"}, {"x": 1, "y": 18, "zone": "BELLY", "line_id": "K-24", "text_chunk": "And, happy melodist, unwearied,", "density": 0.7, "motifs": ["melodist"], "function": "eternity"}, {"x": 2, "y": 18, "zone": "BELLY", "line_id": "K-24", "text_chunk": "And, happy melodist, unwearied,", "density": 0.7, "motifs": ["melodist"], "function": "eternity"}, {"x": 3, "y": 18, "zone": "BELLY", "line_id": "K-24", "text_chunk": "And, happy melodist, unwearied,", "density": 0.7, "motifs": ["melodist"], "function": "eternity"}, {"x": 4, "y": 18, "zone": "BELLY", "line_id": "K-24", "text_chunk": "And, happy melodist, unwearied,", "density": 0.7, "motifs": ["melodist"], "function": "eternity"}, {"x": 5, "y": 18, "zone": "BELLY", "line_id": "K-24", "text_chunk": "And, happy melodist, unwearied,", "density": 0.7, "motifs": ["melodist"], "function": "eternity"}, {"x": 6, "y": 18, "zone": "BELLY", "line_id": "K-24", "text_chunk": "And, happy melodist, unwearied,", "density": 0.7, "motifs": ["melodist"], "function": "eternity"}, {"x": 7, "y": 18, "zone": "BELLY", "line_id": "K-24", "text_chunk": "And, happy melodist, unwearied,", "density": 0.7, "motifs": ["melodist"], "function": "eternity"}, {"x": 8, "y": 18, "zone": "BELLY", "line_id": "K-24", "text_chunk": "And, happy melodist, unwearied,", "density": 0.7, "motifs": ["melodist"], "function": "eternity"}, {"x": 9, "y": 18, "zone": "BELLY", "line_id": "K-25", "text_chunk": "For ever piping songs for ever new;", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 10, "y": 18, "zone": "CENTER_APPROACH", "line_id": "K-47", "text_chunk": "When old age shall this generation waste,", "density": 0.8, "motifs": ["old age"], "function": "transition"}, {"x": 11, "y": 18, "zone": "CENTER_APPROACH", "line_id": "K-47", "text_chunk": "When old age shall this generation waste,", "density": 0.8, "motifs": ["old age"], "function": "transition"}, {"x": 12, "y": 18, "zone": "CENTER_APPROACH", "line_id": "K-47", "text_chunk": "When old age shall this generation waste,", "density": 0.8, "motifs": ["old age"], "function": "transition"}, {"x": 13, "y": 18, "zone": "CENTER_APPROACH", "line_id": "K-47", "text_chunk": "When old age shall this generation waste,", "density": 0.8, "motifs": ["old age"], "function": "transition"}, {"x": 14, "y": 18, "zone": "CENTER_APPROACH", "line_id": "K-47", "text_chunk": "When old age shall this generation waste,", "density": 0.8, "motifs": ["old age"], "function": "transition"}, {"x": 15, "y": 18, "zone": "BELLY", "line_id": "K-25", "text_chunk": "For ever piping songs for ever new;", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 16, "y": 18, "zone": "BELLY", "line_id": "K-25", "text_chunk": "For ever piping songs for ever new;", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 17, "y": 18, "zone": "BELLY", "line_id": "K-25", "text_chunk": "For ever piping songs for ever new;", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 18, "y": 18, "zone": "BELLY", "line_id": "K-25", "text_chunk": "For ever piping songs for ever new;", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 19, "y": 18, "zone": "BELLY", "line_id": "K-25", "text_chunk": "For ever piping songs for ever new;", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 20, "y": 18, "zone": "BELLY", "line_id": "K-25", "text_chunk": "For ever piping songs for ever new;", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 21, "y": 18, "zone": "BELLY", "line_id": "K-25", "text_chunk": "For ever piping songs for ever new;", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 22, "y": 18, "zone": "BELLY", "line_id": "K-25", "text_chunk": "For ever piping songs for ever new;", "density": 0.7, "motifs": ["for"], "function": "eternity"}, {"x": 23, "y": 18, "zone": "BELLY", "line_id": "K-25", "text_chunk": "For ever piping songs for ever new;", "density": 0.7, "motifs": ["for"], "function": "eternity"}], [{"x": 0, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 1, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 2, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 3, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 4, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 5, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 6, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 7, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 8, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 9, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 10, "y": 19, "zone": "CENTER_APPROACH", "line_id": "K-48", "text_chunk": "Thou shalt remain, in midst of other woe", "density": 0.8, "motifs": ["remain"], "function": "eternity"}, {"x": 11, "y": 19, "zone": "CENTER_APPROACH", "line_id": "K-48", "text_chunk": "Thou shalt remain, in midst of other woe", "density": 0.8, "motifs": ["remain"], "function": "eternity"}, {"x": 12, "y": 19, "zone": "CENTER_APPROACH", "line_id": "K-48", "text_chunk": "Thou shalt remain, in midst of other woe", "density": 0.8, "motifs": ["remain"], "function": "eternity"}, {"x": 13, "y": 19, "zone": "CENTER_APPROACH", "line_id": "K-48", "text_chunk": "Thou shalt remain, in midst of other woe", "density": 0.8, "motifs": ["remain"], "function": "eternity"}, {"x": 14, "y": 19, "zone": "CENTER_APPROACH", "line_id": "K-49", "text_chunk": "Than ours, a friend to man, to whom thou say'st,", "density": 0.8, "motifs": ["friend"], "function": "meta"}, {"x": 15, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 16, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 17, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 18, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 19, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 20, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 21, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 22, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 23, "y": 19, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}], [{"x": 0, "y": 20, "zone": "BELLY", "line_id": "K-26", "text_chunk": "More happy love! more happy, happy love!", "density": 0.7, "motifs": ["more"], "function": "eternity"}, {"x": 1, "y": 20, "zone": "BELLY", "line_id": "K-27", "text_chunk": "For ever warm and still to be enjoy'd,", "density": 0.7, "motifs": ["warm"], "function": "eternity"}, {"x": 2, "y": 20, "zone": "BELLY", "line_id": "K-27", "text_chunk": "For ever warm and still to be enjoy'd,", "density": 0.7, "motifs": ["warm"], "function": "eternity"}, {"x": 3, "y": 20, "zone": "BELLY", "line_id": "K-27", "text_chunk": "For ever warm and still to be enjoy'd,", "density": 0.7, "motifs": ["warm"], "function": "eternity"}, {"x": 4, "y": 20, "zone": "BELLY", "line_id": "K-27", "text_chunk": "For ever warm and still to be enjoy'd,", "density": 0.7, "motifs": ["warm"], "function": "eternity"}, {"x": 5, "y": 20, "zone": "BELLY", "line_id": "K-27", "text_chunk": "For ever warm and still to be enjoy'd,", "density": 0.7, "motifs": ["warm"], "function": "eternity"}, {"x": 6, "y": 20, "zone": "BELLY", "line_id": "K-27", "text_chunk": "For ever warm and still to be enjoy'd,", "density": 0.7, "motifs": ["warm"], "function": "eternity"}, {"x": 7, "y": 20, "zone": "BELLY", "line_id": "K-27", "text_chunk": "For ever warm and still to be enjoy'd,", "density": 0.7, "motifs": ["warm"], "function": "eternity"}, {"x": 8, "y": 20, "zone": "BELLY", "line_id": "K-27", "text_chunk": "For ever warm and still to be enjoy'd,", "density": 0.7, "motifs": ["warm"], "function": "eternity"}, {"x": 9, "y": 20, "zone": "BELLY", "line_id": "K-27", "text_chunk": "For ever warm and still to be enjoy'd,", "density": 0.7, "motifs": ["warm"], "function": "eternity"}, {"x": 10, "y": 20, "zone": "CENTER_APPROACH", "line_id": "K-49", "text_chunk": "Than ours, a friend to man, to whom thou say'st,", "density": 0.8, "motifs": ["friend"], "function": "meta"}, {"x": 11, "y": 20, "zone": "CENTER_APPROACH", "line_id": "K-49", "text_chunk": "Than ours, a friend to man, to whom thou say'st,", "density": 0.8, "motifs": ["friend"], "function": "meta"}, {"x": 12, "y": 20, "zone": "CENTER_APPROACH", "line_id": "K-49", "text_chunk": "Than ours, a friend to man, to whom thou say'st,", "density": 0.8, "motifs": ["friend"], "function": "meta"}, {"x": 13, "y": 20, "zone": "CENTER_APPROACH", "line_id": "K-49", "text_chunk": "Than ours, a friend to man, to whom thou say'st,", "density": 0.8, "motifs": ["friend"], "function": "meta"}, {"x": 14, "y": 20, "zone": "CENTER_APPROACH", "line_id": "K-49", "text_chunk": "Than ours, a friend to man, to whom thou say'st,", "density": 0.8, "motifs": ["friend"], "function": "meta"}, {"x": 15, "y": 20, "zone": "BELLY", "line_id": "K-27", "text_chunk": "For ever warm and still to be enjoy'd,", "density": 0.7, "motifs": ["warm"], "function": "eternity"}, {"x": 16, "y": 20, "zone": "BELLY", "line_id": "K-28", "text_chunk": "For ever panting, and for ever young;", "density": 0.7, "motifs": ["panting"], "function": "eternity"}, {"x": 17, "y": 20, "zone": "BELLY", "line_id": "K-28", "text_chunk": "For ever panting, and for ever young;", "density": 0.7, "motifs": ["panting"], "function": "eternity"}, {"x": 18, "y": 20, "zone": "BELLY", "line_id": "K-28", "text_chunk": "For ever panting, and for ever young;", "density": 0.7, "motifs": ["panting"], "function": "eternity"}, {"x": 19, "y": 20, "zone": "BELLY", "line_id": "K-28", "text_chunk": "For ever panting, and for ever young;", "density": 0.7, "motifs": ["panting"], "function": "eternity"}, {"x": 20, "y": 20, "zone": "BELLY", "line_id": "K-28", "text_chunk": "For ever panting, and for ever young;", "density": 0.7, "motifs": ["panting"], "function": "eternity"}, {"x": 21, "y": 20, "zone": "BELLY", "line_id": "K-28", "text_chunk": "For ever panting, and for ever young;", "density": 0.7, "motifs": ["panting"], "function": "eternity"}, {"x": 22, "y": 20, "zone": "BELLY", "line_id": "K-28", "text_chunk": "For ever panting, and for ever young;", "density": 0.7, "motifs": ["panting"], "function": "eternity"}, {"x": 23, "y": 20, "zone": "BELLY", "line_id": "K-28", "text_chunk": "For ever panting, and for ever young;", "density": 0.7, "motifs": ["panting"], "function": "eternity"}], [{"x": 0, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-42", "text_chunk": "O Attic shape! Fair attitude! with brede", "density": 0.9, "motifs": ["Attic"], "function": "invocation"}, {"x": 1, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-42", "text_chunk": "O Attic shape! Fair attitude! with brede", "density": 0.9, "motifs": ["Attic"], "function": "invocation"}, {"x": 2, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-42", "text_chunk": "O Attic shape! Fair attitude! with brede", "density": 0.9, "motifs": ["Attic"], "function": "invocation"}, {"x": 3, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-42", "text_chunk": "O Attic shape! Fair attitude! with brede", "density": 0.9, "motifs": ["Attic"], "function": "invocation"}, {"x": 4, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-42", "text_chunk": "O Attic shape! Fair attitude! with brede", "density": 0.9, "motifs": ["Attic"], "function": "invocation"}, {"x": 5, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-42", "text_chunk": "O Attic shape! Fair attitude! with brede", "density": 0.9, "motifs": ["Attic"], "function": "invocation"}, {"x": 6, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-42", "text_chunk": "O Attic shape! Fair attitude! with brede", "density": 0.9, "motifs": ["Attic"], "function": "invocation"}, {"x": 7, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-42", "text_chunk": "O Attic shape! Fair attitude! with brede", "density": 0.9, "motifs": ["Attic"], "function": "invocation"}, {"x": 8, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-42", "text_chunk": "O Attic shape! Fair attitude! with brede", "density": 0.9, "motifs": ["Attic"], "function": "invocation"}, {"x": 9, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-42", "text_chunk": "O Attic shape! Fair attitude! with brede", "density": 0.9, "motifs": ["Attic"], "function": "invocation"}, {"x": 10, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-42", "text_chunk": "O Attic shape! Fair attitude! with brede", "density": 0.9, "motifs": ["Attic"], "function": "invocation"}, {"x": 11, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-42", "text_chunk": "O Attic shape! Fair attitude! with brede", "density": 0.9, "motifs": ["Attic"], "function": "invocation"}, {"x": 12, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-45", "text_chunk": "Thou, silent form, dost tease us out of thought", "density": 0.9, "motifs": ["silent form"], "function": "meta"}, {"x": 13, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-45", "text_chunk": "Thou, silent form, dost tease us out of thought", "density": 0.9, "motifs": ["silent form"], "function": "meta"}, {"x": 14, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-45", "text_chunk": "Thou, silent form, dost tease us out of thought", "density": 0.9, "motifs": ["silent form"], "function": "meta"}, {"x": 15, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-45", "text_chunk": "Thou, silent form, dost tease us out of thought", "density": 0.9, "motifs": ["silent form"], "function": "meta"}, {"x": 16, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-45", "text_chunk": "Thou, silent form, dost tease us out of thought", "density": 0.9, "motifs": ["silent form"], "function": "meta"}, {"x": 17, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-45", "text_chunk": "Thou, silent form, dost tease us out of thought", "density": 0.9, "motifs": ["silent form"], "function": "meta"}, {"x": 18, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-45", "text_chunk": "Thou, silent form, dost tease us out of thought", "density": 0.9, "motifs": ["silent form"], "function": "meta"}, {"x": 19, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-45", "text_chunk": "Thou, silent form, dost tease us out of thought", "density": 0.9, "motifs": ["silent form"], "function": "meta"}, {"x": 20, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-45", "text_chunk": "Thou, silent form, dost tease us out of thought", "density": 0.9, "motifs": ["silent form"], "function": "meta"}, {"x": 21, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-45", "text_chunk": "Thou, silent form, dost tease us out of thought", "density": 0.9, "motifs": ["silent form"], "function": "meta"}, {"x": 22, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-45", "text_chunk": "Thou, silent form, dost tease us out of thought", "density": 0.9, "motifs": ["silent form"], "function": "meta"}, {"x": 23, "y": 21, "zone": "RIM_BOTTOM", "line_id": "K-45", "text_chunk": "Thou, silent form, dost tease us out of thought", "density": 0.9, "motifs": ["silent form"], "function": "meta"}], [{"x": 0, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-46", "text_chunk": "As doth eternity: Cold Pastoral!", "density": 0.9, "motifs": ["eternity"], "function": "eternity"}, {"x": 1, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-46", "text_chunk": "As doth eternity: Cold Pastoral!", "density": 0.9, "motifs": ["eternity"], "function": "eternity"}, {"x": 2, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-46", "text_chunk": "As doth eternity: Cold Pastoral!", "density": 0.9, "motifs": ["eternity"], "function": "eternity"}, {"x": 3, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-46", "text_chunk": "As doth eternity: Cold Pastoral!", "density": 0.9, "motifs": ["eternity"], "function": "eternity"}, {"x": 4, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-46", "text_chunk": "As doth eternity: Cold Pastoral!", "density": 0.9, "motifs": ["eternity"], "function": "eternity"}, {"x": 5, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-46", "text_chunk": "As doth eternity: Cold Pastoral!", "density": 0.9, "motifs": ["eternity"], "function": "eternity"}, {"x": 6, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-46", "text_chunk": "As doth eternity: Cold Pastoral!", "density": 0.9, "motifs": ["eternity"], "function": "eternity"}, {"x": 7, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-46", "text_chunk": "As doth eternity: Cold Pastoral!", "density": 0.9, "motifs": ["eternity"], "function": "eternity"}, {"x": 8, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-46", "text_chunk": "As doth eternity: Cold Pastoral!", "density": 0.9, "motifs": ["eternity"], "function": "eternity"}, {"x": 9, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-46", "text_chunk": "As doth eternity: Cold Pastoral!", "density": 0.9, "motifs": ["eternity"], "function": "eternity"}, {"x": 10, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-47", "text_chunk": "When old age shall this generation waste,", "density": 0.9, "motifs": ["old age"], "function": "transition"}, {"x": 11, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-47", "text_chunk": "When old age shall this generation waste,", "density": 0.9, "motifs": ["old age"], "function": "transition"}, {"x": 12, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-47", "text_chunk": "When old age shall this generation waste,", "density": 0.9, "motifs": ["old age"], "function": "transition"}, {"x": 13, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-47", "text_chunk": "When old age shall this generation waste,", "density": 0.9, "motifs": ["old age"], "function": "transition"}, {"x": 14, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-47", "text_chunk": "When old age shall this generation waste,", "density": 0.9, "motifs": ["old age"], "function": "transition"}, {"x": 15, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-47", "text_chunk": "When old age shall this generation waste,", "density": 0.9, "motifs": ["old age"], "function": "transition"}, {"x": 16, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-48", "text_chunk": "Thou shalt remain, in midst of other woe", "density": 0.9, "motifs": ["remain"], "function": "eternity"}, {"x": 17, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-48", "text_chunk": "Thou shalt remain, in midst of other woe", "density": 0.9, "motifs": ["remain"], "function": "eternity"}, {"x": 18, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-48", "text_chunk": "Thou shalt remain, in midst of other woe", "density": 0.9, "motifs": ["remain"], "function": "eternity"}, {"x": 19, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-48", "text_chunk": "Thou shalt remain, in midst of other woe", "density": 0.9, "motifs": ["remain"], "function": "eternity"}, {"x": 20, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-48", "text_chunk": "Thou shalt remain, in midst of other woe", "density": 0.9, "motifs": ["remain"], "function": "eternity"}, {"x": 21, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-48", "text_chunk": "Thou shalt remain, in midst of other woe", "density": 0.9, "motifs": ["remain"], "function": "eternity"}, {"x": 22, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-48", "text_chunk": "Thou shalt remain, in midst of other woe", "density": 0.9, "motifs": ["remain"], "function": "eternity"}, {"x": 23, "y": 22, "zone": "RIM_BOTTOM", "line_id": "K-48", "text_chunk": "Thou shalt remain, in midst of other woe", "density": 0.9, "motifs": ["remain"], "function": "eternity"}], [{"x": 0, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-49", "text_chunk": "Than ours, a friend to man, to whom thou say'st,", "density": 0.9, "motifs": ["friend"], "function": "meta"}, {"x": 1, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-49", "text_chunk": "Than ours, a friend to man, to whom thou say'st,", "density": 0.9, "motifs": ["friend"], "function": "meta"}, {"x": 2, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-49", "text_chunk": "Than ours, a friend to man, to whom thou say'st,", "density": 0.9, "motifs": ["friend"], "function": "meta"}, {"x": 3, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-49", "text_chunk": "Than ours, a friend to man, to whom thou say'st,", "density": 0.9, "motifs": ["friend"], "function": "meta"}, {"x": 4, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-49", "text_chunk": "Than ours, a friend to man, to whom thou say'st,", "density": 0.9, "motifs": ["friend"], "function": "meta"}, {"x": 5, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-49", "text_chunk": "Than ours, a friend to man, to whom thou say'st,", "density": 0.9, "motifs": ["friend"], "function": "meta"}, {"x": 6, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-49", "text_chunk": "Than ours, a friend to man, to whom thou say'st,", "density": 0.9, "motifs": ["friend"], "function": "meta"}, {"x": 7, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-49", "text_chunk": "Than ours, a friend to man, to whom thou say'st,", "density": 0.9, "motifs": ["friend"], "function": "meta"}, {"x": 8, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-44", "text_chunk": "With forest branches and the trodden weed;", "density": 0.9, "motifs": ["forest"], "function": "scene"}, {"x": 9, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-44", "text_chunk": "With forest branches and the trodden weed;", "density": 0.9, "motifs": ["forest"], "function": "scene"}, {"x": 10, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-44", "text_chunk": "With forest branches and the trodden weed;", "density": 0.9, "motifs": ["forest"], "function": "scene"}, {"x": 11, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-44", "text_chunk": "With forest branches and the trodden weed;", "density": 0.9, "motifs": ["forest"], "function": "scene"}, {"x": 12, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-44", "text_chunk": "With forest branches and the trodden weed;", "density": 0.9, "motifs": ["forest"], "function": "scene"}, {"x": 13, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-44", "text_chunk": "With forest branches and the trodden weed;", "density": 0.9, "motifs": ["forest"], "function": "scene"}, {"x": 14, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-44", "text_chunk": "With forest branches and the trodden weed;", "density": 0.9, "motifs": ["forest"], "function": "scene"}, {"x": 15, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-44", "text_chunk": "With forest branches and the trodden weed;", "density": 0.9, "motifs": ["forest"], "function": "scene"}, {"x": 16, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-50", "text_chunk": "Beauty is truth, truth beauty,—that is all", "density": 0.9, "motifs": ["beauty"], "function": "axiom"}, {"x": 17, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-50", "text_chunk": "Beauty is truth", "density": 0.88, "motifs": ["beauty"], "function": "axiom"}, {"x": 18, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-50", "text_chunk": "truth beauty,—that is all", "density": 0.9, "motifs": ["beauty"], "function": "axiom"}, {"x": 19, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-50", "text_chunk": "Beauty is truth, truth beauty,—that is all", "density": 0.9, "motifs": ["beauty"], "function": "axiom"}, {"x": 20, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-51", "text_chunk": "Ye know on earth", "density": 0.88, "motifs": ["earth"], "function": "axiom"}, {"x": 21, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-51", "text_chunk": "all ye need to know.", "density": 0.9, "motifs": ["earth"], "function": "axiom"}, {"x": 22, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-51", "text_chunk": "Ye know on earth, and all ye need to know.", "density": 0.9, "motifs": ["earth"], "function": "axiom"}, {"x": 23, "y": 23, "zone": "RIM_BOTTOM", "line_id": "K-51", "text_chunk": "Ye know on earth", "density": 0.88, "motifs": ["earth"], "function": "axiom"}]], "index": {"line_to_cells": {"K-01": [{"x": 0, "y": 0}, {"x": 1, "y": 0}, {"x": 2, "y": 0}, {"x": 3, "y": 0}, {"x": 4, "y": 0}, {"x": 5, "y": 0}], "K-02": [{"x": 6, "y": 0}, {"x": 7, "y": 0}, {"x": 8, "y": 0}, {"x": 9, "y": 0}, {"x": 10, "y": 0}, {"x": 11, "y": 0}, {"x": 12, "y": 0}, {"x": 13, "y": 0}, {"x": 14, "y": 0}, {"x": 15, "y": 0}, {"x": 16, "y": 0}, {"x": 17, "y": 0}, {"x": 18, "y": 0}, {"x": 19, "y": 0}], "K-50": [{"x": 20, "y": 0}, {"x": 21, "y": 0}, {"x": 22, "y": 0}, {"x": 23, "y": 0}, {"x": 23, "y": 2}, {"x": 11, "y": 12}, {"x": 12, "y": 12}, {"x": 12, "y": 13}, {"x": 16, "y": 23}, {"x": 17, "y": 23}, {"x": 18, "y": 23}, {"x": 19, "y": 23}], "K-03": [{"x": 0, "y": 1}, {"x": 1, "y": 1}, {"x": 2, "y": 1}, {"x": 3, "y": 1}, {"x": 4, "y": 1}, {"x": 5, "y": 1}, {"x": 6, "y": 1}, {"x": 7, "y": 1}, {"x": 8, "y": 1}, {"x": 9, "y": 1}, {"x": 10, "y": 1}, {"x": 11, "y": 1}, {"x": 12, "y": 1}, {"x": 13, "y": 1}], "K-04": [{"x": 14, "y": 1}, {"x": 15, "y": 1}, {"x": 16, "y": 1}, {"x": 17, "y": 1}, {"x": 18, "y": 1}, {"x": 19, "y": 1}, {"x": 20, "y": 1}, {"x": 21, "y": 1}, {"x": 22, "y": 1}, {"x": 23, "y": 1}, {"x": 0, "y": 2}, {"x": 1, "y": 2}, {"x": 2, "y": 2}, {"x": 3, "y": 2}], "K-05": [{"x": 4, "y": 2}, {"x": 5, "y": 2}, {"x": 6, "y": 2}, {"x": 7, "y": 2}, {"x": 8, "y": 2}, {"x": 9, "y": 2}, {"x": 10, "y": 2}, {"x": 11, "y": 2}, {"x": 12, "y": 2}, {"x": 13, "y": 2}, {"x": 14, "y": 2}, {"x": 15, "y": 2}, {"x": 16, "y": 2}, {"x": 17, "y": 2}], "K-51": [{"x": 18, "y": 2}, {"x": 19, "y": 2}, {"x": 20, "y": 2}, {"x": 21, "y": 2}, {"x": 22, "y": 2}, {"x": 12, "y": 11}, {"x": 13, "y": 12}, {"x": 20, "y": 23}, {"x": 21, "y": 23}, {"x": 22, "y": 23}, {"x": 23, "y": 23}], "K-12": [{"x": 0, "y": 3}, {"x": 1, "y": 3}, {"x": 2, "y": 3}, {"x": 3, "y": 3}, {"x": 8, "y": 8}, {"x": 9, "y": 8}, {"x": 10, "y": 8}, {"x": 11, "y": 8}, {"x": 12, "y": 8}, {"x": 13, "y": 8}, {"x": 14, "y": 8}, {"x": 15, "y": 8}, {"x": 16, "y": 8}, {"x": 17, "y": 8}], "K-13": [{"x": 4, "y": 3}, {"x": 5, "y": 3}, {"x": 6, "y": 3}, {"x": 7, "y": 3}, {"x": 18, "y": 8}, {"x": 19, "y": 8}, {"x": 20, "y": 8}, {"x": 21, "y": 8}, {"x": 22, "y": 8}, {"x": 23, "y": 8}, {"x": 0, "y": 9}, {"x": 1, "y": 9}], "K-16": [{"x": 8, "y": 3}, {"x": 9, "y": 3}, {"x": 14, "y": 9}, {"x": 15, "y": 9}, {"x": 16, "y": 9}, {"x": 17, "y": 9}, {"x": 18, "y": 9}, {"x": 19, "y": 9}], "K-29": [{"x": 10, "y": 3}, {"x": 11, "y": 3}, {"x": 12, "y": 3}, {"x": 13, "y": 3}, {"x": 14, "y": 3}, {"x": 10, "y": 4}, {"x": 11, "y": 4}, {"x": 12, "y": 4}, {"x": 13, "y": 4}, {"x": 14, "y": 4}, {"x": 10, "y": 5}, {"x": 11, "y": 5}], "K-17": [{"x": 15, "y": 3}, {"x": 16, "y": 3}, {"x": 20, "y": 9}, {"x": 21, "y": 9}], "K-18": [{"x": 17, "y": 3}, {"x": 18, "y": 3}, {"x": 22, "y": 9}, {"x": 23, "y": 9}], "K-43": [{"x": 19, "y": 3}, {"x": 20, "y": 3}, {"x": 21, "y": 3}, {"x": 22, "y": 3}, {"x": 23, "y": 3}, {"x": 0, "y": 4}, {"x": 1, "y": 4}, {"x": 2, "y": 4}, {"x": 3, "y": 4}, {"x": 4, "y": 4}], "K-44": [{"x": 5, "y": 4}, {"x": 6, "y": 4}, {"x": 8, "y": 23}, {"x": 9, "y": 23}, {"x": 10, "y": 23}, {"x": 11, "y": 23}, {"x": 12, "y": 23}, {"x": 13, "y": 23}, {"x": 14, "y": 23}, {"x": 15, "y": 23}], "K-30": [{"x": 7, "y": 4}, {"x": 8, "y": 4}, {"x": 9, "y": 4}, {"x": 15, "y": 4}], "K-20": [{"x": 16, "y": 4}, {"x": 17, "y": 4}, {"x": 18, "y": 4}, {"x": 19, "y": 4}, {"x": 20, "y": 4}, {"x": 21, "y": 4}, {"x": 22, "y": 4}, {"x": 23, "y": 4}, {"x": 0, "y": 5}, {"x": 1, "y": 5}, {"x": 2, "y": 5}, {"x": 3, "y": 5}, {"x": 4, "y": 5}, {"x": 5, "y": 5}, {"x": 6, "y": 5}, {"x": 7, "y": 5}], "K-21": [{"x": 8, "y": 5}, {"x": 9, "y": 5}, {"x": 15, "y": 5}, {"x": 16, "y": 5}, {"x": 17, "y": 5}, {"x": 18, "y": 5}, {"x": 19, "y": 5}, {"x": 20, "y": 5}, {"x": 21, "y": 5}, {"x": 22, "y": 5}, {"x": 23, "y": 5}, {"x": 15, "y": 10}, {"x": 16, "y": 10}, {"x": 17, "y": 10}, {"x": 18, "y": 10}, {"x": 19, "y": 10}], "K-14": [{"x": 12, "y": 5}, {"x": 13, "y": 5}, {"x": 14, "y": 5}, {"x": 2, "y": 9}, {"x": 3, "y": 9}, {"x": 4, "y": 9}, {"x": 5, "y": 9}, {"x": 6, "y": 9}, {"x": 7, "y": 9}], "K-06": [{"x": 0, "y": 6}, {"x": 1, "y": 6}, {"x": 2, "y": 6}, {"x": 3, "y": 6}, {"x": 4, "y": 6}, {"x": 5, "y": 6}, {"x": 6, "y": 6}, {"x": 7, "y": 6}, {"x": 8, "y": 6}, {"x": 9, "y": 6}], "K-07": [{"x": 10, "y": 6}, {"x": 11, "y": 6}, {"x": 12, "y": 6}, {"x": 13, "y": 6}, {"x": 14, "y": 6}, {"x": 15, "y": 6}, {"x": 16, "y": 6}, {"x": 17, "y": 6}], "K-08": [{"x": 18, "y": 6}, {"x": 19, "y": 6}, {"x": 20, "y": 6}, {"x": 21, "y": 6}, {"x": 22, "y": 6}, {"x": 23, "y": 6}, {"x": 0, "y": 7}, {"x": 1, "y": 7}], "K-09": [{"x": 2, "y": 7}, {"x": 3, "y": 7}, {"x": 4, "y": 7}, {"x": 5, "y": 7}, {"x": 6, "y": 7}, {"x": 7, "y": 7}, {"x": 8, "y": 7}, {"x": 9, "y": 7}, {"x": 10, "y": 7}, {"x": 11, "y": 7}], "K-10": [{"x": 12, "y": 7}, {"x": 13, "y": 7}, {"x": 14, "y": 7}, {"x": 15, "y": 7}, {"x": 16, "y": 7}, {"x": 17, "y": 7}, {"x": 18, "y": 7}, {"x": 19, "y": 7}, {"x": 20, "y": 7}, {"x": 21, "y": 7}], "K-11": [{"x": 22, "y": 7}, {"x": 23, "y": 7}, {"x": 0, "y": 8}, {"x": 1, "y": 8}, {"x": 2, "y": 8}, {"x": 3, "y": 8}, {"x": 4, "y": 8}, {"x": 5, "y": 8}, {"x": 6, "y": 8}, {"x": 7, "y": 8}], "K-15": [{"x": 8, "y": 9}, {"x": 9, "y": 9}, {"x": 10, "y": 9}, {"x": 11, "y": 9}, {"x": 12, "y": 9}, {"x": 13, "y": 9}, {"x": 10, "y": 10}, {"x": 11, "y": 10}, {"x": 12, "y": 10}], "K-36": [{"x": 0, "y": 10}, {"x": 1, "y": 10}, {"x": 2, "y": 10}, {"x": 3, "y": 10}, {"x": 4, "y": 10}, {"x": 5, "y": 10}, {"x": 10, "y": 15}, {"x": 11, "y": 15}, {"x": 12, "y": 15}, {"x": 13, "y": 15}, {"x": 14, "y": 15}, {"x": 15, "y": 15}, {"x": 16, "y": 15}, {"x": 17, "y": 15}, {"x": 18, "y": 15}, {"x": 19, "y": 15}], "K-37": [{"x": 6, "y": 10}, {"x": 7, "y": 10}, {"x": 8, "y": 10}, {"x": 9, "y": 10}, {"x": 20, "y": 15}, {"x": 21, "y": 15}, {"x": 22, "y": 15}, {"x": 23, "y": 15}, {"x": 0, "y": 16}, {"x": 1, "y": 16}, {"x": 2, "y": 16}, {"x": 3, "y": 16}, {"x": 4, "y": 16}, {"x": 5, "y": 16}], "K-19": [{"x": 13, "y": 10}, {"x": 14, "y": 10}, {"x": 10, "y": 11}, {"x": 11, "y": 11}, {"x": 13, "y": 11}], "K-22": [{"x": 20, "y": 10}, {"x": 21, "y": 10}, {"x": 22, "y": 10}, {"x": 23, "y": 10}, {"x": 15, "y": 11}, {"x": 16, "y": 11}, {"x": 17, "y": 11}, {"x": 18, "y": 11}, {"x": 19, "y": 11}, {"x": 20, "y": 11}, {"x": 21, "y": 11}, {"x": 22, "y": 11}, {"x": 23, "y": 11}, {"x": 15, "y": 12}, {"x": 16, "y": 12}, {"x": 17, "y": 12}, {"x": 18, "y": 12}, {"x": 19, "y": 12}, {"x": 20, "y": 12}, {"x": 21, "y": 12}], "K-38": [{"x": 0, "y": 11}, {"x": 1, "y": 11}, {"x": 2, "y": 11}, {"x": 3, "y": 11}, {"x": 4, "y": 11}, {"x": 5, "y": 11}, {"x": 6, "y": 16}, {"x": 7, "y": 16}, {"x": 8, "y": 16}, {"x": 9, "y": 16}, {"x": 10, "y": 16}, {"x": 11, "y": 16}, {"x": 12, "y": 16}, {"x": 13, "y": 16}, {"x": 14, "y": 16}, {"x": 15, "y": 16}], "K-39": [{"x": 6, "y": 11}, {"x": 7, "y": 11}, {"x": 8, "y": 11}, {"x": 9, "y": 11}, {"x": 0, "y": 12}, {"x": 1, "y": 12}, {"x": 16, "y": 16}, {"x": 17, "y": 16}, {"x": 18, "y": 16}, {"x": 19, "y": 16}, {"x": 20, "y": 16}, {"x": 21, "y": 16}, {"x": 22, "y": 16}, {"x": 23, "y": 16}, {"x": 0, "y": 17}, {"x": 1, "y": 17}], "K-45": [{"x": 14, "y": 11}, {"x": 10, "y": 12}, {"x": 12, "y": 21}, {"x": 13, "y": 21}, {"x": 14, "y": 21}, {"x": 15, "y": 21}, {"x": 16, "y": 21}, {"x": 17, "y": 21}, {"x": 18, "y": 21}, {"x": 19, "y": 21}, {"x": 20, "y": 21}, {"x": 21, "y": 21}, {"x": 22, "y": 21}, {"x": 23, "y": 21}], "K-40": [{"x": 2, "y": 12}, {"x": 3, "y": 12}, {"x": 4, "y": 12}, {"x": 5, "y": 12}, {"x": 6, "y": 12}, {"x": 7, "y": 12}, {"x": 8, "y": 12}, {"x": 2, "y": 17}, {"x": 3, "y": 17}, {"x": 4, "y": 17}, {"x": 5, "y": 17}, {"x": 6, "y": 17}, {"x": 7, "y": 17}, {"x": 8, "y": 17}, {"x": 9, "y": 17}, {"x": 10, "y": 17}, {"x": 11, "y": 17}, {"x": 12, "y": 17}], "K-41": [{"x": 9, "y": 12}, {"x": 0, "y": 13}, {"x": 1, "y": 13}, {"x": 2, "y": 13}, {"x": 3, "y": 13}, {"x": 4, "y": 13}, {"x": 5, "y": 13}, {"x": 13, "y": 17}, {"x": 14, "y": 17}, {"x": 15, "y": 17}, {"x": 16, "y": 17}, {"x": 17, "y": 17}, {"x": 18, "y": 17}, {"x": 19, "y": 17}, {"x": 20, "y": 17}, {"x": 21, "y": 17}, {"x": 22, "y": 17}, {"x": 23, "y": 17}], "K-46": [{"x": 14, "y": 12}, {"x": 10, "y": 13}, {"x": 11, "y": 13}, {"x": 13, "y": 13}, {"x": 0, "y": 22}, {"x": 1, "y": 22}, {"x": 2, "y": 22}, {"x": 3, "y": 22}, {"x": 4, "y": 22}, {"x": 5, "y": 22}, {"x": 6, "y": 22}, {"x": 7, "y": 22}, {"x": 8, "y": 22}, {"x": 9, "y": 22}], "K-23": [{"x": 22, "y": 12}, {"x": 23, "y": 12}, {"x": 15, "y": 13}, {"x": 16, "y": 13}, {"x": 17, "y": 13}, {"x": 18, "y": 13}, {"x": 19, "y": 13}, {"x": 20, "y": 13}, {"x": 21, "y": 13}, {"x": 22, "y": 13}], "K-31": [{"x": 6, "y": 13}, {"x": 7, "y": 13}, {"x": 8, "y": 13}, {"x": 9, "y": 13}], "K-47": [{"x": 14, "y": 13}, {"x": 10, "y": 18}, {"x": 11, "y": 18}, {"x": 12, "y": 18}, {"x": 13, "y": 18}, {"x": 14, "y": 18}, {"x": 10, "y": 22}, {"x": 11, "y": 22}, {"x": 12, "y": 22}, {"x": 13, "y": 22}, {"x": 14, "y": 22}, {"x": 15, "y": 22}], "K-24": [{"x": 23, "y": 13}, {"x": 0, "y": 18}, {"x": 1, "y": 18}, {"x": 2, "y": 18}, {"x": 3, "y": 18}, {"x": 4, "y": 18}, {"x": 5, "y": 18}, {"x": 6, "y": 18}, {"x": 7, "y": 18}, {"x": 8, "y": 18}], "K-32": [{"x": 0, "y": 14}, {"x": 1, "y": 14}, {"x": 2, "y": 14}, {"x": 3, "y": 14}, {"x": 4, "y": 14}, {"x": 5, "y": 14}, {"x": 6, "y": 14}, {"x": 7, "y": 14}, {"x": 8, "y": 14}, {"x": 9, "y": 14}], "K-33": [{"x": 10, "y": 14}, {"x": 11, "y": 14}, {"x": 12, "y": 14}, {"x": 13, "y": 14}, {"x": 14, "y": 14}, {"x": 15, "y": 14}, {"x": 16, "y": 14}, {"x": 17, "y": 14}], "K-34": [{"x": 18, "y": 14}, {"x": 19, "y": 14}, {"x": 20, "y": 14}, {"x": 21, "y": 14}, {"x": 22, "y": 14}, {"x": 23, "y": 14}, {"x": 0, "y": 15}, {"x": 1, "y": 15}], "K-35": [{"x": 2, "y": 15}, {"x": 3, "y": 15}, {"x": 4, "y": 15}, {"x": 5, "y": 15}, {"x": 6, "y": 15}, {"x": 7, "y": 15}, {"x": 8, "y": 15}, {"x": 9, "y": 15}], "K-25": [{"x": 9, "y": 18}, {"x": 15, "y": 18}, {"x": 16, "y": 18}, {"x": 17, "y": 18}, {"x": 18, "y": 18}, {"x": 19, "y": 18}, {"x": 20, "y": 18}, {"x": 21, "y": 18}, {"x": 22, "y": 18}, {"x": 23, "y": 18}], "K-26": [{"x": 0, "y": 19}, {"x": 1, "y": 19}, {"x": 2, "y": 19}, {"x": 3, "y": 19}, {"x": 4, "y": 19}, {"x": 5, "y": 19}, {"x": 6, "y": 19}, {"x": 7, "y": 19}, {"x": 8, "y": 19}, {"x": 9, "y": 19}, {"x": 15, "y": 19}, {"x": 16, "y": 19}, {"x": 17, "y": 19}, {"x": 18, "y": 19}, {"x": 19, "y": 19}, {"x": 20, "y": 19}, {"x": 21, "y": 19}, {"x": 22, "y": 19}, {"x": 23, "y": 19}, {"x": 0, "y": 20}], "K-48": [{"x": 10, "y": 19}, {"x": 11, "y": 19}, {"x": 12, "y": 19}, {"x": 13, "y": 19}, {"x": 16, "y": 22}, {"x": 17, "y": 22}, {"x": 18, "y": 22}, {"x": 19, "y": 22}, {"x": 20, "y": 22}, {"x": 21, "y": 22}, {"x": 22, "y": 22}, {"x": 23, "y": 22}], "K-49": [{"x": 14, "y": 19}, {"x": 10, "y": 20}, {"x": 11, "y": 20}, {"x": 12, "y": 20}, {"x": 13, "y": 20}, {"x": 14, "y": 20}, {"x": 0, "y": 23}, {"x": 1, "y": 23}, {"x": 2, "y": 23}, {"x": 3, "y": 23}, {"x": 4, "y": 23}, {"x": 5, "y": 23}, {"x": 6, "y": 23}, {"x": 7, "y": 23}], "K-27": [{"x": 1, "y": 20}, {"x": 2, "y": 20}, {"x": 3, "y": 20}, {"x": 4, "y": 20}, {"x": 5, "y": 20}, {"x": 6, "y": 20}, {"x": 7, "y": 20}, {"x": 8, "y": 20}, {"x": 9, "y": 20}, {"x": 15, "y": 20}], "K-28": [{"x": 16, "y": 20}, {"x": 17, "y": 20}, {"x": 18, "y": 20}, {"x": 19, "y": 20}, {"x": 20, "y": 20}, {"x": 21, "y": 20}, {"x": 22, "y": 20}, {"x": 23, "y": 20}], "K-42": [{"x": 0, "y": 21}, {"x": 1, "y": 21}, {"x": 2, "y": 21}, {"x": 3, "y": 21}, {"x": 4, "y": 21}, {"x": 5, "y": 21}, {"x": 6, "y": 21}, {"x": 7, "y": 21}, {"x": 8, "y": 21}, {"x": 9, "y": 21}, {"x": 10, "y": 21}, {"x": 11, "y": 21}]}, "zone_summary": {"RIM_TOP": {"cells": 72, "avg_density": 0.899}, "BELLY": {"cells": 150, "avg_density": 0.7}, "CENTER_APPROACH": {"cells": 45, "avg_density": 0.8}, "UPPER_FRIEZE": {"cells": 96, "avg_density": 0.85}, "ABSENCE_FIELD": {"cells": 40, "avg_density": 0.053}, "SEAL": {"cells": 5, "avg_density": 0.98}, "LOWER_FRIEZE": {"cells": 96, "avg_density": 0.85}, "RIM_BOTTOM": {"cells": 72, "avg_density": 0.899}}}, "regenerate_instructions": ["Parse lines deterministically: remove blank lines; set K-01 = '<title> — <byline>'; set K-02..K-51 to the next 50 nonblank lines in order, trimming leading indentation only.", "Apply semantic tags exactly as in lines[]. These tags are the operative routing layer (function/motifs/weight/default_zone).", "Compute zone geometry with the fixed rule: SEAL={(12,12),(11,12),(12,11),(13,12),(12,13)}; RIM_TOP if y∈[0..2]; RIM_BOTTOM if y∈[21..23]; UPPER_FRIEZE if y∈[6..9]; LOWER_FRIEZE if y∈[14..17]; ABSENCE_FIELD if (y∈[10..13] and x∈[0..9]); CENTER_APPROACH if (x∈[10..14] and y∈{3,4,5,10,11,12,13,18,19,20}) excluding SEAL; else BELLY.", "Place line_ids into coordinates by executing placement_schedules, in this order: row_segments (rim+friezes), seal_cells, absence_field, center_approach, belly_remainder. Within each schedule, expand counts into a flat list and assign to cells in the specified fill order.", "Pack text_chunk deterministically per cell: build per-line candidate fragments by taking up to three contiguous 8-word windows (start/middle/end), repeating short lines until ≥20 chars, truncating to ≤80. Then choose candidate[(x+7y) mod n] for normal zones; SEAL always uses candidate[0]. ABSENCE_FIELD uses blanks unless (x+2y) mod 3 == 0, in which case it uses a candidate truncated to 40 chars.", "Compute density deterministically: base by zone {rim:0.75, friezes:0.70, belly:0.55, center_approach:0.65, seal:0.95, absence blank:0.02, absence fragment:0.12}; for non-absence add min(len(text_chunk)/120,0.15) and clamp ≤0.98."], "checks": {"all_lines_covered": true, "seal_ok": true, "frieze_continuity_ok": true, "absence_contiguous_ok": true, "balance_ok": true, "max_line_cells": {"line_id": "K-26", "cells": 20}}};
+
+const ZONE_COLORS = {
+  "RIM_TOP": "#cfe8ff",
+  "RIM_BOTTOM": "#cfe8ff",
+  "UPPER_FRIEZE": "#d7ffd9",
+  "LOWER_FRIEZE": "#d7ffd9",
+  "BELLY": "#fff4d6",
+  "ABSENCE_FIELD": "#f3f3f3",
+  "SEAL": "#ffd6d6",
+  "CENTER_APPROACH": "#e5ddff"
+};
+
+function $(id){return document.getElementById(id)}
+function clamp(v,a,b){return Math.max(a, Math.min(b, v));}
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>t.classList.remove("on"), 1200);
+}
+
+const state = {
+  selLineId: null,
+  selCell: null,
+  activeWalkIdx: -1,
+  walkPath: [],
+  playing: false,
+  timer: null,
+  search: "",
+  viewMode: "chunk",
+  walkMode: "none",
+};
+
+function cellKey(x,y){return `${x},${y}`}
+
+function buildLegend() {
+  const el = $("legend");
+  el.innerHTML = "";
+  const zones = Object.keys(MANIFEST.index.zone_summary);
+  zones.forEach(z => {
+    const sw = document.createElement("div");
+    sw.className="sw";
+    const d = document.createElement("div");
+    d.className="dot";
+    d.style.background = ZONE_COLORS[z] || "#fff";
+    sw.appendChild(d);
+    const t = document.createElement("div");
+    t.textContent = z;
+    sw.appendChild(t);
+    el.appendChild(sw);
+  });
+}
+
+function summarizeChecks() {
+  const c = MANIFEST.checks || {};
+  const ok = (c.all_lines_covered && c.seal_ok && c.frieze_continuity_ok && c.absence_contiguous_ok && c.balance_ok);
+  $("checkPill").textContent = ok ? "checks: OK" : "checks: WARN";
+  $("checkPill").style.borderColor = ok ? "#16a34a55" : "#f59e0b55";
+  $("checkPill").style.color = ok ? "#166534" : "#92400e";
+}
+
+function buildLineList() {
+  const list = $("lineList");
+  list.innerHTML="";
+  const q = state.search.trim().toLowerCase();
+  for (const line of MANIFEST.lines) {
+    const hay = (line.text + " " + (line.motifs||[]).join(" ") + " " + line.function + " " + line.zone).toLowerCase();
+    if (q && !hay.includes(q)) continue;
+
+    const it = document.createElement("div");
+    it.className="item" + (state.selLineId===line.line_id ? " sel":"");
+    it.dataset.lineId = line.line_id;
+
+    const top = document.createElement("div");
+    top.className="top";
+    const left = document.createElement("div");
+    left.innerHTML = `<span class="id">${line.line_id}</span>`;
+    const right = document.createElement("div");
+    right.innerHTML = `<span class="fn">${line.function} · ${line.zone} · w${line.weight}</span>`;
+    top.appendChild(left);
+    top.appendChild(right);
+
+    const ln = document.createElement("div");
+    ln.className="ln";
+    ln.textContent = line.text;
+
+    it.appendChild(top);
+    it.appendChild(ln);
+
+    it.addEventListener("click", ()=>selectLine(line.line_id));
+    list.appendChild(it);
+  }
+}
+
+function renderGrid() {
+  const grid = $("grid");
+  grid.innerHTML = "";
+  const view = state.viewMode;
+
+  for (let y=0;y<24;y++) {
+    for (let x=0;x<24;x++) {
+      const cell = MANIFEST.grid[y][x];
+      const div = document.createElement("div");
+      const blank = !cell.text_chunk;
+      div.className = "cell" + (blank ? " blank":"");
+      div.dataset.x = x;
+      div.dataset.y = y;
+
+      const txt = document.createElement("div");
+      txt.className="txt";
+
+      // content display
+      if (view==="chunk") {
+        txt.textContent = cell.text_chunk || "·";
+      } else if (view==="zone") {
+        txt.textContent = cell.zone.replace(/_/g," ").toLowerCase();
+      } else if (view==="density") {
+        txt.textContent = blank ? "·" : String(cell.density ?? 0);
+      } else if (view==="line") {
+        txt.textContent = blank ? "·" : cell.line_id;
+      }
+      div.appendChild(txt);
+
+      // zone color background
+      const zc = ZONE_COLORS[cell.zone] || "#fff";
+      div.style.background = zc + "cc";
+
+      // density as opacity (but preserve legibility)
+      const d = (cell.density ?? (blank ? 0.08 : 0.62));
+      div.style.opacity = clamp(0.35 + d*0.9, 0.35, 1);
+
+      // small badge coords
+      const bd = document.createElement("div");
+      bd.className="badge";
+      bd.textContent = `${x},${y}`;
+      div.appendChild(bd);
+
+      div.addEventListener("mouseenter", ()=> {
+        $("hoverPill").textContent = `hover: (${x},${y}) · ${cell.zone} · ${cell.line_id}`;
+      });
+      div.addEventListener("mouseleave", ()=> {
+        $("hoverPill").textContent = "hover: —";
+      });
+      div.addEventListener("click", ()=>selectCell(x,y));
+
+      grid.appendChild(div);
+    }
+  }
+
+  applyHighlights();
+}
+
+function applyHighlights() {
+  const cells = document.querySelectorAll(".cell");
+  cells.forEach(el => {
+    el.classList.remove("active","hit");
+    const x = parseInt(el.dataset.x,10);
+    const y = parseInt(el.dataset.y,10);
+
+    // selected cell
+    if (state.selCell && state.selCell.x===x && state.selCell.y===y) {
+      el.classList.add("active");
+    }
+
+    // highlight line footprint
+    if (state.selLineId) {
+      const cell = MANIFEST.grid[y][x];
+      if (cell.line_id === state.selLineId) {
+        el.classList.add("hit");
+      }
+    }
+
+    // active walk
+    if (state.activeWalkIdx>=0 && state.walkPath[state.activeWalkIdx]) {
+      const p = state.walkPath[state.activeWalkIdx];
+      if (p.x===x && p.y===y) {
+        el.classList.add("active");
+      }
+    }
+  });
+}
+
+function selectCell(x,y) {
+  const cell = MANIFEST.grid[y][x];
+  state.selCell = {x,y};
+  state.selLineId = cell.line_id || null;
+  $("selPill").textContent = `selected: ${cell.line_id || "—"} @(${x},${y})`;
+  buildLineList();
+  showDetail(cell, x, y);
+  applyHighlights();
+}
+
+function selectLine(lineId) {
+  state.selLineId = (state.selLineId === lineId) ? null : lineId;
+  state.selCell = null;
+  $("selPill").textContent = `selected: ${state.selLineId || "—"}`;
+  buildLineList();
+  if (state.selLineId) {
+    const line = MANIFEST.lines.find(l=>l.line_id===state.selLineId);
+    const coords = (MANIFEST.index.line_to_cells[state.selLineId]||[]);
+    showLineDetail(line, coords);
+  } else {
+    $("detailPre").textContent = "Click a cell to inspect. Click a line to highlight all its cells.";
+  }
+  applyHighlights();
+}
+
+function showDetail(cell, x, y) {
+  const line = MANIFEST.lines.find(l=>l.line_id===cell.line_id);
+  const obj = {
+    coord: {x,y},
+    zone: cell.zone,
+    line_id: cell.line_id,
+    function: cell.function,
+    motifs: line?.motifs || cell.motifs || [],
+    density: cell.density,
+    text_chunk: cell.text_chunk,
+    full_line: line?.text || null
+  };
+  $("detailPre").textContent = JSON.stringify(obj, null, 2);
+}
+
+function showLineDetail(line, coords) {
+  const obj = {
+    line_id: line.line_id,
+    function: line.function,
+    zone: line.zone,
+    motifs: line.motifs,
+    weight: line.weight,
+    allocated_cells: MANIFEST.allocation[line.line_id],
+    coords: coords
+  };
+  $("detailPre").textContent = JSON.stringify(obj, null, 2) + "\n\n" + line.text;
+}
+
+function buildWalkPath() {
+  const mode = state.walkMode;
+  const path = [];
+  const push = (x,y)=>path.push({x,y});
+
+  if (mode==="none") return path;
+
+  if (mode==="row") {
+    for (let y=0;y<24;y++) for (let x=0;x<24;x++) push(x,y);
+  } else if (mode==="col") {
+    for (let x=0;x<24;x++) for (let y=0;y<24;y++) push(x,y);
+  } else if (mode==="spiral") {
+    // Spiral from outer ring to center
+    let left=0, right=23, top=0, bottom=23;
+    while (left<=right && top<=bottom) {
+      for (let x=left;x<=right;x++) push(x,top);
+      for (let y=top+1;y<=bottom;y++) push(right,y);
+      if (top<bottom) for (let x=right-1;x>=left;x--) push(x,bottom);
+      if (left<right) for (let y=bottom-1;y>top;y--) push(left,y);
+      left++; right--; top++; bottom--;
+    }
+  } else if (mode==="zones") {
+    // Ordered zones: rim top → upper frieze → belly → lower frieze → rim bottom → approach → seal → absence
+    const order = ["RIM_TOP","UPPER_FRIEZE","BELLY","LOWER_FRIEZE","RIM_BOTTOM","CENTER_APPROACH","SEAL","ABSENCE_FIELD"];
+    const seen = new Set();
+    for (const z of order) {
+      for (let y=0;y<24;y++) for (let x=0;x<24;x++) {
+        const cell = MANIFEST.grid[y][x];
+        if (cell.zone===z) {
+          const k = cellKey(x,y);
+          if (!seen.has(k)) {
+            seen.add(k);
+            push(x,y);
+          }
+        }
+      }
+    }
+    // if any leftover, append
+    for (let y=0;y<24;y++) for (let x=0;x<24;x++) {
+      const k = cellKey(x,y);
+      if (!seen.has(k)) push(x,y);
+    }
+  }
+
+  return path;
+}
+
+function resetWalk() {
+  stopWalk(false);
+  state.walkPath = buildWalkPath();
+  state.activeWalkIdx = (state.walkMode==="none") ? -1 : 0;
+  $("walkPill").textContent = "walk: " + state.walkMode;
+  $("transcript").textContent = "";
+  applyHighlights();
+}
+
+function stepWalk() {
+  if (!state.walkPath.length) return;
+  const idx = state.activeWalkIdx;
+  if (idx<0 || idx>=state.walkPath.length) {
+    stopWalk(true);
+    return;
+  }
+  const p = state.walkPath[idx];
+  const cell = MANIFEST.grid[p.y][p.x];
+  state.selCell = p;
+  state.selLineId = cell.line_id || null;
+
+  // transcript append
+  const t = cell.text_chunk;
+  if (t) {
+    const box = $("transcript");
+    const prev = (idx>0) ? MANIFEST.grid[state.walkPath[idx-1].y][state.walkPath[idx-1].x] : null;
+    const lineBreak = prev && prev.line_id && cell.line_id && prev.line_id !== cell.line_id;
+    box.textContent += (lineBreak ? "\n" : " ") + t;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  $("selPill").textContent = `selected: ${cell.line_id || "—"} @(${p.x},${p.y})`;
+  showDetail(cell, p.x, p.y);
+
+  state.activeWalkIdx++;
+  applyHighlights();
+}
+
+function playWalk() {
+  if (state.playing) return;
+  if (state.walkMode==="none") {
+    toast("Choose a walk mode first.");
+    return;
+  }
+  state.playing = true;
+  const ms = parseInt($("speed").value,10);
+  $("playBtn").textContent = "Pause";
+  state.timer = setInterval(()=> {
+    stepWalk();
+    if (state.activeWalkIdx>=state.walkPath.length) stopWalk(true);
+  }, ms);
+}
+
+function pauseWalk() {
+  state.playing = false;
+  $("playBtn").textContent = "Play";
+  clearInterval(state.timer);
+  state.timer = null;
+}
+
+function stopWalk(clear=true) {
+  pauseWalk();
+  state.activeWalkIdx = (state.walkMode==="none") ? -1 : 0;
+  if (clear) $("transcript").textContent = "";
+  applyHighlights();
+}
+
+function downloadBlob(filename, text, type="application/octet-stream") {
+  const blob = new Blob([text], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 500);
+}
+
+function init() {
+  $("metaSmall").textContent = `world=${MANIFEST.world} · lines=${MANIFEST.lines.length} · built=${new Date().toISOString().slice(0,10)}`;
+  $("regenPre").textContent = (MANIFEST.regenerate_instructions||[]).join("\n");
+  summarizeChecks();
+  buildLegend();
+
+  buildLineList();
+  renderGrid();
+
+  $("viewMode").addEventListener("change", (e)=> {
+    state.viewMode = e.target.value;
+    renderGrid();
+  });
+
+  $("walkMode").addEventListener("change", (e)=> {
+    state.walkMode = e.target.value;
+    resetWalk();
+  });
+
+  $("playBtn").addEventListener("click", ()=> {
+    if (!state.playing) playWalk();
+    else pauseWalk();
+  });
+
+  $("stepBtn").addEventListener("click", ()=> {
+    if (state.walkMode==="none") {
+      toast("Choose a walk mode first.");
+      return;
+    }
+    if (!state.walkPath.length) resetWalk();
+    stepWalk();
+  });
+
+  $("stopBtn").addEventListener("click", ()=>stopWalk(true));
+
+  $("speed").addEventListener("input", (e)=> {
+    $("speedLabel").textContent = e.target.value;
+    if (state.playing) {
+      pauseWalk();
+      playWalk();
+    }
+  });
+
+  $("q").addEventListener("input", (e)=> {
+    state.search = e.target.value;
+    buildLineList();
+  });
+
+  $("copyBtn").addEventListener("click", async ()=> {
+    const t = $("transcript").textContent.trim();
+    if (!t) return toast("Transcript is empty.");
+    try {
+      await navigator.clipboard.writeText(t);
+      toast("Copied transcript.");
+    } catch(err) {
+      toast("Clipboard blocked (browser).");
+    }
+  });
+
+  $("dlJsonBtn").addEventListener("click", ()=> {
+    downloadBlob("KEATS_URN_24_manifest.json", JSON.stringify(MANIFEST, null, 2), "application/json");
+  });
+
+  $("dlTxtBtn").addEventListener("click", ()=> {
+    const t = $("transcript").textContent.trim() || "";
+    downloadBlob("KEATS_URN_24_transcript.txt", t, "text/plain");
+  });
+
+  window.addEventListener("keydown", (e)=> {
+    if (e.key==="Escape") {
+      state.selLineId = null;
+      state.selCell = null;
+      buildLineList();
+      $("detailPre").textContent = "Click a cell to inspect. Click a line to highlight all its cells.";
+      $("selPill").textContent = "selected: —";
+      applyHighlights();
+    }
+    if (e.key===" " && (document.activeElement.tagName!=="INPUT" && document.activeElement.tagName!=="TEXTAREA")) {
+      e.preventDefault();
+      if (!state.playing) playWalk();
+      else pauseWalk();
+    }
+    if (e.key==="ArrowRight") {
+      e.preventDefault();
+      if (state.walkMode!=="none") stepWalk();
+    }
+  });
+
+  resetWalk();
+  toast("Loaded. Choose View/Walk. Space = play/pause.");
+}
+
+init();
+</script>
+</body>
+</html>

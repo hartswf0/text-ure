@@ -1,0 +1,2404 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Shield of Achilles → Calligram Transmission Grid (24×24)</title>
+  <style>
+    :root{
+      --paper:#f6f4ef;
+      --ink:#141414;
+      --muted:#6b6b6b;
+      --line:#d7d2c7;
+      --panel:#ffffffc9;
+      --panelSolid:#ffffff;
+      --accent:#1b5cff;
+      --good:#12a150;
+      --warn:#d97706;
+      --bad:#dc2626;
+      --glow: rgba(27, 92, 255, .16);
+      --shadow: 0 10px 30px rgba(0,0,0,.10);
+      --radius: 16px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--paper);
+      color: var(--ink);
+      overflow:hidden;
+    }
+
+    /* Layout */
+    .app{
+      height:100dvh;
+      width:100%;
+      display:grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    header{
+      position:sticky; top:0;
+      background: linear-gradient(to bottom, rgba(246,244,239,.96), rgba(246,244,239,.72));
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--line);
+      z-index: 20;
+    }
+
+    .bar{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 12px;
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+    }
+
+    .title{
+      min-width: 0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      flex: 1 1 auto;
+    }
+
+    .title h1{
+      font-size: 14px;
+      margin:0;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .title .sub{
+      font-size: 12px;
+      color: var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.7);
+      padding:6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--ink);
+      user-select:none;
+    }
+
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.78);
+      color: var(--ink);
+      padding:8px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      cursor:pointer;
+      box-shadow: 0 1px 0 rgba(0,0,0,.04);
+      transition: transform .06s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    .btn:active{transform: translateY(1px)}
+    .btn.primary{
+      border-color: rgba(27, 92, 255, .35);
+      background: rgba(27, 92, 255, .10);
+    }
+
+    .btn.danger{
+      border-color: rgba(220, 38, 38, .35);
+      background: rgba(220, 38, 38, .09);
+    }
+
+    .btn.small{padding:6px 8px; border-radius: 10px}
+
+    .main{
+      display:grid;
+      grid-template-columns: 1.25fr .95fr;
+      gap: 10px;
+      padding: 10px;
+      padding-left: max(10px, env(safe-area-inset-left));
+      padding-right: max(10px, env(safe-area-inset-right));
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+      overflow:hidden;
+    }
+
+    /* Mobile: stack */
+    @media (max-width: 980px){
+      .main{grid-template-columns: 1fr; grid-template-rows: 1.05fr .95fr;}
+    }
+
+    .card{
+      background: rgba(255,255,255,.78);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      min-height:0;
+    }
+
+    .cardHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.82);
+    }
+
+    .cardHead .left{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+
+    .cardHead .left .h{
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .cardHead .left .s{
+      font-size: 11px;
+      color: var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .cardBody{
+      display:grid;
+      grid-template-rows: auto 1fr;
+      min-height:0;
+      height:100%;
+    }
+
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.72);
+    }
+
+    .field{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.75);
+      padding:6px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      min-width: 0;
+    }
+
+    .field input[type="text"]{
+      border:none;
+      outline:none;
+      background: transparent;
+      width: 180px;
+      max-width: 52vw;
+      font-size: 12px;
+      color: var(--ink);
+    }
+
+    .field select{
+      border:none;
+      outline:none;
+      background: transparent;
+      font-size: 12px;
+      color: var(--ink);
+    }
+
+    .field input[type="range"]{
+      width: 120px;
+      max-width: 40vw;
+    }
+
+    /* Grid */
+    .gridWrap{
+      position: relative;
+      padding: 10px;
+      min-height:0;
+      display:grid;
+      place-items:center;
+    }
+
+    .gridCanvas{
+      width: min(86vmin, 720px);
+      height: min(86vmin, 720px);
+      max-height: 100%;
+      max-width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.66);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.02);
+      position: relative;
+      overflow:hidden;
+      touch-action: none;
+    }
+
+    .grid{
+      position:absolute; inset:0;
+      display:grid;
+      grid-template-columns: repeat(24, 1fr);
+      grid-template-rows: repeat(24, 1fr);
+    }
+
+    .cell{
+      border-right: 1px solid rgba(215,210,199,.55);
+      border-bottom: 1px solid rgba(215,210,199,.55);
+      position: relative;
+      display:grid;
+      place-items:center;
+      font-size: 10px;
+      color: rgba(20,20,20,.62);
+      user-select:none;
+      cursor:pointer;
+    }
+
+    .cell.inactive{
+      background: rgba(20,20,20,.04);
+      cursor:default;
+    }
+
+    .cell .dot{
+      width: 7px; height: 7px;
+      border-radius: 999px;
+      background: rgba(20,20,20,.18);
+      box-shadow: 0 1px 0 rgba(0,0,0,.06);
+      display:none;
+    }
+    .cell.occ1 .dot{display:block; background: rgba(27, 92, 255, .32)}
+    .cell.occ2 .dot{display:block; background: rgba(217, 119, 6, .36)}
+    .cell.occ3 .dot{display:block; background: rgba(220, 38, 38, .36)}
+
+    .cell .n{
+      position:absolute;
+      bottom: 2px; right: 3px;
+      font-size: 9px;
+      color: rgba(20,20,20,.45);
+      display:none;
+    }
+    .cell.occMore .n{display:block}
+
+    .cell.selected{
+      outline: 2px solid rgba(27, 92, 255, .65);
+      outline-offset: -2px;
+      background: var(--glow);
+      z-index: 2;
+    }
+
+    .cell.cursor{
+      box-shadow: inset 0 0 0 2px rgba(27,92,255,.85);
+      z-index: 3;
+    }
+
+    /* Shield rings overlay */
+    .rings{
+      position:absolute; inset:0;
+      pointer-events:none;
+      opacity:.58;
+    }
+
+    /* Inspector */
+    .inspector{
+      min-height:0;
+      overflow:auto;
+      padding: 10px 12px;
+      background: rgba(255,255,255,.64);
+    }
+    .inspector h3{
+      margin:0 0 6px 0;
+      font-size: 12px;
+      letter-spacing:.2px;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 110px 1fr;
+      gap:6px 10px;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+    .kv .k{color: var(--muted)}
+    .kv .v{color: var(--ink); min-width:0; overflow-wrap:anywhere}
+
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-top: 10px;
+    }
+
+    .item{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.78);
+      border-radius: 14px;
+      padding: 10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    .item .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .tagRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+
+    .tag{
+      font-size: 11px;
+      color: var(--ink);
+      border: 1px solid rgba(215,210,199,.9);
+      background: rgba(255,255,255,.78);
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+
+    .tag.blue{border-color: rgba(27,92,255,.35); background: rgba(27,92,255,.08)}
+    .tag.orange{border-color: rgba(217,119,6,.38); background: rgba(217,119,6,.08)}
+    .tag.red{border-color: rgba(220,38,38,.38); background: rgba(220,38,38,.08)}
+    .tag.green{border-color: rgba(18,161,80,.35); background: rgba(18,161,80,.08)}
+
+    .item .txt{
+      font-family: ui-serif, Georgia, "Times New Roman", Times, serif;
+      font-size: 13px;
+      line-height: 1.35;
+      color: var(--ink);
+      white-space:pre-wrap;
+      overflow-wrap:anywhere;
+    }
+
+    .item button{
+      align-self:flex-start;
+    }
+
+    /* Tabs (right card) */
+    .tabs{
+      display:flex;
+      gap:8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.72);
+    }
+    .tab{
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.8);
+      cursor:pointer;
+      user-select:none;
+    }
+    .tab.active{
+      border-color: rgba(27,92,255,.35);
+      background: rgba(27,92,255,.10);
+    }
+
+    .pane{
+      min-height:0;
+      overflow:auto;
+      padding: 10px 12px;
+      background: rgba(255,255,255,.64);
+      display:none;
+    }
+    .pane.active{display:block}
+
+    textarea{
+      width:100%;
+      min-height: 240px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.35;
+      background: rgba(255,255,255,.82);
+      color: var(--ink);
+      outline:none;
+      resize: vertical;
+    }
+
+    pre{
+      margin:0;
+      padding:10px;
+      border:1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.82);
+      overflow:auto;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .hint{
+      font-size: 12px;
+      color: var(--muted);
+      margin: 8px 0 0 0;
+    }
+
+    .hr{
+      height:1px;
+      background: var(--line);
+      margin: 12px 0;
+    }
+
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <div class="bar">
+        <div class="title">
+          <h1>Shield of Achilles → 24×24 Calligram Transmission Grid</h1>
+          <div class="sub">Cells store references, not strings. Navigation = reading. Reading = traversal.</div>
+        </div>
+
+        <span class="pill" id="pillSpec">Spec: —</span>
+        <button class="btn primary" id="btnCompile" title="Compile text into the grid">Compile</button>
+        <button class="btn" id="btnRitual" title="Toggle traversal log">Ritual: OFF</button>
+        <button class="btn danger" id="btnClearLog" title="Clear ritual log">Clear Log</button>
+      </div>
+    </header>
+
+    <div class="main">
+
+      <!-- LEFT: GRID + INSPECTOR -->
+      <section class="card" aria-label="Grid + Inspector">
+        <div class="cardHead">
+          <div class="left">
+            <div class="h">Surface Text: shield-as-address-space</div>
+            <div class="s">24×24 grid with circular shield mask + 3 rings. Tap cells; arrows/WASD; swipe to move.</div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+            <span class="pill" id="pillCounts">—</span>
+            <span class="pill" id="pillCursor">Cursor: —</span>
+          </div>
+        </div>
+
+        <div class="cardBody">
+          <div class="toolbar">
+            <div class="field" title="Segmentation (fragments)">
+              <span class="mono">SEG</span>
+              <select id="segMode">
+                <option value="line" selected>Every line</option>
+                <option value="stanza">Stanza blocks</option>
+              </select>
+            </div>
+
+            <div class="field" title="Allocation scale (cells per fragment)">
+              <span class="mono">ALLOC</span>
+              <input id="alloc" type="range" min="0.6" max="2.4" step="0.1" value="1.2"/>
+              <span class="mono" id="allocVal">1.2×</span>
+            </div>
+
+            <div class="field" title="Zone filter (origin_world)">
+              <span class="mono">ZONE</span>
+              <select id="zoneFilter">
+                <option value="ALL" selected>All</option>
+                <option value="MEXICO">MEXICO (Peace / Fields)</option>
+                <option value="PARIS">PARIS (War / Tumult)</option>
+                <option value="TECHNOLOGY">TECHNOLOGY (Forge / Spine)</option>
+                <option value="MEMORY">MEMORY (Cosmos / Rim)</option>
+              </select>
+            </div>
+
+            <div class="field" title="Search fragments">
+              <span class="mono">FIND</span>
+              <input id="search" type="text" placeholder="keyword…" />
+            </div>
+
+            <button class="btn small" id="btnCenter" title="Center cursor">Center</button>
+            <button class="btn small" id="btnAuto" title="Auto-select next occupied cell">Next Occ</button>
+          </div>
+
+          <div class="gridWrap">
+            <div class="gridCanvas" id="gridCanvas">
+              <svg class="rings" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(20,20,20,.18)" stroke-width="0.6"></circle>
+                <circle cx="50" cy="50" r="36" fill="none" stroke="rgba(20,20,20,.12)" stroke-width="0.6"></circle>
+                <circle cx="50" cy="50" r="24" fill="none" stroke="rgba(20,20,20,.10)" stroke-width="0.6"></circle>
+              </svg>
+              <div class="grid" id="grid"></div>
+            </div>
+          </div>
+
+          <div class="inspector" id="inspector">
+            <h3>Cell Inspector</h3>
+            <div class="kv">
+              <div class="k">Address</div><div class="v" id="cellAddr">—</div>
+              <div class="k">Ring</div><div class="v" id="cellRing">—</div>
+              <div class="k">Occupancy</div><div class="v" id="cellOcc">—</div>
+              <div class="k">Zone</div><div class="v" id="cellZone">—</div>
+            </div>
+
+            <div class="hr"></div>
+
+            <h3>Fragments in this cell</h3>
+            <div class="list" id="cellFragments"></div>
+
+            <div class="hr"></div>
+
+            <h3>Ritual Log (Traversal)</h3>
+            <pre class="mono" id="ritualLog">—</pre>
+            <p class="hint">Tip: turn Ritual ON, then traverse. You’re “reading” by scan-head movement.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: FRAGMENTS / OPERATIVE TEXT / INPUTS -->
+      <section class="card" aria-label="Fragments + Operative Text">
+        <div class="cardHead">
+          <div class="left">
+            <div class="h">Operative Text: spec + manifest</div>
+            <div class="s">POML is parsed (lightly). Manifest is the deterministic code-text that regenerates the surface grid.</div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+            <button class="btn small" id="btnExport">Export Manifest</button>
+            <button class="btn small" id="btnImport">Import Manifest</button>
+          </div>
+        </div>
+
+        <div class="tabs">
+          <div class="tab active" data-tab="frags">Fragments</div>
+          <div class="tab" data-tab="op">Operative Manifest</div>
+          <div class="tab" data-tab="src">Source Text</div>
+          <div class="tab" data-tab="poml">POML Spec</div>
+        </div>
+
+        <div class="pane active" id="pane-frags">
+          <div class="kv">
+            <div class="k">Interpretation</div>
+            <div class="v">
+              <div><span class="tag blue">MEXICO</span> = Peace / Labor / Pastoral / Dance</div>
+              <div><span class="tag red">PARIS</span> = War / Contest / Blood / Siege</div>
+              <div><span class="tag green">TECHNOLOGY</span> = Forge / TSF spine / making</div>
+              <div><span class="tag orange">MEMORY</span> = Cosmos / eternity / ocean rim</div>
+            </div>
+          </div>
+          <div class="hr"></div>
+          <div id="fragList" class="list"></div>
+          <p class="hint">Tap a fragment to highlight its footprint in the grid.</p>
+        </div>
+
+        <div class="pane" id="pane-op">
+          <h3>Compiled Manifest (JSON)</h3>
+          <pre class="mono" id="manifestOut"></pre>
+          <p class="hint">This is the “code-text”: rules + fragments + cell addresses. If you export/import this, the surface grid is reproducible.</p>
+        </div>
+
+        <div class="pane" id="pane-src">
+          <h3>Source Text</h3>
+          <textarea id="sourceText"></textarea>
+          <p class="hint">Edit the poem, then hit <b>Compile</b>. Default segmentation is “Every line”.</p>
+        </div>
+
+        <div class="pane" id="pane-poml">
+          <h3>POML Spec</h3>
+          <textarea id="pomlText"></textarea>
+          <p class="hint">Spec is lightly parsed to extract meta, axioms, morphism maps (signal → geometry/field), zones, constraints.</p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+<script>
+/* ============================================================
+   SHIELD GRID COMPILER
+   - 24×24 address space with circular shield mask (round).
+   - Cells store fragment IDs (references), not full strings.
+   - Traversal = reading (cursor scan-head).
+   - Uses the provided POML morphisms (signal_type → geometry/field).
+   ============================================================ */
+
+(function(){
+  const ROWS = 24, COLS = 24;
+  const CENTER = { r: (ROWS-1)/2, c: (COLS-1)/2 }; // 11.5, 11.5
+  const RADIUS = 11.75; // shield radius in cell units
+  const RINGS = [
+    {name:"Inner",  max: 4.2},
+    {name:"Middle", max: 8.0},
+    {name:"Outer",  max: 11.8},
+    {name:"Rim",    max: 12.2}
+  ];
+
+  const el = (id)=>document.getElementById(id);
+
+  const gridEl = el("grid");
+  const gridCanvas = el("gridCanvas");
+  const inspector = el("inspector");
+
+  const pillSpec = el("pillSpec");
+  const pillCounts = el("pillCounts");
+  const pillCursor = el("pillCursor");
+
+  const cellAddr = el("cellAddr");
+  const cellRing = el("cellRing");
+  const cellOcc  = el("cellOcc");
+  const cellZone = el("cellZone");
+  const cellFragments = el("cellFragments");
+  const ritualLogEl = el("ritualLog");
+
+  const btnCompile = el("btnCompile");
+  const btnRitual = el("btnRitual");
+  const btnClearLog = el("btnClearLog");
+  const btnCenter = el("btnCenter");
+  const btnAuto = el("btnAuto");
+  const btnExport = el("btnExport");
+  const btnImport = el("btnImport");
+
+  const alloc = el("alloc");
+  const allocVal = el("allocVal");
+  const segMode = el("segMode");
+  const zoneFilter = el("zoneFilter");
+  const search = el("search");
+
+  const sourceText = el("sourceText");
+  const pomlText = el("pomlText");
+
+  const fragList = el("fragList");
+  const manifestOut = el("manifestOut");
+
+  /* -------------------------
+     Defaults (your payload)
+     ------------------------- */
+  sourceText.value = `{The Iliad, Book XVIII, [The Shield of Achilles]
+
+Homer
+
+Thetis goes to the palace of Vulcan to obtain new arms for her son.
+
+"Thee, welcome, goddess! what occasion calls
+
+(So long a stranger) to these honour'd walls?
+
+'Tis thine, fair Thetis, the command to lay,
+
+And Vulcan's joy and duty to obey."
+
+To whom the mournful mother thus replies:
+
+(The crystal drops stood trembling in her eyes:)
+
+"O Vulcan! say, was ever breast divine
+
+So pierced with sorrows, so o'erwhelm'd as mine?
+
+Of all the goddesses, did Jove prepare
+
+For Thetis only such a weight of care?
+
+I, only I, of all the watery race
+
+By force subjected to a man's embrace,
+
+Who, sinking now with age and sorrow, pays
+
+The mighty fine imposed on length of days.
+
+Sprung from my bed, a godlike hero came,
+
+The bravest sure that ever bore the name;
+
+Like some fair plant beneath my careful hand
+
+He grew, he flourish'd, and he graced the land:
+
+To Troy I sent him! but his native shore
+
+Never, ah never, shall receive him more;
+
+(Even while he lives, he wastes with secret woe;)
+
+Nor I, a goddess, can retard the blow!
+
+Robb'd of the prize the Grecian suffrage gave,
+
+The king of nations forced his royal slave:
+
+For this he grieved; and, till the Greeks oppress'd
+
+Required his arm, he sorrow'd unredress'd.
+
+Large gifts they promise, and their elders send;
+
+In vain--he arms not, but permits his friend
+
+His arms, his steeds, his forces to employ:
+
+He marches, combats, almost conquers Troy:
+
+Then slain by Phoebus (Hector had the name)
+
+At once resigns his armour, life, and fame.
+
+But thou, in pity, by my prayer be won:
+
+Grace with immortal arms this short-lived son,
+
+And to the field in martial pomp restore,
+
+To shine with glory, till he shines no more!"
+
+To her the artist-god: "Thy griefs resign,
+
+Secure, what Vulcan can, is ever thine.
+
+O could I hide him from the Fates, as well,
+
+Or with these hands the cruel stroke repel,
+
+As I shall forge most envied arms, the gaze
+
+Of wondering ages, and the world's amaze!"
+
+Thus having said, the father of the fires
+
+To the black labours of his forge retires.
+
+Soon as he bade them blow, the bellows turn'd
+
+Their iron mouths; and where the furnace burn'd,
+
+Resounding breathed: at once the blast expires,
+
+And twenty forges catch at once the fires;
+
+Just as the god directs, now loud, now low,
+
+They raise a tempest, or they gently blow;
+
+In hissing flames huge silver bars are roll'd,
+
+And stubborn brass, and tin, and solid gold;
+
+Before, deep fix'd, the eternal anvils stand;
+
+The ponderous hammer loads his better hand,
+
+His left with tongs turns the vex'd metal round,
+
+And thick, strong strokes, the doubling vaults rebound.
+
+Then first he form'd the immense and solid shield;
+
+Rich various artifice emblazed the field;
+
+Its utmost verge a threefold circle bound;
+
+A silver chain suspends the massy round;
+
+Five ample plates the broad expanse compose,
+
+And godlike labours on the surface rose.
+
+There shone the image of the master-mind:
+
+There earth, there heaven, there ocean he design'd;
+
+The unwearied sun, the moon completely round;
+
+The starry lights that heaven's high convex crown'd;
+
+The Pleiads, Hyads, with the northern team;
+
+And great Orion's more refulgent beam;
+
+To which, around the axle of the sky,
+
+The Bear, revolving, points his golden eye,
+
+Still shines exalted on the ethereal plain,
+
+Nor bathes his blazing forehead in the main.
+
+Two cities radiant on the shield appear,
+
+The image one of peace, and one of war.
+
+Here sacred pomp and genial feast delight,
+
+And solemn dance, and hymeneal rite;
+
+Along the street the new-made brides are led,
+
+With torches flaming, to the nuptial bed:
+
+The youthful dancers in a circle bound
+
+To the soft flute, and cithern's silver sound:
+
+Through the fair streets the matrons in a row
+
+Stand in their porches, and enjoy the show.
+
+There in the forum swarm a numerous train;
+
+The subject of debate, a townsman slain:
+
+One pleads the fine discharged, which one denied,
+
+And bade the public and the laws decide:
+
+The witness is produced on either hand:
+
+For this, or that, the partial people stand:
+
+The appointed heralds still the noisy bands,
+
+And form a ring, with sceptres in their hands:
+
+On seats of stone, within the sacred place,
+
+The reverend elders nodded o'er the case;
+
+Alternate, each the attesting sceptre took,
+
+And rising solemn, each his sentence spoke
+
+Two golden talents lay amidst, in sight,
+
+The prize of him who best adjudged the right.
+
+Another part
+
+Glow'd with refulgent arms, and horrid war.
+
+Two mighty hosts a leaguer'd town embrace,
+
+And one would pillage, one would burn the place.
+
+Meantime the townsmen, arm'd with silent care,
+
+A secret ambush on the foe prepare:
+
+Their wives, their children, and the watchful band
+
+Of trembling parents, on the turrets stand.
+
+They march; by Pallas and by Mars made bold:
+
+Gold were the gods, their radiant garments gold,
+
+And gold their armour: these the squadron led,
+
+August, divine, superior by the head!
+
+A place for ambush fit they found, and stood,
+
+Cover'd with shields, beside a silver flood.
+
+Two spies at distance lurk, and watchful seem
+
+If sheep or oxen seek the winding stream.
+
+Soon the white flocks proceeded o'er the plains,
+
+And steers slow-moving, and two shepherd swains;
+
+Behind them piping on their reeds they go,
+
+Nor fear an ambush, nor suspect a foe.
+
+In arms the glittering squadron rising round
+
+Rush sudden; hills of slaughter heap the ground;
+
+Whole flocks and herds lie bleeding on the plains,
+
+And, all amidst them, dead, the shepherd swains!
+
+The bellowing oxen the besiegers hear;
+
+They rise, take horse, approach, and meet the war,
+
+They fight, they fall, beside the silver flood;
+
+The waving silver seem'd to blush with blood.
+
+There Tumult, there Contention stood confess'd;
+
+One rear'd a dagger at a captive's breast;
+
+One held a living foe, that freshly bled
+
+With new-made wounds; another dragg'd a dead;
+
+Now here, now there, the carcases they tore:
+
+Fate stalk'd amidst them, grim with human gore.
+
+And the whole war came out, and met the eye;
+
+And each bold figure seem'd to live or die.
+
+A field deep furrow'd next the god design'd,
+
+The third time labour'd by the sweating hind;
+
+The shining shares full many ploughmen guide,
+
+And turn their crooked yokes on every side.
+
+Still as at either end they wheel around,
+
+The master meets them with his goblet crown'd;
+
+The hearty draught rewards, renews their toil,
+
+Then back the turning ploughshares cleave the soil:
+
+Behind, the rising earth in ridges roll'd;
+
+And sable look'd, though form'd of molten gold.
+
+Another field rose high with waving grain;
+
+With bended sickles stand the reaper train:
+
+Here stretched in ranks the levell'd swarths are found,
+
+Sheaves heap'd on sheaves here thicken up the ground.
+
+With sweeping stroke the mowers strow the lands;
+
+The gatherers follow, and collect in bands;
+
+And last the children, in whose arms are borne
+
+(Too short to gripe them) the brown sheaves of corn.
+
+The rustic monarch of the field descries,
+
+With silent glee, the heaps around him rise.
+
+A ready banquet on the turf is laid,
+
+Beneath an ample oak's expanded shade.
+
+The victim ox the sturdy youth prepare;
+
+The reaper's due repast, the woman's care.
+
+Next, ripe in yellow gold, a vineyard shines,
+
+Bent with the ponderous harvest of its vines;
+
+A deeper dye the dangling clusters show,
+
+And curl'd on silver props, in order glow:
+
+A darker metal mix'd intrench'd the place;
+
+And pales of glittering tin the inclosure grace.
+
+To this, one pathway gently winding leads,
+
+Where march a train with baskets on their heads,
+
+(Fair maids and blooming youths,) that smiling bear
+
+The purple product of the autumnal year.
+
+To these a youth awakes the warbling strings,
+
+Whose tender lay the fate of Linus sings;
+
+In measured dance behind him move the train,
+
+Tune soft the voice, and answer to the strain.
+
+Here herds of oxen march, erect and bold,
+
+Rear high their horns, and seem to low in gold,
+
+And speed to meadows on whose sounding shores
+
+A rapid torrent through the rushes roars:
+
+Four golden herdsmen as their guardians stand,
+
+And nine sour dogs complete the rustic band.
+
+Two lions rushing from the wood appear'd;
+
+And seized a bull, the master of the herd:
+
+He roar'd: in vain the dogs, the men withstood;
+
+They tore his flesh, and drank his sable blood.
+
+The dogs (oft cheer'd in vain) desert the prey,
+
+Dread the grim terrors, and at distance bay.
+
+Next this, the eye the art of Vulcan leads
+
+Deep through fair forests, and a length of meads,
+
+And stalls, and folds, and scatter'd cots between;
+
+And fleecy flocks, that whiten all the scene.
+
+A figured dance succeeds; such once was seen
+
+In lofty Gnossus for the Cretan queen,
+
+Form'd by Daedalean art; a comely band
+
+Of youths and maidens, bounding hand in hand.
+
+The maids in soft simars of linen dress'd;
+
+The youths all graceful in the glossy vest:
+
+Of those the locks with flowery wreath inroll'd;
+
+Of these the sides adorn'd with swords of gold,
+
+That glittering gay, from silver belts depend.
+
+Now all at once they rise, at once descend,
+
+With well-taught feet: now shape in oblique ways,
+
+Confusedly regular, the moving maze:
+
+Now forth at once, too swift for sight, they spring,
+
+And undistinguish'd blend the flying ring:
+
+So whirls a wheel, in giddy circle toss'd,
+
+And, rapid as it runs, the single spokes are lost.
+
+The gazing multitudes admire around:
+
+Two active tumblers in the centre bound;
+
+Now high, now low, their pliant limbs they bend:
+
+And general songs the sprightly revel end.
+
+Thus the broad shield complete the artist crown'd
+
+With his last hand, and pour'd the ocean round:
+
+In living silver seem'd the waves to roll,
+
+And beat the buckler's verge, and bound the whole.
+
+This done, whate'er a warrior's use requires
+
+He forged; the cuirass that outshone the fires,
+
+The greaves of ductile tin, the helm impress'd
+
+With various sculpture, and the golden crest.
+
+At Thetis' feet the finished labour lay:
+
+She, as a falcon cuts the aerial way,
+
+Swift from Olympus' snowy summit flies,
+
+And bears the blazing present through the skies.
+}`;
+
+  pomlText.value = `<poml>
+
+  <meta>
+    <name>Apollinaire Calligram Transmission Bridge</name>
+    <version>2.0</version>
+    <intent>
+      Encode poetry as a spatial transmission system where
+      geography, sound, memory, and technology coexist inside
+      a single navigable calligrammatic field.
+    </intent>
+  </meta>
+
+  <axioms>
+    <axiom>A1: Text may function as architecture.</axiom>
+    <axiom>A2: Architecture may function as signal.</axiom>
+    <axiom>A3: Distance is a layout problem, not a geographic fact.</axiom>
+    <axiom>A4: Reading is traversal through a transmission field.</axiom>
+    <axiom>A5: Meaning emerges from spatial relation, not sequence.</axiom>
+    <axiom>A6: A poem may contain multiple simultaneous centers.</axiom>
+  </axioms>
+
+  <entities>
+
+    <entity id="TEXT_FRAGMENT">
+      <description>Minimal transmissible unit (phrase, sound, utterance).</description>
+      <properties>
+        <property>raw_text</property>
+        <property>origin_world</property> <!-- PARIS | MEXICO | MEMORY | TECHNOLOGY -->
+        <property>semantic_tags</property>
+        <property>signal_type</property>  <!-- postcard | voice | ambient | memory -->
+      </properties>
+    </entity>
+
+    <entity id="WORLD_ZONE">
+      <description>Large semantic hemisphere.</description>
+      <values>
+        PARIS
+        MEXICO
+      </values>
+    </entity>
+
+    <entity id="TRANSMISSION_SPINE">
+      <description>Vertical connective axis linking distant zones.</description>
+      <symbol>TSF</symbol>
+    </entity>
+
+    <entity id="GEOMETRIC_INTENT">
+      <description>Shape grammar derived from transmission role.</description>
+      <values>
+        BLOCK
+        COLUMN
+        RADIAL
+        GRID
+        RAY
+        CLUSTER
+      </values>
+    </entity>
+
+    <entity id="FIELD">
+      <description>Directional propagation behavior.</description>
+      <values>
+        TOP_DOWN
+        BOTTOM_UP
+        CENTER_OUT
+        EDGE_IN
+        ORBIT
+      </values>
+    </entity>
+
+    <entity id="CELL">
+      <description>Atomic viewport inside spatial semantic grid.</description>
+      <properties>
+        <property>layers[]</property>
+      </properties>
+    </entity>
+
+  </entities>
+
+  <morphisms>
+
+    <morphism>
+      <from>TEXT_FRAGMENT</from>
+      <to>GEOMETRIC_INTENT</to>
+      <rule>
+        If signal_type=postcard → BLOCK  
+        If signal_type=voice → COLUMN  
+        If signal_type=ambient → RAY  
+        If signal_type=memory → CLUSTER
+      </rule>
+    </morphism>
+
+    <morphism>
+      <from>TEXT_FRAGMENT</from>
+      <to>FIELD</to>
+      <rule>
+        voice → TOP_DOWN  
+        ambient → CENTER_OUT  
+        postcard → GRID  
+        memory → ORBIT
+      </rule>
+    </morphism>
+
+    <morphism>
+      <from>(TEXT_FRAGMENT, GEOMETRIC_INTENT, FIELD)</from>
+      <to>CELL*</to>
+      <rule>
+        Rasterize fragment geometry into multiple cell addresses.
+      </rule>
+    </morphism>
+
+  </morphisms>
+
+  <zones>
+
+    <zone id="LEFT_HEMISPHERE">
+      <world>MEXICO</world>
+      <geometry>BLOCK + COLUMN</geometry>
+      <semantics>
+        Postcard fragments
+      </semantics>
+    </zone>
+
+    <zone id="RIGHT_HEMISPHERE">
+      <world>PARIS</world>
+      <geometry>RADIAL + RAY</geometry>
+      <semantics>
+        Ambient street sounds
+      </semantics>
+    </zone>
+
+    <zone id="CENTER_SPINE">
+      <world>TECHNOLOGY</world>
+      <geometry>COLUMN</geometry>
+      <symbol>TSF</symbol>
+      <semantics>
+        Wireless transmission
+      </semantics>
+    </zone>
+
+  </zones>
+
+  <constraints>
+
+    <constraint>No hemisphere may contain only one geometry type.</constraint>
+    <constraint>TSF spine must intersect both hemispheres.</constraint>
+    <constraint>RADIAL text must not align to grid axes.</constraint>
+    <constraint>Fragments may overlap.</constraint>
+    <constraint>Cells store references, not strings.</constraint>
+
+  </constraints>
+
+  <aesthetic_modes>
+
+    <mode name="POSTCARD_BLOCK">
+      <geometry>BLOCK</geometry>
+      <field>GRID</field>
+    </mode>
+
+    <mode name="RADIO_RAYS">
+      <geometry>RAY</geometry>
+      <field>CENTER_OUT</field>
+    </mode>
+
+    <mode name="VOICE_RAIN">
+      <geometry>COLUMN</geometry>
+      <field>TOP_DOWN</field>
+    </mode>
+
+    <mode name="MEMORY_ORBIT">
+      <geometry>CLUSTER</geometry>
+      <field>ORBIT</field>
+    </mode>
+
+  </aesthetic_modes>
+
+</poml>`;
+
+  /* -------------------------
+     State
+     ------------------------- */
+  let spec = null;
+  let manifest = null;
+
+  let grid = [];             // grid[r][c] = { active, ringName, ids:[] }
+  let cellEls = [];          // flat array of DOM cells, index r*COLS+c
+  let cursor = { r: 12, c: 12 };
+  let selected = { r: 12, c: 12 };
+  let ritualOn = false;
+  let ritualLog = [];
+
+  let highlightedFragmentId = null;
+
+  /* -------------------------
+     Utilities
+     ------------------------- */
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+  function hashStr(str){
+    // deterministic 32-bit hash
+    let h = 2166136261 >>> 0;
+    for (let i=0;i<str.length;i++){
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function mulberry32(seed){
+    return function(){
+      let t = seed += 0x6D2B79F5;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+  }
+
+  function distCell(r,c){
+    const y = (r + 0.5) - (CENTER.r + 0.5);
+    const x = (c + 0.5) - (CENTER.c + 0.5);
+    return Math.sqrt(x*x + y*y);
+  }
+
+  function ringName(d){
+    for (const R of RINGS){
+      if (d <= R.max) return R.name;
+    }
+    return "Outside";
+  }
+
+  function idx(r,c){ return r*COLS + c; }
+
+  function isActive(r,c){
+    return distCell(r,c) <= RADIUS;
+  }
+
+  function ensureActiveMove(r,c, dr, dc){
+    // step until active or out of bounds
+    let rr=r, cc=c;
+    for (let i=0;i<28;i++){
+      rr += dr; cc += dc;
+      if (rr<0 || rr>=ROWS || cc<0 || cc>=COLS) return null;
+      if (grid[rr][cc].active) return {r:rr,c:cc};
+    }
+    return null;
+  }
+
+  function parsePOML(xmlText){
+    // light parser: meta name/version/intent; axioms; morphism maps; zones; constraints
+    let doc = null;
+    try{
+      doc = new DOMParser().parseFromString(xmlText, "application/xml");
+      const parserError = doc.querySelector("parsererror");
+      if (parserError) throw new Error("POML parse error");
+    }catch(e){
+      return {
+        meta:{name:"(unparsed)", version:"?", intent:""},
+        axioms:[],
+        maps:{
+          signalToGeom:{postcard:"BLOCK", voice:"COLUMN", ambient:"RAY", memory:"CLUSTER"},
+          signalToField:{voice:"TOP_DOWN", ambient:"CENTER_OUT", postcard:"GRID", memory:"ORBIT"}
+        },
+        zones:[],
+        constraints:[]
+      };
+    }
+
+    const qText = (sel)=>{
+      const node = doc.querySelector(sel);
+      return node ? node.textContent.trim().replace(/\s+/g," ") : "";
+    };
+
+    const meta = {
+      name: qText("meta > name") || "Unnamed Spec",
+      version: qText("meta > version") || "?",
+      intent: qText("meta > intent") || ""
+    };
+
+    const axioms = Array.from(doc.querySelectorAll("axioms > axiom")).map(n=>n.textContent.trim());
+
+    const rules = Array.from(doc.querySelectorAll("morphisms morphism rule")).map(n=>n.textContent);
+    const signalToGeom = {};
+    const signalToField = {};
+
+    for (const block of rules){
+      // geom rule: "If signal_type=postcard → BLOCK"
+      const lines = block.split(/\n/).map(s=>s.trim()).filter(Boolean);
+      for (const ln of lines){
+        // allow both "If signal_type=postcard → BLOCK" and "voice → TOP_DOWN"
+        let m = ln.match(/signal_type\s*=\s*(postcard|voice|ambient|memory)\s*[→-]\s*(BLOCK|COLUMN|RADIAL|GRID|RAY|CLUSTER)/i);
+        if (m){
+          signalToGeom[m[1].toLowerCase()] = m[2].toUpperCase();
+          continue;
+        }
+        m = ln.match(/^(voice|ambient|postcard|memory)\s*[→-]\s*(TOP_DOWN|BOTTOM_UP|CENTER_OUT|EDGE_IN|ORBIT)\b/i);
+        if (m){
+          signalToField[m[1].toLowerCase()] = m[2].toUpperCase();
+        }
+      }
+    }
+
+    // fallback defaults if missing
+    if (!Object.keys(signalToGeom).length){
+      Object.assign(signalToGeom,{postcard:"BLOCK", voice:"COLUMN", ambient:"RAY", memory:"CLUSTER"});
+    }
+    if (!Object.keys(signalToField).length){
+      Object.assign(signalToField,{voice:"TOP_DOWN", ambient:"CENTER_OUT", postcard:"GRID", memory:"ORBIT"});
+    }
+
+    const zones = Array.from(doc.querySelectorAll("zones > zone")).map(z=>{
+      const id = z.getAttribute("id") || "";
+      const world = (z.querySelector("world")?.textContent||"").trim();
+      const geometry = (z.querySelector("geometry")?.textContent||"").trim().replace(/\s+/g," ");
+      const symbol = (z.querySelector("symbol")?.textContent||"").trim();
+      const semantics = (z.querySelector("semantics")?.textContent||"").trim().replace(/\s+/g," ");
+      return {id, world, geometry, symbol, semantics};
+    });
+
+    const constraints = Array.from(doc.querySelectorAll("constraints > constraint")).map(n=>n.textContent.trim());
+
+    return { meta, axioms, maps:{signalToGeom, signalToField}, zones, constraints };
+  }
+
+  /* -------------------------
+     Fragmentation
+     ------------------------- */
+  function normalizeLines(text){
+    // keep order, strip outer braces if present, preserve quotes
+    let t = text.trim();
+    // If wrapped in leading "{" and trailing "}" try to remove (gentle)
+    if (t.startsWith("{") && t.endsWith("}")){
+      t = t.slice(1,-1).trim();
+    }
+    // normalize newlines
+    t = t.replace(/\r\n/g,"\n");
+    return t;
+  }
+
+  function segment(text, mode){
+    const t = normalizeLines(text);
+    if (mode === "stanza"){
+      const blocks = t.split(/\n\s*\n+/).map(b=>b.trim()).filter(Boolean);
+      return blocks.map((b,i)=>({ kind:"stanza", raw:b, i }));
+    }
+    // line mode
+    const lines = t.split("\n").map(s=>s.replace(/\s+$/,"")).filter(s=>s.trim().length>0);
+    return lines.map((ln,i)=>({ kind:"line", raw:ln.trim(), i }));
+  }
+
+  /* -------------------------
+     Classification (Iliad → POML fields)
+     origin_world: PARIS | MEXICO | MEMORY | TECHNOLOGY
+     signal_type : postcard | voice | ambient | memory
+     ------------------------- */
+  function classifyFragment(raw, prev){
+    const s = raw;
+    const lower = s.toLowerCase();
+
+    const tags = [];
+
+    const has = (...words)=>words.some(w=>lower.includes(w));
+
+    // semantic tags
+    if (has("vulcan","forge","bellows","furnace","anvil","hammer","tongs","metal","gold","silver","tin","brass","forges","forged","shield","plates","circle","chain","labours")){
+      tags.push("forge","metal","making");
+    }
+    if (has("earth","heaven","ocean","sun","moon","star","pleiads","hyads","orion","bear","axle","sky","ethereal")){
+      tags.push("cosmos","stars");
+    }
+    if (has("ocean round","waves","buckler's verge","bound the whole","pourd the ocean","waves to roll")){
+      tags.push("ocean","rim");
+    }
+    if (has("peace","feast","dance","nuptial","brides","hymeneal","flute","cithern","matrons","elders","forum","laws","sceptre","talents")){
+      tags.push("civic","peace","ritual");
+    }
+    if (has("war","arms","hosts","leaguer","pillage","burn","ambush","slaughter","blood","tumult","contention","dagger","captive","carcases","fate")){
+      tags.push("war","conflict");
+    }
+    if (has("field","plough","ploughmen","shares","soil","grain","reaper","sickles","sheaves","harvest","vineyard","clusters","vines")){
+      tags.push("labor","agriculture");
+    }
+    if (has("oxen","herds","lions","dogs","bull","flocks","forests","meads","folds","cots","shepherd")){
+      tags.push("pastoral","beasts");
+    }
+    if (has("gnossus","daedalean","tumblers","moving maze","whirls a wheel","revel")){
+      tags.push("dance","maze");
+    }
+
+    // origin_world
+    let origin_world = prev?.origin_world || "MEXICO";
+
+    if (tags.includes("forge")){
+      origin_world = "TECHNOLOGY";
+    } else if (tags.includes("war")){
+      origin_world = "PARIS";
+    } else if (tags.includes("cosmos") || tags.includes("ocean")){
+      origin_world = "MEMORY";
+    } else if (tags.includes("peace") || tags.includes("labor") || tags.includes("pastoral") || tags.includes("dance")){
+      origin_world = "MEXICO";
+    }
+
+    // signal_type
+    let signal_type = "ambient";
+
+    // voice: quoted speech OR explicit dialogue markers
+    const looksQuoted = s.startsWith('"') || s.endsWith('"') || has("to whom","to her","replies","thus replies");
+    if (looksQuoted || has("o vulcan","thee, welcome","thy griefs resign")){
+      signal_type = "voice";
+    } else if (origin_world === "MEMORY" && (tags.includes("cosmos") || tags.includes("ocean"))){
+      signal_type = "memory";
+    } else if (origin_world === "TECHNOLOGY" && tags.includes("forge")){
+      // treat “how it is made” as a schematic block
+      signal_type = "postcard";
+    } else if (tags.includes("labor") && has("another field","next, ripe","a ready banquet")){
+      // tableaus read like panels
+      signal_type = "postcard";
+    } else {
+      signal_type = "ambient";
+    }
+
+    // special: ocean rim prefers RADIAL/ORBIT
+    const preferRadial = tags.includes("ocean") || tags.includes("rim");
+
+    return { raw_text: raw, origin_world, signal_type, semantic_tags: tags, preferRadial };
+  }
+
+  /* -------------------------
+     Geometry rasterization
+     Output: set of {r,c}
+     ------------------------- */
+  function placeForOrigin(origin_world, tagHints){
+    // anchors inside the shield circle
+    // MEXICO (left): peace/labor/pastoral
+    // PARIS (right): war
+    // TECHNOLOGY: center spine
+    // MEMORY: top + rim
+    if (origin_world === "TECHNOLOGY") return { r: 12, c: 12 };
+    if (origin_world === "PARIS") return { r: 12, c: 16 };
+    if (origin_world === "MEXICO") return { r: 12, c: 8 };
+    // MEMORY
+    if (tagHints?.includes("ocean") || tagHints?.includes("rim")) return { r: 12, c: 12 }; // arc around center
+    if (tagHints?.includes("cosmos")) return { r: 6, c: 12 };
+    return { r: 8, c: 12 };
+  }
+
+  function addCells(outSet, coords){
+    for (const p of coords){
+      if (p.r<0 || p.r>=ROWS || p.c<0 || p.c>=COLS) continue;
+      if (!grid[p.r][p.c].active) continue;
+      outSet.add(p.r + "," + p.c);
+    }
+  }
+
+  function cellsFromSet(set){
+    const out = [];
+    for (const key of set){
+      const [r,c] = key.split(",").map(Number);
+      out.push({r,c});
+    }
+    return out;
+  }
+
+  function geom_BLOCK(anchor, k, rng){
+    // rectangle near anchor
+    const set = new Set();
+    const w = clamp(Math.round(Math.sqrt(k) + 1), 1, 6);
+    const h = clamp(Math.ceil(k / w), 1, 6);
+    const r0 = anchor.r - Math.floor(h/2);
+    const c0 = anchor.c - Math.floor(w/2);
+    let placed = 0;
+
+    for (let rr=0; rr<h; rr++){
+      for (let cc=0; cc<w; cc++){
+        if (placed>=k) break;
+        addCells(set, [{r:r0+rr, c:c0+cc}]);
+        placed++;
+      }
+      if (placed>=k) break;
+    }
+
+    // small jitter if under-filled due to mask
+    let tries=0;
+    while (cellsFromSet(set).length < Math.min(k, 18) && tries++<40){
+      const rr = anchor.r + Math.floor((rng()-0.5)*h*1.2);
+      const cc = anchor.c + Math.floor((rng()-0.5)*w*1.2);
+      addCells(set,[{r:rr,c:cc}]);
+    }
+    return cellsFromSet(set);
+  }
+
+  function geom_COLUMN(anchor, k, field){
+    const set = new Set();
+    const dir = (field === "BOTTOM_UP") ? -1 : 1;
+    let rr = anchor.r;
+    for (let i=0;i<k;i++){
+      addCells(set, [{r: rr, c: anchor.c}]);
+      rr += dir;
+    }
+    return cellsFromSet(set);
+  }
+
+  function geom_RAY(anchor, k, field, rng){
+    const set = new Set();
+    // pick a non-axis direction
+    const angles = [
+      Math.PI * (1/8), Math.PI * (3/8), Math.PI * (5/8), Math.PI * (7/8),
+      Math.PI * (9/8), Math.PI * (11/8), Math.PI * (13/8), Math.PI * (15/8)
+    ];
+    let a = angles[Math.floor(rng()*angles.length)];
+
+    // if CENTER_OUT, bias direction away from center
+    if (field === "CENTER_OUT"){
+      const vx = anchor.c - CENTER.c;
+      const vy = anchor.r - CENTER.r;
+      const base = Math.atan2(vy, vx);
+      // nudge by ±22.5°
+      const tweak = (rng() < 0.5 ? -1 : 1) * (Math.PI/8);
+      a = base + tweak;
+      // still avoid axis-aligned: if too close to 0/90/180/270, twist a bit
+      const nearAxis = (x)=>Math.min(
+        Math.abs(x%(Math.PI/2)),
+        Math.abs((Math.PI/2) - (x%(Math.PI/2)))
+      );
+      if (nearAxis(Math.abs(a)) < (Math.PI/18)){
+        a += (rng()<0.5?-1:1) * (Math.PI/10);
+      }
+    }
+
+    const dx = Math.cos(a);
+    const dy = Math.sin(a);
+    let x = anchor.c + 0.5, y = anchor.r + 0.5;
+
+    for (let i=0;i<k;i++){
+      const rr = Math.floor(y);
+      const cc = Math.floor(x);
+      addCells(set,[{r:rr,c:cc}]);
+      x += dx;
+      y += dy;
+    }
+    return cellsFromSet(set);
+  }
+
+  function geom_CLUSTER(anchor, k, field, rng){
+    const set = new Set();
+    const radius = clamp(1 + Math.sqrt(k)*0.9, 1, 7);
+
+    // ORBIT: bias points to a ring around center
+    if (field === "ORBIT"){
+      for (let i=0;i<k;i++){
+        const ang = rng() * Math.PI * 2;
+        const baseR = clamp(10.8 + (rng()-0.5)*0.9, 8, 12);
+        const rr = Math.round(CENTER.r + Math.sin(ang)*baseR);
+        const cc = Math.round(CENTER.c + Math.cos(ang)*baseR);
+        addCells(set,[{r:rr,c:cc}]);
+      }
+      return cellsFromSet(set);
+    }
+
+    for (let i=0;i<k;i++){
+      const rr = anchor.r + Math.round((rng()-0.5)*2*radius);
+      const cc = anchor.c + Math.round((rng()-0.5)*2*radius);
+      addCells(set,[{r:rr,c:cc}]);
+    }
+    return cellsFromSet(set);
+  }
+
+  function geom_RADIAL(k, rng){
+    const set = new Set();
+    // place along rim arc, non-axis aligned
+    const baseR = 11.4;
+    const start = rng()*Math.PI*2;
+    const step = (Math.PI*2) / Math.max(14, Math.min(50, k*8));
+    for (let i=0;i<Math.max(k, 6);i++){
+      const ang = start + i*step;
+      const rr = Math.round(CENTER.r + Math.sin(ang)*baseR);
+      const cc = Math.round(CENTER.c + Math.cos(ang)*baseR);
+      addCells(set,[{r:rr,c:cc}]);
+    }
+    return cellsFromSet(set);
+  }
+
+  /* -------------------------
+     Compile
+     ------------------------- */
+  function initGrid(){
+    grid = Array.from({length: ROWS}, (_,r)=>{
+      return Array.from({length: COLS}, (_,c)=>{
+        const d = distCell(r,c);
+        const active = d <= RADIUS;
+        return { active, ring: ringName(d), ids: [], zones: new Set() };
+      });
+    });
+  }
+
+  function buildGridDOM(){
+    gridEl.innerHTML = "";
+    cellEls = [];
+    for (let r=0;r<ROWS;r++){
+      for (let c=0;c<COLS;c++){
+        const d = document.createElement("div");
+        d.className = "cell";
+        if (!grid[r][c].active) d.classList.add("inactive");
+
+        const dot = document.createElement("div");
+        dot.className = "dot";
+        const n = document.createElement("div");
+        n.className = "n";
+        d.appendChild(dot);
+        d.appendChild(n);
+
+        d.dataset.r = String(r);
+        d.dataset.c = String(c);
+
+        d.addEventListener("click", ()=>{
+          if (!grid[r][c].active) return;
+          selectCell(r,c,true);
+        });
+
+        gridEl.appendChild(d);
+        cellEls.push(d);
+      }
+    }
+  }
+
+  function clearHighlights(){
+    for (const d of cellEls){
+      d.classList.remove("selected","cursor");
+    }
+  }
+
+  function updateCellClasses(){
+    for (let r=0;r<ROWS;r++){
+      for (let c=0;c<COLS;c++){
+        const d = cellEls[idx(r,c)];
+        if (!grid[r][c].active){
+          d.classList.add("inactive");
+          d.classList.remove("occ1","occ2","occ3","occMore");
+          d.querySelector(".n").textContent = "";
+          continue;
+        }
+        const n = grid[r][c].ids.length;
+        d.classList.remove("occ1","occ2","occ3","occMore");
+        if (n===1) d.classList.add("occ1");
+        else if (n===2) d.classList.add("occ2");
+        else if (n===3) d.classList.add("occ3");
+        else if (n>3) { d.classList.add("occ3","occMore"); d.querySelector(".n").textContent = String(n); }
+        else d.querySelector(".n").textContent = "";
+      }
+    }
+    // re-apply selection/cursor
+    cellEls[idx(selected.r, selected.c)]?.classList.add("selected");
+    cellEls[idx(cursor.r, cursor.c)]?.classList.add("cursor");
+  }
+
+  function compile(){
+    // parse POML
+    spec = parsePOML(pomlText.value);
+    pillSpec.textContent = `Spec: ${spec.meta.name} v${spec.meta.version}`;
+
+    initGrid();
+    if (!cellEls.length) buildGridDOM();
+
+    const seg = segMode.value;
+    const parts = segment(sourceText.value, seg);
+
+    // classify fragments
+    const fragments = [];
+    let prev = null;
+
+    for (const p of parts){
+      const frag = classifyFragment(p.raw, prev);
+      prev = frag;
+
+      const id = `F${String(p.i).padStart(4,"0")}`;
+      const seed = hashStr(id + "|" + frag.raw_text);
+      const rng = mulberry32(seed);
+
+      // geometry + field from POML morphisms
+      let geometric_intent = spec.maps.signalToGeom[frag.signal_type] || "RAY";
+      let field = spec.maps.signalToField[frag.signal_type] || "CENTER_OUT";
+
+      // overrides for shield-rim memory
+      if (frag.preferRadial){
+        geometric_intent = "RADIAL";
+        field = "ORBIT";
+      }
+
+      // allocation (cells count)
+      const scale = parseFloat(alloc.value);
+      const base = Math.ceil(clamp(frag.raw_text.length / (seg==="line" ? 42 : 120), 1, seg==="line" ? 5 : 14));
+      const k = clamp(Math.round(base * scale), 1, 30);
+
+      // anchor
+      const anchor = placeForOrigin(frag.origin_world, frag.semantic_tags);
+
+      // rasterize
+      let coords = [];
+      if (geometric_intent === "BLOCK"){
+        coords = geom_BLOCK(anchor, k, rng);
+      } else if (geometric_intent === "COLUMN"){
+        coords = geom_COLUMN(anchor, k, field);
+      } else if (geometric_intent === "CLUSTER"){
+        coords = geom_CLUSTER(anchor, k, field, rng);
+      } else if (geometric_intent === "RADIAL"){
+        coords = geom_RADIAL(k, rng);
+      } else { // RAY, GRID fallback
+        if (field === "GRID"){
+          coords = geom_BLOCK(anchor, k, rng);
+        } else {
+          coords = geom_RAY(anchor, k, field, rng);
+        }
+      }
+
+      // apply zone filter at render time; always store full mapping
+      for (const {r,c} of coords){
+        grid[r][c].ids.push(id);
+        grid[r][c].zones.add(frag.origin_world);
+      }
+
+      fragments.push({
+        id,
+        raw_text: frag.raw_text,
+        origin_world: frag.origin_world,
+        semantic_tags: frag.semantic_tags,
+        signal_type: frag.signal_type,
+        geometric_intent,
+        field,
+        anchor,
+        cells: coords
+      });
+    }
+
+    // enforce "TSF spine must intersect both hemispheres":
+    // create a TECHNOLOGY spine on center columns (11,12) so there is always an intersection.
+    const spineCells = [];
+    for (let r=1;r<ROWS-1;r++){
+      for (const c of [11,12]){
+        if (!grid[r][c].active) continue;
+        spineCells.push({r,c});
+      }
+    }
+    const spineId = "TSF_SPINE";
+    for (const p of spineCells){
+      grid[p.r][p.c].ids.push(spineId);
+      grid[p.r][p.c].zones.add("TECHNOLOGY");
+    }
+    fragments.unshift({
+      id: spineId,
+      raw_text: "TSF SPINE — transmission column: forge-channel linking hemispheres.",
+      origin_world: "TECHNOLOGY",
+      semantic_tags: ["spine","tsf"],
+      signal_type: "postcard",
+      geometric_intent: "COLUMN",
+      field: "TOP_DOWN",
+      anchor: {r:12,c:12},
+      cells: spineCells
+    });
+
+    // build manifest
+    manifest = {
+      meta: {
+        name: "Shield of Achilles — Calligram Transmission Grid",
+        built_from_spec: spec.meta,
+        grid: { rows: ROWS, cols: COLS, mask: "circle", radius: RADIUS },
+        interpretation: {
+          MEXICO: "Peace/Labor/Pastoral/Dance (left hemisphere)",
+          PARIS: "War/Conflict/Tumult (right hemisphere)",
+          TECHNOLOGY: "Forge/Spine (center)",
+          MEMORY: "Cosmos/Eternity/Rim"
+        }
+      },
+      axioms: spec.axioms,
+      morphism_maps: spec.maps,
+      constraints: spec.constraints,
+      zones: spec.zones,
+      fragments
+    };
+
+    // render
+    applyFiltersAndRender();
+    // center cursor on selected
+    cursor = { r: 12, c: 12 };
+    selected = { r: 12, c: 12 };
+    if (!grid[selected.r][selected.c].active){
+      // find nearest active
+      for (let rr=0; rr<ROWS; rr++){
+        for (let cc=0; cc<COLS; cc++){
+          if (grid[rr][cc].active){ selected={r:rr,c:cc}; cursor={r:rr,c:cc}; rr=ROWS; break; }
+        }
+      }
+    }
+    selectCell(selected.r, selected.c, false);
+    updateCounts();
+    updateManifestOut();
+  }
+
+  function updateCounts(){
+    const fragCount = manifest?.fragments?.length || 0;
+    let occ=0;
+    for (let r=0;r<ROWS;r++){
+      for (let c=0;c<COLS;c++){
+        if (grid[r][c].active && grid[r][c].ids.length) occ++;
+      }
+    }
+    pillCounts.textContent = `Fragments: ${fragCount} · Occupied cells: ${occ}/576`;
+    pillCursor.textContent = `Cursor: r${cursor.r+1} c${cursor.c+1}`;
+  }
+
+  function updateManifestOut(){
+    if (!manifest){ manifestOut.textContent = "—"; return; }
+    // keep it readable (not too huge): include full fragments but trimmed raw_text in preview
+    const preview = structuredClone(manifest);
+    preview.fragments = preview.fragments.map(f=>({
+      ...f,
+      raw_text: (f.raw_text.length>220 ? f.raw_text.slice(0,220)+"…" : f.raw_text)
+    }));
+    manifestOut.textContent = JSON.stringify(preview, null, 2);
+  }
+
+  /* -------------------------
+     Filters + Rendering
+     ------------------------- */
+  function fragmentMatches(f){
+    const zf = zoneFilter.value;
+    const q = search.value.trim().toLowerCase();
+    if (zf !== "ALL" && f.origin_world !== zf) return false;
+    if (q){
+      const hay = (f.raw_text + " " + (f.semantic_tags||[]).join(" ")).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  }
+
+  function applyFiltersAndRender(){
+    if (!manifest) return;
+
+    // highlight a fragment footprint if selected
+    highlightedFragmentId = highlightedFragmentId || null;
+
+    // render fragments list
+    fragList.innerHTML = "";
+    const frags = manifest.fragments.filter(fragmentMatches);
+
+    for (const f of frags){
+      const item = document.createElement("div");
+      item.className = "item";
+
+      const top = document.createElement("div");
+      top.className = "top";
+
+      const left = document.createElement("div");
+      left.style.minWidth = "0";
+
+      const tags = document.createElement("div");
+      tags.className = "tagRow";
+
+      const zoneTag = document.createElement("span");
+      zoneTag.className = "tag " + (
+        f.origin_world==="MEXICO" ? "blue" :
+        f.origin_world==="PARIS" ? "red" :
+        f.origin_world==="TECHNOLOGY" ? "green" : "orange"
+      );
+      zoneTag.textContent = f.origin_world;
+      tags.appendChild(zoneTag);
+
+      const sigTag = document.createElement("span");
+      sigTag.className = "tag";
+      sigTag.textContent = `signal:${f.signal_type}`;
+      tags.appendChild(sigTag);
+
+      const geoTag = document.createElement("span");
+      geoTag.className = "tag";
+      geoTag.textContent = `geom:${f.geometric_intent}`;
+      tags.appendChild(geoTag);
+
+      const fieldTag = document.createElement("span");
+      fieldTag.className = "tag";
+      fieldTag.textContent = `field:${f.field}`;
+      tags.appendChild(fieldTag);
+
+      const txt = document.createElement("div");
+      txt.className = "txt";
+      txt.textContent = f.raw_text;
+
+      left.appendChild(tags);
+      left.appendChild(txt);
+
+      const btn = document.createElement("button");
+      btn.className = "btn small";
+      btn.textContent = (highlightedFragmentId===f.id) ? "Unhighlight" : "Highlight";
+      btn.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        highlightedFragmentId = (highlightedFragmentId===f.id) ? null : f.id;
+        paintHighlights();
+      });
+
+      top.appendChild(left);
+      top.appendChild(btn);
+
+      item.appendChild(top);
+
+      item.addEventListener("click", ()=>{
+        // select the first cell of this fragment if exists
+        if (f.cells && f.cells.length){
+          const p = f.cells[0];
+          selectCell(p.r, p.c, true);
+          highlightedFragmentId = f.id;
+          paintHighlights();
+        }
+      });
+
+      fragList.appendChild(item);
+    }
+
+    paintHighlights();
+    updateCounts();
+  }
+
+  function paintHighlights(){
+    if (!manifest) return;
+    // base classes
+    for (let r=0;r<ROWS;r++){
+      for (let c=0;c<COLS;c++){
+        const d = cellEls[idx(r,c)];
+        d.style.background = "";
+        d.style.opacity = "";
+      }
+    }
+
+    // apply zone filter by dimming non-zone cells
+    const zf = zoneFilter.value;
+    if (zf !== "ALL"){
+      for (let r=0;r<ROWS;r++){
+        for (let c=0;c<COLS;c++){
+          if (!grid[r][c].active) continue;
+          if (!grid[r][c].zones.has(zf)){
+            cellEls[idx(r,c)].style.opacity = "0.38";
+          } else {
+            cellEls[idx(r,c)].style.opacity = "1";
+          }
+        }
+      }
+    }
+
+    // fragment highlight footprint
+    if (highlightedFragmentId){
+      const f = manifest.fragments.find(x=>x.id===highlightedFragmentId);
+      if (f?.cells?.length){
+        for (const p of f.cells){
+          const d = cellEls[idx(p.r,p.c)];
+          d.style.background = "rgba(27,92,255,.18)";
+          d.style.opacity = "1";
+        }
+      }
+    }
+
+    // selected and cursor are re-applied in updateCellClasses
+    updateCellClasses();
+  }
+
+  /* -------------------------
+     Selection + inspector
+     ------------------------- */
+  function describeZone(z){
+    if (z==="MEXICO") return "MEXICO (Peace/Labor/Pastoral)";
+    if (z==="PARIS") return "PARIS (War/Conflict)";
+    if (z==="TECHNOLOGY") return "TECHNOLOGY (Forge/Spine)";
+    if (z==="MEMORY") return "MEMORY (Cosmos/Rim)";
+    return z || "—";
+  }
+
+  function selectCell(r,c, moveCursor){
+    selected = {r,c};
+    if (moveCursor) cursor = {r,c};
+
+    clearHighlights();
+    updateCellClasses();
+    pillCursor.textContent = `Cursor: r${cursor.r+1} c${cursor.c+1}`;
+
+    const g = grid[r][c];
+    cellAddr.textContent = `r${r+1} c${c+1} (0-based: ${r},${c})`;
+    cellRing.textContent = g.ring;
+    cellOcc.textContent = `${g.ids.length} refs`;
+    const zones = Array.from(g.zones);
+    cellZone.textContent = zones.length ? zones.map(describeZone).join(" · ") : "—";
+
+    // fill list
+    cellFragments.innerHTML = "";
+    if (!g.ids.length){
+      const empty = document.createElement("div");
+      empty.className = "item";
+      empty.innerHTML = `<div class="txt">—</div>`;
+      cellFragments.appendChild(empty);
+      return;
+    }
+
+    // show up to 12 fragments in cell
+    const ids = g.ids.slice(0,12);
+    for (const id of ids){
+      const f = manifest.fragments.find(x=>x.id===id);
+      const item = document.createElement("div");
+      item.className = "item";
+
+      const top = document.createElement("div");
+      top.className = "top";
+
+      const tagRow = document.createElement("div");
+      tagRow.className = "tagRow";
+
+      const idTag = document.createElement("span");
+      idTag.className = "tag";
+      idTag.textContent = id;
+      tagRow.appendChild(idTag);
+
+      if (f){
+        const zTag = document.createElement("span");
+        zTag.className = "tag " + (
+          f.origin_world==="MEXICO" ? "blue" :
+          f.origin_world==="PARIS" ? "red" :
+          f.origin_world==="TECHNOLOGY" ? "green" : "orange"
+        );
+        zTag.textContent = f.origin_world;
+        tagRow.appendChild(zTag);
+
+        const sTag = document.createElement("span");
+        sTag.className = "tag";
+        sTag.textContent = `signal:${f.signal_type}`;
+        tagRow.appendChild(sTag);
+      }
+
+      const btn = document.createElement("button");
+      btn.className = "btn small";
+      btn.textContent = (highlightedFragmentId===id) ? "Unhighlight" : "Highlight";
+      btn.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        highlightedFragmentId = (highlightedFragmentId===id) ? null : id;
+        paintHighlights();
+      });
+
+      top.appendChild(tagRow);
+      top.appendChild(btn);
+
+      const txt = document.createElement("div");
+      txt.className = "txt";
+      txt.textContent = f ? f.raw_text : "(unknown fragment)";
+
+      item.appendChild(top);
+      item.appendChild(txt);
+
+      item.addEventListener("click", ()=>{
+        highlightedFragmentId = id;
+        paintHighlights();
+      });
+
+      cellFragments.appendChild(item);
+    }
+  }
+
+  /* -------------------------
+     Traversal (keyboard + swipe)
+     ------------------------- */
+  function logStep(r,c){
+    if (!ritualOn) return;
+    const stamp = new Date().toISOString().slice(11,19);
+    ritualLog.push({t: stamp, r: r+1, c: c+1});
+    if (ritualLog.length > 200) ritualLog.shift();
+    ritualLogEl.textContent = ritualLog.map(x=>`${x.t}  r${x.r} c${x.c}`).join("\n");
+  }
+
+  function moveCursor(dr,dc){
+    const next = ensureActiveMove(cursor.r, cursor.c, dr, dc);
+    if (!next) return;
+    cursor = next;
+    logStep(cursor.r, cursor.c);
+    selectCell(cursor.r, cursor.c, false);
+    pillCursor.textContent = `Cursor: r${cursor.r+1} c${cursor.c+1}`;
+  }
+
+  function keyHandler(e){
+    if (!manifest) return;
+    const k = e.key.toLowerCase();
+    const map = {
+      "arrowup":[-1,0], "w":[-1,0],
+      "arrowdown":[1,0], "s":[1,0],
+      "arrowleft":[0,-1], "a":[0,-1],
+      "arrowright":[0,1], "d":[0,1]
+    };
+    if (map[k]){
+      e.preventDefault();
+      moveCursor(map[k][0], map[k][1]);
+    } else if (k === "enter" || k === " "){
+      e.preventDefault();
+      selectCell(cursor.r, cursor.c, true);
+    }
+  }
+  window.addEventListener("keydown", keyHandler, {passive:false});
+
+  // swipe on gridCanvas
+  let pointerDown = null;
+  gridCanvas.addEventListener("pointerdown", (e)=>{
+    pointerDown = { x: e.clientX, y: e.clientY, t: performance.now() };
+    gridCanvas.setPointerCapture(e.pointerId);
+  });
+
+  gridCanvas.addEventListener("pointerup", (e)=>{
+    if (!pointerDown) return;
+    const dx = e.clientX - pointerDown.x;
+    const dy = e.clientY - pointerDown.y;
+    const dt = performance.now() - pointerDown.t;
+    pointerDown = null;
+
+    // tap-to-select nearest cell
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10){
+      const rect = gridCanvas.getBoundingClientRect();
+      const x = clamp((e.clientX - rect.left) / rect.width, 0, 0.999999);
+      const y = clamp((e.clientY - rect.top) / rect.height, 0, 0.999999);
+      const c = Math.floor(x * COLS);
+      const r = Math.floor(y * ROWS);
+      if (grid[r][c].active) selectCell(r,c,true);
+      return;
+    }
+
+    // swipe move
+    if (dt < 600){
+      if (Math.abs(dx) > Math.abs(dy)){
+        if (dx > 16) moveCursor(0, 1);
+        else if (dx < -16) moveCursor(0, -1);
+      } else {
+        if (dy > 16) moveCursor(1, 0);
+        else if (dy < -16) moveCursor(-1, 0);
+      }
+    }
+  });
+
+  /* -------------------------
+     Buttons + UI
+     ------------------------- */
+  btnCompile.addEventListener("click", ()=>{
+    highlightedFragmentId = null;
+    compile();
+  });
+
+  alloc.addEventListener("input", ()=>{
+    allocVal.textContent = `${alloc.value}×`;
+  });
+  alloc.addEventListener("change", ()=>{
+    if (manifest) compile();
+  });
+
+  segMode.addEventListener("change", ()=>{
+    if (manifest) compile();
+  });
+
+  zoneFilter.addEventListener("change", ()=>{
+    applyFiltersAndRender();
+  });
+
+  search.addEventListener("input", ()=>{
+    // debounce lightly
+    clearTimeout(search._t);
+    search._t = setTimeout(applyFiltersAndRender, 90);
+  });
+
+  btnRitual.addEventListener("click", ()=>{
+    ritualOn = !ritualOn;
+    btnRitual.textContent = `Ritual: ${ritualOn ? "ON" : "OFF"}`;
+    btnRitual.classList.toggle("primary", ritualOn);
+    if (ritualOn) logStep(cursor.r, cursor.c);
+  });
+
+  btnClearLog.addEventListener("click", ()=>{
+    ritualLog = [];
+    ritualLogEl.textContent = "—";
+  });
+
+  btnCenter.addEventListener("click", ()=>{
+    cursor = { r: 12, c: 12 };
+    if (!grid[cursor.r][cursor.c].active){
+      // pick any active cell
+      outer: for (let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++) if (grid[r][c].active){ cursor={r,c}; break outer; }
+    }
+    selectCell(cursor.r, cursor.c, true);
+  });
+
+  btnAuto.addEventListener("click", ()=>{
+    // jump to next occupied (respect filter if set)
+    const zf = zoneFilter.value;
+    const start = idx(cursor.r, cursor.c);
+    for (let step=1; step<ROWS*COLS; step++){
+      const i = (start + step) % (ROWS*COLS);
+      const r = Math.floor(i / COLS);
+      const c = i % COLS;
+      if (!grid[r][c].active) continue;
+      if (!grid[r][c].ids.length) continue;
+      if (zf !== "ALL" && !grid[r][c].zones.has(zf)) continue;
+      cursor = {r,c};
+      selectCell(r,c,true);
+      logStep(r,c);
+      return;
+    }
+  });
+
+  // tabs
+  document.querySelectorAll(".tab").forEach(t=>{
+    t.addEventListener("click", ()=>{
+      document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+      document.querySelectorAll(".pane").forEach(x=>x.classList.remove("active"));
+      t.classList.add("active");
+      const tab = t.dataset.tab;
+      el(`pane-${tab}`).classList.add("active");
+    });
+  });
+
+  btnExport.addEventListener("click", async ()=>{
+    if (!manifest) return;
+    const data = JSON.stringify(manifest, null, 2);
+    try{
+      await navigator.clipboard.writeText(data);
+      btnExport.textContent = "Copied!";
+      setTimeout(()=>btnExport.textContent="Export Manifest", 800);
+    }catch{
+      // fallback: open prompt
+      prompt("Copy manifest JSON:", data);
+    }
+  });
+
+  btnImport.addEventListener("click", ()=>{
+    const txt = prompt("Paste manifest JSON here:");
+    if (!txt) return;
+    try{
+      const obj = JSON.parse(txt);
+      if (!obj || !obj.fragments) throw new Error("bad manifest");
+      // load manifest -> rebuild grid from addresses
+      spec = obj.meta?.built_from_spec ? {meta: obj.meta.built_from_spec, axioms: obj.axioms||[], maps: obj.morphism_maps||{}, zones: obj.zones||[], constraints: obj.constraints||[]} : spec;
+
+      initGrid();
+      if (!cellEls.length) buildGridDOM();
+
+      manifest = obj;
+
+      // re-fill grid
+      for (const f of manifest.fragments){
+        for (const p of (f.cells||[])){
+          if (p.r==null || p.c==null) continue;
+          if (p.r<0||p.r>=ROWS||p.c<0||p.c>=COLS) continue;
+          if (!grid[p.r][p.c].active) continue;
+          grid[p.r][p.c].ids.push(f.id);
+          if (f.origin_world) grid[p.r][p.c].zones.add(f.origin_world);
+        }
+      }
+
+      pillSpec.textContent = `Spec: ${spec?.meta?.name || "Imported"} v${spec?.meta?.version || "?"}`;
+      highlightedFragmentId = null;
+      applyFiltersAndRender();
+      cursor = {r:12,c:12}; selected = {r:12,c:12};
+      selectCell(selected.r, selected.c, true);
+      updateCounts();
+      updateManifestOut();
+    }catch(e){
+      alert("Could not import manifest JSON.");
+    }
+  });
+
+  /* -------------------------
+     Initial render
+     ------------------------- */
+  allocVal.textContent = `${alloc.value}×`;
+  initGrid();
+  buildGridDOM();
+  compile();
+})();
+</script>
+</body>
+</html>

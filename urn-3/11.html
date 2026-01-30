@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carey Ritual Grid: Urn Architectonics</title>
+    <style>
+        :root {
+            --bg-void: #050505;
+            --bg-panel: #0a0a0a;
+            --color-core: #e0f7fa; /* Cold Fusion / Truth */
+            --color-inner: #ffd700; /* Gold / Stasis */
+            --color-middle: #6495ed; /* Cornflower / Inquiry */
+            --color-outer: #808080; /* Grey / Boundary */
+            --color-silence: #1a1a1a;
+            --border-dim: #222;
+            --text-main: #ccc;
+            --font-mono: 'Courier New', Courier, monospace;
+            --font-serif: 'Times New Roman', Times, serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-void);
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Default for Desktop */
+        }
+
+        /* --- HEADER --- */
+        header {
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border-dim);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-panel);
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        h1 {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--color-core);
+        }
+
+        .meta-tag {
+            font-size: 0.7rem;
+            color: #666;
+            border: 1px solid #333;
+            padding: 2px 6px;
+            border-radius: 2px;
+        }
+
+        /* --- MAIN LAYOUT --- */
+        main {
+            flex: 1;
+            display: flex;
+            overflow: hidden; /* Default for Desktop */
+        }
+
+        /* --- THE GRID --- */
+        #grid-container {
+            flex: 1; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            background: #000;
+        }
+
+        #ritual-grid {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            grid-template-rows: repeat(24, 1fr);
+            width: 85vmin; 
+            height: 85vmin;
+            border: 1px solid var(--border-dim);
+            background: #000;
+        }
+
+        .cell {
+            border: 1px solid #111;
+            font-size: 0; 
+            position: relative;
+            transition: all 0.2s ease;
+            cursor: crosshair;
+        }
+
+        /* Zone Coloring */
+        .zone-outer { background-color: rgba(128, 128, 128, 0.05); }
+        .zone-middle { background-color: rgba(100, 149, 237, 0.08); }
+        .zone-inner { background-color: rgba(255, 215, 0, 0.1); }
+        .zone-core { background-color: rgba(224, 247, 250, 0.15); box-shadow: inset 0 0 10px rgba(224,247,250,0.1); }
+
+        /* Silence Cells */
+        .is-silence {
+            background-color: #000 !important;
+            border-color: #000;
+        }
+        .is-silence::after {
+            content: "•";
+            color: #333;
+            font-size: 8px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Hover Interaction */
+        .cell:hover {
+            border-color: #fff;
+            z-index: 10;
+            transform: scale(1.5);
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        /* Traversal Highlight */
+        .highlight {
+            background-color: #fff !important;
+            box-shadow: 0 0 15px #fff;
+            z-index: 5;
+            transition: background-color 0.1s;
+        }
+
+        /* --- SIDE PANEL (HUD) --- */
+        #hud-panel {
+            /* FIXED WIDTH LAYOUT (Desktop Default) */
+            flex: 0 0 400px; 
+            min-width: 350px;
+            
+            background: #111; 
+            border-left: 2px solid #333; 
+            padding: 30px; 
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            overflow-y: auto;
+            font-size: 1rem;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.5); 
+            z-index: 20;
+        }
+
+        .hud-section {
+            border: 1px solid #444; 
+            padding: 20px;
+            background: #161616; 
+            border-radius: 4px;
+        }
+
+        .hud-title {
+            text-transform: uppercase;
+            font-size: 0.9rem; 
+            font-weight: bold;
+            color: #ccc; 
+            margin-bottom: 20px;
+            border-bottom: 2px solid #444;
+            padding-bottom: 10px;
+            letter-spacing: 1.5px;
+        }
+
+        #cell-data {
+            font-family: var(--font-mono);
+            line-height: 1.5;
+        }
+
+        .data-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 18px; 
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .data-key { 
+            color: #888; 
+            font-size: 0.85rem; 
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+        
+        .data-val { 
+            color: #fff; 
+            text-align: left;
+            font-size: 1.3rem; 
+            font-weight: 700;
+            text-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+
+        #fragment-display {
+            font-family: var(--font-serif);
+            font-style: italic;
+            font-size: 1.8rem; 
+            color: #fff;
+            text-align: center;
+            min-height: 100px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.3;
+            background: #0a0a0a;
+            border: 1px solid #333;
+        }
+
+        /* --- CONTROLS --- */
+        #controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        button {
+            background: #222; 
+            border: 1px solid #555;
+            color: #ddd; 
+            padding: 18px;
+            text-transform: uppercase;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #333;
+            color: #fff;
+            border-color: #777;
+        }
+
+        button.active {
+            border-color: var(--color-core);
+            color: var(--color-core);
+            background: #0f181a;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px; 
+            background: transparent;
+        }
+
+        button:hover::before { background: var(--color-outer); }
+        button.active::before { background: var(--color-core); }
+
+        /* --- RESPONSIVE MOBILE --- */
+        @media (max-width: 900px) {
+            body {
+                height: auto; /* Allow scrolling on mobile */
+                overflow-y: auto;
+            }
+
+            main { 
+                flex-direction: column; 
+                overflow: visible;
+                height: auto;
+            }
+
+            #grid-container { 
+                flex: 0 0 auto;
+                width: 100%;
+                padding: 10px;
+                background: #000;
+            }
+
+            #ritual-grid { 
+                /* Square grid responsive to width */
+                width: 92vw; 
+                height: 92vw; 
+                max-width: 500px;
+                max-height: 500px;
+            }
+            
+            #hud-panel { 
+                /* Full width stack */
+                flex: 0 0 auto;
+                width: 100%;
+                max-width: 100%;
+                min-width: 0;
+                border-left: none; 
+                border-top: 2px solid var(--border-dim);
+                padding: 20px;
+                box-shadow: none;
+            }
+
+            h1 { font-size: 0.9rem; }
+            
+            /* Compact Data Rows for Mobile */
+            .data-row {
+                flex-direction: row;
+                align-items: baseline;
+                justify-content: space-between;
+                margin-bottom: 12px;
+                padding-bottom: 8px;
+                border-bottom: 1px dashed #333;
+            }
+            .data-key { margin-bottom: 0; }
+            .data-val { font-size: 1rem; text-align: right; }
+            
+            #fragment-display {
+                font-size: 1.4rem;
+                min-height: 80px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Carey Ritual Grid: v1.2</h1>
+        <div class="meta-tag">PROTOCOL: URN_ARCHITECTONICS</div>
+    </header>
+
+    <main>
+        <div id="grid-container">
+            <div id="ritual-grid">
+                <!-- Cells generated via JS -->
+            </div>
+        </div>
+
+        <div id="hud-panel">
+            <div class="hud-section" style="border-color: var(--color-core);">
+                <div class="hud-title">Current Ritual Site</div>
+                <div id="fragment-display">Hover over the grid...</div>
+            </div>
+
+            <div class="hud-section">
+                <div class="hud-title">Cell Schema</div>
+                <div id="cell-data">
+                    <div class="data-row">
+                        <span class="data-key">Coordinates</span>
+                        <span class="data-val" id="val-coord">--</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-key">Topological Zone</span>
+                        <span class="data-val" id="val-zone">--</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-key">Ritual Act</span>
+                        <span class="data-val" id="val-act">--</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-key">World Operation</span>
+                        <span class="data-val" id="val-op">--</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-key">Active Motif</span>
+                        <span class="data-val" id="val-motif">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-section">
+                <div class="hud-title">Traversal Modes</div>
+                <div id="controls">
+                    <button onclick="runTraversal('pilgrimage')">01 // Pilgrimage (Centripetal)</button>
+                    <button onclick="runTraversal('circulation')">02 // Circulation (Orbital)</button>
+                    <button onclick="runTraversal('spiral')">03 // Spiral of Silence</button>
+                    <button onclick="clearTraversal()">00 // Reset Field</button>
+                </div>
+            </div>
+            
+            <div style="font-size: 0.7rem; color: #555; margin-top: auto; line-height: 1.4;">
+                <strong>TERMINAL THESIS:</strong><br>
+                This grid does not organize information. This grid performs culture.
+            </div>
+        </div>
+    </main>
+
+    <script>
+        /*
+         * CAREY RITUAL GRID LOGIC
+         * Dimensions: 24x24
+         * Ontology: Keats' Ode on a Grecian Urn
+         */
+
+        const GRID_SIZE = 24;
+        const gridElement = document.getElementById('ritual-grid');
+        
+        // --- DATA POOLS ---
+        
+        const TEXT_FRAGMENTS = {
+            CORE: ["Beauty is Truth", "Truth Beauty", "That is all", "Ye know", "Cold Pastoral", "Eternity", "Silent Form", "Woe", "Friend to man"],
+            INNER: ["Happy boughs", "Cannot shed", "Forever new", "Warm love", "Panting", "Young", "Winning near", "Fair youth", "Cannot fade"],
+            MIDDLE: ["What men?", "What gods?", "Mad pursuit", "Struggle", "Escape", "Wild ecstasy", "Pipes", "Timbrels", "Maidens loth"],
+            OUTER: ["Unravish'd", "Quietness", "Silence", "Slow time", "Sylvan", "Historian", "Legend", "Sacrifice", "Little town", "Desolate"]
+        };
+
+        const MOTIFS = {
+            CORE: ["Tautology", "Epistemology", "Closure", "Paradox"],
+            INNER: ["Stasis", "Biological Heat", "Vegetal Loop", "Arrested Desire"],
+            MIDDLE: ["Inquiry", "Narrative Tension", "Acoustic Gap", "Mythos"],
+            OUTER: ["Desolation", "History", "Virginity", "Boundary"]
+        };
+
+        const ACTS = {
+            CORE: ["SEAL", "INVOCATION"],
+            INNER: ["CHANT", "WITNESS"],
+            MIDDLE: ["QUESTION", "WITNESS"],
+            OUTER: ["QUESTION", "TRANSFORM"]
+        };
+
+        const OPS = {
+            CORE: "PRODUCE",
+            INNER: "MAINTAIN",
+            MIDDLE: "REPAIR",
+            OUTER: "TRANSFORM"
+        };
+
+        // --- GRID GENERATION ---
+
+        let cells = [];
+
+        function initGrid() {
+            gridElement.innerHTML = '';
+            cells = [];
+
+            for (let y = 1; y <= GRID_SIZE; y++) {
+                for (let x = 1; x <= GRID_SIZE; x++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    
+                    // Determine Zone
+                    const zoneData = determineZone(x, y);
+                    cell.classList.add(zoneData.cssClass);
+                    
+                    // Generate Content
+                    const content = generateCellContent(zoneData.type, x, y);
+                    
+                    // Store Data on Element
+                    cell.dataset.x = x;
+                    cell.dataset.y = y;
+                    cell.dataset.zone = zoneData.type;
+                    cell.dataset.act = content.act;
+                    cell.dataset.op = content.op;
+                    cell.dataset.motif = content.motif;
+                    cell.dataset.fragment = content.fragment;
+
+                    // Interactions
+                    cell.addEventListener('mouseenter', () => updateHUD(cell.dataset));
+                    // Touch support for mobile: tap to see data
+                    cell.addEventListener('click', () => updateHUD(cell.dataset));
+                    
+                    gridElement.appendChild(cell);
+                    cells.push({ x, y, element: cell });
+                }
+            }
+        }
+
+        function determineZone(x, y) {
+            // Logic based on 1-based indexing
+            // CORE: 10-13, 10-13
+            // INNER: 7-16, 7-16
+            // MIDDLE: 4-19, 4-19
+            // OUTER: 1-24, 1-24
+            
+            if (x >= 10 && x <= 13 && y >= 10 && y <= 13) {
+                return { type: 'CORE', cssClass: 'zone-core' };
+            } else if (x >= 7 && x <= 16 && y >= 7 && y <= 16) {
+                return { type: 'INNER', cssClass: 'zone-inner' };
+            } else if (x >= 4 && x <= 19 && y >= 4 && y <= 19) {
+                return { type: 'MIDDLE', cssClass: 'zone-middle' };
+            } else {
+                return { type: 'OUTER', cssClass: 'zone-outer' };
+            }
+        }
+
+        function generateCellContent(zoneType, x, y) {
+            // Silence Logic (10% chance)
+            if (Math.random() < 0.10) {
+                return {
+                    act: "SILENCE",
+                    op: "VOID",
+                    motif: "Null",
+                    fragment: "[ ... ]"
+                };
+            }
+
+            const fragments = TEXT_FRAGMENTS[zoneType];
+            const motifs = MOTIFS[zoneType];
+            const acts = ACTS[zoneType];
+            
+            return {
+                act: acts[Math.floor(Math.random() * acts.length)],
+                op: OPS[zoneType],
+                motif: motifs[Math.floor(Math.random() * motifs.length)],
+                fragment: fragments[Math.floor(Math.random() * fragments.length)]
+            };
+        }
+
+        // --- INTERACTION ---
+
+        function updateHUD(data) {
+            document.getElementById('fragment-display').textContent = `"${data.fragment}"`;
+            document.getElementById('val-coord').textContent = `(${data.x}, ${data.y})`;
+            document.getElementById('val-zone').textContent = data.zone;
+            document.getElementById('val-act').textContent = data.act;
+            document.getElementById('val-op').textContent = data.op;
+            document.getElementById('val-motif').textContent = data.motif;
+
+            // Visual feedback for silence
+            const display = document.getElementById('fragment-display');
+            if (data.act === 'SILENCE') {
+                display.style.color = '#333';
+                display.style.fontStyle = 'normal';
+            } else {
+                display.style.color = 'var(--color-core)'; // Default highlight
+                if(data.zone === 'INNER') display.style.color = 'var(--color-inner)';
+                if(data.zone === 'MIDDLE') display.style.color = 'var(--color-middle)';
+                display.style.fontStyle = 'italic';
+            }
+        }
+
+        // --- TRAVERSAL LOGIC ---
+
+        let activeInterval = null;
+
+        function clearTraversal() {
+            if (activeInterval) clearInterval(activeInterval);
+            cells.forEach(c => c.element.classList.remove('highlight'));
+            document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        }
+
+        function runTraversal(mode) {
+            clearTraversal();
+            
+            // Highlight button
+            const buttons = document.querySelectorAll('button');
+            if(mode === 'pilgrimage') buttons[0].classList.add('active');
+            if(mode === 'circulation') buttons[1].classList.add('active');
+            if(mode === 'spiral') buttons[2].classList.add('active');
+
+            let path = [];
+
+            if (mode === 'pilgrimage') {
+                // Centripetal: Start corners, move to center
+                // Simplified linear interp for visual effect
+                let startX = 1, startY = 1;
+                let endX = 12, endY = 12;
+                for(let i=0; i<12; i++) {
+                   path.push({x: startX+i, y: startY+i}); 
+                }
+            } else if (mode === 'circulation') {
+                // Orbital: Walk the Inner Ring (approx Row 8)
+                // Top edge
+                for (let x=7; x<=16; x++) path.push({x: x, y: 7});
+                // Right edge
+                for (let y=8; y<=16; y++) path.push({x: 16, y: y});
+                // Bottom edge
+                for (let x=15; x>=7; x--) path.push({x: x, y: 16});
+                // Left edge
+                for (let y=15; y>=8; y--) path.push({x: 7, y: y});
+            } else if (mode === 'spiral') {
+                // Simple spiral approximation
+                let x = 1, y = 1;
+                let dx = 1, dy = 0;
+                let limit = GRID_SIZE;
+                let count = 0;
+                let turns = 0;
+                
+                // Generative spiral path
+                for(let i=0; i<300; i++) {
+                    path.push({x,y});
+                    if (x + dx > limit - turns || x + dx < 1 + turns || y + dy > limit - turns || y + dy < 1 + turns) {
+                        let temp = dx;
+                        dx = -dy;
+                        dy = temp;
+                        if (dy === 0) turns++; 
+                    }
+                    x += dx;
+                    y += dy;
+                    if(x === 12 && y === 12) break;
+                }
+            }
+
+            // Animate Path
+            let index = 0;
+            activeInterval = setInterval(() => {
+                if (index >= path.length) {
+                    clearInterval(activeInterval);
+                    return;
+                }
+                
+                // Clear previous if we want a "worm" effect, or keep for "trace"
+                // Let's do a "trace" effect that fades
+                const step = path[index];
+                const cellObj = cells.find(c => c.x === step.x && c.y === step.y);
+                
+                if (cellObj) {
+                    cellObj.element.classList.add('highlight');
+                    // update HUD to match travel
+                    updateHUD(cellObj.element.dataset);
+                    
+                    // Fade out tail
+                    setTimeout(() => {
+                        cellObj.element.classList.remove('highlight');
+                    }, 400); // Trail length duration
+                }
+
+                index++;
+            }, 50); // Speed
+        }
+
+        // Initialize
+        initGrid();
+
+    </script>
+</body>
+</html>

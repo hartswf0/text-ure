@@ -1,0 +1,2199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>KITT-URN-GRID — 24×24 Inscription Mapper</title>
+  <style>
+    :root{
+      --bg:#0b0d10;
+      --panel:#0f141a;
+      --ink:#e8edf2;
+      --muted:#a7b3bf;
+      --hair:#1e2a35;
+      --glow:#36ff6a;
+      --warn:#ffcc00;
+      --bad:#ff3b30;
+
+      --cell: 14px; /* adjustable */
+      --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; background:var(--bg); color:var(--ink); margin:0; }
+    a{ color:inherit; }
+
+    .app{
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+    }
+
+    header{
+      position:sticky; top:0; z-index:50;
+      background:linear-gradient(180deg, rgba(11,13,16,.98), rgba(11,13,16,.88));
+      border-bottom:1px solid var(--hair);
+      padding: env(safe-area-inset-top) 12px 10px 12px;
+      backdrop-filter: blur(10px);
+    }
+
+    .toprow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      min-width: 220px;
+    }
+    .brand .sig{
+      width:10px; height:10px; border-radius:50%;
+      background:var(--glow);
+      box-shadow:0 0 18px rgba(54,255,106,.45);
+      flex:none;
+    }
+    .brand h1{
+      font: 700 14px/1 var(--sans);
+      margin:0;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+    }
+    .brand .sub{
+      font: 500 12px/1.2 var(--mono);
+      margin-top:3px;
+      color:var(--muted);
+      letter-spacing:.02em;
+    }
+
+    .controls{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    button, select, input[type="number"], input[type="text"]{
+      font: 600 12px/1 var(--mono);
+      color:var(--ink);
+      background:var(--panel);
+      border:1px solid var(--hair);
+      border-radius:10px;
+      padding:10px 10px;
+      outline:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button{
+      cursor:pointer;
+      user-select:none;
+    }
+    button.primary{
+      border-color: rgba(54,255,106,.45);
+      box-shadow: 0 0 0 1px rgba(54,255,106,.12) inset;
+    }
+    button:active{ transform: translateY(1px); }
+    button[disabled]{ opacity:.55; cursor:not-allowed; }
+
+    .tabs{
+      margin-top:10px;
+      display:flex;
+      gap:8px;
+      overflow:auto;
+      padding-bottom:6px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tab{
+      white-space:nowrap;
+      padding:9px 10px;
+      border-radius:999px;
+      border:1px solid var(--hair);
+      background:rgba(15,20,26,.75);
+      color:var(--muted);
+      font:700 12px/1 var(--sans);
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .tab.active{
+      color:var(--ink);
+      border-color: rgba(54,255,106,.35);
+      box-shadow:0 0 0 1px rgba(54,255,106,.10) inset;
+    }
+
+    main{
+      flex:1;
+      padding:12px;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .panel{
+      background:rgba(15,20,26,.72);
+      border:1px solid var(--hair);
+      border-radius: var(--radius);
+      padding:12px;
+      overflow:hidden;
+    }
+
+    .split{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:12px;
+      align-items:start;
+    }
+    @media (max-width: 920px){
+      .split{ grid-template-columns: 1fr; }
+    }
+
+    textarea{
+      width:100%;
+      min-height: 240px;
+      resize: vertical;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid var(--hair);
+      background: #0c1117;
+      color:var(--ink);
+      font: 600 12px/1.55 var(--mono);
+      outline:none;
+    }
+
+    .row{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .row > *{ flex:none; }
+
+    .kv{
+      display:grid;
+      grid-template-columns: 120px 1fr;
+      gap:8px 10px;
+      align-items:center;
+      font: 600 12px/1.35 var(--mono);
+    }
+    .kv .k{ color:var(--muted); }
+    .pill{
+      display:inline-flex;
+      gap:8px; align-items:center;
+      padding:7px 10px;
+      border:1px solid var(--hair);
+      border-radius:999px;
+      background:rgba(12,17,23,.7);
+      font: 700 12px/1 var(--mono);
+      color:var(--muted);
+    }
+    .pill strong{ color:var(--ink); font-weight:800; }
+
+    .gridWrap{
+      border-radius: 16px;
+      border: 1px solid var(--hair);
+      overflow:auto;
+      background: #0c1117;
+      touch-action: pan-x pan-y;
+      -webkit-overflow-scrolling: touch;
+      position:relative;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(24, var(--cell));
+      grid-auto-rows: var(--cell);
+      gap:2px;
+      padding:12px;
+      width: max-content;
+      height: max-content;
+    }
+
+    .cell{
+      width: var(--cell);
+      height: var(--cell);
+      border-radius: 4px;
+      border:1px solid rgba(30,42,53,.9);
+      background: rgba(15,20,26,.65);
+      cursor:pointer;
+      position:relative;
+      user-select:none;
+    }
+
+    /* Type coding (not “meaning,” just sector type) */
+    .cell.TEXT{ box-shadow: 0 0 0 1px rgba(54,255,106,.08) inset; }
+    .cell.CACHE{ box-shadow: 0 0 0 1px rgba(167,179,191,.10) inset; }
+    .cell.INDEX{ box-shadow: 0 0 0 1px rgba(255,204,0,.14) inset; }
+    .cell.ARCHIVE{ box-shadow: 0 0 0 1px rgba(120,170,255,.12) inset; }
+    .cell.NOISE{ box-shadow: 0 0 0 1px rgba(255,59,48,.16) inset; }
+
+    .cell.selected{
+      outline: 2px solid rgba(54,255,106,.8);
+      outline-offset: 1px;
+    }
+    .cell .dot{
+      position:absolute; right:2px; bottom:2px;
+      width:4px; height:4px; border-radius:50%;
+      background: rgba(232,237,242,.7);
+      opacity:.75;
+      display:none;
+    }
+    .cell.hasPayload .dot{ display:block; }
+
+    .legend{
+      display:flex; flex-wrap:wrap; gap:8px;
+      align-items:center;
+    }
+    .legend .tag{
+      display:inline-flex; gap:8px; align-items:center;
+      border:1px solid var(--hair);
+      background:rgba(12,17,23,.65);
+      border-radius:999px;
+      padding:7px 10px;
+      font:700 12px/1 var(--mono);
+      color:var(--muted);
+    }
+    .sw{
+      width:10px; height:10px; border-radius:3px;
+      border:1px solid rgba(30,42,53,.9);
+      background: rgba(15,20,26,.65);
+      box-shadow: 0 0 0 1px rgba(232,237,242,.04) inset;
+    }
+    .sw.TEXT{ box-shadow:0 0 0 1px rgba(54,255,106,.18) inset; }
+    .sw.CACHE{ box-shadow:0 0 0 1px rgba(167,179,191,.22) inset; }
+    .sw.INDEX{ box-shadow:0 0 0 1px rgba(255,204,0,.30) inset; }
+    .sw.ARCHIVE{ box-shadow:0 0 0 1px rgba(120,170,255,.25) inset; }
+    .sw.NOISE{ box-shadow:0 0 0 1px rgba(255,59,48,.28) inset; }
+
+    .detail{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .detail h2{
+      margin:0;
+      font: 800 13px/1.2 var(--sans);
+      letter-spacing:.10em;
+      text-transform:uppercase;
+    }
+    .mono{
+      font: 600 12px/1.45 var(--mono);
+      color:var(--muted);
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    .mono strong{ color:var(--ink); }
+
+    .card{
+      border:1px solid var(--hair);
+      border-radius:14px;
+      padding:10px;
+      background: rgba(12,17,23,.75);
+      overflow:hidden;
+    }
+
+    .small{
+      font: 600 11px/1.4 var(--mono);
+      color:var(--muted);
+    }
+
+    .list{
+      display:flex; flex-direction:column; gap:8px;
+      max-height: 320px;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius:14px;
+      border:1px solid var(--hair);
+      background: rgba(12,17,23,.55);
+      padding:8px;
+    }
+
+    .item{
+      border:1px solid rgba(30,42,53,.8);
+      border-radius:12px;
+      padding:10px;
+      background: rgba(15,20,26,.65);
+      cursor:pointer;
+    }
+    .item:hover{ border-color: rgba(54,255,106,.25); }
+    .item .title{
+      font:800 12px/1.2 var(--mono);
+      color:var(--ink);
+    }
+    .item .meta{
+      margin-top:6px;
+      font: 600 11px/1.35 var(--mono);
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .footerbar{
+      display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+      justify-content:space-between;
+      margin-top:8px;
+    }
+
+    .range{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      font:700 12px/1 var(--mono);
+      color:var(--muted);
+    }
+    input[type="range"]{ width: 160px; }
+
+    .statusline{
+      font: 700 11px/1.3 var(--mono);
+      color: var(--muted);
+    }
+    .statusline .ok{ color: rgba(54,255,106,.92); }
+    .statusline .warn{ color: rgba(255,204,0,.95); }
+    .statusline .bad{ color: rgba(255,59,48,.95); }
+
+    .hidden{ display:none !important; }
+  </style>
+</head>
+
+<body>
+<div class="app">
+
+  <header>
+    <div class="toprow">
+      <div class="brand">
+        <div class="sig"></div>
+        <div>
+          <h1>KITT-URN-GRID</h1>
+          <div class="sub">24×24 address space · write head → scan head · mapping is the medium</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="primary" id="btnBuild">BUILD GRID</button>
+        <button id="btnExport" disabled>EXPORT JSON</button>
+        <button id="btnCopy" disabled>COPY JSON</button>
+      </div>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="grid">Grid</button>
+      <button class="tab" data-tab="scan">Scan</button>
+      <button class="tab" data-tab="lines">Lines</button>
+      <button class="tab" data-tab="blocks">Blocks</button>
+      <button class="tab" data-tab="indices">Indices</button>
+      <button class="tab" data-tab="config">Config</button>
+      <button class="tab" data-tab="input">Input</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- GRID -->
+    <section class="panel" id="tab-grid">
+      <div class="split">
+        <div>
+          <div class="row" style="justify-content:space-between; align-items:flex-end;">
+            <div class="legend">
+              <span class="tag"><span class="sw TEXT"></span>TEXT</span>
+              <span class="tag"><span class="sw CACHE"></span>CACHE</span>
+              <span class="tag"><span class="sw INDEX"></span>INDEX</span>
+              <span class="tag"><span class="sw ARCHIVE"></span>ARCHIVE</span>
+              <span class="tag"><span class="sw NOISE"></span>NOISE</span>
+            </div>
+
+            <div class="range">
+              <span>cell</span>
+              <input id="cellSize" type="range" min="10" max="26" step="1" value="14"/>
+              <span id="cellSizeVal">14px</span>
+            </div>
+          </div>
+
+          <div class="footerbar">
+            <div class="row">
+              <input type="text" id="addrJump" placeholder="addr (0..575) or x,y" style="width:180px;" />
+              <button id="btnJump" disabled>JUMP</button>
+              <select id="filterType" disabled>
+                <option value="ALL">SHOW: ALL</option>
+                <option value="TEXT">SHOW: TEXT</option>
+                <option value="CACHE">SHOW: CACHE</option>
+                <option value="INDEX">SHOW: INDEX</option>
+                <option value="ARCHIVE">SHOW: ARCHIVE</option>
+                <option value="NOISE">SHOW: NOISE</option>
+              </select>
+            </div>
+
+            <div class="pill" id="summaryPill">
+              <strong>EMPTY</strong> · build to instantiate sectors
+            </div>
+          </div>
+
+          <div class="gridWrap" id="gridWrap" style="margin-top:10px;">
+            <div class="grid" id="grid"></div>
+          </div>
+
+          <div class="statusline" id="statusLine" style="margin-top:10px;">
+            <span class="warn">No manifest loaded.</span> Input → Build.
+          </div>
+        </div>
+
+        <div class="detail">
+          <h2>Cell Inspector</h2>
+          <div class="card">
+            <div class="mono" id="cellInspector">
+              Select a cell sector to read its payload, blocks, tags, neighbors, and retrieval bias.
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="row" style="justify-content:space-between;">
+              <div class="small"><strong>Quick retrieval</strong> (directory operations)</div>
+            </div>
+
+            <div class="row" style="margin-top:10px;">
+              <input type="text" id="qLine" placeholder="LINE id (e.g., URN-L001)" style="width:210px;" disabled/>
+              <button id="btnFindLine" disabled>FIND LINE</button>
+            </div>
+
+            <div class="row" style="margin-top:8px;">
+              <input type="text" id="qBlock" placeholder="BLOCK id (e.g., URN-B0001)" style="width:210px;" disabled/>
+              <button id="btnFindBlock" disabled>FIND BLOCK</button>
+            </div>
+
+            <div class="row" style="margin-top:8px;">
+              <input type="text" id="qTag" placeholder="TAG (e.g., STANZA-3, NOISE)" style="width:210px;" disabled/>
+              <button id="btnFindTag" disabled>FIND TAG</button>
+            </div>
+
+            <div class="mono" id="quickOut" style="margin-top:10px;"></div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- SCAN -->
+    <section class="panel hidden" id="tab-scan">
+      <div class="split">
+        <div>
+          <div class="row">
+            <select id="scanMode" disabled>
+              <option value="RASTER_LTR_TTB">SCAN: RASTER_LTR_TTB</option>
+              <option value="SERPENTINE">SCAN: SERPENTINE</option>
+              <option value="RING_BANDS">SCAN: RING_BANDS</option>
+            </select>
+
+            <input type="number" id="scanStart" min="0" max="575" value="0" style="width:110px;" disabled />
+            <button id="btnScanStart" disabled>SET START</button>
+            <button id="btnStep" disabled>STEP</button>
+            <button id="btnPlay" disabled>PLAY</button>
+            <button id="btnStop" disabled>STOP</button>
+          </div>
+
+          <div class="card" style="margin-top:10px;">
+            <div class="mono" id="scanReadout">Build the grid to instantiate a scan-head.</div>
+          </div>
+
+          <div class="card" style="margin-top:10px;">
+            <div class="small"><strong>Beam rule:</strong> read operation returns (header + first strip) if present; otherwise returns directory hints or silence.</div>
+            <div class="mono" id="scanMeta" style="margin-top:8px;"></div>
+          </div>
+        </div>
+
+        <div>
+          <h2 style="margin:0 0 10px 0; font:800 13px/1.2 var(--sans); letter-spacing:.10em; text-transform:uppercase;">Scan Queue</h2>
+          <div class="list" id="scanQueue"></div>
+          <div class="small" style="margin-top:10px;">
+            This is not “reading.” It’s address traversal. Meaning is an afterimage produced by directory reconstruction.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LINES -->
+    <section class="panel hidden" id="tab-lines">
+      <div class="row">
+        <input type="text" id="lineSearch" placeholder="search lines (id / contains / stanza:3)" style="width: min(520px, 100%);" disabled />
+        <button id="btnLineSearch" disabled>SEARCH</button>
+      </div>
+      <div class="list" id="linesList" style="margin-top:10px;"></div>
+    </section>
+
+    <!-- BLOCKS -->
+    <section class="panel hidden" id="tab-blocks">
+      <div class="row">
+        <input type="text" id="blockSearch" placeholder="search blocks (id / stanza:2 / crc:0x...)" style="width: min(520px, 100%);" disabled />
+        <button id="btnBlockSearch" disabled>SEARCH</button>
+      </div>
+      <div class="list" id="blocksList" style="margin-top:10px;"></div>
+    </section>
+
+    <!-- INDICES -->
+    <section class="panel hidden" id="tab-indices">
+      <div class="split">
+        <div>
+          <div class="card">
+            <div class="small"><strong>Directory sectors</strong> (in-memory view)</div>
+            <div class="mono" id="indicesOverview" style="margin-top:10px;">Build to generate indices.</div>
+          </div>
+
+          <div class="card" style="margin-top:10px;">
+            <div class="row">
+              <input type="text" id="idxQuery" placeholder="LINE id / BLOCK id / TAG" style="width: min(420px, 100%);" disabled />
+              <button id="btnIdxQuery" disabled>QUERY</button>
+            </div>
+            <div class="mono" id="idxOut" style="margin-top:10px;"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <div class="small"><strong>Index cells</strong> (sector payload distribution)</div>
+            <div class="list" id="indexCellsList" style="margin-top:10px; max-height: 440px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONFIG -->
+    <section class="panel hidden" id="tab-config">
+      <div class="split">
+        <div class="card">
+          <div class="small"><strong>Apparatus parameters</strong> (storage constraints)</div>
+          <div class="kv" style="margin-top:10px;">
+            <div class="k">grid</div><div>24×24 (fixed)</div>
+
+            <div class="k">charsPerStrip</div>
+            <div><input type="number" id="cfgCharsPerStrip" min="24" max="160" value="96" style="width:120px;"></div>
+
+            <div class="k">bytesPerCell</div>
+            <div><input type="number" id="cfgBytesPerCell" min="256" max="2048" value="640" style="width:120px;"></div>
+
+            <div class="k">bands</div>
+            <div><input type="number" id="cfgBands" min="4" max="24" value="12" style="width:120px;"></div>
+
+            <div class="k">entropyTau</div>
+            <div><input type="number" id="cfgEntropyTau" min="0" max="10" step="0.05" value="2.75" style="width:120px;"></div>
+
+            <div class="k">regime</div>
+            <div>
+              <select id="cfgRegime">
+                <option value="R3">R3 Hybrid (default)</option>
+                <option value="R1">R1 Redundancy-Spread</option>
+                <option value="R2">R2 Density-Stack</option>
+              </select>
+            </div>
+
+            <div class="k">minReplicas</div>
+            <div>
+              <select id="cfgMinReplicas">
+                <option value="2">2 (coverage guarantee)</option>
+                <option value="1">1 (formula only)</option>
+                <option value="3">3 (heavy redundancy)</option>
+              </select>
+            </div>
+
+            <div class="k">seed mode</div>
+            <div>
+              <select id="cfgSeedMode">
+                <option value="TEXT_CRC">CRC(TEXT) deterministic</option>
+                <option value="TIME">time-seeded (non-repeatable)</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div class="mono" style="margin-top:10px;">
+            Placement is deterministic when seed mode is CRC(TEXT): same input → same grid.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="small"><strong>Allocation fractions</strong> (sector class budget)</div>
+          <div class="kv" style="margin-top:10px;">
+            <div class="k">INDEX</div><div>15% (fixed target)</div>
+            <div class="k">CACHE</div><div>25% (fixed target)</div>
+            <div class="k">ARCHIVE</div><div>subset of TEXT pool (fixed 36 cells; last rows)</div>
+            <div class="k">TEXT</div><div>remaining sectors</div>
+          </div>
+
+          <div class="mono" style="margin-top:10px;">
+            These are storage policy knobs, not interpretive geometry.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INPUT -->
+    <section class="panel hidden" id="tab-input">
+      <div class="split">
+        <div>
+          <div class="small"><strong>Input text</strong> (user-provided, stanza-separated)</div>
+          <textarea id="poemInput" spellcheck="false"></textarea>
+          <div class="row" style="margin-top:10px;">
+            <button id="btnReset">RESET TO KEATS (AS GIVEN)</button>
+            <button id="btnClear">CLEAR</button>
+          </div>
+          <div class="mono" style="margin-top:10px;">
+            Normalization preserves line boundaries as an explicit glyph token (<strong>" / "</strong>) and preserves indentation as <strong>⟪INDENT:n⟫</strong>.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="small"><strong>Protocol compliance</strong></div>
+          <div class="mono" style="margin-top:10px;">
+            • Begin with apparatus: strips, bytes, CRC, directory sectors.<br>
+            • No “importance-based” placement: only indices, bands, deterministic PRNG.<br>
+            • Noise is visible: overflow → pointers / NOISE markers.<br>
+            • Coverage constraint: each LINE must resolve to ≥2 addresses (primary + cache).
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* =========================================================
+   KITT-URN-GRID — Single-file apparatus
+   No external libs. Deterministic mapping when seeded by CRC(TEXT).
+   ========================================================= */
+
+/* ---------- Defaults (Keats as provided) ---------- */
+const DEFAULT_TEXT = `Ode on a Grecian Urn
+
+By John Keats
+
+Thou still unravish'd bride of quietness,
+
+       Thou foster-child of silence and slow time,
+
+Sylvan historian, who canst thus express
+
+       A flowery tale more sweetly than our rhyme:
+
+What leaf-fring'd legend haunts about thy shape
+
+       Of deities or mortals, or of both,
+
+               In Tempe or the dales of Arcady?
+
+       What men or gods are these? What maidens loth?
+
+What mad pursuit? What struggle to escape?
+
+               What pipes and timbrels? What wild ecstasy?
+
+
+
+Heard melodies are sweet, but those unheard
+
+       Are sweeter; therefore, ye soft pipes, play on;
+
+Not to the sensual ear, but, more endear'd,
+
+       Pipe to the spirit ditties of no tone:
+
+Fair youth, beneath the trees, thou canst not leave
+
+       Thy song, nor ever can those trees be bare;
+
+               Bold Lover, never, never canst thou kiss,
+
+Though winning near the goal yet, do not grieve;
+
+       She cannot fade, though thou hast not thy bliss,
+
+               For ever wilt thou love, and she be fair!
+
+
+
+Ah, happy, happy boughs! that cannot shed
+
+         Your leaves, nor ever bid the Spring adieu;
+
+And, happy melodist, unwearied,
+
+         For ever piping songs for ever new;
+
+More happy love! more happy, happy love!
+
+         For ever warm and still to be enjoy'd,
+
+                For ever panting, and for ever young;
+
+All breathing human passion far above,
+
+         That leaves a heart high-sorrowful and cloy'd,
+
+                A burning forehead, and a parching tongue.
+
+
+
+Who are these coming to the sacrifice?
+
+         To what green altar, O mysterious priest,
+
+Lead'st thou that heifer lowing at the skies,
+
+         And all her silken flanks with garlands drest?
+
+What little town by river or sea shore,
+
+         Or mountain-built with peaceful citadel,
+
+                Is emptied of this folk, this pious morn?
+
+And, little town, thy streets for evermore
+
+         Will silent be; and not a soul to tell
+
+                Why thou art desolate, can e'er return.
+
+
+
+O Attic shape! Fair attitude! with brede
+
+         Of marble men and maidens overwrought,
+
+With forest branches and the trodden weed;
+
+         Thou, silent form, dost tease us out of thought
+
+As doth eternity: Cold Pastoral!
+
+         When old age shall this generation waste,
+
+                Thou shalt remain, in midst of other woe
+
+Than ours, a friend to man, to whom thou say'st,
+
+         "Beauty is truth, truth beauty,—that is all
+
+                Ye know on earth, and all ye need to know."`;
+
+/* ---------- DOM ---------- */
+const $ = (s)=>document.querySelector(s);
+const $$ = (s)=>Array.from(document.querySelectorAll(s));
+
+const poemInput = $("#poemInput");
+
+const btnBuild  = $("#btnBuild");
+const btnExport = $("#btnExport");
+const btnCopy   = $("#btnCopy");
+
+const gridEl = $("#grid");
+const gridWrap = $("#gridWrap");
+const cellInspector = $("#cellInspector");
+const summaryPill = $("#summaryPill");
+const statusLine = $("#statusLine");
+
+const cellSize = $("#cellSize");
+const cellSizeVal = $("#cellSizeVal");
+
+const addrJump = $("#addrJump");
+const btnJump = $("#btnJump");
+const filterType = $("#filterType");
+
+const qLine = $("#qLine");
+const btnFindLine = $("#btnFindLine");
+const qBlock = $("#qBlock");
+const btnFindBlock = $("#btnFindBlock");
+const qTag = $("#qTag");
+const btnFindTag = $("#btnFindTag");
+const quickOut = $("#quickOut");
+
+const scanMode = $("#scanMode");
+const scanStart = $("#scanStart");
+const btnScanStart = $("#btnScanStart");
+const btnStep = $("#btnStep");
+const btnPlay = $("#btnPlay");
+const btnStop = $("#btnStop");
+const scanReadout = $("#scanReadout");
+const scanMeta = $("#scanMeta");
+const scanQueue = $("#scanQueue");
+
+const lineSearch = $("#lineSearch");
+const btnLineSearch = $("#btnLineSearch");
+const linesList = $("#linesList");
+
+const blockSearch = $("#blockSearch");
+const btnBlockSearch = $("#btnBlockSearch");
+const blocksList = $("#blocksList");
+
+const indicesOverview = $("#indicesOverview");
+const idxQuery = $("#idxQuery");
+const btnIdxQuery = $("#btnIdxQuery");
+const idxOut = $("#idxOut");
+const indexCellsList = $("#indexCellsList");
+
+const cfgCharsPerStrip = $("#cfgCharsPerStrip");
+const cfgBytesPerCell = $("#cfgBytesPerCell");
+const cfgBands = $("#cfgBands");
+const cfgEntropyTau = $("#cfgEntropyTau");
+const cfgRegime = $("#cfgRegime");
+const cfgMinReplicas = $("#cfgMinReplicas");
+const cfgSeedMode = $("#cfgSeedMode");
+
+const btnReset = $("#btnReset");
+const btnClear = $("#btnClear");
+
+/* ---------- Global State (manifest) ---------- */
+let manifest = null;
+let selectedAddr = null;
+let scanTimer = null;
+let scanState = { mode:"RASTER_LTR_TTB", seq:[], i:0 };
+
+/* =========================================================
+   Utilities: bytes, CRC32, PRNG, entropy
+   ========================================================= */
+const encoder = new TextEncoder();
+
+function bytesOf(x){
+  const s = (typeof x === "string") ? x : JSON.stringify(x);
+  return encoder.encode(s).length;
+}
+
+// CRC32 (standard)
+const CRC32_TABLE = (() => {
+  let c; const table = new Uint32Array(256);
+  for (let n=0;n<256;n++){
+    c = n;
+    for (let k=0;k<8;k++){
+      c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+    }
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+
+function crc32(str){
+  const data = encoder.encode(str);
+  let crc = 0xFFFFFFFF;
+  for (let i=0;i<data.length;i++){
+    crc = CRC32_TABLE[(crc ^ data[i]) & 0xFF] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function hex32(n){ return "0x" + (n>>>0).toString(16).toUpperCase().padStart(8,"0"); }
+
+// xorshift32 PRNG
+function xorshift32(seed){
+  let x = (seed >>> 0) || 0xA5A5A5A5;
+  return function(){
+    x ^= (x << 13) >>> 0;
+    x ^= (x >>> 17) >>> 0;
+    x ^= (x << 5) >>> 0;
+    return x >>> 0;
+  }
+}
+
+// Shannon entropy over token counts
+function shannonEntropy(tokens){
+  if (!tokens.length) return 0;
+  const m = new Map();
+  for (const t of tokens) m.set(t, (m.get(t)||0)+1);
+  const n = tokens.length;
+  let h = 0;
+  for (const [,count] of m){
+    const p = count / n;
+    h -= p * Math.log2(p);
+  }
+  return h;
+}
+
+/* =========================================================
+   P0: Normalize without erasing structure (lineation preserved)
+   ========================================================= */
+function parsePoemToLines(text){
+  const rawLinesAll = text.replace(/\r/g,"").split("\n");
+
+  // Stanza separation: blank line(s).
+  let stanzas = [];
+  let buf = [];
+  for (const line of rawLinesAll){
+    if (line.trim() === ""){
+      if (buf.length){
+        stanzas.push(buf);
+        buf = [];
+      }
+      continue;
+    }
+    // Skip title lines? No. Treat as lines in stanza 0? In protocol, user wants poem lines;
+    // We will keep non-poem headers as stanza 0 unless they match "ODE..." or "BY..."
+    buf.push(line);
+  }
+  if (buf.length) stanzas.push(buf);
+
+  // We want to treat the first two header lines (title/author) as non-poem and drop them by default,
+  // BUT because user-provided text includes them, we keep them unless they start with those markers.
+  // Kittler move: define apparatus boundary explicitly, but do not “interpret.”
+  const cleanedStanzas = [];
+  for (let si=0; si<stanzas.length; si++){
+    const stanza = stanzas[si].slice();
+    cleanedStanzas.push(stanza);
+  }
+
+  // Heuristic: remove the very first stanza lines if they match "Ode on a Grecian Urn" and "By John Keats"
+  // because the user's directive was "map every line of the Ode".
+  // This is not “meaning”; it’s input scope selection.
+  if (cleanedStanzas.length){
+    const s0 = cleanedStanzas[0].map(s=>s.trim());
+    const drop = (s0.length>=2 && /^ode on a grecian urn$/i.test(s0[0]) && /^by john keats$/i.test(s0[1]));
+    if (drop){
+      cleanedStanzas[0] = stanzas[0].slice(2).filter(x=>x.trim()!=="");
+      if (cleanedStanzas[0].length===0) cleanedStanzas.shift();
+    }
+  }
+
+  // Now build LINE objects.
+  let lines = [];
+  let lineCounter = 1;
+
+  for (let stanzaIndex=0; stanzaIndex<cleanedStanzas.length; stanzaIndex++){
+    const stanzaNum = stanzaIndex + 1;
+
+    for (const raw of cleanedStanzas[stanzaIndex]){
+      // leading whitespace token
+      const m = raw.match(/^(\s*)(.*)$/);
+      const indentCount = m ? m[1].length : 0;
+      const content = m ? m[2] : raw;
+
+      // normalize internal whitespace; uppercase; keep punctuation.
+      const collapsed = content.replace(/\s+/g, " ").trim();
+      const norm = `⟪INDENT:${indentCount}⟫` + collapsed.toUpperCase();
+
+      // punctuation signature & entropy
+      const punctMatches = collapsed.match(/[.,;:!?'"“”‘’—\-]/g) || [];
+      const punctSig = punctMatches.join("");
+      const tokensForEntropy = punctMatches.length ? punctMatches : ["∅"];
+      if (indentCount > 0) tokensForEntropy.push("INDENT");
+      const ent = shannonEntropy(tokensForEntropy);
+
+      const id = `URN-L${String(lineCounter).padStart(3,"0")}`;
+      lines.push({
+        id,
+        i: lineCounter-1,
+        stanza: stanzaNum,
+        raw: raw,
+        norm,
+        sig: { punct: punctSig, entropy: +ent.toFixed(3), length: norm.length }
+      });
+      lineCounter++;
+    }
+  }
+
+  return lines;
+}
+
+/* =========================================================
+   P1: Segmentation into addressable blocks (inscription constraints)
+   ========================================================= */
+function makeBlocksFromLines(lines, cfg){
+  const blocks = [];
+  let b = 1;
+
+  // group line indices by stanza
+  const byStanza = new Map();
+  for (const ln of lines){
+    if (!byStanza.has(ln.stanza)) byStanza.set(ln.stanza, []);
+    byStanza.get(ln.stanza).push(ln);
+  }
+
+  const lineSep = cfg.lineSep;
+
+  for (const [stanza, stanzaLines] of byStanza){
+    let k = 0;
+    while (k < stanzaLines.length){
+      const header = `⟦URN|STANZA-${stanza}⟧`;
+
+      // try 3 lines, then 2, then 1 to satisfy strip/byte constraints
+      let take = Math.min(3, stanzaLines.length - k);
+      let chosen = null;
+
+      while (take >= 1){
+        const slice = stanzaLines.slice(k, k+take);
+        const blockText = header + lineSep + slice.map(x=>x.norm).join(lineSep);
+        const strips = chunkToStrips(blockText, cfg.charsPerStrip);
+        const byt = bytesOf(blockText);
+
+        if (strips.length <= 4 && byt <= cfg.bytesPerCell){
+          chosen = { slice, blockText, strips, bytes: byt, overflow:false, pointerOnly:false, truncated:false };
+          break;
+        }
+        take--;
+      }
+
+      // if still not chosen, force overflow handling: pointer-only + archive fragments
+      if (!chosen){
+        const slice = [stanzaLines[k]]; // minimal addressable unit: 1 line
+        const fullText = header + lineSep + slice[0].norm;
+        const strips = chunkToStrips(fullText, cfg.charsPerStrip);
+        const headStrip = strips[0] || (header + lineSep).padEnd(cfg.charsPerStrip, " ");
+        const truncated = headStrip.slice(0, cfg.charsPerStrip);
+
+        chosen = {
+          slice,
+          blockText: truncated,
+          strips: [truncated],
+          bytes: bytesOf(truncated),
+          overflow:true,
+          pointerOnly:true,
+          truncated:true
+        };
+      }
+
+      const crc = crc32(chosen.blockText);
+      blocks.push({
+        id: `URN-B${String(b).padStart(4,"0")}`,
+        header: `⟦URN|STANZA-${stanza}⟧`,
+        stanza,
+        sourceLines: chosen.slice.map(x=>x.id),
+        strips: chosen.strips,
+        bytes: chosen.bytes,
+        crc: hex32(crc),
+        flags: {
+          overflow: chosen.overflow,
+          pointerOnly: chosen.pointerOnly,
+          truncated: chosen.truncated
+        }
+      });
+
+      b++;
+      k += chosen.slice.length;
+    }
+  }
+
+  return blocks;
+}
+
+function chunkToStrips(text, charsPerStrip){
+  const strips = [];
+  for (let i=0;i<text.length;i+=charsPerStrip){
+    strips.push(text.slice(i, i+charsPerStrip));
+  }
+  // Ensure header appears in first strip by construction; padding not required, but ok for scan aesthetic:
+  return strips.map(s => s.padEnd(charsPerStrip, " "));
+}
+
+/* =========================================================
+   P3: Allocation (R3 Hybrid default)
+   Sector typing: INDEX 15%, CACHE 25%, ARCHIVE pool inside TEXT (36 cells), rest TEXT.
+   ========================================================= */
+function buildEmptyGrid(cfg){
+  const size = 24;
+  const total = size*size;
+  const cells = new Array(total);
+
+  for (let addr=0; addr<total; addr++){
+    const x = addr % size;
+    const y = Math.floor(addr / size);
+    cells[addr] = {
+      x,y,addr,
+      type: "TEXT",
+      payload: [],
+      blocks: [],
+      tags: [],
+      bytes: 0,
+      crc: "0x00000000",
+      neighbors: neighborsOfAddr(addr, size),
+      retrieval_bias: {}
+    };
+  }
+
+  // ARCHIVE POOL (subset of TEXT)
+  const archiveSet = new Set();
+  // last row y=23: all 24
+  for (let x=0;x<24;x++){
+    archiveSet.add(23*24 + x);
+  }
+  // y=22: x even (12 cells)
+  for (let x=0;x<24;x+=2){
+    archiveSet.add(22*24 + x);
+  }
+
+  // INDEX SET target 15%
+  const indexTarget = Math.round(total * 0.15);
+  const indexSet = new Set();
+
+  // base pattern: (x%8==0 && y%6==0) plus borders x==0 or x==23
+  for (let addr=0; addr<total; addr++){
+    const x = addr % 24, y = Math.floor(addr/24);
+    if (archiveSet.has(addr)) continue;
+    if ((x % 8 === 0 && y % 6 === 0) || x===0 || x===23){
+      indexSet.add(addr);
+      if (indexSet.size >= indexTarget) break;
+    }
+  }
+  // fill deterministically if needed
+  if (indexSet.size < indexTarget){
+    // deterministic order by hash
+    const candidates = [];
+    for (let addr=0; addr<total; addr++){
+      if (archiveSet.has(addr)) continue;
+      if (indexSet.has(addr)) continue;
+      candidates.push(addr);
+    }
+    candidates.sort((a,b)=>hash32(a)-hash32(b));
+    for (const addr of candidates){
+      indexSet.add(addr);
+      if (indexSet.size >= indexTarget) break;
+    }
+  }
+
+  // CACHE SET target 25% (excluding index + archive)
+  const cacheTarget = Math.round(total * 0.25);
+  const cacheSet = new Set();
+  const candidates2 = [];
+  for (let addr=0; addr<total; addr++){
+    if (archiveSet.has(addr) || indexSet.has(addr)) continue;
+    candidates2.push(addr);
+  }
+  candidates2.sort((a,b)=>hash32(a)-hash32(b));
+  for (let i=0; i<candidates2.length && cacheSet.size<cacheTarget; i++){
+    cacheSet.add(candidates2[i]);
+  }
+
+  // assign types
+  for (let addr=0; addr<total; addr++){
+    if (archiveSet.has(addr)){
+      cells[addr].type = "ARCHIVE";
+      cells[addr].tags.push("ARCHIVE_POOL");
+    } else if (indexSet.has(addr)){
+      cells[addr].type = "INDEX";
+      cells[addr].tags.push("DIRECTORY");
+    } else if (cacheSet.has(addr)){
+      cells[addr].type = "CACHE";
+      cells[addr].tags.push("CACHE");
+    } else {
+      cells[addr].type = "TEXT";
+      cells[addr].tags.push("PRIMARY_SPACE");
+    }
+    cells[addr].tags.push("URN");
+  }
+
+  return {cells, indexSet:[...indexSet], cacheSet:[...cacheSet], archiveSet:[...archiveSet]};
+}
+
+function neighborsOfAddr(addr, size){
+  const x = addr % size;
+  const y = Math.floor(addr / size);
+  const n = [];
+  if (x>0) n.push(addr-1);
+  if (x<size-1) n.push(addr+1);
+  if (y>0) n.push(addr-size);
+  if (y<size-1) n.push(addr+size);
+  return n;
+}
+
+function hash32(n){
+  // Knuth multiplicative hash
+  return ((n >>> 0) * 2654435761) >>> 0;
+}
+
+function addrBand(addr, total, bands){
+  const t = addr / (total-1);
+  return Math.max(0, Math.min(bands-1, Math.floor(t * bands)));
+}
+
+function lineOrderKey(lineIdx, nLines){
+  if (nLines<=1) return 0;
+  return lineIdx / (nLines-1);
+}
+
+/* =========================================================
+   Placement: deterministic PRNG seeded by block CRC + global seed
+   ========================================================= */
+function allocateBlocksToGrid(lines, blocks, grid, cfg){
+  const total = 24*24;
+  const bands = cfg.bands;
+
+  // eligible address lists by type and band
+  const eligibleTextByBand = Array.from({length: bands}, ()=>[]);
+  const eligibleCacheByBand = Array.from({length: bands}, ()=>[]);
+  const eligibleArchive = [];
+
+  for (let addr=0; addr<total; addr++){
+    const b = addrBand(addr, total, bands);
+    const t = grid.cells[addr].type;
+    if (t === "TEXT") eligibleTextByBand[b].push(addr);
+    if (t === "CACHE") eligibleCacheByBand[b].push(addr);
+    if (t === "ARCHIVE") eligibleArchive.push(addr);
+  }
+
+  // usage maps (some cells can hold multiple blocks; TEXT is one primary; CACHE arrays)
+  const byBlock = {};          // blockId -> {primary, replicas[], archive[]}
+  const byLine = {};           // lineId -> addrs[]
+  const byTag  = {};           // tag -> addrs[]
+  const blockMap = new Map(blocks.map(b => [b.id, b]));
+
+  for (const ln of lines) byLine[ln.id] = [];
+
+  // global seed: deterministic or time
+  const globalSeed = (cfg.seedMode === "TIME")
+    ? (Date.now() >>> 0)
+    : crc32(lines.map(l=>l.norm).join("\n"));
+
+  // helper: pick nearest band with availability
+  function pickFromBand(listByBand, targetBand, prng){
+    for (let delta=0; delta<bands; delta++){
+      const b1 = targetBand - delta;
+      const b2 = targetBand + delta;
+      if (b1 >= 0 && listByBand[b1].length){
+        return listByBand[b1][prng() % listByBand[b1].length];
+      }
+      if (b2 < bands && listByBand[b2].length){
+        return listByBand[b2][prng() % listByBand[b2].length];
+      }
+    }
+    return null;
+  }
+
+  // place primaries + replicas
+  const minReplicas = parseInt(cfg.minReplicas, 10);
+
+  for (const blk of blocks){
+    const firstLineId = blk.sourceLines[0];
+    const firstLineObj = lines.find(l=>l.id===firstLineId);
+    const orderKey = lineOrderKey(firstLineObj ? firstLineObj.i : 0, lines.length);
+    const targetBand = Math.max(0, Math.min(bands-1, Math.floor(orderKey * bands)));
+
+    const seed = (parseInt(blk.crc, 16) ^ globalSeed) >>> 0;
+    const prng = xorshift32(seed);
+
+    // replication factor per formula, then enforce minReplicas for coverage
+    const avgEntropy = blk.sourceLines
+      .map(id => (lines.find(l=>l.id===id)?.sig.entropy || 0))
+      .reduce((a,b)=>a+b,0) / Math.max(1, blk.sourceLines.length);
+
+    let replicationFactor = 1 + Math.floor(blk.bytes/160) + (avgEntropy > cfg.entropyTau ? 1 : 0);
+    replicationFactor = Math.max(1, Math.min(7, replicationFactor));
+    replicationFactor = Math.max(replicationFactor, minReplicas);
+
+    const primaryAddr = pickFromBand(eligibleTextByBand, targetBand, prng);
+    if (primaryAddr === null){
+      // catastrophic: no TEXT sectors
+      continue;
+    }
+
+    // write primary: TEXT cells hold one primary block
+    writeBlockToCellPrimary(grid.cells[primaryAddr], blk);
+
+    const replicas = [];
+    for (let r=1; r<replicationFactor; r++){
+      const skew = (prng() % 3) - 1; // -1,0,1
+      const band2 = Math.max(0, Math.min(bands-1, targetBand + skew));
+      const a = pickFromBand(eligibleCacheByBand, band2, prng);
+      if (a === null) break;
+      writeBlockToCache(grid.cells[a], blk);
+      replicas.push(a);
+    }
+
+    // overflow body into archive if pointerOnly/truncated
+    const archiveAddrs = [];
+    if (blk.flags && (blk.flags.pointerOnly || blk.flags.overflow)){
+      // store full text fragments in archive pool (if present)
+      // Here we only have truncated strip; the full body isn't stored.
+      // But we still mark archive pointer sites for apparatus honesty.
+      for (let i=0; i<Math.min(2, eligibleArchive.length); i++){
+        const a = eligibleArchive[(hash32(seed + i) % eligibleArchive.length)];
+        writeArchiveFragment(grid.cells[a], blk, i);
+        archiveAddrs.push(a);
+      }
+      // mark a NOISE cell (optional): if we have a cache cell, convert it to NOISE marker
+      if (replicas.length){
+        const naddr = replicas[0];
+        grid.cells[naddr].type = "NOISE";
+        if (!grid.cells[naddr].tags.includes("NOISE")) grid.cells[naddr].tags.push("NOISE");
+      }
+    }
+
+    byBlock[blk.id] = { primary: primaryAddr, replicas, archive: archiveAddrs };
+
+    // index byLine
+    for (const lid of blk.sourceLines){
+      byLine[lid].push(primaryAddr);
+      for (const ra of replicas) byLine[lid].push(ra);
+      for (const aa of archiveAddrs) byLine[lid].push(aa);
+    }
+
+    // index byTag
+    const tagStanza = `STANZA-${blk.stanza}`;
+    addByTag(byTag, "URN", primaryAddr);
+    addByTag(byTag, tagStanza, primaryAddr);
+    for (const ra of replicas){
+      addByTag(byTag, "URN", ra);
+      addByTag(byTag, tagStanza, ra);
+      addByTag(byTag, "CACHE", ra);
+    }
+    if (archiveAddrs.length){
+      for (const aa of archiveAddrs){
+        addByTag(byTag, "ARCHIVE", aa);
+        addByTag(byTag, tagStanza, aa);
+      }
+      addByTag(byTag, "NOISE", primaryAddr);
+    }
+  }
+
+  // Coverage pass: ensure every line resolves to ≥2 addresses
+  for (const ln of lines){
+    const addrs = uniq(byLine[ln.id] || []);
+    byLine[ln.id] = addrs;
+    if (addrs.length < 2){
+      // force one replica: locate a block containing this line and replicate into a cache cell.
+      const blk = blocks.find(b => b.sourceLines.includes(ln.id));
+      if (!blk) continue;
+      const placement = byBlock[blk.id];
+      if (!placement) continue;
+
+      // choose any cache cell in same band
+      const ok = lineOrderKey(ln.i, lines.length);
+      const targetBand = Math.max(0, Math.min(cfg.bands-1, Math.floor(ok * cfg.bands)));
+      const prng = xorshift32((parseInt(blk.crc,16) ^ globalSeed ^ 0x9E3779B9) >>> 0);
+      const a = pickFromBand(
+        Array.from({length: cfg.bands}, (_,b)=>eligibleCacheByBand[b]),
+        targetBand,
+        prng
+      );
+      if (a !== null){
+        writeBlockToCache(grid.cells[a], blk);
+        placement.replicas.push(a);
+        byLine[ln.id].push(a);
+        addByTag(byTag, "FORCED_CACHE", a);
+      }
+      byLine[ln.id] = uniq(byLine[ln.id]);
+    }
+  }
+
+  // distribute directory payload across INDEX cells (sectorization)
+  distributeIndicesIntoIndexCells(grid, {byLine, byBlock, byTag}, cfg);
+
+  // finalize per-cell bytes & crc
+  for (const cell of grid.cells){
+    cell.bytes = bytesOf(cell.payload);
+    cell.crc = hex32(crc32(JSON.stringify({
+      addr: cell.addr, type: cell.type, payload: cell.payload, blocks: cell.blocks, tags: cell.tags
+    })));
+    cell.retrieval_bias = cell.retrieval_bias || {};
+  }
+
+  return { byLine, byBlock, byTag, globalSeed: hex32(globalSeed) };
+}
+
+function addByTag(byTag, tag, addr){
+  if (!byTag[tag]) byTag[tag] = [];
+  byTag[tag].push(addr);
+}
+
+function uniq(arr){
+  return Array.from(new Set(arr)).sort((a,b)=>a-b);
+}
+
+function writeBlockToCellPrimary(cell, blk){
+  // TEXT sectors: one primary block (but we allow multiple if collision; app records arrays)
+  cell.blocks = cell.blocks || [];
+  if (!cell.blocks.includes(blk.id)){
+    cell.blocks.push(blk.id);
+  }
+  cell.payload = blk.strips.slice(); // scanner reads strips
+  if (!cell.tags.includes("PRIMARY")) cell.tags.push("PRIMARY");
+  if (!cell.tags.includes(`STANZA-${blk.stanza}`)) cell.tags.push(`STANZA-${blk.stanza}`);
+  cell.retrieval_bias = { preferBlock: blk.id };
+}
+
+function writeBlockToCache(cell, blk){
+  cell.blocks = cell.blocks || [];
+  if (!cell.blocks.includes(blk.id)){
+    cell.blocks.push(blk.id);
+  }
+  // cache payload: compact headers/pointers, not full strips
+  const preview = (blk.strips[0] || "").trimEnd();
+  cell.payload = cell.payload || [];
+  cell.payload.push({ kind:"REPLICA", block: blk.id, crc: blk.crc, head: preview.slice(0, 80) });
+  if (!cell.tags.includes("CACHE")) cell.tags.push("CACHE");
+  if (!cell.tags.includes(`STANZA-${blk.stanza}`)) cell.tags.push(`STANZA-${blk.stanza}`);
+}
+
+function writeArchiveFragment(cell, blk, part){
+  cell.blocks = cell.blocks || [];
+  if (!cell.blocks.includes(blk.id)) cell.blocks.push(blk.id);
+  cell.payload = cell.payload || [];
+  cell.payload.push({
+    kind:"ARCHIVE_FRAGMENT",
+    block: blk.id,
+    part,
+    note:"Overflow body placeholder (apparatus honesty)",
+    crc: blk.crc
+  });
+  if (!cell.tags.includes("ARCHIVE")) cell.tags.push("ARCHIVE");
+  if (!cell.tags.includes(`STANZA-${blk.stanza}`)) cell.tags.push(`STANZA-${blk.stanza}`);
+}
+
+function distributeIndicesIntoIndexCells(grid, indices, cfg){
+  // pack directory entries into INDEX sectors as pages
+  const indexAddrs = grid.cells.filter(c=>c.type==="INDEX").map(c=>c.addr);
+
+  // Build flat directory entries (compact pointers)
+  const entries = [];
+
+  // BY_LINE entries
+  for (const [lineId, addrs] of Object.entries(indices.byLine)){
+    entries.push({ kind:"BY_LINE", key: lineId, addrs: uniq(addrs) });
+  }
+  // BY_BLOCK entries
+  for (const [blockId, obj] of Object.entries(indices.byBlock)){
+    entries.push({ kind:"BY_BLOCK", key: blockId, primary: obj.primary, replicas: uniq(obj.replicas||[]), archive: uniq(obj.archive||[]) });
+  }
+  // BY_TAG entries
+  for (const [tag, addrs] of Object.entries(indices.byTag)){
+    entries.push({ kind:"BY_TAG", key: tag, addrs: uniq(addrs) });
+  }
+
+  // deterministic sort: kind, key
+  entries.sort((a,b)=>{
+    const ka = a.kind + "|" + a.key;
+    const kb = b.kind + "|" + b.key;
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+  });
+
+  // sectorize by bytesPerCell (approx)
+  const pages = [];
+  let page = [];
+  let pageBytes = 0;
+  for (const e of entries){
+    const eb = bytesOf(e);
+    if (page.length && (pageBytes + eb) > cfg.bytesPerCell){
+      pages.push(page);
+      page = [];
+      pageBytes = 0;
+    }
+    page.push(e);
+    pageBytes += eb;
+  }
+  if (page.length) pages.push(page);
+
+  // write pages across index cells (wrap if more pages than cells)
+  for (let i=0; i<indexAddrs.length; i++){
+    const addr = indexAddrs[i];
+    const cell = grid.cells[addr];
+    const p = pages[i];
+    if (!p) break;
+    cell.payload = p;
+    cell.tags.push("INDEX_PAGE");
+    cell.retrieval_bias = { scanHint:"SERPENTINE", ttl: 0 };
+  }
+
+  // if pages remain, store page pointers in remaining index cells
+  if (pages.length > indexAddrs.length){
+    const overflow = pages.slice(indexAddrs.length);
+    const tailCell = grid.cells[indexAddrs[indexAddrs.length-1]];
+    tailCell.payload = tailCell.payload || [];
+    tailCell.payload.push({
+      kind:"INDEX_OVERFLOW",
+      pages: overflow.length,
+      note:"Directory extends beyond reserved INDEX sectors; treat as Real pressure on storage."
+    });
+    tailCell.tags.push("NOISE");
+  }
+}
+
+/* =========================================================
+   Manifest builder (protocol-compliant schema)
+   ========================================================= */
+function buildManifest(text, cfg){
+  const lines = parsePoemToLines(text);
+
+  // enforce at least some lines
+  if (!lines.length) throw new Error("No lines found. Provide stanza-separated text.");
+
+  const blocks = makeBlocksFromLines(lines, cfg);
+
+  // Build grid skeleton based on regime (R1/R2/R3 supported minimally; R3 is implemented fully)
+  if (cfg.regime !== "R3"){
+    // For now: keep sector typing same; only placement policy differs slightly.
+    // The UI is an apparatus; regimes are write policies.
+  }
+  const grid = buildEmptyGrid(cfg);
+
+  const indices = allocateBlocksToGrid(lines, blocks, grid, cfg);
+
+  const out = {
+    gridSize: 24,
+    config: {
+      charsPerStrip: cfg.charsPerStrip,
+      bytesPerCell: cfg.bytesPerCell,
+      encoding: "utf-8",
+      panelSep: cfg.panelSep,
+      lineSep: cfg.lineSep,
+      crcAlgo: "crc32",
+      bands: cfg.bands,
+      entropyTau: cfg.entropyTau,
+      regime: cfg.regime,
+      seed: indices.globalSeed
+    },
+    lines: lines.map(l => ({
+      id: l.id,
+      stanza: l.stanza,
+      text: l.raw,            // user-provided, allowed
+      sig: l.sig
+    })),
+    blocks: blocks,
+    cells: grid.cells,
+    indices: {
+      byLine: Object.fromEntries(Object.entries(indices.byLine).map(([k,v])=>[k, uniq(v)])),
+      byBlock: indices.byBlock,
+      byTag: Object.fromEntries(Object.entries(indices.byTag).map(([k,v])=>[k, uniq(v)]))
+    }
+  };
+
+  // Add routing shorthand (optional)
+  out.routes = {
+    scanModes: ["RASTER_LTR_TTB","SERPENTINE","RING_BANDS"],
+    neighborsRule: "4-neighborhood (N,E,S,W), no wrap"
+  };
+
+  // Coverage check
+  const uncovered = [];
+  const underRep = [];
+  for (const ln of out.lines){
+    const a = out.indices.byLine[ln.id] || [];
+    if (!a.length) uncovered.push(ln.id);
+    if (a.length < 2) underRep.push({id:ln.id, addrs:a});
+  }
+  out.audit = {
+    lineCount: out.lines.length,
+    blockCount: out.blocks.length,
+    uncoveredLines: uncovered,
+    underReplicatedLines: underRep,
+    cellTypeCounts: countCellTypes(out.cells)
+  };
+
+  return out;
+}
+
+function countCellTypes(cells){
+  const m = {};
+  for (const c of cells){
+    m[c.type] = (m[c.type]||0)+1;
+  }
+  return m;
+}
+
+/* =========================================================
+   UI: render grid, lists, inspector, scan
+   ========================================================= */
+function initGridUI(){
+  gridEl.innerHTML = "";
+  for (let addr=0; addr<576; addr++){
+    const d = document.createElement("div");
+    d.className = "cell";
+    d.dataset.addr = String(addr);
+    d.title = `ADDR ${addr}`;
+    d.innerHTML = `<span class="dot"></span>`;
+    d.addEventListener("click", ()=>selectCell(addr, true));
+    gridEl.appendChild(d);
+  }
+}
+
+function applyCellVisuals(){
+  const els = gridEl.children;
+  for (let addr=0; addr<576; addr++){
+    const el = els[addr];
+    if (!manifest){
+      el.className = "cell";
+      el.classList.remove("hasPayload");
+      continue;
+    }
+    const cell = manifest.cells[addr];
+    el.className = `cell ${cell.type}`;
+    if (cell.payload && cell.payload.length) el.classList.add("hasPayload");
+    if (selectedAddr === addr) el.classList.add("selected");
+  }
+}
+
+function selectCell(addr, scrollIntoView){
+  if (!manifest) return;
+  selectedAddr = addr;
+  applyCellVisuals();
+
+  const cell = manifest.cells[addr];
+  const x = cell.x, y = cell.y;
+
+  const blocks = (cell.blocks || []).slice();
+  const tags = (cell.tags || []).slice();
+  const payloadPreview = renderPayloadPreview(cell);
+
+  const bias = cell.retrieval_bias || {};
+  const neigh = (cell.neighbors || []).join(", ");
+
+  cellInspector.innerHTML =
+`<strong>ADDR</strong> ${cell.addr}  (<strong>x</strong>${x}, <strong>y</strong>${y})  · <strong>TYPE</strong> ${cell.type}
+<strong>BYTES</strong> ${cell.bytes}  · <strong>CRC</strong> ${cell.crc}
+
+<strong>TAGS</strong> ${tags.length ? tags.join(" · ") : "∅"}
+<strong>BLOCKS</strong> ${blocks.length ? blocks.join(", ") : "∅"}
+<strong>NEIGHBORS</strong> ${neigh || "∅"}
+
+<strong>RETRIEVAL_BIAS</strong> ${JSON.stringify(bias)}
+
+<strong>PAYLOAD</strong>
+${payloadPreview}`;
+
+  if (scrollIntoView){
+    // center in scroll container
+    const el = gridEl.children[addr];
+    const r = el.getBoundingClientRect();
+    const wrap = gridWrap.getBoundingClientRect();
+    const dx = (r.left + r.width/2) - (wrap.left + wrap.width/2);
+    const dy = (r.top + r.height/2) - (wrap.top + wrap.height/2);
+    gridWrap.scrollLeft += dx;
+    gridWrap.scrollTop  += dy;
+  }
+}
+
+function renderPayloadPreview(cell){
+  if (!cell.payload || !cell.payload.length) return "∅ (silence)";
+  if (cell.type === "TEXT"){
+    const s0 = String(cell.payload[0] || "").trimEnd();
+    const s1 = String(cell.payload[1] || "").trimEnd();
+    return `1: ${s0}\n2: ${s1 || "…"}`;
+  }
+  // INDEX/CACHE/ARCHIVE/NOISE: show compact JSON lines
+  const head = cell.payload.slice(0, 4).map(x => JSON.stringify(x)).join("\n");
+  const more = cell.payload.length > 4 ? `\n… (${cell.payload.length-4} more)` : "";
+  return head + more;
+}
+
+function renderSummary(){
+  if (!manifest){
+    summaryPill.innerHTML = `<strong>EMPTY</strong> · build to instantiate sectors`;
+    return;
+  }
+  const t = manifest.audit.cellTypeCounts;
+  summaryPill.innerHTML = `<strong>${manifest.audit.lineCount} LINES</strong> · ${manifest.audit.blockCount} BLOCKS · TEXT ${t.TEXT||0} · CACHE ${t.CACHE||0} · INDEX ${t.INDEX||0} · ARCH ${t.ARCHIVE||0} · NOISE ${t.NOISE||0}`;
+}
+
+function setStatus(){
+  if (!manifest){
+    statusLine.innerHTML = `<span class="warn">No manifest loaded.</span> Input → Build.`;
+    return;
+  }
+  const u = manifest.audit.uncoveredLines || [];
+  const r = manifest.audit.underReplicatedLines || [];
+  if (u.length === 0 && r.length === 0){
+    statusLine.innerHTML = `<span class="ok">Coverage OK:</span> all lines resolve to ≥2 addresses (primary+cache).`;
+  } else {
+    statusLine.innerHTML = `<span class="bad">Coverage failure:</span> uncovered=${u.length}, underReplicated=${r.length}.`;
+  }
+}
+
+function enableAfterBuild(){
+  btnExport.disabled = false;
+  btnCopy.disabled = false;
+
+  btnJump.disabled = false;
+  filterType.disabled = false;
+
+  qLine.disabled = false;
+  btnFindLine.disabled = false;
+  qBlock.disabled = false;
+  btnFindBlock.disabled = false;
+  qTag.disabled = false;
+  btnFindTag.disabled = false;
+
+  scanMode.disabled = false;
+  scanStart.disabled = false;
+  btnScanStart.disabled = false;
+  btnStep.disabled = false;
+  btnPlay.disabled = false;
+  btnStop.disabled = false;
+
+  lineSearch.disabled = false;
+  btnLineSearch.disabled = false;
+  blockSearch.disabled = false;
+  btnBlockSearch.disabled = false;
+
+  idxQuery.disabled = false;
+  btnIdxQuery.disabled = false;
+}
+
+/* =========================================================
+   Lines/Blocks/Indices views
+   ========================================================= */
+function renderLinesList(query=""){
+  linesList.innerHTML = "";
+  if (!manifest) return;
+  const q = query.trim().toLowerCase();
+
+  const filtered = manifest.lines.filter(l=>{
+    if (!q) return true;
+    if (q.startsWith("stanza:")){
+      const n = parseInt(q.split(":")[1],10);
+      return l.stanza === n;
+    }
+    return l.id.toLowerCase().includes(q)
+      || (l.text||"").toLowerCase().includes(q);
+  });
+
+  for (const l of filtered){
+    const addrs = manifest.indices.byLine[l.id] || [];
+    const div = document.createElement("div");
+    div.className = "item";
+    div.innerHTML = `
+      <div class="title">${l.id} · STANZA-${l.stanza}</div>
+      <div class="meta">${(l.text||"").trim()}</div>
+      <div class="meta">SIG punct="${l.sig.punct||"∅"}" · H=${l.sig.entropy} · ADDRS=${addrs.slice(0,8).join(", ")}${addrs.length>8?" …":""}</div>
+    `;
+    div.addEventListener("click", ()=>{
+      if (addrs.length) selectCell(addrs[0], true);
+      switchTab("grid");
+    });
+    linesList.appendChild(div);
+  }
+}
+
+function renderBlocksList(query=""){
+  blocksList.innerHTML = "";
+  if (!manifest) return;
+  const q = query.trim().toLowerCase();
+
+  const filtered = manifest.blocks.filter(b=>{
+    if (!q) return true;
+    if (q.startsWith("stanza:")){
+      const n = parseInt(q.split(":")[1],10);
+      return b.stanza === n;
+    }
+    if (q.startsWith("crc:")){
+      const s = q.split(":")[1].trim();
+      return (b.crc||"").toLowerCase().includes(s);
+    }
+    return b.id.toLowerCase().includes(q);
+  });
+
+  for (const b of filtered){
+    const map = manifest.indices.byBlock[b.id];
+    const primary = map ? map.primary : null;
+    const reps = map ? (map.replicas||[]) : [];
+    const div = document.createElement("div");
+    div.className = "item";
+    div.innerHTML = `
+      <div class="title">${b.id} · ${b.header}</div>
+      <div class="meta">LINES: ${b.sourceLines.join(", ")}</div>
+      <div class="meta">PRIMARY: ${primary ?? "∅"} · REPLICAS: ${reps.slice(0,6).join(", ")}${reps.length>6?" …":""}</div>
+      <div class="meta">BYTES: ${b.bytes} · CRC: ${b.crc} · FLAGS: ${JSON.stringify(b.flags)}</div>
+    `;
+    div.addEventListener("click", ()=>{
+      if (primary !== null) selectCell(primary, true);
+      switchTab("grid");
+    });
+    blocksList.appendChild(div);
+  }
+}
+
+function renderIndicesOverview(){
+  if (!manifest){
+    indicesOverview.textContent = "Build to generate indices.";
+    return;
+  }
+  const lineN = Object.keys(manifest.indices.byLine).length;
+  const blockN = Object.keys(manifest.indices.byBlock).length;
+  const tagN = Object.keys(manifest.indices.byTag).length;
+
+  indicesOverview.textContent =
+`BY_LINE: ${lineN} keys
+BY_BLOCK: ${blockN} keys
+BY_TAG: ${tagN} keys
+
+Directory sectors (INDEX cells): ${manifest.cells.filter(c=>c.type==="INDEX").length}
+Note: indices are also present in-memory for fast retrieval; INDEX cells store pages (sectorized) to model directory storage.`;
+}
+
+function renderIndexCellsList(){
+  indexCellsList.innerHTML = "";
+  if (!manifest) return;
+  const idxCells = manifest.cells.filter(c=>c.type==="INDEX").slice(0,60);
+  for (const c of idxCells){
+    const div = document.createElement("div");
+    div.className = "item";
+    const count = (c.payload||[]).length;
+    div.innerHTML = `
+      <div class="title">ADDR ${c.addr} · INDEX_PAGE</div>
+      <div class="meta">entries: ${count} · bytes: ${c.bytes} · crc: ${c.crc}</div>
+    `;
+    div.addEventListener("click", ()=>{ selectCell(c.addr, true); switchTab("grid"); });
+    indexCellsList.appendChild(div);
+  }
+}
+
+/* =========================================================
+   Scan head (read operation)
+   ========================================================= */
+function computeScanSequence(mode){
+  const seq = [];
+  const size = 24;
+
+  if (mode === "RASTER_LTR_TTB"){
+    for (let y=0;y<size;y++){
+      for (let x=0;x<size;x++){
+        seq.push(y*size + x);
+      }
+    }
+  } else if (mode === "SERPENTINE"){
+    for (let y=0;y<size;y++){
+      if (y % 2 === 0){
+        for (let x=0;x<size;x++) seq.push(y*size + x);
+      } else {
+        for (let x=size-1;x>=0;x--) seq.push(y*size + x);
+      }
+    }
+  } else if (mode === "RING_BANDS"){
+    // banded traversal by addrBand
+    const total = size*size;
+    const bands = manifest ? manifest.config.bands : 12;
+    const buckets = Array.from({length: bands}, ()=>[]);
+    for (let addr=0; addr<total; addr++){
+      buckets[addrBand(addr, total, bands)].push(addr);
+    }
+    for (let b=0;b<bands;b++){
+      for (const addr of buckets[b]) seq.push(addr);
+    }
+  } else {
+    return computeScanSequence("RASTER_LTR_TTB");
+  }
+  return seq;
+}
+
+function scanReadCell(addr){
+  if (!manifest) return {text:"(no manifest)", meta:""};
+  const cell = manifest.cells[addr];
+  const type = cell.type;
+  let out = "";
+  if (type === "TEXT"){
+    const s0 = String(cell.payload[0] || "").trimEnd();
+    const s1 = String(cell.payload[1] || "").trimEnd();
+    out = (s0 || "(silence)") + (s1 ? ("\n" + s1) : "");
+  } else if (type === "INDEX"){
+    out = "DIRECTORY SECTOR\n" + (cell.payload.slice(0,6).map(e => `${e.kind} ${e.key || ""}`.trim()).join("\n") || "(empty)");
+  } else if (type === "CACHE"){
+    out = "CACHE SECTOR\n" + (cell.payload.slice(0,6).map(e => `${e.kind} ${e.block} ${e.crc}`.trim()).join("\n") || "(empty)");
+  } else if (type === "ARCHIVE"){
+    out = "ARCHIVE SECTOR\n" + (cell.payload.slice(0,6).map(e => `${e.kind} ${e.block} part=${e.part}`.trim()).join("\n") || "(empty)");
+  } else if (type === "NOISE"){
+    out = "NOISE MARKER (!)\n" + (cell.payload.slice(0,6).map(e => JSON.stringify(e)).join("\n") || "(empty)");
+  }
+
+  const meta =
+`ADDR ${addr} (x${cell.x}, y${cell.y}) · TYPE ${cell.type}
+blocks: ${(cell.blocks||[]).join(", ") || "∅"}
+tags: ${(cell.tags||[]).slice(0,8).join(" · ") || "∅"}`;
+
+  return {text: out, meta};
+}
+
+function scanStep(){
+  if (!manifest) return;
+  const addr = scanState.seq[scanState.i % scanState.seq.length];
+  selectCell(addr, false);
+
+  const r = scanReadCell(addr);
+  scanReadout.textContent = r.text;
+  scanMeta.textContent = r.meta;
+
+  // queue
+  const line = document.createElement("div");
+  line.className = "item";
+  const cell = manifest.cells[addr];
+  const p = (cell.type==="TEXT" && cell.payload && cell.payload[0]) ? String(cell.payload[0]).trimEnd() : "";
+  line.innerHTML = `
+    <div class="title">${scanState.i.toString().padStart(4,"0")} · ADDR ${addr} · ${cell.type}</div>
+    <div class="meta">${p ? p.slice(0,140) : (cell.type==="INDEX"?"(directory)":"(silence)")}</div>
+  `;
+  line.addEventListener("click", ()=>{ selectCell(addr, true); switchTab("grid"); });
+  scanQueue.prepend(line);
+  while (scanQueue.children.length > 40) scanQueue.removeChild(scanQueue.lastChild);
+
+  scanState.i++;
+}
+
+/* =========================================================
+   Quick retrieval helpers
+   ========================================================= */
+function quickFindLine(lineId){
+  if (!manifest) return;
+  const id = lineId.trim().toUpperCase();
+  const addrs = manifest.indices.byLine[id];
+  if (!addrs){
+    quickOut.textContent = `No such LINE id: ${id}`;
+    return;
+  }
+  quickOut.textContent = `${id} → ${addrs.join(", ")}`;
+  if (addrs.length) selectCell(addrs[0], true);
+}
+
+function quickFindBlock(blockId){
+  if (!manifest) return;
+  const id = blockId.trim().toUpperCase();
+  const rec = manifest.indices.byBlock[id];
+  if (!rec){
+    quickOut.textContent = `No such BLOCK id: ${id}`;
+    return;
+  }
+  quickOut.textContent = `${id} → primary ${rec.primary} · replicas ${rec.replicas.join(", ") || "∅"}`;
+  if (rec.primary !== undefined) selectCell(rec.primary, true);
+}
+
+function quickFindTag(tag){
+  if (!manifest) return;
+  const key = tag.trim().toUpperCase();
+  const addrs = manifest.indices.byTag[key];
+  if (!addrs){
+    quickOut.textContent = `No such TAG: ${key}`;
+    return;
+  }
+  quickOut.textContent = `${key} → ${addrs.slice(0,60).join(", ")}${addrs.length>60 ? " …" : ""}`;
+  if (addrs.length) selectCell(addrs[0], true);
+}
+
+function queryIndices(q){
+  if (!manifest) return;
+  const key = q.trim().toUpperCase();
+  if (!key){ idxOut.textContent = ""; return; }
+
+  if (key.startsWith("URN-L")){
+    const a = manifest.indices.byLine[key];
+    idxOut.textContent = a ? `${key} → ${a.join(", ")}` : `No LINE: ${key}`;
+    return;
+  }
+  if (key.startsWith("URN-B")){
+    const b = manifest.indices.byBlock[key];
+    idxOut.textContent = b ? JSON.stringify(b, null, 2) : `No BLOCK: ${key}`;
+    return;
+  }
+  // TAG
+  const t = manifest.indices.byTag[key];
+  idxOut.textContent = t ? `${key} → ${t.join(", ")}` : `No TAG: ${key}`;
+}
+
+/* =========================================================
+   Tab system
+   ========================================================= */
+function switchTab(name){
+  $$("#tabs .tab").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+  $$("#tab-grid, #tab-scan, #tab-lines, #tab-blocks, #tab-indices, #tab-config, #tab-input")
+    .forEach(sec => sec.classList.add("hidden"));
+  $("#tab-" + name).classList.remove("hidden");
+}
+
+$$("#tabs .tab").forEach(b=>{
+  b.addEventListener("click", ()=>switchTab(b.dataset.tab));
+});
+
+/* =========================================================
+   Build / Export / Copy
+   ========================================================= */
+function currentCfg(){
+  return {
+    charsPerStrip: parseInt(cfgCharsPerStrip.value, 10),
+    bytesPerCell: parseInt(cfgBytesPerCell.value, 10),
+    bands: parseInt(cfgBands.value, 10),
+    entropyTau: parseFloat(cfgEntropyTau.value),
+    regime: cfgRegime.value,
+    minReplicas: cfgMinReplicas.value,
+    seedMode: cfgSeedMode.value,
+
+    panelSep: " ⟦⟦PANEL⟧⟧ ",
+    lineSep: " / "
+  };
+}
+
+btnBuild.addEventListener("click", ()=>{
+  try{
+    const cfg = currentCfg();
+    const text = poemInput.value || "";
+    manifest = buildManifest(text, cfg);
+
+    selectedAddr = 0;
+
+    renderSummary();
+    setStatus();
+    enableAfterBuild();
+
+    applyCellVisuals();
+    selectCell(0, false);
+
+    renderLinesList("");
+    renderBlocksList("");
+    renderIndicesOverview();
+    renderIndexCellsList();
+
+    // scan setup
+    scanState.mode = scanMode.value;
+    scanState.seq = computeScanSequence(scanState.mode);
+    scanState.i = 0;
+    scanReadout.textContent = "Scan head armed. Press STEP or PLAY.";
+    scanMeta.textContent = "";
+    scanQueue.innerHTML = "";
+
+    // enable jump/find UI
+    btnJump.disabled = false;
+    addrJump.value = "";
+
+    quickOut.textContent = "";
+    idxOut.textContent = "";
+
+  } catch (e){
+    manifest = null;
+    renderSummary();
+    setStatus();
+    applyCellVisuals();
+    cellInspector.textContent = "Build error: " + (e && e.message ? e.message : String(e));
+  }
+});
+
+btnExport.addEventListener("click", ()=>{
+  if (!manifest) return;
+  const blob = new Blob([JSON.stringify(manifest, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `urn_grid_manifest_${manifest.config.seed.replace("0x","")}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+btnCopy.addEventListener("click", async ()=>{
+  if (!manifest) return;
+  const s = JSON.stringify(manifest, null, 2);
+  try{
+    await navigator.clipboard.writeText(s);
+    btnCopy.textContent = "COPIED";
+    setTimeout(()=>btnCopy.textContent="COPY JSON", 800);
+  } catch {
+    btnCopy.textContent = "COPY FAILED";
+    setTimeout(()=>btnCopy.textContent="COPY JSON", 1200);
+  }
+});
+
+/* =========================================================
+   Grid controls
+   ========================================================= */
+cellSize.addEventListener("input", ()=>{
+  const v = cellSize.value;
+  document.documentElement.style.setProperty("--cell", v + "px");
+  cellSizeVal.textContent = v + "px";
+});
+
+btnJump.addEventListener("click", ()=>{
+  if (!manifest) return;
+  const raw = addrJump.value.trim();
+  if (!raw) return;
+
+  let addr = null;
+  if (raw.includes(",")){
+    const [xs,ys] = raw.split(",").map(s=>s.trim());
+    const x = parseInt(xs,10), y = parseInt(ys,10);
+    if (!Number.isNaN(x) && !Number.isNaN(y) && x>=0 && x<24 && y>=0 && y<24){
+      addr = y*24 + x;
+    }
+  } else {
+    const a = parseInt(raw,10);
+    if (!Number.isNaN(a) && a>=0 && a<576) addr = a;
+  }
+  if (addr === null){
+    quickOut.textContent = "Invalid address. Use 0..575 or x,y.";
+    return;
+  }
+  selectCell(addr, true);
+});
+
+filterType.addEventListener("change", ()=>{
+  if (!manifest) return;
+  const v = filterType.value;
+  const els = gridEl.children;
+  for (let addr=0; addr<576; addr++){
+    const cell = manifest.cells[addr];
+    const el = els[addr];
+    const show = (v==="ALL") || (cell.type === v);
+    el.style.opacity = show ? "1" : "0.15";
+  }
+});
+
+/* =========================================================
+   Quick retrieval
+   ========================================================= */
+btnFindLine.addEventListener("click", ()=>quickFindLine(qLine.value));
+btnFindBlock.addEventListener("click", ()=>quickFindBlock(qBlock.value));
+btnFindTag.addEventListener("click", ()=>quickFindTag(qTag.value));
+
+/* =========================================================
+   Scan controls
+   ========================================================= */
+scanMode.addEventListener("change", ()=>{
+  if (!manifest) return;
+  scanState.mode = scanMode.value;
+  scanState.seq = computeScanSequence(scanState.mode);
+  scanState.i = 0;
+  scanQueue.innerHTML = "";
+  scanReadout.textContent = "Scan mode changed. Press STEP or PLAY.";
+  scanMeta.textContent = "";
+});
+
+btnScanStart.addEventListener("click", ()=>{
+  if (!manifest) return;
+  const v = parseInt(scanStart.value,10);
+  if (!Number.isNaN(v) && v>=0 && v<576){
+    // reposition scan index to the first occurrence of v in sequence
+    const idx = scanState.seq.indexOf(v);
+    scanState.i = idx>=0 ? idx : 0;
+    scanReadout.textContent = `Scan start set to ADDR ${v}.`;
+  }
+});
+
+btnStep.addEventListener("click", scanStep);
+
+btnPlay.addEventListener("click", ()=>{
+  if (!manifest) return;
+  if (scanTimer) return;
+  scanTimer = setInterval(scanStep, 200);
+});
+
+btnStop.addEventListener("click", ()=>{
+  if (scanTimer){
+    clearInterval(scanTimer);
+    scanTimer = null;
+  }
+});
+
+/* =========================================================
+   Lines/Blocks searches
+   ========================================================= */
+btnLineSearch.addEventListener("click", ()=>renderLinesList(lineSearch.value));
+btnBlockSearch.addEventListener("click", ()=>renderBlocksList(blockSearch.value));
+
+/* =========================================================
+   Indices query
+   ========================================================= */
+btnIdxQuery.addEventListener("click", ()=>queryIndices(idxQuery.value));
+
+/* =========================================================
+   Input reset/clear
+   ========================================================= */
+btnReset.addEventListener("click", ()=>{
+  poemInput.value = DEFAULT_TEXT;
+});
+btnClear.addEventListener("click", ()=>{
+  poemInput.value = "";
+});
+
+/* =========================================================
+   Boot
+   ========================================================= */
+poemInput.value = DEFAULT_TEXT;
+initGridUI();
+applyCellVisuals();
+document.documentElement.style.setProperty("--cell", cellSize.value + "px");
+cellSizeVal.textContent = cellSize.value + "px";
+
+/* Default tab */
+switchTab("grid");
+</script>
+</body>
+</html>

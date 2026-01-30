@@ -1,0 +1,367 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { Compass, Maximize2, Minimize2, Wind, Anchor, Grid, Star, Activity, Move } from 'lucide-react';
+
+// --- POML DATA STRUCTURES ---
+
+// AXIOM A1: Text functions as geometry.
+const GEOMETRY_TYPES = {
+  RADIAL: 'RADIAL',       // The Forge / Creation
+  CONSTELLATION: 'CONSTELLATION', // The Heavens
+  LATTICE: 'LATTICE',     // City of Peace
+  CLUSTER: 'CLUSTER',     // City of War
+  FIELD: 'FIELD',         // Ploughing
+  SPIRAL: 'SPIRAL',       // The Dance
+  ORBIT: 'ORBIT'          // The Ocean
+};
+
+// Raw Text Segments mapped to Semantic Force
+const POEM_DATA = [
+  {
+    id: 'intro',
+    type: GEOMETRY_TYPES.RADIAL,
+    text: "Thee, welcome, goddess! what occasion calls... 'Tis thine, fair Thetis, the command to lay, And Vulcan's joy and duty to obey.",
+    label: "The Request",
+    color: "text-rose-300",
+    density: 2
+  },
+  {
+    id: 'grief',
+    type: GEOMETRY_TYPES.CLUSTER,
+    text: "O Vulcan! say, was ever breast divine So pierced with sorrows, so o'erwhelm'd as mine? ... To Troy I sent him! but his native shore Never, ah never, shall receive him more;",
+    label: "Thetis' Grief",
+    color: "text-blue-200",
+    density: 8
+  },
+  {
+    id: 'forge',
+    type: GEOMETRY_TYPES.RADIAL,
+    text: "Soon as he bade them blow, the bellows turn'd... In hissing flames huge silver bars are roll'd... The ponderous hammer loads his better hand.",
+    label: "The Forge",
+    color: "text-orange-500",
+    density: 10
+  },
+  {
+    id: 'universe',
+    type: GEOMETRY_TYPES.CONSTELLATION,
+    text: "There earth, there heaven, there ocean he design'd; The unwearied sun, the moon completely round; The starry lights... The Pleiads, Hyads, with the northern team; And great Orion's more refulgent beam.",
+    label: "The Heavens",
+    color: "text-yellow-100",
+    density: 4
+  },
+  {
+    id: 'peace',
+    type: GEOMETRY_TYPES.LATTICE,
+    text: "Two cities radiant on the shield appear, The image one of peace... Here sacred pomp and genial feast delight... The youthful dancers in a circle bound To the soft flute.",
+    label: "City of Peace",
+    color: "text-emerald-300",
+    density: 5
+  },
+  {
+    id: 'law',
+    type: GEOMETRY_TYPES.LATTICE,
+    text: "There in the forum swarm a numerous train... The reverend elders nodded o'er the case; Alternate, each the attesting sceptre took.",
+    label: "The Forum",
+    color: "text-emerald-500",
+    density: 5
+  },
+  {
+    id: 'war',
+    type: GEOMETRY_TYPES.CLUSTER,
+    text: "Another part (a prospect differing far) Glow'd with refulgent arms, and horrid war. Two mighty hosts... One rear'd a dagger at a captive's breast... Fate stalk'd amidst them, grim with human gore.",
+    label: "City of War",
+    color: "text-red-500",
+    density: 9
+  },
+  {
+    id: 'farming',
+    type: GEOMETRY_TYPES.FIELD,
+    text: "A field deep furrow'd next the god design'd... The shining shares full many ploughmen guide... Behind, the rising earth in ridges roll'd; And sable look'd, though form'd of molten gold.",
+    label: "The Plough",
+    color: "text-amber-600",
+    density: 6
+  },
+  {
+    id: 'harvest',
+    type: GEOMETRY_TYPES.FIELD,
+    text: "Another field rose high with waving grain... Here stretched in ranks the levell'd swarths are found... The rustic monarch of the field descries, With silent glee, the heaps around him rise.",
+    label: "The Harvest",
+    color: "text-yellow-500",
+    density: 6
+  },
+  {
+    id: 'vineyard',
+    type: GEOMETRY_TYPES.SPIRAL,
+    text: "Next, ripe in yellow gold, a vineyard shines... To this, one pathway gently winding leads... To these a youth awakes the warbling strings, Whose tender lay the fate of Linus sings.",
+    label: "The Vineyard",
+    color: "text-purple-400",
+    density: 7
+  },
+  {
+    id: 'pasture',
+    type: GEOMETRY_TYPES.CLUSTER,
+    text: "Here herds of oxen march, erect and bold... Two lions rushing from the wood appear'd; And seized a bull... They tore his flesh, and drank his sable blood.",
+    label: "The Pasture",
+    color: "text-amber-200",
+    density: 8
+  },
+  {
+    id: 'dance',
+    type: GEOMETRY_TYPES.SPIRAL,
+    text: "A figured dance succeeds... A comely band Of youths and maidens, bounding hand in hand... So whirls a wheel, in giddy circle toss'd.",
+    label: "The Dance",
+    color: "text-pink-300",
+    density: 4
+  },
+  {
+    id: 'ocean',
+    type: GEOMETRY_TYPES.ORBIT,
+    text: "Thus the broad shield complete the artist crown'd... In living silver seem'd the waves to roll, And beat the buckler's verge, and bound the whole.",
+    label: "The Ocean",
+    color: "text-cyan-300",
+    density: 3
+  }
+];
+
+// --- HELPER COMPONENTS ---
+
+const TextParticle = ({ text, x, y, rotation, opacity, scale, color, isActive, onClick, onHover }) => (
+  <div
+    className={`absolute transition-all duration-700 ease-out cursor-pointer select-none font-serif hover:scale-125 ${color} ${isActive ? 'z-50 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'z-10'}`}
+    style={{
+      left: '50%',
+      top: '50%',
+      transform: `translate(${x}px, ${y}px) rotate(${rotation}deg) scale(${isActive ? 1.5 : scale})`,
+      opacity: isActive ? 1 : opacity,
+      fontSize: '12px',
+      whiteSpace: 'nowrap',
+      maxWidth: '200px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis'
+    }}
+    onMouseEnter={onHover}
+    onClick={onClick}
+  >
+    {text}
+  </div>
+);
+
+const ReaderDeck = ({ activeChunk }) => {
+  if (!activeChunk) return (
+    <div className="fixed bottom-8 left-8 right-8 h-32 bg-slate-900/80 backdrop-blur-md border border-slate-700 rounded-lg p-6 flex items-center justify-center text-slate-500 font-mono text-sm animate-pulse">
+      [ Awaiting Traversal... Hover geometric forms to decode text ]
+    </div>
+  );
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-xl border-t border-slate-700 p-8 transition-all duration-500 z-[100] max-h-[40vh] overflow-y-auto">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center gap-3 mb-4">
+          <span className={`text-xs font-bold uppercase tracking-widest px-2 py-1 rounded bg-slate-800 ${activeChunk.color}`}>
+            {activeChunk.label}
+          </span>
+          <span className="text-xs text-slate-500 font-mono">
+            DENSITY: {activeChunk.density} // GEOMETRY: {activeChunk.type}
+          </span>
+        </div>
+        <p className="font-serif text-xl md:text-2xl leading-relaxed text-slate-200">
+          {activeChunk.text}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// --- MAIN APPLICATION ---
+
+export default function ShieldOfAchillesCalligram() {
+  const [activeId, setActiveId] = useState(null);
+  const [scale, setScale] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [particles, setParticles] = useState([]);
+
+  // --- GEOMETRY GENERATOR (POML PROCEDURE) ---
+  useEffect(() => {
+    const newParticles = [];
+    const centerX = 0;
+    const centerY = 0;
+
+    POEM_DATA.forEach((chunk) => {
+      const words = chunk.text.split(' ');
+      const particleCount = Math.min(words.length, 40); // Cap particles per chunk for performance
+      const step = Math.floor(words.length / particleCount);
+
+      for (let i = 0; i < particleCount; i++) {
+        const textSegment = words.slice(i * step, (i + 1) * step).join(' ');
+        let x = 0, y = 0, r = 0, s = 1, o = 0.6;
+
+        switch (chunk.type) {
+          case GEOMETRY_TYPES.RADIAL: // The Forge (Center)
+            const angleRad = (i / particleCount) * Math.PI * 2;
+            const radiusRad = 50 + (i * 2); 
+            x = Math.cos(angleRad) * radiusRad;
+            y = Math.sin(angleRad) * radiusRad;
+            r = (angleRad * 180) / Math.PI;
+            s = 0.8 + Math.random() * 0.4;
+            break;
+
+          case GEOMETRY_TYPES.CONSTELLATION: // Sky (Scattered Top)
+            x = (Math.random() - 0.5) * 600;
+            y = -250 + (Math.random() - 0.5) * 200;
+            o = 0.4 + Math.random() * 0.6;
+            break;
+
+          case GEOMETRY_TYPES.LATTICE: // City of Peace (Ordered Grid Left)
+            x = -350 + (i % 5) * 60;
+            y = -100 + Math.floor(i / 5) * 30;
+            r = 0;
+            o = 0.8;
+            break;
+
+          case GEOMETRY_TYPES.CLUSTER: // City of War (Chaotic Right)
+            x = 350 + (Math.random() - 0.5) * 200;
+            y = 0 + (Math.random() - 0.5) * 200;
+            r = Math.random() * 90 - 45;
+            o = 0.7;
+            break;
+            
+          case GEOMETRY_TYPES.FIELD: // Farming (Stripes Bottom)
+            x = (i % 8) * 60 - 200;
+            y = 250 + Math.floor(i / 8) * 20;
+            r = 0; // Horizontal rows
+            s = 0.9;
+            break;
+
+          case GEOMETRY_TYPES.SPIRAL: // Dance/Vineyard (Spiral Interleaved)
+            const spiralAngle = i * 0.5;
+            const spiralRad = 150 + i * 5;
+            x = Math.cos(spiralAngle) * spiralRad;
+            y = Math.sin(spiralAngle) * spiralRad;
+            r = (spiralAngle * 180) / Math.PI + 90;
+            break;
+
+          case GEOMETRY_TYPES.ORBIT: // Ocean (Outer Ring)
+            const orbitAngle = (i / particleCount) * Math.PI * 2;
+            const orbitRad = 450;
+            x = Math.cos(orbitAngle) * orbitRad;
+            y = Math.sin(orbitAngle) * orbitRad;
+            r = (orbitAngle * 180) / Math.PI + 90; // Tangential
+            s = 1.2;
+            break;
+
+          default:
+            break;
+        }
+
+        newParticles.push({
+          id: `${chunk.id}-${i}`,
+          chunkId: chunk.id,
+          text: textSegment,
+          x, y, r, s, o,
+          color: chunk.color
+        });
+      }
+    });
+
+    setParticles(newParticles);
+  }, []);
+
+  const activeChunkData = useMemo(() => 
+    POEM_DATA.find(p => p.id === activeId), 
+  [activeId]);
+
+  return (
+    <div className="w-full h-screen bg-slate-950 text-slate-300 overflow-hidden relative font-sans selection:bg-rose-500 selection:text-white">
+      
+      {/* UI Controls */}
+      <div className="absolute top-6 left-6 z-50 flex flex-col gap-4">
+        <div className="bg-slate-900/50 backdrop-blur border border-slate-700 p-4 rounded-lg shadow-xl w-64">
+          <h1 className="text-sm font-bold tracking-widest text-slate-100 uppercase mb-1">
+            Homer / Vulcan
+          </h1>
+          <h2 className="text-xs text-slate-500 mb-4 font-mono">
+            Shield Construction Matrix
+          </h2>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs text-rose-300">
+              <Activity size={12} /> <span>Axiom: Geometry is Semantic Force</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-emerald-300">
+              <Move size={12} /> <span>Axiom: Reading is Traversal</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <button onClick={() => setScale(s => Math.min(s + 0.2, 3))} className="p-2 bg-slate-800 rounded hover:bg-slate-700 text-slate-300 transition-colors">
+            <Maximize2 size={16} />
+          </button>
+          <button onClick={() => setScale(s => Math.max(s - 0.2, 0.4))} className="p-2 bg-slate-800 rounded hover:bg-slate-700 text-slate-300 transition-colors">
+            <Minimize2 size={16} />
+          </button>
+          <button onClick={() => setRotation(r => r + 45)} className="p-2 bg-slate-800 rounded hover:bg-slate-700 text-slate-300 transition-colors">
+            <Wind size={16} />
+          </button>
+          <button onClick={() => {setScale(1); setRotation(0); setActiveId(null)}} className="p-2 bg-slate-800 rounded hover:bg-slate-700 text-slate-300 transition-colors">
+            <Anchor size={16} />
+          </button>
+        </div>
+      </div>
+
+      {/* Legend / Compass */}
+      <div className="absolute top-6 right-6 z-50 flex flex-col gap-2 items-end">
+         <div className="bg-slate-900/50 p-3 rounded text-right backdrop-blur border border-slate-700">
+            <div className="flex items-center justify-end gap-2 text-xs text-yellow-100 mb-1">
+               Heavens <Star size={10} />
+            </div>
+            <div className="flex items-center justify-end gap-2 text-xs text-emerald-300 mb-1">
+               Peace/Grid <Grid size={10} />
+            </div>
+            <div className="flex items-center justify-end gap-2 text-xs text-red-400 mb-1">
+               War/Chaos <Activity size={10} />
+            </div>
+            <div className="flex items-center justify-end gap-2 text-xs text-cyan-300">
+               Ocean/Orbit <Compass size={10} />
+            </div>
+         </div>
+      </div>
+
+      {/* The Spatial Canvas */}
+      <div 
+        className="w-full h-full relative flex items-center justify-center overflow-hidden cursor-grab active:cursor-grabbing"
+        onWheel={(e) => setScale(s => Math.max(0.4, Math.min(3, s - e.deltaY * 0.001)))}
+      >
+        <div 
+          className="relative transition-transform duration-1000 ease-out will-change-transform"
+          style={{
+            transform: `scale(${scale}) rotate(${rotation}deg)`,
+            width: '0px',
+            height: '0px' // Acts as the center point
+          }}
+        >
+          {/* Background Decorative Rings */}
+          <div className="absolute rounded-full border border-slate-800 opacity-20 w-[900px] h-[900px] -left-[450px] -top-[450px] pointer-events-none" />
+          <div className="absolute rounded-full border border-slate-800 opacity-30 w-[600px] h-[600px] -left-[300px] -top-[300px] pointer-events-none" />
+          <div className="absolute rounded-full border border-slate-800 opacity-40 w-[300px] h-[300px] -left-[150px] -top-[150px] pointer-events-none" />
+
+          {/* Central Furnace Glow */}
+          <div className="absolute w-0 h-0 shadow-[0_0_150px_60px_rgba(234,88,12,0.15)] pointer-events-none" />
+
+          {/* Render All Text Particles */}
+          {particles.map((p) => (
+            <TextParticle 
+              key={p.id}
+              {...p}
+              isActive={activeId === p.chunkId}
+              onHover={() => setActiveId(p.chunkId)}
+              onClick={() => setActiveId(p.chunkId)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Linear Reader Bridge */}
+      <ReaderDeck activeChunk={activeChunkData} />
+
+    </div>
+  );
+}

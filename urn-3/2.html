@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Lettre-Océan: Digital Map</title>
+    <style>
+        :root {
+            --bg-color: #f4f1ea;
+            --ink-color: #1a1a1a;
+            --accent-color: #d93a3a; /* Faded stamp red */
+            --paper-texture: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZjRmMWVhIi8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNlOWU2ZDAiLz4KPC9zdmc+');
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #2c2c2c; /* Dark outer background for contrast */
+            font-family: 'Courier New', Courier, monospace; /* Typewriter feel */
+            color: var(--ink-color);
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* The Scalable Container */
+        #poem-viewport {
+            transform-origin: top center;
+            background-color: var(--bg-color);
+            background-image: var(--paper-texture);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            width: 800px; /* Reference width */
+            /* Height is auto */
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* --- Typography Helpers --- */
+        .bold { font-weight: 900; }
+        .serif { font-family: Georgia, 'Times New Roman', serif; }
+        .sans { font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif; letter-spacing: 1px;}
+        .caps { text-transform: uppercase; }
+        .small { font-size: 0.8em; }
+        .tiny { font-size: 0.6em; }
+        
+        /* --- Shared Graphic Elements --- */
+        .wavy-line {
+            height: 10px;
+            width: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='20' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 3 Q 5 0 10 3 T 20 3' fill='none' stroke='%231a1a1a' stroke-width='1.5'/%3E%3C/svg%3E");
+            background-repeat: repeat-x;
+            margin: 10px 0;
+            opacity: 0.7;
+        }
+
+        /* =========================================
+           ZONE 1: THE POSTCARD (Left Hemisphere)
+           ========================================= */
+        .zone-postcard {
+            position: relative;
+            margin-bottom: 80px; /* More space */
+            border-bottom: 2px dashed #ccc;
+            padding-bottom: 40px;
+        }
+
+        .header-quote {
+            text-align: center;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .postcard-grid {
+            display: grid;
+            grid-template-columns: 1fr 60px 1fr; /* Left, Spine, Right */
+            gap: 10px;
+            position: relative;
+        }
+
+        /* The TSF Spine */
+        .tsf-spine {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            line-height: 1.2;
+            color: #000;
+        }
+        .tsf-letter {
+            display: block;
+        }
+
+        /* Postcard Left Side */
+        .pc-left {
+            position: relative;
+            padding: 10px;
+        }
+        
+        .stamp-box {
+            border: 2px solid var(--ink-color);
+            padding: 5px;
+            width: fit-content;
+            transform: rotate(-2deg);
+            margin: 10px 0;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        .circular-stamp {
+            width: 80px;
+            height: 80px;
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            color: var(--accent-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            transform: rotate(15deg);
+            position: absolute;
+            top: 60px;
+            right: 0;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        /* Postcard Right Side */
+        .pc-right {
+            text-align: left;
+            padding-left: 10px;
+        }
+
+        .mexicana-header {
+            text-align: center;
+            border-top: 2px double black;
+            border-bottom: 2px double black;
+            padding: 10px 0;
+            margin: 15px 0;
+        }
+
+        .address-script {
+            font-family: 'Brush Script MT', cursive;
+            font-size: 1.2em;
+            transform: rotate(-5deg);
+            margin-left: 20px;
+            color: #444;
+        }
+
+        /* Bottom MAYAS section */
+        .mayas-zone {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 60px;
+            padding-bottom: 20px;
+        }
+
+        .bonjour {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .mayas-word {
+            font-size: 4em;
+            font-family: serif;
+            letter-spacing: 20px;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        /* =========================================
+           ZONE 2: THE TOWER (Right Hemisphere)
+           ========================================= */
+        .zone-tower {
+            position: relative;
+            /* Increased height further to let the bottom flow freely */
+            height: 1400px; 
+            width: 100%;
+        }
+
+        .tower-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        .tower-title {
+            font-size: 2.2em;
+            text-align: center;
+            font-family: Impact, sans-serif;
+            margin: 20px 0;
+        }
+
+        /* The Radial System */
+        .radial-container {
+            position: absolute;
+            top: 350px; /* Moved slightly up to give more room below */
+            left: 50%;
+            width: 0;
+            height: 0;
+        }
+
+        .center-hub {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-weight: bold;
+            width: 150px;
+            height: 150px;
+            z-index: 10;
+            background: var(--bg-color); /* Mask lines behind it */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            box-shadow: 0 0 15px rgba(244, 241, 234, 1);
+            border: 1px dotted #ccc;
+        }
+
+        /* Spokes */
+        .spoke {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: 0 0;
+            white-space: nowrap;
+            font-size: 1em; /* Increased size */
+            font-weight: bold;
+            color: #222;
+            pointer-events: none; /* Let clicks pass through */
+        }
+
+        /* Helper for vertical stacking letters */
+        .vertical-stack span {
+            display: block;
+            text-align: center;
+            line-height: 1.1; /* Improved line spacing for readability */
+        }
+
+        /* Floating debris words */
+        .debris {
+            position: absolute;
+            font-size: 0.9em;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        
+        .sound-effect {
+            font-style: italic;
+            color: #555;
+            font-family: serif;
+            font-size: 0.85em;
+        }
+
+        /* -- NAVIGATION HINT -- */
+        .nav-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            opacity: 0;
+            animation: fadeHint 4s ease-in-out forwards;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        @keyframes fadeHint {
+            0% { opacity: 0; transform: translate(-50%, 20px); }
+            20% { opacity: 1; transform: translate(-50%, 0); }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="nav-hint">Pinch to Zoom &bull; Drag to Pan</div>
+
+    <div id="poem-viewport">
+        
+        <!-- ================= PAGE 1: THE POSTCARD ================= -->
+        <div class="zone-postcard">
+            
+            <!-- Top Narrative -->
+            <div class="header-quote">
+                I was on the banks of the Rhine when you left for Mexico<br>
+                Your voice reaches me despite the enormous distance<br>
+                Shady looking people on the quay at Vera Cruz
+            </div>
+
+            <div class="wavy-line"></div>
+
+            <div class="postcard-grid">
+                
+                <!-- Left Column -->
+                <div class="pc-left">
+                    <div class="small serif">Juan Aldama</div>
+                    <br>
+                    <div class="stamp-box">
+                        <b>Correos</b><br>Mexico<br>4 centavos
+                    </div>
+                    <div class="stamp-box" style="transform: rotate(1deg); margin-top: 20px;">
+                        <b>U.S. Postage</b><br>2 cents 2
+                    </div>
+
+                    <div class="circular-stamp">
+                        <span>VERA CRUZ</span>
+                        <span>29-5-14</span>
+                    </div>
+
+                    <div style="margin-top: 40px; font-size: 0.9em;">
+                        Long live the Republic<br>
+                        Down with Mr. Zun<br>
+                        The King<br>
+                        <i>Evviva il Papa</i>
+                    </div>
+
+                    <div style="margin-top: 30px; transform: rotate(-10deg); color: #555; font-size: 0.8em;">
+                        Of keys I have seen a thousand and a thousand
+                    </div>
+                </div>
+
+                <!-- Center Spine (TSF) -->
+                <div class="tsf-spine">
+                    <span class="tsf-letter">W</span>
+                    <span class="tsf-letter">I</span>
+                    <span class="tsf-letter">R</span>
+                    <span class="tsf-letter">E</span>
+                    <span class="tsf-letter">L</span>
+                    <span class="tsf-letter">E</span>
+                    <span class="tsf-letter">S</span>
+                    <span class="tsf-letter">S</span>
+                    <div style="font-size: 0.4em; letter-spacing: 2px; margin-top:10px;">(T.S.F.)</div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="pc-right">
+                    <div style="font-size: 0.9em; line-height: 1.3;">
+                        The travelers from the <i>Espagne</i> having to make<br>
+                        the trip to Coatzacoalcos to embark<br>
+                        I send you this card today instead
+                    </div>
+
+                    <div class="mexicana-header">
+                        <div class="bold sans" style="font-size: 1.4em;">REPUBLICA MEXICANA</div>
+                        <div class="serif" style="font-size: 1.2em; letter-spacing: 3px;">POST CARD</div>
+                    </div>
+
+                    <div style="position: absolute; right: 10px; top: 130px; font-size: 0.7em; text-align: right;">
+                        11 45<br>29-5<br>14<br>Rue des Batignolles
+                    </div>
+
+                    <div style="font-size: 0.9em; margin-top: 10px;">
+                        of profiting from the Vera Cruz mail which is not safe<br>
+                        Everything is calm here and we are awaiting events.
+                    </div>
+
+                    <div class="address-script" style="margin-top: 50px;">
+                        Shut your trap my old pal
+                    </div>
+                </div>
+            </div>
+
+            <div class="mayas-zone">
+                <div style="width: 20%;">
+                    <div class="bonjour" style="transform: rotate(-15deg);">HELLO</div>
+                    <div style="font-size: 0.7em; transform: rotate(45deg); margin-left: 20px;">YOU WILL NEVER TRULY KNOW</div>
+                </div>
+                <div style="width: 20%; font-size: 3em; font-weight: bold; text-align: center;">THE</div>
+                <div style="width: 50%;">
+                    <div style="font-size: 4em; font-family: serif; font-weight: bold; text-align: center; letter-spacing: 15px;">MAYAS</div>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- ================= PAGE 2: THE TOWER (RADIAL) ================= -->
+        <div class="zone-tower">
+            
+            <div class="tower-header">
+                <div style="font-size: 0.9em;">Te souviens-tu du tremblement de terre entre 1885 et 1890</div>
+                <div class="bold" style="font-size: 1.1em;">Do you remember the earthquake between 1885 and 1890</div>
+                <div>we slept for more than a month in a tent</div>
+                
+                <div class="tower-title">
+                    HELLO MY BROTHER ALBERT <span style="font-size: 0.7em; font-weight: normal;">in Mexico</span>
+                </div>
+                
+                <div class="wavy-line"></div>
+                <div style="text-align: right; font-style: italic; margin-right: 50px;">Young girls in Chapultepec</div>
+            </div>
+
+            <!-- The Radial Calligram Engine -->
+            <!-- Hub is positioned at top: 350px -->
+            <div class="radial-container">
+                
+                <!-- Center Hub -->
+                <div class="center-hub vertical-stack">
+                   <div style="font-size: 0.8em; margin-bottom: 5px;">HIGH OF</div>
+                   <div style="font-size: 1.8em; line-height: 1;">300</div>
+                   <div style="font-size: 0.8em;">METERS</div>
+                </div>
+
+                <!-- TOP HALF: Text Flows IN to center -->
+                <!-- Pushed further out: translate(0, -190px) to -220px -->
+
+                <!-- 12 o'clock -->
+                <div class="spoke vertical-stack" style="transform: translateX(-50%) translate(0, -220px);">
+                    <span>and</span><span>how</span><span>I</span><span>rode</span><span>the</span><span>rails</span><span>with</span><span>my</span><span>gal</span>
+                </div>
+
+                <!-- 1 o'clock -->
+                <div class="spoke vertical-stack" style="transform: rotate(30deg) translate(0, -220px);">
+                    <span>St.</span><span>Isidore</span><span>Street</span><span>in</span><span>Havana</span><span>that</span><span>doesn't</span><span>exist +</span>
+                </div>
+
+                <!-- 11 o'clock -->
+                <div class="spoke vertical-stack" style="transform: rotate(-30deg) translate(0, -220px);">
+                    <span>Toussaint</span><span>Luca</span><span>is</span><span>now</span><span>in</span><span>Poitiers</span>
+                </div>
+
+                <!-- SIDE SPOKES -->
+                <!-- 3 o'clock -->
+                <div class="spoke" style="transform: rotate(15deg) translate(100px, 0px);">
+                    <b>Chirimoya</b>
+                </div>
+                <!-- 9 o'clock -->
+                <div class="spoke" style="transform: rotate(-10deg) translate(-300px, 0px);">
+                    Carriage travelers for Chatou / move along Sirs
+                </div>
+
+
+                <!-- BOTTOM HALF: Text Flows OUT from center -->
+                <!-- Increased initial separation: translate(0, 160px) instead of 100px -->
+                <!-- Adjusted angles for wider fanning -->
+
+                <!-- 6 o'clock (Straight Down) -->
+                <div class="spoke vertical-stack" style="transform: translateX(-50%) translate(0, 160px);">
+                    <span>I</span><span>got</span><span>up</span><span>at</span><span>2am</span><span>and</span><span>drank</span><span>a</span><span>Mouton</span>
+                </div>
+
+                <!-- 5 o'clock (South East) - Rotate more sharply to clear 6 o'clock -->
+                <div class="spoke vertical-stack" style="transform: rotate(-35deg) translate(0, 160px);">
+                    <span>He</span><span>called</span><span>the</span><span>Indian</span><span>Son</span><span>of</span><span>a</span><span>Bitch</span>
+                </div>
+
+                <!-- 4 o'clock (More East) -->
+                <div class="spoke vertical-stack" style="transform: rotate(-65deg) translate(0, 160px);">
+                     <span>Pendeco</span><span>is</span><span>+</span><span>than</span><span>an</span><span>im</span><span>becile</span>
+                </div>
+
+                <!-- 7 o'clock (South West) - Rotate more sharply -->
+                <div class="spoke vertical-stack" style="transform: rotate(35deg) translate(0, 160px);">
+                    <span>The</span><span>cable</span><span>gram</span><span>had</span><span>2</span><span>words</span><span>IN</span><span>SAFETY</span>
+                </div>
+
+
+                <!-- Floating Debris (Repositioned to gaps) -->
+                <!-- Top Left Gap -->
+                <div class="debris bold" style="top: -150px; left: -140px; transform: rotate(-15deg);">THE POET'S NEW SHOES</div>
+                
+                <!-- Top Right Gap -->
+                <div class="debris bold" style="top: -50px; left: 130px;">GRAMOPHONES</div>
+                
+                <!-- Mid Right Gap -->
+                <div class="debris bold" style="top: 80px; left: 150px;">AUTOBUS</div>
+                
+                <!-- Mid Left Gap -->
+                <div class="debris bold" style="top: 80px; left: -220px;">SIRENS</div>
+
+                <!-- Sound Effects (Tucked into blank spaces) -->
+                <div class="debris sound-effect" style="top: -120px; left: -80px;">cré cré cré</div>
+                <div class="debris sound-effect" style="top: -120px; right: -140px;">cré cré</div>
+                
+                <!-- Bottom noise - pushed down and between spokes -->
+                <div class="debris sound-effect" style="top: 450px; left: 180px;">cré cré cré</div> 
+                <div class="debris sound-effect" style="top: 500px; left: -150px;">cré cré</div> 
+                
+                <div class="debris sound-effect" style="top: 100px; right: 0px;">ting ting</div>
+                <div class="debris sound-effect" style="top: 120px; left: -100px;">Hou Hou</div>
+                <div class="debris sound-effect" style="top: 250px; right: 120px;">ou ou ou</div>
+                
+                <div class="debris" style="right: -280px; top: 80px; font-style: italic;">A la Crème à</div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function scalePoem() {
+            const poem = document.getElementById('poem-viewport');
+            const containerWidth = 800;
+            const screenWidth = window.innerWidth;
+            const margin = 20; 
+
+            if (screenWidth < containerWidth + margin) {
+                const scale = (screenWidth - margin) / containerWidth;
+                poem.style.transform = `scale(${scale})`;
+                
+                // Adjust body height using bounding rect to ensure scrollability
+                const rect = poem.getBoundingClientRect();
+                document.body.style.height = (rect.height + 100) + 'px';
+            } else {
+                poem.style.transform = 'scale(1)';
+                document.body.style.height = 'auto';
+            }
+        }
+
+        window.addEventListener('resize', scalePoem);
+        window.addEventListener('DOMContentLoaded', scalePoem);
+    </script>
+</body>
+</html>

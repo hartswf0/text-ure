@@ -1,0 +1,1476 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+  <title>Apollinaire Calligram Transmission Bridge — Lettre-Océan</title>
+  <style>
+    :root{
+      --ink:#111;
+      --paper:#f6f3ec;
+      --paper2:#f9f7f2;
+      --gutter:#e7e2d8;
+      --muted:#6b655c;
+      --accent:#0f6;
+      --warn:#ff3b30;
+      --chip:#ece6dc;
+      --shadow: 0 12px 40px rgba(0,0,0,.14);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Garamond, Georgia, serif;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; background:#0b0c10; color:var(--ink); }
+    #app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+      font-family:var(--sans);
+    }
+
+    /* HUD */
+    header{
+      position:relative;
+      z-index:10;
+      display:flex;
+      gap:.6rem;
+      align-items:center;
+      padding:.55rem .7rem;
+      background:linear-gradient(180deg, rgba(20,22,28,.98), rgba(18,19,24,.92));
+      color:#f4f4f0;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .brand{
+      display:flex; flex-direction:column; line-height:1.05;
+      min-width: 12rem;
+    }
+    .brand b{ font-size:.95rem; letter-spacing:.02em; }
+    .brand span{ font-size:.72rem; color:rgba(255,255,255,.7); font-family:var(--mono); }
+    .hud-row{
+      display:flex; gap:.45rem; flex-wrap:wrap; align-items:center;
+      margin-left:auto;
+    }
+    .btn, .chip, .seg{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.08);
+      color:#f4f4f0;
+      border-radius:.6rem;
+      padding:.42rem .55rem;
+      font-size:.84rem;
+      line-height:1;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn{ cursor:pointer; }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      border-color: rgba(15,255,120,.35);
+      box-shadow: 0 0 0 1px rgba(15,255,120,.18) inset;
+    }
+    .btn.warn{
+      border-color: rgba(255,59,48,.40);
+      box-shadow: 0 0 0 1px rgba(255,59,48,.18) inset;
+    }
+    .btn.small{ padding:.36rem .5rem; font-size:.8rem; border-radius:.55rem; }
+    .seg{
+      display:flex; gap:.3rem; padding:.3rem; border-radius:.8rem;
+    }
+    .seg button{
+      border:0; background:transparent; color:rgba(255,255,255,.75);
+      padding:.36rem .55rem; border-radius:.6rem; cursor:pointer;
+      font-size:.82rem;
+    }
+    .seg button.on{
+      background:rgba(255,255,255,.12);
+      color:#fff;
+      box-shadow: 0 1px 0 rgba(255,255,255,.08) inset;
+    }
+    .search{
+      display:flex; align-items:center; gap:.4rem;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      border-radius:.7rem;
+      padding:.32rem .5rem;
+    }
+    .search input{
+      border:0; outline:0; background:transparent; color:#fff;
+      font-size:.84rem; width: 13rem; max-width: 40vw;
+    }
+    .search input::placeholder{ color:rgba(255,255,255,.55); }
+
+    /* STAGE */
+    main{
+      flex:1;
+      display:flex;
+      overflow:hidden;
+      position:relative;
+    }
+    #viewport{
+      flex:1;
+      position:relative;
+      overflow:hidden;
+      background: radial-gradient(1000px 600px at 65% 30%, rgba(255,255,255,.06), transparent 60%),
+                  radial-gradient(800px 500px at 20% 70%, rgba(255,255,255,.05), transparent 60%),
+                  linear-gradient(180deg, #0b0c10, #06070a);
+      touch-action:none; /* we implement pan/zoom */
+    }
+
+    /* Paper frame */
+    #frame{
+      position:absolute; inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: clamp(.5rem, 2vw, 1.1rem);
+    }
+
+    /* Panzoom layer */
+    #panzoom{
+      width:min(1200px, 100%);
+      aspect-ratio: 1000 / 700;
+      position:relative;
+      transform-origin: 0 0;
+      will-change: transform;
+      filter: drop-shadow(0 18px 50px rgba(0,0,0,.42));
+    }
+
+    /* SVG */
+    svg{ width:100%; height:100%; display:block; border-radius: 18px; overflow:hidden; }
+
+    /* Drawer */
+    #drawer{
+      width: 360px;
+      max-width: 46vw;
+      background: rgba(246,243,236,.98);
+      border-left: 1px solid rgba(0,0,0,.10);
+      box-shadow: var(--shadow);
+      position:relative;
+      display:flex;
+      flex-direction:column;
+    }
+    #drawerHeader{
+      padding:.65rem .75rem .55rem .75rem;
+      border-bottom: 1px solid rgba(0,0,0,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.35));
+    }
+    #drawerHeader .title{
+      font-family:var(--mono);
+      font-size:.78rem;
+      color:rgba(0,0,0,.60);
+      letter-spacing:.03em;
+    }
+    #drawerHeader .h1{
+      font-family:var(--serif);
+      font-size:1.02rem;
+      margin-top:.22rem;
+      line-height:1.15;
+    }
+    #drawerBody{
+      padding:.7rem .75rem 1rem .75rem;
+      overflow:auto;
+    }
+    .card{
+      background: rgba(255,255,255,.72);
+      border:1px solid rgba(0,0,0,.10);
+      border-radius: 14px;
+      padding:.65rem .7rem;
+      margin-bottom:.65rem;
+    }
+    .kv{ display:grid; grid-template-columns: 120px 1fr; gap:.35rem .55rem; font-size:.88rem; }
+    .kv div:nth-child(odd){ color:rgba(0,0,0,.58); font-family:var(--mono); font-size:.78rem; }
+    .poemline{
+      font-family:var(--serif);
+      font-size:1.02rem;
+      line-height:1.25;
+      white-space:pre-wrap;
+    }
+    .subline{
+      font-family:var(--serif);
+      font-size:.96rem;
+      line-height:1.22;
+      color:rgba(0,0,0,.72);
+      white-space:pre-wrap;
+    }
+    .tags{ display:flex; flex-wrap:wrap; gap:.35rem; margin-top:.55rem; }
+    .tag{
+      background: var(--chip);
+      border:1px solid rgba(0,0,0,.10);
+      border-radius: 999px;
+      padding:.25rem .5rem;
+      font-size:.74rem;
+      font-family:var(--mono);
+      color:rgba(0,0,0,.72);
+    }
+    .drawerActions{ display:flex; gap:.4rem; flex-wrap:wrap; margin-top:.6rem; }
+    .drawerActions button{
+      border-radius:.65rem;
+      padding:.42rem .6rem;
+      border:1px solid rgba(0,0,0,.18);
+      background: rgba(255,255,255,.75);
+      cursor:pointer;
+      font-size:.84rem;
+    }
+    .drawerActions button:active{ transform: translateY(1px); }
+
+    /* Mobile drawer as bottom sheet */
+    @media (max-width: 860px){
+      #drawer{
+        position:absolute;
+        right:0;
+        left:0;
+        bottom:0;
+        top:auto;
+        width:100%;
+        max-width:none;
+        height: 44%;
+        border-left:0;
+        border-top: 1px solid rgba(0,0,0,.12);
+        transform: translateY(0);
+      }
+    }
+
+    /* Fragment styles inside SVG */
+    .frag text{
+      font-family: var(--serif);
+      fill: var(--ink);
+      paint-order: stroke;
+      stroke: rgba(246,243,236,.65);
+      stroke-width: 3px;
+      stroke-linejoin: round;
+    }
+    .frag .mono{
+      font-family: var(--mono);
+      letter-spacing:.03em;
+    }
+    .frag .loud{
+      font-weight: 800;
+      letter-spacing:.04em;
+      text-transform: uppercase;
+    }
+    .frag .muted{
+      fill: rgba(0,0,0,.68);
+      stroke: rgba(246,243,236,.55);
+    }
+    .frag:hover text{
+      fill: #000;
+      stroke: rgba(15,255,120,.35);
+      stroke-width: 4px;
+    }
+    .frag.selected text{
+      stroke: rgba(15,255,120,.75);
+      stroke-width: 6px;
+    }
+
+    /* Overlays */
+    .overlay-line{ stroke: rgba(0,0,0,.32); stroke-width: 2; fill:none; stroke-dasharray: 6 5; }
+    .overlay-ray{ stroke: rgba(0,0,0,.20); stroke-width: 2; fill:none; }
+    .overlay-cluster{ fill: rgba(15,255,120,.07); stroke: rgba(15,255,120,.35); stroke-width: 2; }
+    .overlay-block{ fill: rgba(0,0,0,.03); stroke: rgba(0,0,0,.18); stroke-width: 2; }
+    .overlay-hidden{ display:none; }
+
+    /* Footer hint */
+    #hint{
+      position:absolute;
+      left: .75rem;
+      bottom: .75rem;
+      z-index:8;
+      color: rgba(255,255,255,.72);
+      font-family: var(--mono);
+      font-size: .78rem;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 999px;
+      padding: .32rem .55rem;
+      backdrop-filter: blur(10px);
+      user-select:none;
+      max-width: 92vw;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Tiny “grain” effect over paper */
+    .paperGrain{
+      mix-blend-mode:multiply;
+      opacity:.10;
+    }
+  </style>
+</head>
+
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <b>Apollinaire Calligram Transmission Bridge</b>
+      <span>LETTRE-OCEAN → spatial transmission field (TSF)</span>
+    </div>
+
+    <div class="hud-row">
+      <div class="seg" title="Language">
+        <button id="langFR" class="on">FR</button>
+        <button id="langEN">EN</button>
+        <button id="langBoth">BOTH</button>
+      </div>
+
+      <div class="seg" title="Overlays">
+        <button id="ovGeom" class="on">GEOM</button>
+        <button id="ovRays" class="on">RAYS</button>
+        <button id="ovGrid">GRID</button>
+      </div>
+
+      <div class="search" title="Search fragments">
+        <span style="opacity:.8">⌕</span>
+        <input id="q" placeholder="search: TSF, Mayas, sirenes…" />
+      </div>
+
+      <button id="reset" class="btn small">RESET VIEW</button>
+      <button id="drawerToggle" class="btn small primary">INSPECT</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="viewport">
+      <div id="frame">
+        <div id="panzoom" aria-label="Calligram field">
+          <svg id="field" viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg" role="img">
+            <!-- Rendered by JS -->
+          </svg>
+        </div>
+      </div>
+
+      <div id="hint">Drag to pan · Wheel/pinch to zoom · Tap a fragment to inspect · Filters in drawer</div>
+    </div>
+
+    <aside id="drawer" hidden>
+      <div id="drawerHeader">
+        <div class="title">TEXT_FRAGMENT → GEOMETRIC_INTENT → FIELD → CELL*</div>
+        <div class="h1" id="drawerTitle">No fragment selected</div>
+      </div>
+      <div id="drawerBody">
+        <div class="card" id="drawerIntro">
+          <div class="poemline">This is a navigable calligram: two hemispheres (MEXICO / PARIS) held together by a visible TSF spine.</div>
+          <div class="subline" style="margin-top:.5rem;">
+A1: Text may function as architecture.
+A2: Architecture may function as signal.
+A3: Distance is a layout problem.
+A4: Reading is traversal.
+A5: Meaning emerges from relation.
+          </div>
+          <div class="drawerActions">
+            <button id="exportJSON">EXPORT FRAGMENTS JSON</button>
+            <button id="copyPOML">COPY POML SKELETON</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="kv">
+            <div>Filter zones</div>
+            <div>
+              <label><input type="checkbox" id="fMexico" checked /> MEXICO</label>
+              &nbsp;&nbsp;
+              <label><input type="checkbox" id="fParis" checked /> PARIS</label>
+              &nbsp;&nbsp;
+              <label><input type="checkbox" id="fTech" checked /> TECHNOLOGY</label>
+            </div>
+            <div>Filter signals</div>
+            <div>
+              <label><input type="checkbox" id="sPostcard" checked /> postcard</label>
+              <label><input type="checkbox" id="sVoice" checked /> voice</label>
+              <label><input type="checkbox" id="sAmbient" checked /> ambient</label>
+              <label><input type="checkbox" id="sMemory" checked /> memory</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="fragCard" hidden>
+          <div class="poemline" id="fragFR"></div>
+          <div class="subline" id="fragEN" style="margin-top:.45rem;"></div>
+          <div class="tags" id="fragTags"></div>
+          <div class="card" style="margin-top:.6rem; background: rgba(255,255,255,.58);">
+            <div class="kv" id="fragKV"></div>
+          </div>
+          <div class="drawerActions">
+            <button id="copyFrag">COPY FRAGMENT JSON</button>
+            <button id="focusFrag" class="primary">FOCUS</button>
+            <button id="clearSel" class="warn">CLEAR</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="font-family:var(--mono); font-size:.78rem; color:rgba(0,0,0,.62); margin-bottom:.35rem;">
+            Data (editable) — paste JSON array of fragments and press “Reload”
+          </div>
+          <textarea id="dataBox" style="width:100%; min-height:180px; font-family:var(--mono); font-size:.74rem; border-radius:12px; border:1px solid rgba(0,0,0,.14); padding:.55rem; background:rgba(255,255,255,.65);"></textarea>
+          <div class="drawerActions" style="margin-top:.5rem;">
+            <button id="reloadData">RELOAD</button>
+            <button id="restoreData">RESTORE DEFAULT</button>
+          </div>
+          <div style="font-family:var(--mono); font-size:.74rem; color:rgba(0,0,0,.58); margin-top:.55rem;">
+            Tip: adjust <b>x</b>, <b>y</b>, <b>angle</b>, and <b>size</b> to refine the spatial map.
+          </div>
+        </div>
+
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(() => {
+  // ============================================================
+  // 0) POML-ish constants
+  // ============================================================
+  const MORPH_GEOM = (signal) => ({
+    postcard: "BLOCK",
+    voice: "COLUMN",
+    ambient: "RAY",
+    memory: "CLUSTER",
+    tech: "COLUMN"
+  }[signal] || "CLUSTER");
+
+  const MORPH_FIELD = (signal) => ({
+    voice: "TOP_DOWN",
+    ambient: "CENTER_OUT",
+    postcard: "GRID",
+    memory: "ORBIT",
+    tech: "TOP_DOWN"
+  }[signal] || "ORBIT");
+
+  // ============================================================
+  // 1) Default dataset (first complete-pass extraction)
+  //    Coordinates are in SVG units (viewBox 0..1000 × 0..700)
+  // ============================================================
+  const DEFAULT_FRAGMENTS = [
+    // LEFT PAGE (MEXICO)
+    {
+      id:"L_TITLE", zone:"MEXICO", signal:"postcard",
+      fr:"LETTRE-OCEAN", en:"OCEAN-LETTER",
+      x:250, y:46, angle:0, size:26, weight:"bold", style:"loud",
+      tags:["title","spread-left"]
+    },
+    {
+      id:"L_SPLIT", zone:"MEXICO", signal:"memory",
+      fr:"Je t’envoie la ville en gros paquet\net je la coupe en 2",
+      en:"I’m sending you the city in a big parcel\nand I’m cutting it in two.",
+      x:160, y:98, angle:-12, size:14, weight:"normal",
+      tags:["instruction","layout","A3"]
+    },
+    {
+      id:"L_STANZA", zone:"MEXICO", signal:"voice",
+      fr:"J’étais au bord du Rhin quand tu partis pour le Mexique\nTa voix me parvient malgré l’énorme distance\nGens de mauvaise mine sur le quai à la Vera Cruz",
+      en:"I was on the bank of the Rhine when you left for Mexico.\nYour voice reaches me despite the enormous distance.\nShifty-looking people on the quay at Vera Cruz.",
+      x:180, y:170, angle:0, size:13, weight:"normal",
+      tags:["Rhine","Vera Cruz","distance","voice"]
+    },
+    {
+      id:"L_POST_HDR", zone:"MEXICO", signal:"postcard",
+      fr:"REPUBLICA MEXICANA\nTARJETA POSTAL",
+      en:"MEXICAN REPUBLIC\nPOSTCARD",
+      x:250, y:285, angle:0, size:16, weight:"bold", style:"mono",
+      tags:["postcard","header"]
+    },
+    {
+      id:"L_POST_MSG", zone:"MEXICO", signal:"postcard",
+      fr:"Les voyageurs de l’Espagne devant faire\nle voyage de Coatzacoalcos pour s’embarquer\nje t’envoie cette carte aujourd’hui au lieu\nde profiter du courrier de Vera Cruz qui n’est pas sûr\nTout est calme ici et nous sommes dans l’attente\ndes évènements.",
+      en:"The travelers from Spain having to make\nthe trip to Coatzacoalcos in order to embark,\nI’m sending you this card today instead\nof taking advantage of the Veracruz mail, which isn’t reliable.\nEverything is calm here and we are waiting\nfor events.",
+      x:250, y:385, angle:0, size:12, weight:"normal",
+      tags:["Coatzacoalcos","mail","calm","events"]
+    },
+    {
+      id:"L_STAMPS", zone:"MEXICO", signal:"postcard",
+      fr:"Correos\nMexico\n4 centavos\n\nU.S. Postage\n2 cents",
+      en:"Mexico Post\n4 centavos\n\nU.S. Postage\n2 cents",
+      x:90, y:330, angle:0, size:11, weight:"normal", style:"mono",
+      tags:["stamps","routing"]
+    },
+    {
+      id:"TSF", zone:"TECHNOLOGY", signal:"tech",
+      fr:"T\nS\nF",
+      en:"TSF\n(Wireless telegraphy / radio)",
+      x:485, y:470, angle:0, size:56, weight:"bold",
+      tags:["TRANSMISSION_SPINE","TSF"]
+    },
+    {
+      id:"L_MAYAS_LINE", zone:"MEXICO", signal:"voice",
+      fr:"Bonjour tu ne connaîtras jamais bien\nles Mayas",
+      en:"Hello — you will never truly know\nthe Mayas well.",
+      x:260, y:630, angle:-6, size:14, weight:"normal",
+      tags:["Mayas","closing"]
+    },
+    {
+      id:"L_MAYAS", zone:"MEXICO", signal:"postcard",
+      fr:"Mayas",
+      en:"Mayas",
+      x:250, y:678, angle:0, size:44, weight:"bold",
+      tags:["final-word"]
+    },
+
+    // RIGHT PAGE (PARIS / acoustic map)
+    {
+      id:"R_MEM", zone:"PARIS", signal:"memory",
+      fr:"Te souviens-tu du tremblement de terre\nentre 1885 et 1890\non coucha plus d’un mois sous la tente",
+      en:"Do you remember the earthquake\nbetween 1885 and 1890,\nwe slept more than a month under the tent.",
+      x:740, y:60, angle:0, size:14, weight:"normal",
+      tags:["earthquake","memory"]
+    },
+    {
+      id:"R_HELLO", zone:"PARIS", signal:"voice",
+      fr:"BONJOUR  MON  FRÈRE  ALBERT  à Mexico",
+      en:"HELLO  MY  BROTHER  ALBERT  in Mexico",
+      x:740, y:118, angle:0, size:20, weight:"bold", style:"loud",
+      tags:["address","call"]
+    },
+    {
+      id:"R_CHAP", zone:"PARIS", signal:"memory",
+      fr:"Jeunes filles à Chapultepec",
+      en:"Young girls at Chapultepec",
+      x:840, y:170, angle:0, size:16, weight:"normal",
+      tags:["Chapultepec","label"]
+    },
+    {
+      id:"R_GORGE", zone:"PARIS", signal:"voice",
+      fr:"et\ncom.\nment\nj’ai\nbrû\nlé\nle\nle\ndur\navec\nma\ngorge",
+      en:"and\nhow\nI\nburned\nthe\nhard(thing)\nwith\nmy\nthroat",
+      x:625, y:220, angle:0, size:12, weight:"normal",
+      tags:["voice-column"]
+    },
+    {
+      id:"R_LUCA", zone:"PARIS", signal:"postcard",
+      fr:"Tous\nsait\nLuca\nest\nmain\ntenant\nà\nPoi\ntiers",
+      en:"Everyone\nknows\nLuca\nis\nnow\nin\nPoi\ntiers",
+      x:575, y:240, angle:0, size:12, weight:"normal",
+      tags:["Luca","Poitiers"]
+    },
+    {
+      id:"R_HAVANE", zone:"PARIS", signal:"postcard",
+      fr:"rue\nSt-\nIsidore\nà\nla\nHavane\ncela\nexiste\n+",
+      en:"St-\nIsidore\nStreet\nin\nHavana\nthat\nexists\n+",
+      x:905, y:250, angle:0, size:12, weight:"normal",
+      tags:["Havana","+ marker"]
+    },
+    {
+      id:"R_SHOES", zone:"PARIS", signal:"postcard",
+      fr:"LES CHAUSSURES NEUVES DU POÈTE",
+      en:"THE POET’S NEW SHOES",
+      x:740, y:305, angle:0, size:14, weight:"bold", style:"loud",
+      tags:["banner","object"]
+    },
+    {
+      id:"R_GRAM", zone:"PARIS", signal:"ambient",
+      fr:"GRAMOPHONES",
+      en:"GRAMOPHONES",
+      x:740, y:345, angle:0, size:12, weight:"bold",
+      tags:["sound-source"]
+    },
+    {
+      id:"R_BUS", zone:"PARIS", signal:"ambient",
+      fr:"AUTOBUS",
+      en:"BUSES",
+      x:740, y:380, angle:0, size:12, weight:"bold",
+      tags:["sound-source"]
+    },
+    {
+      id:"R_SIREN", zone:"PARIS", signal:"ambient",
+      fr:"SIRENES",
+      en:"SIRENS",
+      x:705, y:420, angle:0, size:12, weight:"bold",
+      tags:["sound-source"]
+    },
+    {
+      id:"R_EIFFEL", zone:"PARIS", signal:"ambient",
+      fr:"Haute\nde\n300\nmètres",
+      en:"300\nmeters\nhigh",
+      x:740, y:455, angle:0, size:12, weight:"normal",
+      tags:["landmark","height"]
+    },
+    {
+      id:"R_CIRC", zone:"PARIS", signal:"voice",
+      fr:"allons circulez Mes…",
+      en:"Come on, move along, gen— (gentlemen)",
+      x:545, y:450, angle:-12, size:12, weight:"normal",
+      tags:["crowd","street"]
+    },
+    {
+      id:"R_CHIRI", zone:"PARIS", signal:"postcard",
+      fr:"Chirimoya",
+      en:"Cherimoya",
+      x:905, y:360, angle:14, size:12, weight:"normal",
+      tags:["fruit","label"]
+    },
+    {
+      id:"R_CREAM", zone:"PARIS", signal:"postcard",
+      fr:"A la Crème à",
+      en:"With cream / at the cream…",
+      x:925, y:430, angle:0, size:12, weight:"normal",
+      tags:["shop-fragment"]
+    },
+    {
+      id:"R_CABLE", zone:"PARIS", signal:"postcard",
+      fr:"Le\ncablogramme\ncomportait…\nmoi en\nSURETÉ",
+      en:"The cablegram stated…\nme safe.",
+      x:565, y:575, angle:-26, size:12, weight:"normal",
+      tags:["cablegram","safety"]
+    },
+    {
+      id:"R_WAKE", zone:"PARIS", signal:"voice",
+      fr:"je\nme\nsuis\nlevé\nà\n2 h.\ndu\nmatin\net\nj’ai\ndéjà\nbu\ndu\nmou\nton",
+      en:"I\ngot\nup\nat\n2 a.m.\nand\nhave\nalready\ndrunk\nsome\nmutton",
+      x:645, y:610, angle:20, size:12, weight:"normal",
+      tags:["daily-report","surreal"]
+    },
+    {
+      id:"R_INSULT1", zone:"PARIS", signal:"voice",
+      fr:"Pen\ndeco\nc’est\n+\nqu’un\nim\nbécile",
+      en:"“Pendejo” is\nmore than\nan imbecile.",
+      x:920, y:565, angle:0, size:12, weight:"normal",
+      tags:["insult","street","spanish"]
+    },
+    {
+      id:"R_INSULT2", zone:"PARIS", signal:"voice",
+      fr:"Il\nappelait\nl’Indien\nHijo\nde la\nCin\nga\nda",
+      en:"He called the Indian\n“son of the chingada.”",
+      x:860, y:640, angle:0, size:12, weight:"normal",
+      tags:["insult","spanish","note: profanity"]
+    }
+  ];
+
+  // Ambient particle generator settings (for the “cré / Hou / ting / dots” field)
+  const AMBIENT_FIELD = {
+    seed: 144, // deterministic
+    tokens: ["cré","Hou","ting","ou","o","·","·","·"],
+    count: 120,
+    // region roughly shoe-field on right page
+    bounds: { x0: 520, y0: 220, x1: 980, y1: 610 }
+  };
+
+  // ============================================================
+  // 2) State
+  // ============================================================
+  let fragments = structuredClone(DEFAULT_FRAGMENTS);
+  let selectedId = null;
+
+  let langMode = "FR"; // FR | EN | BOTH
+  let overlays = { geom:true, rays:true, grid:false };
+
+  let filters = {
+    zones: { MEXICO:true, PARIS:true, TECHNOLOGY:true },
+    signals: { postcard:true, voice:true, ambient:true, memory:true, tech:true }
+  };
+
+  let searchQ = "";
+
+  // Pan/Zoom state (transform applied to #panzoom)
+  const pan = { x: 0, y: 0, s: 1 };
+  let dragging = false;
+  let dragStart = { x:0, y:0, px:0, py:0 };
+  const pointers = new Map(); // pointerId -> {x,y}
+  let pinchStart = null;
+
+  // ============================================================
+  // 3) Elements
+  // ============================================================
+  const el = {
+    svg: document.getElementById("field"),
+    panzoom: document.getElementById("panzoom"),
+    viewport: document.getElementById("viewport"),
+    drawer: document.getElementById("drawer"),
+    drawerTitle: document.getElementById("drawerTitle"),
+    fragCard: document.getElementById("fragCard"),
+    fragFR: document.getElementById("fragFR"),
+    fragEN: document.getElementById("fragEN"),
+    fragTags: document.getElementById("fragTags"),
+    fragKV: document.getElementById("fragKV"),
+    dataBox: document.getElementById("dataBox"),
+    q: document.getElementById("q")
+  };
+
+  // HUD buttons
+  const btn = {
+    langFR: document.getElementById("langFR"),
+    langEN: document.getElementById("langEN"),
+    langBoth: document.getElementById("langBoth"),
+    ovGeom: document.getElementById("ovGeom"),
+    ovRays: document.getElementById("ovRays"),
+    ovGrid: document.getElementById("ovGrid"),
+    reset: document.getElementById("reset"),
+    drawerToggle: document.getElementById("drawerToggle")
+  };
+
+  // Filters
+  const f = {
+    mexico: document.getElementById("fMexico"),
+    paris: document.getElementById("fParis"),
+    tech: document.getElementById("fTech"),
+    sPost: document.getElementById("sPostcard"),
+    sVoice: document.getElementById("sVoice"),
+    sAmb: document.getElementById("sAmbient"),
+    sMem: document.getElementById("sMemory")
+  };
+
+  // Drawer actions
+  const act = {
+    exportJSON: document.getElementById("exportJSON"),
+    copyPOML: document.getElementById("copyPOML"),
+    reloadData: document.getElementById("reloadData"),
+    restoreData: document.getElementById("restoreData"),
+    copyFrag: document.getElementById("copyFrag"),
+    focusFrag: document.getElementById("focusFrag"),
+    clearSel: document.getElementById("clearSel")
+  };
+
+  // ============================================================
+  // 4) Utilities
+  // ============================================================
+  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
+  function setLang(mode){
+    langMode = mode;
+    btn.langFR.classList.toggle("on", mode==="FR");
+    btn.langEN.classList.toggle("on", mode==="EN");
+    btn.langBoth.classList.toggle("on", mode==="BOTH");
+    render();
+    refreshDrawer();
+  }
+
+  function setOverlay(name, val){
+    overlays[name] = val;
+    btn.ovGeom.classList.toggle("on", overlays.geom);
+    btn.ovRays.classList.toggle("on", overlays.rays);
+    btn.ovGrid.classList.toggle("on", overlays.grid);
+    render();
+  }
+
+  function setDrawer(open){
+    el.drawer.hidden = !open;
+    btn.drawerToggle.textContent = open ? "CLOSE" : "INSPECT";
+  }
+
+  function seedRand(seed){
+    // Deterministic PRNG (Mulberry32)
+    let t = seed >>> 0;
+    return () => {
+      t += 0x6D2B79F5;
+      let r = Math.imul(t ^ (t >>> 15), 1 | t);
+      r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+      return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function svgEl(tag, attrs={}, children=[]){
+    const n = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const [k,v] of Object.entries(attrs)){
+      if (v === null || v === undefined) continue;
+      n.setAttribute(k, String(v));
+    }
+    for (const c of children) n.appendChild(c);
+    return n;
+  }
+
+  function textLines(s){
+    return (s ?? "").split("\n");
+  }
+
+  function passesFilters(frag){
+    const zoneOK = filters.zones[frag.zone] ?? true;
+    const signalOK = (filters.signals[frag.signal] ?? true);
+    const q = searchQ.trim().toLowerCase();
+    if (!q) return zoneOK && signalOK;
+    const hay = `${frag.id} ${frag.fr||""} ${frag.en||""} ${(frag.tags||[]).join(" ")}`.toLowerCase();
+    return zoneOK && signalOK && hay.includes(q);
+  }
+
+  function findFrag(id){ return fragments.find(x => x.id === id) || null; }
+
+  async function copyText(txt){
+    try{
+      await navigator.clipboard.writeText(txt);
+      toast("Copied to clipboard");
+    }catch{
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = txt;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      toast("Copied to clipboard");
+    }
+  }
+
+  let toastTimer = null;
+  function toast(msg){
+    const hint = document.getElementById("hint");
+    hint.textContent = msg;
+    hint.style.borderColor = "rgba(15,255,120,.35)";
+    hint.style.background = "rgba(0,0,0,.35)";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      hint.textContent = "Drag to pan · Wheel/pinch to zoom · Tap a fragment to inspect · Filters in drawer";
+      hint.style.borderColor = "rgba(255,255,255,.10)";
+      hint.style.background = "rgba(0,0,0,.25)";
+    }, 1400);
+  }
+
+  // ============================================================
+  // 5) Render
+  // ============================================================
+  function render(){
+    // Clear SVG
+    while (el.svg.firstChild) el.svg.removeChild(el.svg.firstChild);
+
+    // Paper base (two-page spread)
+    // Background rect
+    el.svg.appendChild(svgEl("rect", { x:0, y:0, width:1000, height:700, fill:"var(--paper)" }));
+    // Left and right subtle tints
+    el.svg.appendChild(svgEl("rect", { x:0, y:0, width:500, height:700, fill:"var(--paper2)", opacity:"0.85" }));
+    el.svg.appendChild(svgEl("rect", { x:500, y:0, width:500, height:700, fill:"var(--paper2)", opacity:"0.72" }));
+    // Gutter
+    el.svg.appendChild(svgEl("rect", { x:495, y:0, width:10, height:700, fill:"var(--gutter)", opacity:"0.95" }));
+    el.svg.appendChild(svgEl("line", { x1:500, y1:0, x2:500, y2:700, stroke:"rgba(0,0,0,.10)", "stroke-width":"2" }));
+
+    // Grain overlay (simple deterministic dots)
+    el.svg.appendChild(makeGrain());
+
+    // Zone labels
+    el.svg.appendChild(svgEl("text", { x:28, y:22, class:"mono", fill:"rgba(0,0,0,.55)", "font-size":"12" }, [document.createTextNode("LEFT_HEMISPHERE = MEXICO")]));
+    el.svg.appendChild(svgEl("text", { x:772, y:22, class:"mono", fill:"rgba(0,0,0,.55)", "font-size":"12" }, [document.createTextNode("RIGHT_HEMISPHERE = PARIS")]));
+    el.svg.appendChild(svgEl("text", { x:468, y:22, class:"mono", fill:"rgba(0,0,0,.55)", "font-size":"12" }, [document.createTextNode("CENTER_SPINE = TSF")]));
+
+    // Wavy separator bands (carrier wave)
+    el.svg.appendChild(wavyBand(30, 500, 70));
+    el.svg.appendChild(wavyBand(530, 500, 70));
+
+    // Optional grid overlay
+    if (overlays.grid) el.svg.appendChild(makeGrid(25)); // 40×28-ish
+
+    // Geometry overlays: blocks/columns/clusters
+    const ovGroup = svgEl("g", { id:"overlays" });
+
+    if (overlays.geom){
+      // Hemispheric block hints
+      ovGroup.appendChild(svgEl("rect",{x:55,y:250,width:390,height:220,class:"overlay-block"}));
+      ovGroup.appendChild(svgEl("rect",{x:540,y:210,width:430,height:430,class:"overlay-block"}));
+      // Cluster hints
+      ovGroup.appendChild(svgEl("circle",{cx:740,cy:60,r:46,class:"overlay-cluster"}));
+      ovGroup.appendChild(svgEl("circle",{cx:160,cy:98,r:38,class:"overlay-cluster"}));
+      // TSF spine line
+      ovGroup.appendChild(svgEl("line",{x1:485,y1:120,x2:485,y2:660,class:"overlay-line"}));
+    }
+
+    if (overlays.rays){
+      // Center-out acoustic rays from around the “shoe banner” center
+      const c = { x:740, y:392 };
+      const rays = [
+        {a:-70, L:230},{a:-45,L:280},{a:-20,L:260},{a:10,L:250},{a:35,L:230},{a:60,L:220}
+      ];
+      for (const r of rays){
+        const rad = r.a*Math.PI/180;
+        const x2 = c.x + Math.cos(rad)*r.L;
+        const y2 = c.y + Math.sin(rad)*r.L;
+        ovGroup.appendChild(svgEl("path",{
+          d:`M ${c.x} ${c.y} Q ${ (c.x+x2)/2 } ${ (c.y+y2)/2 - 18 } ${x2} ${y2}`,
+          class:"overlay-ray"
+        }));
+      }
+    }
+    el.svg.appendChild(ovGroup);
+
+    // Ambient particles (sound texture)
+    const ambGroup = svgEl("g", { id:"ambient" });
+    for (const a of makeAmbientParticles()){
+      if (!passesFilters(a)) continue;
+      ambGroup.appendChild(makeFragNode(a, true));
+    }
+    el.svg.appendChild(ambGroup);
+
+    // Fragment group
+    const g = svgEl("g", { id:"fragments" });
+    for (const frag of fragments){
+      if (!passesFilters(frag)) continue;
+      g.appendChild(makeFragNode(frag, false));
+    }
+    el.svg.appendChild(g);
+  }
+
+  function makeGrain(){
+    // cheap “paper grain”: dots sprinkled; kept light
+    const g = svgEl("g",{class:"paperGrain"});
+    const rnd = seedRand(77);
+    const n = 900;
+    for (let i=0;i<n;i++){
+      const x = rnd()*1000;
+      const y = rnd()*700;
+      const r = rnd()*0.9 + 0.15;
+      const o = rnd()*0.12 + 0.03;
+      g.appendChild(svgEl("circle",{cx:x,cy:y,r:r,fill:`rgba(0,0,0,${o})`}));
+    }
+    return g;
+  }
+
+  function wavyBand(x0, x1, y){
+    // draws 3 wave lines like the printed separators
+    const group = svgEl("g",{});
+    const lines = [0, 7, 14];
+    for (const dy of lines){
+      const d = wavePath(x0, x1, y+dy, 10, 9);
+      group.appendChild(svgEl("path",{d, stroke:"rgba(0,0,0,.55)", "stroke-width":"2", fill:"none"}));
+    }
+    return group;
+  }
+
+  function wavePath(x0, x1, y, amp, period){
+    let d = `M ${x0} ${y}`;
+    const len = x1 - x0;
+    const steps = Math.floor(len / period);
+    for (let i=1;i<=steps;i++){
+      const x = x0 + i*period;
+      const s = (i%2===0) ? -1 : 1;
+      const cy = y + s*amp;
+      const px = x - period/2;
+      d += ` Q ${px} ${cy} ${x} ${y}`;
+    }
+    return d;
+  }
+
+  function makeGrid(cell){
+    const g = svgEl("g",{opacity:"0.18"});
+    for (let x=0; x<=1000; x+=cell){
+      g.appendChild(svgEl("line",{x1:x,y1:0,x2:x,y2:700,stroke:"rgba(0,0,0,.25)","stroke-width":"1"}));
+    }
+    for (let y=0; y<=700; y+=cell){
+      g.appendChild(svgEl("line",{x1:0,y1:y,x2:1000,y2:y,stroke:"rgba(0,0,0,.25)","stroke-width":"1"}));
+    }
+    return g;
+  }
+
+  function makeAmbientParticles(){
+    if (!filters.signals.ambient) return [];
+    const rnd = seedRand(AMBIENT_FIELD.seed);
+    const out = [];
+    for (let i=0;i<AMBIENT_FIELD.count;i++){
+      const t = AMBIENT_FIELD.tokens[Math.floor(rnd()*AMBIENT_FIELD.tokens.length)];
+      const x = AMBIENT_FIELD.bounds.x0 + rnd()*(AMBIENT_FIELD.bounds.x1-AMBIENT_FIELD.bounds.x0);
+      const y = AMBIENT_FIELD.bounds.y0 + rnd()*(AMBIENT_FIELD.bounds.y1-AMBIENT_FIELD.bounds.y0);
+      const ang = (rnd()*24 - 12);
+      const size = 10 + rnd()*4;
+      out.push({
+        id:`A${String(i).padStart(3,"0")}`,
+        zone:"PARIS",
+        signal:"ambient",
+        fr:t, en:t,
+        x, y,
+        angle: ang,
+        size,
+        weight:"normal",
+        tags:["ambient-field","carrier-noise"],
+        _ambient:true
+      });
+    }
+    return out;
+  }
+
+  function makeFragNode(frag, isAmbient){
+    const geom = frag.geom || MORPH_GEOM(frag.signal);
+    const field = frag.field || MORPH_FIELD(frag.signal);
+
+    const group = svgEl("g", {
+      class: `frag ${selectedId===frag.id ? "selected" : ""}`,
+      "data-id": frag.id,
+      "data-zone": frag.zone,
+      "data-signal": frag.signal,
+      "data-geom": geom,
+      "data-field": field,
+      cursor: isAmbient ? "default" : "pointer"
+    });
+
+    // geometry hint overlays per fragment (optional)
+    if (overlays.geom && !isAmbient){
+      if (geom === "BLOCK"){
+        group.appendChild(svgEl("rect",{
+          x: frag.x-170, y: frag.y-38, width: 340, height: 76,
+          class:"overlay-block", opacity:"0.65"
+        }));
+      } else if (geom === "CLUSTER"){
+        group.appendChild(svgEl("circle",{
+          cx: frag.x, cy: frag.y, r: 30,
+          class:"overlay-cluster", opacity:"0.55"
+        }));
+      } else if (geom === "COLUMN"){
+        group.appendChild(svgEl("rect",{
+          x: frag.x-65, y: frag.y-70, width: 130, height: 140,
+          class:"overlay-block", opacity:"0.35"
+        }));
+      }
+    }
+
+    const t = svgEl("text", {
+      x: frag.x,
+      y: frag.y,
+      "text-anchor": "middle",
+      "font-size": String(frag.size ?? 12),
+      "font-weight": frag.weight ?? "normal",
+      transform: `rotate(${frag.angle ?? 0} ${frag.x} ${frag.y})`
+    });
+
+    // Class tweaks
+    const cls = [];
+    if (frag.style === "mono") cls.push("mono");
+    if (frag.style === "loud") cls.push("loud");
+    if (isAmbient) cls.push("muted");
+    if (cls.length) t.setAttribute("class", cls.join(" "));
+
+    // Decide what to show based on language mode
+    let content = frag.fr ?? "";
+    if (langMode === "EN") content = frag.en ?? frag.fr ?? "";
+    if (langMode === "BOTH"){
+      const fr = frag.fr ?? "";
+      const en = frag.en ?? "";
+      content = fr && en ? (fr + "\n—\n" + en) : (fr || en);
+    }
+
+    // Multi-line support with tspans
+    const lines = textLines(content);
+    lines.forEach((line, i) => {
+      const span = svgEl("tspan", {
+        x: frag.x,
+        dy: (i===0 ? "0" : (frag.size ? (frag.size * 1.15) : 14))
+      });
+      span.textContent = line;
+      t.appendChild(span);
+    });
+
+    group.appendChild(t);
+
+    if (!isAmbient){
+      group.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectFrag(frag.id);
+      });
+    }
+
+    return group;
+  }
+
+  // ============================================================
+  // 6) Selection + Drawer
+  // ============================================================
+  function selectFrag(id){
+    selectedId = id;
+    const frag = findFrag(id);
+    if (!frag) return;
+    setDrawer(true);
+    refreshDrawer();
+    render();
+  }
+
+  function refreshDrawer(){
+    const frag = selectedId ? findFrag(selectedId) : null;
+
+    if (!frag){
+      el.drawerTitle.textContent = "No fragment selected";
+      el.fragCard.hidden = true;
+      return;
+    }
+
+    el.drawerTitle.textContent = `${frag.id} · ${frag.zone} · ${frag.signal}`;
+
+    el.fragCard.hidden = false;
+
+    el.fragFR.textContent = frag.fr || "";
+    el.fragEN.textContent = frag.en || "";
+
+    // tags
+    el.fragTags.innerHTML = "";
+    const geom = frag.geom || MORPH_GEOM(frag.signal);
+    const field = frag.field || MORPH_FIELD(frag.signal);
+
+    const tagList = [
+      `GEOM:${geom}`,
+      `FIELD:${field}`,
+      ...((frag.tags||[]).slice(0, 10).map(t => `#${t}`))
+    ];
+    for (const t of tagList){
+      const span = document.createElement("span");
+      span.className = "tag";
+      span.textContent = t;
+      el.fragTags.appendChild(span);
+    }
+
+    // key-values
+    const kv = [
+      ["origin_world", frag.zone],
+      ["signal_type", frag.signal],
+      ["geometric_intent", geom],
+      ["field", field],
+      ["x,y", `${Math.round(frag.x)}, ${Math.round(frag.y)}`],
+      ["angle", String(frag.angle ?? 0)],
+      ["notes", (frag.note || "").trim() || "—"]
+    ];
+
+    el.fragKV.innerHTML = "";
+    for (const [k,v] of kv){
+      const a = document.createElement("div"); a.textContent = k;
+      const b = document.createElement("div"); b.textContent = v;
+      el.fragKV.appendChild(a); el.fragKV.appendChild(b);
+    }
+  }
+
+  function focusOnFrag(id){
+    const frag = findFrag(id);
+    if (!frag) return;
+
+    // Convert frag coords into viewport coords (roughly) and center it.
+    // Our panzoom is scaled from 0,0 in SVG space. We'll just center by setting pan.
+    const vp = el.viewport.getBoundingClientRect();
+    const framePad = 16;
+
+    const targetScale = clamp(pan.s, 1.0, 2.8);
+    pan.s = targetScale;
+
+    // desired pixel center in panzoom space
+    const cx = vp.width / 2;
+    const cy = vp.height / 2;
+
+    // panzoom box size (CSS pixels)
+    const pz = el.panzoom.getBoundingClientRect();
+    // We can't directly use its rect after transform reliably; compute based on width/height before transform:
+    const baseW = el.panzoom.offsetWidth;
+    const baseH = el.panzoom.offsetHeight;
+
+    // Map SVG point to local pixels in panzoom base
+    const px = (frag.x / 1000) * baseW;
+    const py = (frag.y / 700) * baseH;
+
+    // Transform: screen = translate(pan.x, pan.y) + scale(pan.s) * local
+    pan.x = cx - pan.s * px;
+    pan.y = cy - pan.s * py;
+
+    applyPanZoom();
+  }
+
+  // ============================================================
+  // 7) Pan/Zoom interactions
+  // ============================================================
+  function applyPanZoom(){
+    // Clamp a bit so users can't lose the paper entirely
+    const vp = el.viewport.getBoundingClientRect();
+    const baseW = el.panzoom.offsetWidth;
+    const baseH = el.panzoom.offsetHeight;
+
+    const scaledW = baseW * pan.s;
+    const scaledH = baseH * pan.s;
+
+    const minX = vp.width - scaledW - 80;
+    const maxX = 80;
+    const minY = vp.height - scaledH - 80;
+    const maxY = 80;
+
+    pan.x = clamp(pan.x, minX, maxX);
+    pan.y = clamp(pan.y, minY, maxY);
+
+    el.panzoom.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${pan.s})`;
+  }
+
+  function resetView(){
+    pan.s = 1;
+    pan.x = 0;
+    pan.y = 0;
+    applyPanZoom();
+  }
+
+  function viewportToLocal(clientX, clientY){
+    const rect = el.viewport.getBoundingClientRect();
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }
+
+  function onWheel(e){
+    e.preventDefault();
+    const delta = -e.deltaY;
+    const zoomFactor = delta > 0 ? 1.08 : 0.92;
+
+    const p = viewportToLocal(e.clientX, e.clientY);
+    const prevS = pan.s;
+    const nextS = clamp(prevS * zoomFactor, 0.7, 4.0);
+
+    // Zoom around pointer: keep point stable
+    // screen = T + s * local  => local = (screen - T) / s
+    const lx = (p.x - pan.x) / prevS;
+    const ly = (p.y - pan.y) / prevS;
+
+    pan.s = nextS;
+    pan.x = p.x - pan.s * lx;
+    pan.y = p.y - pan.s * ly;
+
+    applyPanZoom();
+  }
+
+  function onPointerDown(e){
+    el.viewport.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+    if (pointers.size === 1){
+      dragging = true;
+      dragStart = { x:e.clientX, y:e.clientY, px:pan.x, py:pan.y };
+    } else if (pointers.size === 2){
+      const pts = [...pointers.values()];
+      pinchStart = pinchMetrics(pts[0], pts[1]);
+    }
+  }
+
+  function onPointerMove(e){
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+    if (pointers.size === 1 && dragging){
+      const dx = e.clientX - dragStart.x;
+      const dy = e.clientY - dragStart.y;
+      pan.x = dragStart.px + dx;
+      pan.y = dragStart.py + dy;
+      applyPanZoom();
+    }
+
+    if (pointers.size === 2 && pinchStart){
+      const pts = [...pointers.values()];
+      const now = pinchMetrics(pts[0], pts[1]);
+
+      const prevS = pinchStart.s;
+      const nextS = clamp(pinchStart.baseScale * (now.dist / pinchStart.dist), 0.7, 4.0);
+
+      // Zoom around pinch center (viewport coords)
+      const rect = el.viewport.getBoundingClientRect();
+      const cx = now.cx - rect.left;
+      const cy = now.cy - rect.top;
+
+      const lx = (cx - pinchStart.basePanX) / pinchStart.baseScale;
+      const ly = (cy - pinchStart.basePanY) / pinchStart.baseScale;
+
+      pan.s = nextS;
+      pan.x = cx - pan.s * lx;
+      pan.y = cy - pan.s * ly;
+
+      applyPanZoom();
+    }
+  }
+
+  function onPointerUp(e){
+    pointers.delete(e.pointerId);
+    if (pointers.size === 0){
+      dragging = false;
+      pinchStart = null;
+    }
+    if (pointers.size === 1){
+      // continue drag from remaining pointer
+      const pt = [...pointers.values()][0];
+      dragging = true;
+      dragStart = { x:pt.x, y:pt.y, px:pan.x, py:pan.y };
+      pinchStart = null;
+    }
+  }
+
+  function pinchMetrics(a,b){
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const dist = Math.hypot(dx,dy);
+    const cx = (a.x+b.x)/2;
+    const cy = (a.y+b.y)/2;
+    return {
+      dist, cx, cy,
+      baseScale: pan.s,
+      basePanX: pan.x,
+      basePanY: pan.y
+    };
+  }
+
+  // click background clears selection
+  el.svg.addEventListener("click", () => {
+    selectedId = null;
+    refreshDrawer();
+    render();
+  });
+
+  // ============================================================
+  // 8) Wiring (HUD / Drawer / Filters)
+  // ============================================================
+  btn.langFR.onclick = () => setLang("FR");
+  btn.langEN.onclick = () => setLang("EN");
+  btn.langBoth.onclick = () => setLang("BOTH");
+
+  btn.ovGeom.onclick = () => setOverlay("geom", !overlays.geom);
+  btn.ovRays.onclick = () => setOverlay("rays", !overlays.rays);
+  btn.ovGrid.onclick = () => setOverlay("grid", !overlays.grid);
+
+  btn.reset.onclick = () => resetView();
+  btn.drawerToggle.onclick = () => setDrawer(el.drawer.hidden);
+
+  el.q.addEventListener("input", () => {
+    searchQ = el.q.value;
+    render();
+  });
+
+  // Filter bindings
+  function syncFiltersFromUI(){
+    filters.zones.MEXICO = f.mxico = f.mexico.checked;
+    filters.zones.PARIS = f.paris.checked;
+    filters.zones.TECHNOLOGY = f.tech.checked;
+
+    filters.signals.postcard = f.sPost.checked;
+    filters.signals.voice = f.sVoice.checked;
+    filters.signals.ambient = f.sAmb.checked;
+    filters.signals.memory = f.sMem.checked;
+    filters.signals.tech = f.tech.checked; // tech is its own zone but also signal
+    render();
+  }
+  f.mexico.onchange = syncFiltersFromUI;
+  f.paris.onchange = syncFiltersFromUI;
+  f.tech.onchange = syncFiltersFromUI;
+  f.sPost.onchange = syncFiltersFromUI;
+  f.sVoice.onchange = syncFiltersFromUI;
+  f.sAmb.onchange = syncFiltersFromUI;
+  f.sMem.onchange = syncFiltersFromUI;
+
+  // Drawer actions
+  act.exportJSON.onclick = () => copyText(JSON.stringify(fragments, null, 2));
+
+  act.copyPOML.onclick = () => {
+    const poml = {
+      meta:{
+        name:"Apollinaire Calligram Transmission Bridge",
+        version:"2.0",
+        intent:"Encode poetry as a spatial transmission system where geography, sound, memory, and technology coexist inside a single navigable calligrammatic field."
+      },
+      axioms:[
+        "A1: Text may function as architecture.",
+        "A2: Architecture may function as signal.",
+        "A3: Distance is a layout problem, not a geographic fact.",
+        "A4: Reading is traversal through a transmission field.",
+        "A5: Meaning emerges from spatial relation, not sequence.",
+        "A6: A poem may contain multiple simultaneous centers."
+      ],
+      zones:[
+        {id:"LEFT_HEMISPHERE", world:"MEXICO", geometry:"BLOCK + COLUMN", semantics:["Postcard fragments","Port descriptions","Earthquake memory","Mayas reference"]},
+        {id:"RIGHT_HEMISPHERE", world:"PARIS", geometry:"RADIAL + RAY", semantics:["Ambient street sounds","Gramophones","Sirens","Casual speech"]},
+        {id:"CENTER_SPINE", world:"TECHNOLOGY", geometry:"COLUMN", symbol:"TSF", semantics:["Wireless transmission","Invisible linkage","Collapsed distance"]}
+      ],
+      morphisms:[
+        {from:"TEXT_FRAGMENT", to:"GEOMETRIC_INTENT", rule:"postcard→BLOCK, voice→COLUMN, ambient→RAY, memory→CLUSTER"},
+        {from:"TEXT_FRAGMENT", to:"FIELD", rule:"voice→TOP_DOWN, ambient→CENTER_OUT, postcard→GRID, memory→ORBIT"},
+        {from:"(TEXT_FRAGMENT, GEOMETRIC_INTENT, FIELD)", to:"CELL*", rule:"Rasterize fragment geometry into multiple cell addresses."}
+      ],
+      fragments: fragments.map(fr => ({
+        id: fr.id,
+        raw_text: fr.fr,
+        translation: fr.en,
+        origin_world: fr.zone,
+        signal_type: fr.signal,
+        geometric_intent: fr.geom || MORPH_GEOM(fr.signal),
+        field: fr.field || MORPH_FIELD(fr.signal),
+        x: fr.x, y: fr.y, angle: fr.angle, size: fr.size,
+        semantic_tags: fr.tags || []
+      }))
+    };
+    copyText(JSON.stringify(poml, null, 2));
+  };
+
+  act.reloadData.onclick = () => {
+    try{
+      const parsed = JSON.parse(el.dataBox.value);
+      if (!Array.isArray(parsed)) throw new Error("JSON must be an array of fragments.");
+      fragments = parsed.map(f => ({
+        ...f,
+        // normalize minimal requirements
+        id: String(f.id || ""),
+        zone: f.zone || "PARIS",
+        signal: f.signal || "memory",
+        x: Number(f.x ?? 500),
+        y: Number(f.y ?? 350),
+        angle: Number(f.angle ?? 0),
+        size: Number(f.size ?? 12),
+        fr: f.fr ?? "",
+        en: f.en ?? ""
+      })).filter(f => f.id);
+      selectedId = null;
+      render();
+      refreshDrawer();
+      toast("Data reloaded");
+    }catch(err){
+      toast("Invalid JSON — see console");
+      console.error(err);
+      alert("Invalid JSON:\n" + err.message);
+    }
+  };
+
+  act.restoreData.onclick = () => {
+    fragments = structuredClone(DEFAULT_FRAGMENTS);
+    el.dataBox.value = JSON.stringify(fragments, null, 2);
+    selectedId = null;
+    render();
+    refreshDrawer();
+    toast("Restored defaults");
+  };
+
+  act.copyFrag.onclick = () => {
+    const fr = selectedId ? findFrag(selectedId) : null;
+    if (!fr) return;
+    const out = {
+      ...fr,
+      geometric_intent: fr.geom || MORPH_GEOM(fr.signal),
+      field: fr.field || MORPH_FIELD(fr.signal)
+    };
+    copyText(JSON.stringify(out, null, 2));
+  };
+
+  act.focusFrag.onclick = () => {
+    if (!selectedId) return;
+    focusOnFrag(selectedId);
+    toast("Focused");
+  };
+
+  act.clearSel.onclick = () => {
+    selectedId = null;
+    refreshDrawer();
+    render();
+  };
+
+  // Pan/zoom event hooks
+  el.viewport.addEventListener("wheel", onWheel, { passive:false });
+  el.viewport.addEventListener("pointerdown", onPointerDown);
+  el.viewport.addEventListener("pointermove", onPointerMove);
+  el.viewport.addEventListener("pointerup", onPointerUp);
+  el.viewport.addEventListener("pointercancel", onPointerUp);
+
+  // Escape closes drawer
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape"){
+      if (!el.drawer.hidden) setDrawer(false);
+      else { selectedId = null; refreshDrawer(); render(); }
+    }
+  });
+
+  // ============================================================
+  // 9) Boot
+  // ============================================================
+  function boot(){
+    // Start centered
+    resetView();
+    render();
+    refreshDrawer();
+    el.dataBox.value = JSON.stringify(fragments, null, 2);
+    setDrawer(false);
+
+    // Slightly center the paper on load for most screens
+    requestAnimationFrame(() => {
+      const vp = el.viewport.getBoundingClientRect();
+      const baseW = el.panzoom.offsetWidth;
+      const baseH = el.panzoom.offsetHeight;
+      pan.x = (vp.width - baseW) / 2;
+      pan.y = (vp.height - baseH) / 2;
+      applyPanZoom();
+    });
+  }
+  boot();
+
+})();
+</script>
+</body>
+</html>

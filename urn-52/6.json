@@ -1,0 +1,673 @@
+{
+  "prompt_id": "CAREY-URN-GRID-v1",
+  "mode": "ritual_cartography",
+  "title": "Ode on a Grecian Urn — Ritual Map (URN-L01..URN-L50)",
+  "entities": {
+    "E_URN": "Urn-as-Stage",
+    "E_READER": "Reader-as-Participant",
+    "E_WORLD": "Shared Order",
+    "chapels": ["C1", "C2", "C3", "C4", "C5"],
+    "altars": ["A_SILENCE", "A_TIME", "A_DESIRE", "A_COMMUNITY", "A_TRUTH"],
+    "processions": ["PR_Q", "PR_APOS", "PR_FOREVER"]
+  },
+  "rite_lines": [
+    {
+      "line_id": "URN-L01",
+      "stanza": 1,
+      "text": "Thou still unravish'd bride of quietness,",
+      "rite_action": "Consecrates the urn by direct address, turning reading into communion rather than observation.",
+      "reader_role": ["Pilgrim"],
+      "function": "PRODUCE",
+      "altars": ["A_SILENCE", "A_TIME"],
+      "world_effect": "Creates a shared space where stillness counts as presence and intimacy can be non-consummated yet binding.",
+      "continuity_hook": "Opens the apostrophe channel that will carry the stanza’s interrogations."
+    },
+    {
+      "line_id": "URN-L02",
+      "stanza": 1,
+      "text": "Thou foster-child of silence and slow time,",
+      "rite_action": "Installs silence and slow time as the governing liturgy—rules of tempo for the whole ceremony.",
+      "reader_role": ["Witness"],
+      "function": "MAINTAIN",
+      "altars": ["A_SILENCE", "A_TIME"],
+      "world_effect": "Stabilizes an order where suspension is not decay but a shared discipline of attention.",
+      "continuity_hook": "Hands forward the urn’s kinship with time so “historian” can become credible."
+    },
+    {
+      "line_id": "URN-L03",
+      "stanza": 1,
+      "text": "Sylvan historian, who canst thus express",
+      "rite_action": "Appoints the urn to an office of communal memory, making the artifact a public historian.",
+      "reader_role": ["Archivist"],
+      "function": "PRODUCE",
+      "altars": ["A_COMMUNITY", "A_TIME"],
+      "world_effect": "Legitimizes a memory-world that does not require living witnesses to stay real.",
+      "continuity_hook": "Promises an ‘expression’ that will outrank ordinary speech."
+    },
+    {
+      "line_id": "URN-L04",
+      "stanza": 1,
+      "text": "A flowery tale more sweetly than our rhyme:",
+      "rite_action": "Transfers authority from the poet’s voice to the urn’s form—medium becomes the trusted priest.",
+      "reader_role": ["Judge"],
+      "function": "TRANSFORM",
+      "altars": ["A_TRUTH", "A_TIME"],
+      "world_effect": "Reorders trust: durability and shape become the grounds of shared belief.",
+      "continuity_hook": "Launches the hunt: if the urn speaks ‘sweeter,’ what legend is it holding?"
+    },
+    {
+      "line_id": "URN-L05",
+      "stanza": 1,
+      "text": "What leaf-fring'd legend haunts about thy shape",
+      "rite_action": "Initiates the question-procession, framing uncertainty as communal wonder rather than failure to decode.",
+      "reader_role": ["Pilgrim", "Witness"],
+      "function": "PRODUCE",
+      "altars": ["A_COMMUNITY", "A_DESIRE"],
+      "world_effect": "Creates a participatory world of partial evidence that demands shared inference.",
+      "continuity_hook": "Queues the cast-list to stabilize imagination (gods/mortals)."
+    },
+    {
+      "line_id": "URN-L06",
+      "stanza": 1,
+      "text": "Of deities or mortals, or of both,",
+      "rite_action": "Performs ritual taxonomy: classifies beings so the scene becomes socially legible.",
+      "reader_role": ["Archivist", "Judge"],
+      "function": "MAINTAIN",
+      "altars": ["A_COMMUNITY", "A_TRUTH"],
+      "world_effect": "Maintains an ordered cosmos where categories hold even when facts are missing.",
+      "continuity_hook": "Anchors the rite in shared coordinates: named places as communal reference points."
+    },
+    {
+      "line_id": "URN-L07",
+      "stanza": 1,
+      "text": "In Tempe or the dales of Arcady?",
+      "rite_action": "Maps the ceremony onto mythic geography—‘there’ becomes a communal ‘here’ for the reader-body.",
+      "reader_role": ["Pilgrim"],
+      "function": "PRODUCE",
+      "altars": ["A_COMMUNITY", "A_TIME"],
+      "world_effect": "Produces place as a shared cultural instrument, not a location to verify.",
+      "continuity_hook": "Escalates from place to identity: who is here, in this shared scene?"
+    },
+    {
+      "line_id": "URN-L08",
+      "stanza": 1,
+      "text": "What men or gods are these? What maidens loth?",
+      "rite_action": "Deepens the question-procession, binding the congregation through synchronized not-knowing.",
+      "reader_role": ["Witness", "Judge"],
+      "function": "REPAIR",
+      "altars": ["A_COMMUNITY", "A_DESIRE"],
+      "world_effect": "Repairs the reader’s need for certainty by sanctifying ambiguity as shared participation.",
+      "continuity_hook": "Introduces desire-with-resistance (‘loth’) to power the next dramatic engine."
+    },
+    {
+      "line_id": "URN-L09",
+      "stanza": 1,
+      "text": "What mad pursuit? What struggle to escape?",
+      "rite_action": "Stages conflict as the ritual engine—pursuit/escape becomes the world’s pulse under stillness.",
+      "reader_role": ["Lover", "Witness"],
+      "function": "PRODUCE",
+      "altars": ["A_DESIRE", "A_TIME"],
+      "world_effect": "Makes tension feel inevitable and communal: drama persists even when time is fixed.",
+      "continuity_hook": "Shifts from bodies to instruments, preparing the ‘unheard’ doctrine."
+    },
+    {
+      "line_id": "URN-L10",
+      "stanza": 1,
+      "text": "What pipes and timbrels? What wild ecstasy?",
+      "rite_action": "Consecrates sound-objects that imply music without delivering it, priming shared imagination as liturgy.",
+      "reader_role": ["Listener", "Witness"],
+      "function": "MAINTAIN",
+      "altars": ["A_SILENCE", "A_DESIRE"],
+      "world_effect": "Maintains a world where absence (unheard music) is an active bond among readers.",
+      "continuity_hook": "Hands off to Chapel 2’s inversion: unheard becomes sweeter than heard."
+    },
+
+    {
+      "line_id": "URN-L11",
+      "stanza": 2,
+      "text": "Heard melodies are sweet, but those unheard",
+      "rite_action": "Inverts sensory authority, teaching the congregation that shared interior hearing outranks public sound.",
+      "reader_role": ["Judge", "Listener"],
+      "function": "TRANSFORM",
+      "altars": ["A_SILENCE", "A_TRUTH"],
+      "world_effect": "Rebuilds what counts as ‘real’ experience: the communal world is maintained through imagined audition.",
+      "continuity_hook": "Suspends the clause mid-gesture so the next line seals the preference."
+    },
+    {
+      "line_id": "URN-L12",
+      "stanza": 2,
+      "text": "Are sweeter; therefore, ye soft pipes, play on;",
+      "rite_action": "Turns the instruments into ritual participants and issues a command that keeps the ceremony running.",
+      "reader_role": ["Priest", "Listener"],
+      "function": "MAINTAIN",
+      "altars": ["A_SILENCE", "A_TIME"],
+      "world_effect": "Creates continuity: the rite persists by command even when no literal sound can occur.",
+      "continuity_hook": "Directs the ‘how’ of listening: away from senses, toward spirit."
+    },
+    {
+      "line_id": "URN-L13",
+      "stanza": 2,
+      "text": "Not to the sensual ear, but, more endear'd,",
+      "rite_action": "Reassigns the congregation’s listening organ—training attention as a social practice.",
+      "reader_role": ["Pilgrim", "Listener"],
+      "function": "TRANSFORM",
+      "altars": ["A_SILENCE", "A_COMMUNITY"],
+      "world_effect": "Makes inwardness a shared norm; the community exists by agreeing where value resides.",
+      "continuity_hook": "Hands the ‘target’ of music to the next line: spirit-bound ditties."
+    },
+    {
+      "line_id": "URN-L14",
+      "stanza": 2,
+      "text": "Pipe to the spirit ditties of no tone:",
+      "rite_action": "Defines an impossible music (no tone) as the ritual’s true hymn, binding the group through paradox.",
+      "reader_role": ["Listener", "Archivist"],
+      "function": "PRODUCE",
+      "altars": ["A_SILENCE", "A_TRUTH"],
+      "world_effect": "Produces a world where meaning can be sustained without material delivery—shared belief becomes infrastructure.",
+      "continuity_hook": "Shifts focus from music to figures on the urn: fair youth and trees."
+    },
+    {
+      "line_id": "URN-L15",
+      "stanza": 2,
+      "text": "Fair youth, beneath the trees, thou canst not leave",
+      "rite_action": "Pins a character into timeless placement, turning limitation into a ceremonial guarantee.",
+      "reader_role": ["Witness", "Archivist"],
+      "function": "MAINTAIN",
+      "altars": ["A_TIME", "A_DESIRE"],
+      "world_effect": "Stabilizes the shared world by fixing roles and positions—community through permanence.",
+      "continuity_hook": "Carries the constraint forward: song continues, trees remain."
+    },
+    {
+      "line_id": "URN-L16",
+      "stanza": 2,
+      "text": "Thy song, nor ever can those trees be bare;",
+      "rite_action": "Chants ‘nor ever’ as a durability clause, promising non-decay as communal comfort.",
+      "reader_role": ["Citizen", "Listener"],
+      "function": "MAINTAIN",
+      "altars": ["A_TIME", "A_COMMUNITY"],
+      "world_effect": "Maintains an order where loss is suspended; the reader joins a society that rehearses continuity.",
+      "continuity_hook": "Hands off to the love-scene: the bold lover’s kiss."
+    },
+    {
+      "line_id": "URN-L17",
+      "stanza": 2,
+      "text": "Bold Lover, never, never canst thou kiss,",
+      "rite_action": "Performs the ritual wound: desire is held at the threshold, made permanent by refusal.",
+      "reader_role": ["Lover", "Witness"],
+      "function": "REPAIR",
+      "altars": ["A_DESIRE", "A_TIME"],
+      "world_effect": "Repairs the fear of endings by substituting suspended fulfillment for consummation-and-loss.",
+      "continuity_hook": "Adds consolation logic: near the goal, do not grieve."
+    },
+    {
+      "line_id": "URN-L18",
+      "stanza": 2,
+      "text": "Though winning near the goal yet, do not grieve;",
+      "rite_action": "Issues pastoral counsel that re-frames deprivation as a stable communal condition.",
+      "reader_role": ["Citizen", "Judge"],
+      "function": "REPAIR",
+      "altars": ["A_DESIRE", "A_COMMUNITY"],
+      "world_effect": "Teaches the congregation a coping script: nearness can be enough when shared as doctrine.",
+      "continuity_hook": "Transfers consolation to the maiden: she cannot fade."
+    },
+    {
+      "line_id": "URN-L19",
+      "stanza": 2,
+      "text": "She cannot fade, though thou hast not thy bliss,",
+      "rite_action": "Guarantees the beloved’s permanence as the ritual’s compensation for unfulfilled touch.",
+      "reader_role": ["Lover", "Witness"],
+      "function": "MAINTAIN",
+      "altars": ["A_TIME", "A_DESIRE"],
+      "world_effect": "Maintains the shared world by suspending decay, making beauty socially ‘safe’ from time.",
+      "continuity_hook": "Opens the chant-keyword: ‘For ever’ as seal and refrain."
+    },
+    {
+      "line_id": "URN-L20",
+      "stanza": 2,
+      "text": "For ever wilt thou love, and she be fair!",
+      "rite_action": "Activates the forever-procession as chant; love becomes a public liturgy rather than a private event.",
+      "reader_role": ["Citizen", "Listener"],
+      "function": "MAINTAIN",
+      "altars": ["A_TIME", "A_TRUTH", "A_DESIRE"],
+      "world_effect": "Stabilizes society-in-time by repeating permanence as shared belief.",
+      "continuity_hook": "Hands into Chapel 3’s saturation chant (‘happy, happy’)."
+    },
+
+    {
+      "line_id": "URN-L21",
+      "stanza": 3,
+      "text": "Ah, happy, happy boughs! that cannot shed",
+      "rite_action": "Begins a communal chant by repetition; ‘happy’ works like a call-and-response to maintain mood.",
+      "reader_role": ["Listener", "Citizen"],
+      "function": "MAINTAIN",
+      "altars": ["A_TIME", "A_COMMUNITY"],
+      "world_effect": "Produces happiness as social atmosphere, not personal report—felt true because shared aloud.",
+      "continuity_hook": "Carries the non-decay clause forward: leaves cannot fall."
+    },
+    {
+      "line_id": "URN-L22",
+      "stanza": 3,
+      "text": "Your leaves, nor ever bid the Spring adieu;",
+      "rite_action": "Extends the ‘nor ever’ spell to seasons, making renewal perpetual and communal.",
+      "reader_role": ["Citizen"],
+      "function": "MAINTAIN",
+      "altars": ["A_TIME", "A_TRUTH"],
+      "world_effect": "Maintains an order where farewell is suspended; community repairs grief by denying departure.",
+      "continuity_hook": "Transfers the chant from trees to musician: ‘happy melodist.’"
+    },
+    {
+      "line_id": "URN-L23",
+      "stanza": 3,
+      "text": "And, happy melodist, unwearied,",
+      "rite_action": "Blesses the performer with inexhaustion, turning labor into endless ritual service.",
+      "reader_role": ["Listener", "Archivist"],
+      "function": "MAINTAIN",
+      "altars": ["A_TIME", "A_COMMUNITY"],
+      "world_effect": "Stabilizes the world by promising that the ceremonial worker never tires—continuity guaranteed.",
+      "continuity_hook": "Keys the refrain: ‘For ever piping…’"
+    },
+    {
+      "line_id": "URN-L24",
+      "stanza": 3,
+      "text": "For ever piping songs for ever new;",
+      "rite_action": "Runs the forever-procession at full volume: repetition becomes the mechanism of maintenance.",
+      "reader_role": ["Listener", "Citizen"],
+      "function": "MAINTAIN",
+      "altars": ["A_TIME", "A_SILENCE"],
+      "world_effect": "Creates a paradoxical continuity: endless repetition that still feels new because it’s ritually renewed.",
+      "continuity_hook": "Moves the blessing to love itself—escalation chant."
+    },
+    {
+      "line_id": "URN-L25",
+      "stanza": 3,
+      "text": "More happy love! more happy, happy love!",
+      "rite_action": "Intensifies the chant into a communal crescendo; emotion is socially manufactured by repetition.",
+      "reader_role": ["Citizen", "Lover"],
+      "function": "PRODUCE",
+      "altars": ["A_DESIRE", "A_COMMUNITY"],
+      "world_effect": "Produces a shared emotional order that feels authoritative because it is collectively repeated.",
+      "continuity_hook": "Hands to the next line’s permanence clauses (‘for ever warm…’)."
+    },
+    {
+      "line_id": "URN-L26",
+      "stanza": 3,
+      "text": "For ever warm and still to be enjoy'd,",
+      "rite_action": "Defines desire as endlessly available and safe from cooling—ritual comfort through stability.",
+      "reader_role": ["Lover", "Judge"],
+      "function": "MAINTAIN",
+      "altars": ["A_DESIRE", "A_TIME"],
+      "world_effect": "Maintains a world where pleasure is unthreatened by change, creating communal reassurance.",
+      "continuity_hook": "Turns warmth into motion: panting, youth."
+    },
+    {
+      "line_id": "URN-L27",
+      "stanza": 3,
+      "text": "For ever panting, and for ever young;",
+      "rite_action": "Chants bodily intensity without consequence, making vitality a public, repeatable condition.",
+      "reader_role": ["Lover", "Citizen"],
+      "function": "MAINTAIN",
+      "altars": ["A_TIME", "A_DESIRE"],
+      "world_effect": "Sustains a shared fantasy of youth as social repair against aging and loss.",
+      "continuity_hook": "Sets up contrast: human passion vs. this elevated condition."
+    },
+    {
+      "line_id": "URN-L28",
+      "stanza": 3,
+      "text": "All breathing human passion far above,",
+      "rite_action": "Draws a hierarchical boundary: the urn’s passion becomes a higher rite than ordinary human life.",
+      "reader_role": ["Judge", "Archivist"],
+      "function": "TRANSFORM",
+      "altars": ["A_TRUTH", "A_TIME"],
+      "world_effect": "Reframes reality: the community is invited to live by an elevated model sustained through ritual reading.",
+      "continuity_hook": "Forces the cost to appear: what human passion leaves behind."
+    },
+    {
+      "line_id": "URN-L29",
+      "stanza": 3,
+      "text": "That leaves a heart high-sorrowful and cloy'd,",
+      "rite_action": "Introduces the break-point: acknowledges satiation and sorrow as the human remainder.",
+      "reader_role": ["Witness", "Judge"],
+      "function": "REPAIR",
+      "altars": ["A_DESIRE", "A_COMMUNITY"],
+      "world_effect": "Repairs the ritual’s credibility by naming the pain it is trying to relieve.",
+      "continuity_hook": "Translates inner cost into bodily symptoms (forehead, tongue)."
+    },
+    {
+      "line_id": "URN-L30",
+      "stanza": 3,
+      "text": "A burning forehead, and a parching tongue.",
+      "rite_action": "Ends the chapel with embodied limit—marks the human body as the site of excess and finitude.",
+      "reader_role": ["Witness"],
+      "function": "REPAIR",
+      "altars": ["A_TIME", "A_DESIRE"],
+      "world_effect": "Repairs community by admitting appetite’s scorch; the ritual offers the urn’s stillness as countermedicine.",
+      "continuity_hook": "Opens Chapel 4: the civic ritual of sacrifice and town."
+    },
+
+    {
+      "line_id": "URN-L31",
+      "stanza": 4,
+      "text": "Who are these coming to the sacrifice?",
+      "rite_action": "Reactivates the question-procession, shifting from erotic rite to civic rite—community becomes visible as procession.",
+      "reader_role": ["Citizen", "Witness"],
+      "function": "PRODUCE",
+      "altars": ["A_COMMUNITY", "A_TRUTH"],
+      "world_effect": "Produces society as an enacted gathering rather than a set of facts.",
+      "continuity_hook": "Opens the altar-node explicitly: green altar and priest."
+    },
+    {
+      "line_id": "URN-L32",
+      "stanza": 4,
+      "text": "To what green altar, O mysterious priest,",
+      "rite_action": "Uses apostrophe to appoint a ritual mediator (priest) and locate the ceremony at an altar-station.",
+      "reader_role": ["Pilgrim", "Citizen"],
+      "function": "PRODUCE",
+      "altars": ["A_COMMUNITY", "A_DESIRE", "A_TRUTH"],
+      "world_effect": "Creates shared order by positing offices (priest) and stations (altar) as communal scaffolding.",
+      "continuity_hook": "Hands the action forward: leading the heifer."
+    },
+    {
+      "line_id": "URN-L33",
+      "stanza": 4,
+      "text": "Lead'st thou that heifer lowing at the skies,",
+      "rite_action": "Animates sacrifice as ritual motion; sound (‘lowing’) reaches skyward, linking earth to cosmos.",
+      "reader_role": ["Witness", "Archivist"],
+      "function": "PRODUCE",
+      "altars": ["A_COMMUNITY", "A_TIME"],
+      "world_effect": "Produces a world where communal action binds the vertical axis (earth/sky) without needing explanation.",
+      "continuity_hook": "Adds ornament and care: garlands, silken flanks."
+    },
+    {
+      "line_id": "URN-L34",
+      "stanza": 4,
+      "text": "And all her silken flanks with garlands drest?",
+      "rite_action": "Marks the rite as aesthetic labor: decoration functions as public commitment and shared meaning.",
+      "reader_role": ["Citizen", "Judge"],
+      "function": "MAINTAIN",
+      "altars": ["A_COMMUNITY", "A_TRUTH"],
+      "world_effect": "Maintains social cohesion by showing how communities invest beauty into obligation.",
+      "continuity_hook": "Turns from procession to the absent town that produced it."
+    },
+    {
+      "line_id": "URN-L35",
+      "stanza": 4,
+      "text": "What little town by river or sea shore,",
+      "rite_action": "Invokes civic geography; the map-function returns to make community imaginable as place.",
+      "reader_role": ["Archivist", "Citizen"],
+      "function": "PRODUCE",
+      "altars": ["A_COMMUNITY", "A_TIME"],
+      "world_effect": "Produces a shared civic world by naming possible habitats rather than confirming one.",
+      "continuity_hook": "Expands possible forms: mountain-built, citadel."
+    },
+    {
+      "line_id": "URN-L36",
+      "stanza": 4,
+      "text": "Or mountain-built with peaceful citadel,",
+      "rite_action": "Stabilizes community by supplying a protective form (citadel) and a mood (peaceful).",
+      "reader_role": ["Citizen", "Judge"],
+      "function": "MAINTAIN",
+      "altars": ["A_COMMUNITY", "A_TRUTH"],
+      "world_effect": "Maintains the idea of ordered life—society as defended and named.",
+      "continuity_hook": "Sets up the rupture: the town is emptied."
+    },
+    {
+      "line_id": "URN-L37",
+      "stanza": 4,
+      "text": "Is emptied of this folk, this pious morn?",
+      "rite_action": "Performs absence as communal fact: emptiness becomes the evidence of shared ritual obligation.",
+      "reader_role": ["Witness", "Citizen"],
+      "function": "TRANSFORM",
+      "altars": ["A_COMMUNITY", "A_TIME", "A_SILENCE"],
+      "world_effect": "Transforms community into a negative space: society is maintained through what is missing.",
+      "continuity_hook": "Direct apostrophe to the town begins—town as addressed participant."
+    },
+    {
+      "line_id": "URN-L38",
+      "stanza": 4,
+      "text": "And, little town, thy streets for evermore",
+      "rite_action": "Apostrophizes the town and locks it into the forever-procession; civic time becomes a chant.",
+      "reader_role": ["Citizen", "Archivist"],
+      "function": "MAINTAIN",
+      "altars": ["A_TIME", "A_COMMUNITY"],
+      "world_effect": "Maintains the shared order by freezing civic life into an eternal ritual present.",
+      "continuity_hook": "Hands to the silence clause: streets will be silent."
+    },
+    {
+      "line_id": "URN-L39",
+      "stanza": 4,
+      "text": "Will silent be; and not a soul to tell",
+      "rite_action": "Stages the ritual break: testimony disappears; community must persist without narrators.",
+      "reader_role": ["Archivist", "Witness"],
+      "function": "REPAIR",
+      "altars": ["A_SILENCE", "A_COMMUNITY"],
+      "world_effect": "Repairs meaning by making silence itself a binding medium when speech fails.",
+      "continuity_hook": "Completes the desolation logic: no one can return to explain why."
+    },
+    {
+      "line_id": "URN-L40",
+      "stanza": 4,
+      "text": "Why thou art desolate, can e'er return.",
+      "rite_action": "Seals absence as irreversible; the ritual demands that the reader carry explanation as communal labor.",
+      "reader_role": ["Archivist", "Judge"],
+      "function": "REPAIR",
+      "altars": ["A_TIME", "A_COMMUNITY", "A_TRUTH"],
+      "world_effect": "Repairs community by transferring ‘telling’ to the congregation (readers) across time.",
+      "continuity_hook": "Opens Chapel 5: form praised, then the final seal is spoken."
+    },
+
+    {
+      "line_id": "URN-L41",
+      "stanza": 5,
+      "text": "O Attic shape! Fair attitude! with brede",
+      "rite_action": "Begins the final chapel with praise-as-invocation; form itself becomes the ceremonial container of the world.",
+      "reader_role": ["Pilgrim", "Judge"],
+      "function": "PRODUCE",
+      "altars": ["A_TRUTH", "A_COMMUNITY"],
+      "world_effect": "Produces social authority through aesthetic address: the community agrees to treat shape as meaningful.",
+      "continuity_hook": "Hands to the contents of the form: marble people overwrought."
+    },
+    {
+      "line_id": "URN-L42",
+      "stanza": 5,
+      "text": "Of marble men and maidens overwrought,",
+      "rite_action": "Populates the stage with communal figures; the urn becomes a civic archive of bodies and roles.",
+      "reader_role": ["Archivist", "Witness"],
+      "function": "PRODUCE",
+      "altars": ["A_COMMUNITY", "A_TIME"],
+      "world_effect": "Makes society durable: people persist as forms when living testimony fails.",
+      "continuity_hook": "Extends population into environment: branches and weed."
+    },
+    {
+      "line_id": "URN-L43",
+      "stanza": 5,
+      "text": "With forest branches and the trodden weed;",
+      "rite_action": "Restores ordinary ground under the ceremonial scene; nature and wear become shared texture.",
+      "reader_role": ["Witness"],
+      "function": "MAINTAIN",
+      "altars": ["A_TIME", "A_COMMUNITY"],
+      "world_effect": "Maintains realism through ritual texture—common ground legitimizes the staged world.",
+      "continuity_hook": "Returns to apostrophe: ‘Thou, silent form…’"
+    },
+    {
+      "line_id": "URN-L44",
+      "stanza": 5,
+      "text": "Thou, silent form, dost tease us out of thought",
+      "rite_action": "Declares the ritual technique: silence is not lack but a device that reshapes communal cognition.",
+      "reader_role": ["Pilgrim", "Archivist"],
+      "function": "TRANSFORM",
+      "altars": ["A_SILENCE", "A_TRUTH"],
+      "world_effect": "Transforms the congregation’s mode of knowing: wonder replaces explanation as social glue.",
+      "continuity_hook": "Links the teasing power to eternity—time becomes the comparison."
+    },
+    {
+      "line_id": "URN-L45",
+      "stanza": 5,
+      "text": "As doth eternity: Cold Pastoral!",
+      "rite_action": "Names the ambivalent affect (‘Cold’) while still consecrating the pastoral as a lasting ritual form.",
+      "reader_role": ["Judge", "Witness"],
+      "function": "REPAIR",
+      "altars": ["A_TIME", "A_DESIRE", "A_TRUTH"],
+      "world_effect": "Repairs the ceremony by admitting chill/alienation inside the shared order rather than denying it.",
+      "continuity_hook": "Shifts to generational time: old age wastes this generation."
+    },
+    {
+      "line_id": "URN-L46",
+      "stanza": 5,
+      "text": "When old age shall this generation waste,",
+      "rite_action": "Marks the inevitable rupture (aging) that threatens community, establishing the need for the urn’s endurance.",
+      "reader_role": ["Citizen", "Witness"],
+      "function": "PRODUCE",
+      "altars": ["A_TIME", "A_COMMUNITY"],
+      "world_effect": "Produces historical time as shared threat, making the ritual’s promise socially necessary.",
+      "continuity_hook": "Sets up the counter-promise: ‘Thou shalt remain…’"
+    },
+    {
+      "line_id": "URN-L47",
+      "stanza": 5,
+      "text": "Thou shalt remain, in midst of other woe",
+      "rite_action": "Promises endurance amid changing sorrows; the urn becomes a persistent ceremonial anchor across eras.",
+      "reader_role": ["Archivist", "Citizen"],
+      "function": "MAINTAIN",
+      "altars": ["A_TIME", "A_SILENCE"],
+      "world_effect": "Maintains continuity of shared order by positing a stable form that outlives particular crises.",
+      "continuity_hook": "Introduces comparative suffering: woes beyond ours."
+    },
+    {
+      "line_id": "URN-L48",
+      "stanza": 5,
+      "text": "Than ours, a friend to man, to whom thou say'st,",
+      "rite_action": "Assigns the urn a social role (friend) and a speech-act: it addresses humanity as an ongoing congregation.",
+      "reader_role": ["Citizen", "Judge"],
+      "function": "PRODUCE",
+      "altars": ["A_COMMUNITY", "A_TRUTH"],
+      "world_effect": "Produces a trans-generational community (‘man’) maintained by recurrent address.",
+      "continuity_hook": "Opens the benediction quotation—final formula begins."
+    },
+    {
+      "line_id": "URN-L49",
+      "stanza": 5,
+      "text": "\"Beauty is truth, truth beauty,—that is all",
+      "rite_action": "Utters the ritual seal: a compact doctrine that stabilizes shared knowing by tying aesthetic form to truth.",
+      "reader_role": ["Judge", "Archivist"],
+      "function": "MAINTAIN",
+      "altars": ["A_TRUTH", "A_COMMUNITY"],
+      "world_effect": "Maintains communal order with an aphorism that can be repeated, taught, and inherited.",
+      "continuity_hook": "Completes the seal by limiting knowledge to what the rite authorizes."
+    },
+    {
+      "line_id": "URN-L50",
+      "stanza": 5,
+      "text": "Ye know on earth, and all ye need to know.\"",
+      "rite_action": "Closes the ceremony by imposing epistemic limits; the community is repaired by a shared boundary on inquiry.",
+      "reader_role": ["Citizen", "Pilgrim"],
+      "function": "REPAIR",
+      "altars": ["A_TRUTH", "A_TIME", "A_COMMUNITY"],
+      "world_effect": "Repairs anxiety by making ‘enough’ a communal agreement—reading becomes belonging.",
+      "continuity_hook": "Final closure: the ritual ends with a benediction that can be reenacted in future readings."
+    }
+  ],
+  "chapel_ceremony_diagrams": [
+    {
+      "chapel": "C1",
+      "name": "Invocation + Interrogation (Lines 1–10)",
+      "diagram": {
+        "ENTRY": "Apostrophe consecrates Urn-as-Stage; stillness becomes presence.",
+        "CHANT": "Question-procession piles interrogatives; wonder becomes shared order.",
+        "TURN": "Desire/drama appears but is held inside marble time.",
+        "SEAL": "Instruments imply music; absence becomes bond."
+      },
+      "altar_crosslinks": ["A_SILENCE", "A_TIME", "A_DESIRE", "A_COMMUNITY", "A_TRUTH"]
+    },
+    {
+      "chapel": "C2",
+      "name": "Unheard Music + Suspended Kiss (Lines 11–20)",
+      "diagram": {
+        "ENTRY": "Heard/unheard inversion reassigns authority from senses to shared inwardness.",
+        "CHANT": "Commands to pipes (‘play on’) keep the rite running.",
+        "TURN": "The kiss cannot occur; deprivation becomes permanence.",
+        "SEAL": "‘For ever’ chant stabilizes love and beauty against time."
+      },
+      "altar_crosslinks": ["A_SILENCE", "A_TIME", "A_DESIRE", "A_COMMUNITY", "A_TRUTH"]
+    },
+    {
+      "chapel": "C3",
+      "name": "Eternal Spring + Saturation (Lines 21–30)",
+      "diagram": {
+        "ENTRY": "‘Happy’ repetition manufactures communal mood as liturgy.",
+        "CHANT": "Forever-procession loops newness through repetition.",
+        "TURN": "Human passion’s cost is named (cloy’d, sorrowful).",
+        "SEAL": "Embodied limit (burning/parching) restores credibility and need for stillness."
+      },
+      "altar_crosslinks": ["A_TIME", "A_DESIRE", "A_COMMUNITY", "A_TRUTH", "A_SILENCE"]
+    },
+    {
+      "chapel": "C4",
+      "name": "Sacrifice + Empty Town (Lines 31–40)",
+      "diagram": {
+        "ENTRY": "Procession-to-sacrifice makes society visible as action.",
+        "CHANT": "Apostrophe appoints priest/altar; offices and stations stabilize order.",
+        "TURN": "The emptied town converts community into absence-in-time.",
+        "SEAL": "Silence replaces testimony; readers inherit the duty to ‘tell.’"
+      },
+      "altar_crosslinks": ["A_COMMUNITY", "A_TRUTH", "A_TIME", "A_SILENCE", "A_DESIRE"]
+    },
+    {
+      "chapel": "C5",
+      "name": "Attic Shape + Aphorism Seal (Lines 41–50)",
+      "diagram": {
+        "ENTRY": "Praise consecrates form as container of shared world.",
+        "CHANT": "Silent form ‘teases’ cognition; wonder becomes method.",
+        "TURN": "‘Cold Pastoral!’ admits ambivalence inside the rite.",
+        "SEAL": "Aphorism binds beauty/truth and sets limits: communal ‘enough.’"
+      },
+      "altar_crosslinks": ["A_TRUTH", "A_TIME", "A_SILENCE", "A_COMMUNITY", "A_DESIRE"]
+    }
+  ],
+  "compiler_spec_compact": {
+    "render_modes": {
+      "M_CARD_DECK": {
+        "unit": "one line = one card",
+        "front": "line text (verbatim)",
+        "back": ["rite_action", "function", "altars", "continuity_hook"],
+        "play": "shuffle within chapel; end each chapel by reading its SEAL lines aloud (C1 L10, C2 L20, C3 L30, C4 L40, C5 L50)"
+      },
+      "M_GRID": {
+        "grid": "5 columns (chapels) × 10 rows (line index within chapel)",
+        "vertical_traversal": "procession/time (row order reenacts ritual time)",
+        "horizontal_traversal": "altar resonance (jump across chapels via shared altar tags)",
+        "stations": "highlight A_SILENCE/A_TIME/A_DESIRE/A_COMMUNITY/A_TRUTH nodes; clicking a node filters all linked lines"
+      },
+      "M_MASS": {
+        "script": [
+          "CALL: apostrophes (L01–L04, L12–L14, L32, L38, L41, L44)",
+          "RESPONSE: question-procession lines (L05–L10, L31–L37)",
+          "CHANT: repetition (L20, L21–L27, L24, ‘for ever’ cluster)",
+          "BENEDICTION: closing formula (L49–L50)"
+        ],
+        "rule": "the congregation (readers) speaks CHANT lines together; solo-reader speaks CALL lines."
+      }
+    },
+    "procession_detectors": {
+      "PR_APOS": "line begins with direct address (Thou/O/ye) or explicitly names addressee",
+      "PR_Q": "line contains interrogative form or stacked questions",
+      "PR_FOREVER": "line contains for ever / nor ever / for evermore repetitions"
+    }
+  },
+  "repair_logic_summary": [
+    {
+      "break_site": "Suspended desire (L17–L20) and human saturation (L29–L30)",
+      "how_it_breaks": "The rite freezes fulfillment; human appetite is shown to scorch and cloy.",
+      "repair_mechanism": "Reframes lack as permanence and teaches a communal coping script (‘do not grieve’), then admits bodily limit to keep trust."
+    },
+    {
+      "break_site": "Community without testimony (L39–L40)",
+      "how_it_breaks": "No one can return to explain; meaning threatens to collapse.",
+      "repair_mechanism": "Transfers narration to the congregation across time: readers become the telling-function."
+    },
+    {
+      "break_site": "Ambivalent ‘Cold Pastoral!’ (L45)",
+      "how_it_breaks": "The ritual’s comfort becomes chilling; distance is felt as coldness.",
+      "repair_mechanism": "Allows critique inside communion, then stabilizes with an aphoristic seal that sets epistemic limits (L49–L50)."
+    }
+  ]
+}

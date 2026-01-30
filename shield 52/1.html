@@ -1,0 +1,2676 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+  <title>Shield Grid: 24×24 Calligram Poem-Engine</title>
+  <style>
+    :root{
+      --paper:#f4f4f0;
+      --ink:#111;
+      --muted:#6b6b6b;
+      --panel:#ffffffcc;
+      --line:#d8d8d2;
+      --line2:#c8c8c0;
+      --accent:#1a1a1a;
+      --good:#1b7f3b;
+      --warn:#b87400;
+      --bad:#b00020;
+
+      --cell:28;               /* px (logical) */
+      --gridZoom:1;            /* css scale */
+      --radius:18px;
+      --shadow: 0 10px 30px rgba(0,0,0,.08);
+      --shadow2: 0 6px 18px rgba(0,0,0,.10);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 800px at 20% 0%, rgba(0,0,0,.05), transparent 60%),
+        radial-gradient(900px 700px at 100% 20%, rgba(0,0,0,.05), transparent 55%),
+        var(--paper);
+      overflow:hidden;
+    }
+
+    /* Header */
+    .topbar{
+      position:sticky; top:0; z-index:50;
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px;
+      background: linear-gradient(to bottom, rgba(244,244,240,.95), rgba(244,244,240,.75));
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--line);
+    }
+    .brand{
+      display:flex; align-items:baseline; gap:10px;
+      min-width: 280px;
+    }
+    .brand h1{
+      margin:0;
+      font-size:14px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+    }
+    .brand .sub{
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 50vw;
+    }
+    .topbar .spacer{flex:1}
+    .btnrow{display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+
+    button, .chip, select, input[type="range"]{
+      font:inherit;
+    }
+    button{
+      border:1px solid var(--line2);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 8px 11px;
+      line-height:1;
+      cursor:pointer;
+      box-shadow: 0 1px 0 rgba(0,0,0,.03);
+      transition: transform .06s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:hover{border-color:#bdbdb3; box-shadow: 0 6px 16px rgba(0,0,0,.06)}
+    button:active{transform: translateY(1px)}
+    button.primary{
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+    }
+    button.danger{
+      background:#fff;
+      color:var(--bad);
+      border-color:#e1b7bf;
+    }
+    button.small{padding:6px 10px; font-size:12px}
+    button[disabled]{opacity:.5; cursor:not-allowed}
+
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:7px 10px;
+      border:1px solid var(--line2);
+      border-radius:999px;
+      background:#fff;
+      color:var(--ink);
+      box-shadow: 0 1px 0 rgba(0,0,0,.03);
+      user-select:none;
+    }
+    .chip b{font-size:12px; letter-spacing:.06em; text-transform:uppercase}
+    .chip span{font-size:12px; color:var(--muted)}
+    .chip input[type="checkbox"]{transform: translateY(1px)}
+    .chip select{
+      border:none; outline:none; background:transparent;
+      font-size:12px; color:var(--muted);
+    }
+
+    /* Layout */
+    .wrap{
+      height: calc(100% - 52px);
+      display:grid;
+      grid-template-columns: 420px 1fr;
+      gap:12px;
+      padding:12px;
+      overflow:hidden;
+    }
+    @media (max-width: 980px){
+      body{overflow:auto}
+      .wrap{
+        height:auto;
+        grid-template-columns: 1fr;
+      }
+      .brand{min-width: 0}
+    }
+
+    .panel{
+      background: var(--panel);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height: 220px;
+    }
+    .panelheader{
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background: linear-gradient(to bottom, rgba(255,255,255,.78), rgba(255,255,255,.45));
+    }
+    .panelheader h2{
+      margin:0;
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .panelheader .meta{
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .tabs{display:flex; gap:6px; align-items:center}
+    .tab{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line2);
+      background:#fff;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .tab.active{
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+    }
+
+    .panelbody{
+      padding:12px;
+      overflow:auto;
+      flex:1;
+    }
+
+    textarea{
+      width:100%;
+      min-height: 210px;
+      padding:10px 10px;
+      border-radius: 14px;
+      border:1px solid var(--line2);
+      outline:none;
+      resize: vertical;
+      background:#fff;
+      color:var(--ink);
+      box-shadow: inset 0 1px 0 rgba(0,0,0,.03);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin:10px 0 0;
+    }
+    .row .hint{
+      font-size:12px;
+      color:var(--muted);
+      margin-left:auto;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    @media (max-width: 540px){
+      .kv{grid-template-columns:1fr}
+    }
+
+    .card{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 16px;
+      box-shadow: var(--shadow2);
+      padding:10px 10px;
+      overflow:hidden;
+    }
+    .card h3{
+      margin:0 0 8px 0;
+      font-size:12px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+    }
+    .card .small{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+
+    /* Grid pane */
+    .gridpane{
+      position:relative;
+      min-height: 420px;
+    }
+    .gridtools{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(to bottom, rgba(255,255,255,.78), rgba(255,255,255,.45));
+    }
+    .gridtools .left, .gridtools .right{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .gridframe{
+      position:relative;
+      flex:1;
+      overflow:auto;
+      padding:12px;
+      background:
+        radial-gradient(900px 600px at 50% 30%, rgba(0,0,0,.05), transparent 55%),
+        rgba(255,255,255,.25);
+    }
+    .canvaswrap{
+      width: fit-content;
+      margin: 0 auto;
+      transform: scale(var(--gridZoom));
+      transform-origin: top center;
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      border:1px solid var(--line);
+      overflow:hidden;
+      background:#fff;
+    }
+    canvas#grid{
+      display:block;
+      image-rendering: crisp-edges;
+      image-rendering: pixelated;
+      background:#fff;
+    }
+
+    .legend{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .dot{width:10px;height:10px;border-radius:999px;border:1px solid var(--line2); background:#fff; display:inline-block}
+    .dot.core{background:#f7f1e3}
+    .dot.inner{background:#eef6ff}
+    .dot.middle{background:#f1fff1}
+    .dot.outer{background:#fff3f6}
+    .dot.ocean{background:#f2f2ff}
+
+    /* Inspector drawer */
+    .drawer{
+      position:absolute;
+      right:12px;
+      top:64px;
+      width:min(420px, calc(100% - 24px));
+      max-height: calc(100% - 76px);
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:none;
+      z-index: 20;
+    }
+    .drawer.open{display:flex; flex-direction:column}
+    .drawer .hd{
+      padding:10px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(to bottom, rgba(255,255,255,.85), rgba(255,255,255,.55));
+    }
+    .drawer .hd b{
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .drawer .bd{
+      padding:12px;
+      overflow:auto;
+    }
+    .form{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .field label{
+      font-size:11px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .field select, .field input[type="text"], .field input[type="number"]{
+      border:1px solid var(--line2);
+      border-radius: 12px;
+      padding: 8px 10px;
+      outline:none;
+      background:#fff;
+      font-size:12px;
+    }
+    .field .range{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .field input[type="range"]{width:100%}
+    .ops{
+      margin-top:12px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .ops label{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:7px 10px;
+      border:1px solid var(--line2);
+      border-radius: 999px;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+      background:#fff;
+    }
+
+    .status{
+      margin-top:10px;
+      border-radius: 14px;
+      padding:10px;
+      border:1px solid var(--line);
+      background: rgba(244,244,240,.55);
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+    .status .ok{color:var(--good); font-weight:600}
+    .status .warn{color:var(--warn); font-weight:600}
+    .status .bad{color:var(--bad); font-weight:600}
+
+    .footer{
+      margin-top:10px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      border:1px solid var(--line2);
+      border-bottom-width:2px;
+      background:#fff;
+      padding:1px 6px;
+      border-radius: 7px;
+      font-size:11px;
+      color:#444;
+    }
+
+    /* Small-screen ergonomics */
+    @media (max-width: 560px){
+      .topbar{padding:10px}
+      .btnrow{justify-content:flex-start}
+      .wrap{padding:10px}
+      .gridframe{padding:10px}
+      textarea{min-height: 240px}
+      :root{--cell:26}
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <h1>Shield Grid</h1>
+      <div class="sub">24×24 calligrammatic transmission bridge · “Language is now matter.”</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="btnrow">
+      <button class="small" id="btnExample" title="Load the Iliad Book XVIII Shield passage">Load Shield Text</button>
+      <button class="small" id="btnExampleSpec" title="Load the OPS-SCHEMAS spec into the Spec tab">Load Spec</button>
+      <button class="primary" id="btnCompile" title="Compile text into the 24×24 grid">Compile → Grid</button>
+      <button class="small" id="btnExport" title="Export current manifest JSON">Export Manifest</button>
+      <button class="small" id="btnImport" title="Import a manifest JSON file">Import</button>
+      <input id="fileImport" type="file" accept="application/json" hidden />
+      <button class="danger small" id="btnReset" title="Reset grid + traversal (keeps text)">Reset</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- Left: authoring + manifest -->
+    <section class="panel">
+      <div class="panelheader">
+        <h2>Operative Text</h2>
+        <div class="tabs" role="tablist" aria-label="Left panel tabs">
+          <div class="tab active" data-tab="text" role="tab" aria-selected="true">Text</div>
+          <div class="tab" data-tab="spec" role="tab" aria-selected="false">Spec</div>
+          <div class="tab" data-tab="manifest" role="tab" aria-selected="false">Manifest</div>
+        </div>
+      </div>
+
+      <div class="panelbody" id="tab_text">
+        <textarea id="sourceText" spellcheck="false" aria-label="Source text"></textarea>
+
+        <div class="row">
+          <span class="chip" title="Segmentation mode">
+            <b>SEG</b>
+            <select id="segMode" aria-label="Segmentation mode">
+              <option value="lines">Lines (non-empty)</option>
+              <option value="stanzas">Stanzas (blank-line blocks)</option>
+              <option value="sentences">Sentences (rough)</option>
+            </select>
+          </span>
+
+          <span class="chip" title="Scan pattern used to place segments into regions">
+            <b>SCAN</b>
+            <select id="scanMode" aria-label="Scan pattern">
+              <option value="spiral">Spiral (center→out)</option>
+              <option value="snake">Snake (row scan)</option>
+              <option value="rings">Rings (shield-like)</option>
+            </select>
+          </span>
+
+          <span class="chip" title="When enabled, empty cells become silence-cells (VOID-ish) with high negative space.">
+            <input type="checkbox" id="silenceCells" checked />
+            <span>Silence cells</span>
+          </span>
+
+          <span class="hint">Tip: click a cell to inspect · hold <span class="kbd">Shift</span> to append traversal</span>
+        </div>
+
+        <div class="kv">
+          <div class="card">
+            <h3>Compiler Notes</h3>
+            <div class="small" id="compileNotes">
+              Paste text → Compile. The compiler heuristically tags segments into scenes (forge/cosmos/cities/fields/dance/ocean),
+              assigns world_operation + ritual_act, then derives calligram layers via mapping rules.
+              You can override any cell in the inspector.
+            </div>
+          </div>
+          <div class="card">
+            <h3>Traversal Rules (TP)</h3>
+            <div class="small">
+              Start must be <b>IMAGE</b> or <b>CONTAINER</b>.
+              End must be <b>VOID</b>.
+              Path must encounter ≥ 3 GlyphFlow types.
+              StrokeWeight should trend <b>LIGHT→BLACK→HAIRLINE</b>.
+              (The engine checks; it won’t stop you, it will shame you.)
+            </div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <b>Design stance:</b> the grid is address space; traversal is reading; meaning is an interface effect.
+        </div>
+      </div>
+
+      <div class="panelbody" id="tab_spec" style="display:none">
+        <textarea id="specText" spellcheck="false" aria-label="Spec text"></textarea>
+        <div class="footer">
+          This is included in the exported manifest under <code>ops_schemas</code> (normalized to JSON).
+        </div>
+      </div>
+
+      <div class="panelbody" id="tab_manifest" style="display:none">
+        <textarea id="manifestText" spellcheck="false" aria-label="Manifest JSON"></textarea>
+        <div class="footer">
+          The manifest is deterministic enough to regenerate the surface grid: segments + placement + calligram layers.
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: grid -->
+    <section class="panel gridpane">
+      <div class="gridtools">
+        <div class="left">
+          <span class="chip" title="Grid zoom">
+            <b>ZOOM</b>
+            <input type="range" id="zoom" min="0.7" max="2.2" value="1" step="0.05" aria-label="Zoom" />
+            <span id="zoomLabel">1.00×</span>
+          </span>
+          <span class="chip" title="Cell size">
+            <b>CELL</b>
+            <input type="range" id="cellSize" min="22" max="38" value="28" step="1" aria-label="Cell size" />
+            <span id="cellLabel">28</span>
+          </span>
+          <span class="chip" title="Render mode">
+            <b>VIEW</b>
+            <select id="viewMode" aria-label="View mode">
+              <option value="calligram">Calligram</option>
+              <option value="plain">Plain</option>
+              <option value="zones">Zones</option>
+              <option value="weights">Weights</option>
+            </select>
+          </span>
+        </div>
+
+        <div class="right">
+          <span class="chip" title="Traversal mode: click cells to build a path. Shift-click always appends.">
+            <input type="checkbox" id="traversalMode" />
+            <span>Traversal</span>
+          </span>
+          <button class="small" id="btnAutoTraversal" title="Generate a default traversal (forge→war→ocean)">Auto Path</button>
+          <button class="small danger" id="btnClearTraversal" title="Clear traversal">Clear Path</button>
+        </div>
+      </div>
+
+      <div class="gridframe" id="gridFrame" tabindex="0" aria-label="Grid container">
+        <div class="legend" style="margin:0 0 10px 0;">
+          <span class="dot core"></span><span>CORE (Cosmos)</span>
+          <span class="dot inner"></span><span>INNER (Cities)</span>
+          <span class="dot middle"></span><span>MIDDLE (Fields)</span>
+          <span class="dot outer"></span><span>OUTER (Pastoral/Dance)</span>
+          <span class="dot ocean"></span><span>BORDER (Ocean)</span>
+          <span style="margin-left:auto">Click to inspect · Drag to scroll · Zoom slider scales the canvas</span>
+        </div>
+
+        <div class="canvaswrap" id="canvasWrap">
+          <canvas id="grid"></canvas>
+        </div>
+
+        <!-- Inspector -->
+        <aside class="drawer" id="drawer" aria-label="Cell inspector">
+          <div class="hd">
+            <b id="drawerTitle">Cell</b>
+            <button class="small" id="btnCloseDrawer">Close</button>
+          </div>
+          <div class="bd">
+            <div class="status" id="cellSummary"></div>
+
+            <div class="form" style="margin-top:12px">
+              <div class="field">
+                <label>glyph_flow</label>
+                <select id="f_glyph_flow"></select>
+              </div>
+              <div class="field">
+                <label>stroke_weight</label>
+                <select id="f_stroke_weight"></select>
+              </div>
+
+              <div class="field">
+                <label>gravity</label>
+                <select id="f_gravity"></select>
+              </div>
+              <div class="field">
+                <label>calligram_function</label>
+                <select id="f_calligram_function"></select>
+              </div>
+
+              <div class="field">
+                <label>letter_material</label>
+                <select id="f_letter_material"></select>
+              </div>
+              <div class="field">
+                <label>shape_outline</label>
+                <select id="f_shape_outline"></select>
+              </div>
+
+              <div class="field">
+                <label>negative_space_ratio</label>
+                <div class="range">
+                  <input id="f_negative_space" type="range" min="0" max="0.9" step="0.05" />
+                  <span id="f_negative_space_lbl" style="font-size:12px;color:var(--muted)"></span>
+                </div>
+              </div>
+              <div class="field">
+                <label>line_tension</label>
+                <div class="range">
+                  <input id="f_line_tension" type="range" min="0" max="1" step="0.05" />
+                  <span id="f_line_tension_lbl" style="font-size:12px;color:var(--muted)"></span>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>wrap_rule</label>
+                <select id="f_wrap_rule">
+                  <option value="break_on_breath">break_on_breath</option>
+                  <option value="break_on_concept">break_on_concept</option>
+                  <option value="continuous">continuous</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>mirroring</label>
+                <select id="f_mirroring">
+                  <option value="false">false</option>
+                  <option value="true">true</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="margin-top:12px">
+              <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">typographic_operators</div>
+              <div class="ops" id="opsList"></div>
+            </div>
+
+            <div class="status" id="traversalStatus" style="margin-top:12px"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </div>
+
+<script>
+/* ============================================================
+   OPS-SCHEMAS (normalized enums + operators + mapping rules)
+   ============================================================ */
+const OPS = {
+  meta: {
+    name: "OPS-SCHEMAS-24x24-CALLIGRAM-v2",
+    intent: "Merge 24×24 grid with calligrammatic rendering so text becomes geometry and geometry becomes argument."
+  },
+  enums: {
+    GlyphFlow: ["LINEAR","SPIRAL","COLUMN","FRACTURE","RADIATE","CLUSTER","SCATTER","WAVE"],
+    StrokeWeight: ["HAIRLINE","LIGHT","REGULAR","BOLD","BLACK"],
+    TypographicGravity: ["TOP","BOTTOM","LEFT","RIGHT","CENTER","FLOAT"],
+    CalligramFunction: ["IMAGE","CONTAINER","BARRIER","PATH","VOID"],
+    LetterMaterial: ["INK","STONE","ASH","NEON","BONE","LIGHT","STATIC"]
+  },
+  operator_library: [
+    { id:"FLOW_TO_SHAPE",       desc:"GlyphFlow must visually resemble shape_outline." },
+    { id:"COMPRESS_TO_POINT",   desc:"Increase line_tension, reduce negative_space_ratio." },
+    { id:"DISSOLVE_TO_VOID",    desc:"Convert letters into scattered fragments; calligram_function=VOID." },
+    { id:"STACK_AS_COLUMN",     desc:"Force vertical alignment; glyph_flow=COLUMN." },
+    { id:"RADIATE_FROM_CENTER", desc:"glyph_flow=RADIATE, gravity=CENTER." },
+    { id:"CARVE_SILHOUETTE",    desc:"Text forms boundary of shape_outline; interior is empty." },
+    { id:"MIRROR_AXIS",         desc:"mirroring=true; reflects around center axis." },
+    { id:"ERODE_STROKE",        desc:"Step stroke_weight downward." }
+  ],
+  mapping_rules: [
+    { id:"M1", if:"world_operation=PRODUCE",   then:"calligram_function=IMAGE" },
+    { id:"M2", if:"world_operation=MAINTAIN",  then:"calligram_function=CONTAINER" },
+    { id:"M3", if:"world_operation=REPAIR",    then:"calligram_function=PATH" },
+    { id:"M4", if:"world_operation=TRANSFORM", then:"calligram_function=VOID" },
+    { id:"M5", if:"ritual_act=INVOCATION",     then:"glyph_flow=RADIATE" },
+    { id:"M6", if:"ritual_act=CHANT",          then:"glyph_flow=WAVE" },
+    { id:"M7", if:"ritual_act=QUESTION",       then:"glyph_flow=FRACTURE" },
+    { id:"M8", if:"silence.is_silence_cell=true", then:"negative_space_ratio >= 0.70" }
+  ],
+  zone_calligram_rules: [
+    { id:"ZC1", rule:"All cells in zone share one dominant LetterMaterial." },
+    { id:"ZC2", rule:"At least one cell per zone uses CARVE_SILHOUETTE." },
+    { id:"ZC3", rule:"Adjacent cells vary StrokeWeight by at most one step." }
+  ],
+  traversal_poetics: [
+    { id:"TP1", rule:"Traversal must encounter at least 3 distinct GlyphFlow types." },
+    { id:"TP2", rule:"Traversal start cell must be IMAGE or CONTAINER." },
+    { id:"TP3", rule:"Traversal end cell must be VOID." },
+    { id:"TP4", rule:"StrokeWeight trends LIGHT→BLACK→HAIRLINE across traversal." }
+  ],
+  shape_catalog: {
+    urn: "Containment of memory, mortality, archive.",
+    door: "Threshold, entry, preposition shift.",
+    spiral_eye: "Recursion, self-observation.",
+    river: "Temporal flow.",
+    knot: "Contradiction, bind."
+  },
+  closing_seal: "Language is now matter. The page is now terrain. The grid is now a poem-engine."
+};
+
+/* ============================================================
+   App state
+   ============================================================ */
+const state = {
+  gridSize: 24,
+  cellSize: 28,
+  zoom: 1,
+  viewMode: "calligram",
+  segMode: "lines",
+  scanMode: "rings",
+  silenceCells: true,
+
+  segments: [],
+  cells: [],
+
+  selected: null,     // cell index
+  traversal: [],      // array of cell indices (in order)
+
+  dirty: true
+};
+
+/* ============================================================
+   Helpers
+   ============================================================ */
+const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+const lerp = (a,b,t)=>a+(b-a)*t;
+const pick = (arr)=>arr[Math.floor(Math.random()*arr.length)];
+const uniq = (arr)=>[...new Set(arr)];
+const nowISO = ()=>new Date().toISOString();
+
+function safeJSON(obj){
+  return JSON.stringify(obj, null, 2);
+}
+
+function normalizeText(t){
+  return (t||"")
+    .replace(/\r\n/g,"\n")
+    .replace(/\t/g,"  ")
+    .trim();
+}
+
+function splitStanzas(t){
+  return normalizeText(t)
+    .split(/\n\s*\n+/)
+    .map(s=>s.trim())
+    .filter(Boolean);
+}
+
+function splitLines(t){
+  return normalizeText(t)
+    .split("\n")
+    .map(s=>s.replace(/\s+$/,""))
+    .filter(s=>s.trim().length>0);
+}
+
+function splitSentences(t){
+  const raw = normalizeText(t)
+    .replace(/\n+/g," ")
+    .replace(/\s+/g," ")
+    .trim();
+  // rough sentence splitter (keeps ? ! .)
+  const parts = raw.split(/(?<=[\.\?\!])\s+/g);
+  return parts.map(s=>s.trim()).filter(Boolean);
+}
+
+/* ============================================================
+   Scene classification (heuristic)
+   ============================================================ */
+const SCENES = {
+  FORGE:   { zoneHint:"CORE",    quadrant:"TOP",    shape:"knot",      op:"PRODUCE",   material:"STONE" },
+  COSMOS:  { zoneHint:"CORE",    quadrant:"CENTER", shape:"spiral_eye",op:"PRODUCE",   material:"LIGHT" },
+  PEACE:   { zoneHint:"INNER",   quadrant:"LEFT",   shape:"urn",       op:"MAINTAIN",  material:"BONE" },
+  WAR:     { zoneHint:"INNER",   quadrant:"RIGHT",  shape:"knot",      op:"TRANSFORM",material:"INK" },
+  PLOUGH:  { zoneHint:"MIDDLE",  quadrant:"TOP",    shape:"river",     op:"MAINTAIN", material:"STONE" },
+  HARVEST: { zoneHint:"MIDDLE",  quadrant:"BOTTOM", shape:"river",     op:"MAINTAIN", material:"BONE" },
+  VINE:    { zoneHint:"MIDDLE",  quadrant:"LEFT",   shape:"river",     op:"REPAIR",   material:"ASH" },
+  CATTLE:  { zoneHint:"MIDDLE",  quadrant:"RIGHT",  shape:"knot",      op:"TRANSFORM",material:"INK" },
+  PASTORAL:{ zoneHint:"OUTER",   quadrant:"BOTTOM", shape:"river",     op:"MAINTAIN", material:"ASH" },
+  DANCE:   { zoneHint:"OUTER",   quadrant:"CENTER", shape:"spiral_eye",op:"MAINTAIN", material:"NEON" },
+  OCEAN:   { zoneHint:"BORDER",  quadrant:"EDGE",   shape:"river",     op:"TRANSFORM",material:"LIGHT" },
+  OTHER:   { zoneHint:"OUTER",   quadrant:"CENTER", shape:null,        op:"MAINTAIN", material:"INK" }
+};
+
+function classifySegment(raw){
+  const s = raw.toLowerCase();
+
+  const has = (...kw)=>kw.some(k=>s.includes(k));
+  // ritual act
+  let ritual_act = "CHANT";
+  if (raw.includes("?")) ritual_act = "QUESTION";
+  if (has("o ", "thee,", "welcome", "grace with", "o could", "thus having said")) ritual_act = "INVOCATION";
+
+  // scene
+  let scene = "OTHER";
+  if (has("vulcan","vulcan's","anvil","bellows","forge","hammer","tongs","furnace","fires","father of the fires")) scene = "FORGE";
+  else if (has("earth","heaven","ocean","sun","moon","star","pleiads","hyads","orion","bear","axle of the sky")) scene = "COSMOS";
+  else if (has("city","peace","dance","hymeneal","brides","forum","elders","talents","laws decide","sceptres")) scene = "PEACE";
+  else if (has("war","arms","hosts","pillag","burn","ambush","slaughter","blood","tumult","contention","fate stalk'd","carcases")) scene = "WAR";
+  else if (has("plough","furrow","shares","yokes","cleave the soil","sweating hind")) scene = "PLOUGH";
+  else if (has("reaper","harvest","grain","sickles","sheaves","banquet","victim ox")) scene = "HARVEST";
+  else if (has("vineyard","vines","clusters","linus","baskets","purple product")) scene = "VINE";
+  else if (has("oxen","herds","lions","bull","herdsmen","torrent","dogs")) scene = "CATTLE";
+  else if (has("forests","meads","stalls","folds","cots","fleecy flocks","whiten all the scene")) scene = "PASTORAL";
+  else if (has("figured dance","gnossus","daedalean","youths and maidens","moving maze","tumblers")) scene = "DANCE";
+  else if (has("ocean round","waves","buckler's verge","pour'd the ocean round","living silver")) scene = "OCEAN";
+
+  // world_operation
+  let world_operation = SCENES[scene].op;
+
+  // a little nuance: if explicit repair path / passage
+  if (has("pathway","winding leads","march a train","witness","decide","adjudged")) {
+    if (world_operation === "MAINTAIN") world_operation = "REPAIR";
+  }
+
+  // weights (allocation pressure)
+  const weight = clamp(
+    1 + (raw.length>130 ? 1 : 0) + (scene==="WAR" || scene==="OCEAN" ? 1 : 0),
+    1, 3
+  );
+
+  return {
+    raw_text: raw,
+    scene,
+    ritual_act,
+    world_operation,
+    weight
+  };
+}
+
+/* ============================================================
+   Grid regions (shield-like rings + quadrants)
+   ============================================================ */
+function zoneOf(rc){
+  const [r,c] = rc;
+  const N = state.gridSize;
+  const d = Math.min(r, c, N-1-r, N-1-c);
+  // 0 = border, inward
+  if (d === 0) return "BORDER";
+  if (d <= 2) return "OUTER";
+  if (d <= 5) return "MIDDLE";
+  if (d <= 8) return "INNER";
+  return "CORE";
+}
+
+function quadrantOf(rc){
+  const [r,c] = rc;
+  const mid = (state.gridSize-1)/2;
+  const top = r < mid, left = c < mid;
+  if (Math.abs(r-mid)<1.1 && Math.abs(c-mid)<1.1) return "CENTER";
+  if (top && left) return "TL";
+  if (top && !left) return "TR";
+  if (!top && left) return "BL";
+  if (!top && !left) return "BR";
+  return "CENTER";
+}
+
+function regionMatchCells(sceneKey){
+  // Return list of coordinates in preferred region for this scene.
+  const N = state.gridSize;
+  const coords = [];
+  const hint = SCENES[sceneKey]?.zoneHint || "OUTER";
+  const quad = SCENES[sceneKey]?.quadrant || "CENTER";
+
+  for (let r=0;r<N;r++){
+    for (let c=0;c<N;c++){
+      const z = zoneOf([r,c]);
+      if (z !== hint) continue;
+
+      // map quadrant intent to geometric constraints
+      if (quad === "LEFT" && c >= N/2) continue;
+      if (quad === "RIGHT" && c < N/2) continue;
+      if (quad === "TOP" && r >= N/2) continue;
+      if (quad === "BOTTOM" && r < N/2) continue;
+
+      if (quad === "EDGE" && z !== "BORDER") continue;
+
+      coords.push([r,c]);
+    }
+  }
+  return coords;
+}
+
+/* ============================================================
+   Scan ordering
+   ============================================================ */
+function orderCoords(coords, mode){
+  const N = state.gridSize;
+  const center = [(N-1)/2, (N-1)/2];
+
+  const dist = (rc)=>Math.hypot(rc[0]-center[0], rc[1]-center[1]);
+
+  if (mode === "snake"){
+    return coords.slice().sort((a,b)=>{
+      if (a[0] !== b[0]) return a[0]-b[0];
+      return (a[0]%2===0) ? (a[1]-b[1]) : (b[1]-a[1]);
+    });
+  }
+
+  if (mode === "spiral"){
+    // approximate spiral by sorting on angle then distance
+    return coords.slice().sort((a,b)=>{
+      const aa = Math.atan2(a[0]-center[0], a[1]-center[1]);
+      const ab = Math.atan2(b[0]-center[0], b[1]-center[1]);
+      if (aa !== ab) return aa - ab;
+      return dist(a) - dist(b);
+    });
+  }
+
+  // rings: sort by ring depth outward, then angle
+  return coords.slice().sort((a,b)=>{
+    const da = Math.min(a[0],a[1],N-1-a[0],N-1-a[1]);
+    const db = Math.min(b[0],b[1],N-1-b[0],N-1-b[1]);
+    if (da !== db) return db - da; // core first (bigger d first)
+    const aa = Math.atan2(a[0]-center[0], a[1]-center[1]);
+    const ab = Math.atan2(b[0]-center[0], b[1]-center[1]);
+    return aa - ab;
+  });
+}
+
+/* ============================================================
+   Calligram layer derivation (mapping rules + zone coherence)
+   ============================================================ */
+function applyMappingRules(seg, cell){
+  // default calligram object
+  const calligram = {
+    glyph_flow: "LINEAR",
+    stroke_weight: "REGULAR",
+    gravity: "CENTER",
+    shape_outline: null,
+    calligram_function: "CONTAINER",
+    letter_material: "INK",
+    negative_space_ratio: 0.15,
+    wrap_rule: "break_on_breath",
+    line_tension: 0.25,
+    mirroring: false
+  };
+
+  // world_operation -> calligram_function
+  if (seg.world_operation === "PRODUCE") calligram.calligram_function = "IMAGE";
+  if (seg.world_operation === "MAINTAIN") calligram.calligram_function = "CONTAINER";
+  if (seg.world_operation === "REPAIR") calligram.calligram_function = "PATH";
+  if (seg.world_operation === "TRANSFORM") calligram.calligram_function = "VOID";
+
+  // ritual_act -> glyph_flow
+  if (seg.ritual_act === "INVOCATION") { calligram.glyph_flow = "RADIATE"; calligram.gravity="CENTER"; }
+  if (seg.ritual_act === "CHANT") { calligram.glyph_flow = "WAVE"; }
+  if (seg.ritual_act === "QUESTION") { calligram.glyph_flow = "FRACTURE"; }
+
+  // scene defaults
+  const sceneDefaults = SCENES[seg.scene] || SCENES.OTHER;
+  calligram.letter_material = sceneDefaults.material || "INK";
+  calligram.shape_outline = sceneDefaults.shape || null;
+
+  // tension & negative space tuned by operation
+  if (seg.world_operation === "PRODUCE") { calligram.line_tension = 0.35; calligram.negative_space_ratio = 0.12; }
+  if (seg.world_operation === "MAINTAIN") { calligram.line_tension = 0.22; calligram.negative_space_ratio = 0.16; }
+  if (seg.world_operation === "REPAIR") { calligram.line_tension = 0.28; calligram.negative_space_ratio = 0.18; }
+  if (seg.world_operation === "TRANSFORM") { calligram.line_tension = 0.55; calligram.negative_space_ratio = 0.45; }
+
+  // border/ocean = more void
+  if (cell.zone === "BORDER"){
+    calligram.calligram_function = "VOID";
+    calligram.glyph_flow = "WAVE";
+    calligram.negative_space_ratio = Math.max(calligram.negative_space_ratio, 0.55);
+    calligram.stroke_weight = "HAIRLINE";
+    calligram.letter_material = "LIGHT";
+    calligram.shape_outline = "river";
+  }
+
+  // stroke weight based on weight + scene
+  const w = seg.weight || 1;
+  if (seg.scene === "WAR") calligram.stroke_weight = (w>=3) ? "BLACK" : "BOLD";
+  else if (seg.scene === "FORGE") calligram.stroke_weight = (w>=2) ? "BOLD" : "REGULAR";
+  else if (seg.scene === "COSMOS") calligram.stroke_weight = "LIGHT";
+  else if (seg.scene === "DANCE") calligram.stroke_weight = "BOLD";
+  else calligram.stroke_weight = (w>=2) ? "REGULAR" : "LIGHT";
+
+  // gravity by quadrant
+  if (cell.quad === "TL") calligram.gravity = "TOP";
+  if (cell.quad === "TR") calligram.gravity = "RIGHT";
+  if (cell.quad === "BL") calligram.gravity = "LEFT";
+  if (cell.quad === "BR") calligram.gravity = "BOTTOM";
+  if (cell.quad === "CENTER") calligram.gravity = "CENTER";
+
+  // default operators
+  const ops = [];
+  if (calligram.shape_outline) ops.push("FLOW_TO_SHAPE");
+  if (calligram.glyph_flow === "COLUMN") ops.push("STACK_AS_COLUMN");
+  if (calligram.glyph_flow === "RADIATE") ops.push("RADIATE_FROM_CENTER");
+  if (calligram.calligram_function === "VOID") ops.push("DISSOLVE_TO_VOID");
+
+  return { calligram, ops };
+}
+
+function enforceZoneCoherence(cells){
+  // ZC1: dominant letter material per zone
+  const zones = ["CORE","INNER","MIDDLE","OUTER","BORDER"];
+  const dom = {
+    CORE:"LIGHT",
+    INNER:"BONE",
+    MIDDLE:"STONE",
+    OUTER:"ASH",
+    BORDER:"LIGHT"
+  };
+  for (const z of zones){
+    for (const c of cells){
+      if (c.zone === z && c.segment){
+        // keep segment-set material, but bias toward dominant by gentle override when empty or OTHER
+        if (c.segment.scene === "OTHER") c.calligram.letter_material = dom[z];
+      }
+      if (c.zone === z && !c.segment && state.silenceCells){
+        c.calligram.letter_material = dom[z];
+      }
+    }
+  }
+
+  // ZC2: at least one CARVE_SILHOUETTE per zone
+  const hasCarve = {};
+  for (const z of zones) hasCarve[z] = false;
+  for (const c of cells){
+    if (c.ops.includes("CARVE_SILHOUETTE")) hasCarve[c.zone] = true;
+  }
+  for (const z of zones){
+    if (hasCarve[z]) continue;
+    // pick first meaningful cell in zone, else first cell in zone
+    const candidate = cells.find(c=>c.zone===z && c.segment) || cells.find(c=>c.zone===z);
+    if (candidate){
+      if (!candidate.calligram.shape_outline) candidate.calligram.shape_outline = (z==="INNER") ? "urn" : (z==="BORDER" ? "river" : "spiral_eye");
+      if (!candidate.ops.includes("CARVE_SILHOUETTE")) candidate.ops.push("CARVE_SILHOUETTE");
+      candidate.dirty = true;
+    }
+  }
+
+  // ZC3: adjacent cells vary StrokeWeight by at most one step
+  const idxWeight = (w)=>OPS.enums.StrokeWeight.indexOf(w);
+  const clampWeight = (i)=>OPS.enums.StrokeWeight[clamp(i,0,OPS.enums.StrokeWeight.length-1)];
+
+  const N = state.gridSize;
+  const get = (r,c)=>cells[r*N+c];
+
+  // one smoothing pass (enough to reduce harsh jumps)
+  for (let r=0;r<N;r++){
+    for (let c=0;c<N;c++){
+      const cell = get(r,c);
+      const neigh = [];
+      if (r>0) neigh.push(get(r-1,c));
+      if (c>0) neigh.push(get(r,c-1));
+      if (r<N-1) neigh.push(get(r+1,c));
+      if (c<N-1) neigh.push(get(r,c+1));
+      const wi = idxWeight(cell.calligram.stroke_weight);
+      let target = wi;
+      for (const n of neigh){
+        const ni = idxWeight(n.calligram.stroke_weight);
+        if (Math.abs(ni - target) > 1){
+          target = ni + Math.sign(target - ni);
+        }
+      }
+      const newW = clampWeight(target);
+      if (newW !== cell.calligram.stroke_weight){
+        cell.calligram.stroke_weight = newW;
+        cell.dirty = true;
+      }
+    }
+  }
+}
+
+/* ============================================================
+   Compiler: text -> segments -> grid cells
+   ============================================================ */
+function buildSegments(text){
+  const mode = state.segMode;
+  let chunks = [];
+  if (mode === "stanzas") chunks = splitStanzas(text);
+  else if (mode === "sentences") chunks = splitSentences(text);
+  else chunks = splitLines(text);
+
+  return chunks.map((raw,i)=>{
+    const seg = classifySegment(raw);
+    return { id:`SEG_${String(i+1).padStart(3,"0")}`, ...seg };
+  });
+}
+
+function makeEmptyCell(i, r, c){
+  return {
+    id: `C_${String(i).padStart(3,"0")}`,
+    index: i,
+    r, c,
+    zone: zoneOf([r,c]),
+    quad: quadrantOf([r,c]),
+    is_silence_cell: false,
+
+    segment: null,
+    calligram: {
+      glyph_flow:"LINEAR",
+      stroke_weight:"HAIRLINE",
+      gravity:"CENTER",
+      shape_outline:null,
+      calligram_function:"VOID",
+      letter_material:"INK",
+      negative_space_ratio: 0.75,
+      wrap_rule:"continuous",
+      line_tension:0.2,
+      mirroring:false
+    },
+    ops: [],
+    dirty: true
+  };
+}
+
+function placeSegments(segments){
+  const N = state.gridSize;
+  const cells = [];
+  for (let r=0;r<N;r++){
+    for (let c=0;c<N;c++){
+      cells.push(makeEmptyCell(r*N+c, r, c));
+    }
+  }
+
+  // region capacity maps (scene -> ordered coords)
+  const regionCoords = {};
+  for (const k of Object.keys(SCENES)){
+    regionCoords[k] = orderCoords(regionMatchCells(k), state.scanMode);
+  }
+
+  // Fallback coords (all non-border first)
+  const allCoords = [];
+  for (let r=0;r<N;r++) for (let c=0;c<N;c++) allCoords.push([r,c]);
+  const fallback = orderCoords(allCoords, state.scanMode);
+
+  const used = new Set();
+
+  function takeCoordForScene(scene){
+    const list = regionCoords[scene] || [];
+    for (const rc of list){
+      const idx = rc[0]*N + rc[1];
+      if (!used.has(idx)) return rc;
+    }
+    // fallback
+    for (const rc of fallback){
+      const idx = rc[0]*N + rc[1];
+      if (!used.has(idx)) return rc;
+    }
+    return null;
+  }
+
+  // Place each segment (one cell per segment; weight influences calligram tension)
+  for (const seg of segments){
+    const rc = takeCoordForScene(seg.scene);
+    if (!rc) break;
+    const idx = rc[0]*N + rc[1];
+    used.add(idx);
+
+    const cell = cells[idx];
+    cell.segment = seg;
+    cell.is_silence_cell = false;
+
+    const {calligram, ops} = applyMappingRules(seg, cell);
+    cell.calligram = calligram;
+    cell.ops = ops;
+    cell.dirty = true;
+  }
+
+  // Silence cells
+  for (const cell of cells){
+    if (!cell.segment && state.silenceCells){
+      cell.is_silence_cell = true;
+      cell.calligram.calligram_function = "VOID";
+      cell.calligram.negative_space_ratio = Math.max(cell.calligram.negative_space_ratio, 0.78);
+      cell.calligram.stroke_weight = "HAIRLINE";
+      cell.ops = uniq(cell.ops.concat(["DISSOLVE_TO_VOID"]));
+      cell.dirty = true;
+    }
+  }
+
+  enforceZoneCoherence(cells);
+  return cells;
+}
+
+/* ============================================================
+   Rendering: grid canvas + cell calligrams
+   ============================================================ */
+const gridCanvas = document.getElementById("grid");
+const gridCtx = gridCanvas.getContext("2d");
+
+function setCanvasSize(){
+  const N = state.gridSize;
+  const cs = state.cellSize;
+  const w = N * cs;
+  const h = N * cs;
+
+  const dpr = window.devicePixelRatio || 1;
+  gridCanvas.width = Math.floor(w * dpr);
+  gridCanvas.height = Math.floor(h * dpr);
+  gridCanvas.style.width = w + "px";
+  gridCanvas.style.height = h + "px";
+  gridCtx.setTransform(dpr,0,0,dpr,0,0);
+
+  state.dirty = true;
+}
+
+function zoneColor(z){
+  // used in zone view
+  if (z==="CORE") return "#f7f1e3";
+  if (z==="INNER") return "#eef6ff";
+  if (z==="MIDDLE") return "#f1fff1";
+  if (z==="OUTER") return "#fff3f6";
+  return "#f2f2ff"; // BORDER
+}
+
+function materialStyle(mat){
+  // Return {fill, shadow, glow, jitter}
+  switch(mat){
+    case "INK": return {fill:"#111", shadow:null, glow:null, jitter:0};
+    case "STONE": return {fill:"#2a2a2a", shadow:"rgba(0,0,0,.25)", glow:null, jitter:0.4};
+    case "ASH": return {fill:"#6a6a6a", shadow:"rgba(0,0,0,.12)", glow:null, jitter:0.8};
+    case "NEON": return {fill:"#1a1a1a", shadow:null, glow:"rgba(50,205,50,.85)", jitter:0.3};
+    case "BONE": return {fill:"#2a1f17", shadow:"rgba(0,0,0,.10)", glow:null, jitter:0.15};
+    case "LIGHT": return {fill:"#111", shadow:null, glow:"rgba(0,0,0,.12)", jitter:0.15};
+    case "STATIC": return {fill:"#222", shadow:null, glow:null, jitter:1.2};
+    default: return {fill:"#111", shadow:null, glow:null, jitter:0};
+  }
+}
+
+function weightToFont(stroke){
+  // use weight + density changes
+  switch(stroke){
+    case "HAIRLINE": return {weight:300, alpha:0.55};
+    case "LIGHT": return {weight:350, alpha:0.72};
+    case "REGULAR": return {weight:450, alpha:0.86};
+    case "BOLD": return {weight:650, alpha:0.92};
+    case "BLACK": return {weight:800, alpha:0.98};
+    default: return {weight:450, alpha:0.85};
+  }
+}
+
+function wrapText(raw, wrapRule, maxLen){
+  const s = raw.replace(/\s+/g," ").trim();
+  if (!s) return [""];
+  if (wrapRule === "continuous"){
+    // stream (we'll slice)
+    const out = [];
+    for (let i=0;i<s.length;i+=maxLen) out.push(s.slice(i,i+maxLen));
+    return out;
+  }
+  if (wrapRule === "break_on_breath"){
+    // split on commas / semicolons / colons / em dashes
+    const parts = s.split(/[,;:\u2014]/).map(x=>x.trim()).filter(Boolean);
+    const lines = [];
+    for (const p of parts){
+      if (p.length <= maxLen) lines.push(p);
+      else {
+        for (let i=0;i<p.length;i+=maxLen) lines.push(p.slice(i,i+maxLen));
+      }
+    }
+    return lines.slice(0, 10);
+  }
+  // break_on_concept: split on conjunction-ish or "and" or "but" (rough)
+  const parts = s.split(/\b(and|but|then|nor|for this|for that|there|here)\b/gi).map(x=>x.trim()).filter(Boolean);
+  const lines = [];
+  for (const p of parts){
+    if (p.length <= maxLen) lines.push(p);
+    else for (let i=0;i<p.length;i+=maxLen) lines.push(p.slice(i,i+maxLen));
+  }
+  return lines.slice(0, 10);
+}
+
+function shapePathPoints(shape, cs){
+  // returns array of points in cell-local coords
+  const pad = cs * 0.12;
+  const W = cs, H = cs;
+  const pts = [];
+  const add = (x,y)=>pts.push([x,y]);
+
+  if (shape === "door"){
+    const x0 = pad*1.2, y0 = pad*1.1;
+    const x1 = W - pad*1.2, y1 = H - pad*1.1;
+    // rectangle perimeter
+    const steps = 18;
+    for (let i=0;i<=steps;i++) add(lerp(x0,x1,i/steps), y0);
+    for (let i=0;i<=steps;i++) add(x1, lerp(y0,y1,i/steps));
+    for (let i=0;i<=steps;i++) add(lerp(x1,x0,i/steps), y1);
+    for (let i=0;i<=steps;i++) add(x0, lerp(y1,y0,i/steps));
+    return pts;
+  }
+
+  if (shape === "river"){
+    const steps = 36;
+    for (let i=0;i<=steps;i++){
+      const t = i/steps;
+      const x = lerp(pad, W-pad, t);
+      const y = H/2 + Math.sin(t*Math.PI*2) * (H*0.18);
+      add(x,y);
+    }
+    return pts;
+  }
+
+  if (shape === "knot"){
+    // infinity loop
+    const steps = 46;
+    for (let i=0;i<=steps;i++){
+      const t = (i/steps) * Math.PI*2;
+      const a = W*0.20, b = H*0.18;
+      const x = W/2 + (a*Math.sin(t));
+      const y = H/2 + (b*Math.sin(t)*Math.cos(t));
+      add(x,y);
+    }
+    return pts;
+  }
+
+  if (shape === "spiral_eye"){
+    // spiral
+    const steps = 46;
+    const cx = W/2, cy = H/2;
+    const maxR = Math.min(W,H)*0.38;
+    for (let i=0;i<=steps;i++){
+      const t = i/steps;
+      const ang = t * Math.PI*3.2;
+      const r = t * maxR;
+      add(cx + Math.cos(ang)*r, cy + Math.sin(ang)*r);
+    }
+    return pts;
+  }
+
+  // urn (default)
+  const steps = 40;
+  const cx = W/2, cy = H/2;
+  const top = pad*1.1, bottom = H - pad*1.1;
+  for (let i=0;i<=steps;i++){
+    const t = i/steps;
+    const y = lerp(top, bottom, t);
+    // bulge mid
+    const bulge = Math.sin(t*Math.PI) * (W*0.18);
+    const neck = (1 - Math.abs(t-0.15)*4); // slight neck near top
+    const width = (W*0.18 + bulge) * clamp(neck, 0.5, 1.1);
+    add(cx - width, y);
+  }
+  for (let i=steps;i>=0;i--){
+    const t = i/steps;
+    const y = lerp(top, bottom, t);
+    const bulge = Math.sin(t*Math.PI) * (W*0.18);
+    const neck = (1 - Math.abs(t-0.15)*4);
+    const width = (W*0.18 + bulge) * clamp(neck, 0.5, 1.1);
+    add(cx + width, y);
+  }
+  return pts;
+}
+
+function drawAlongPath(ctx, text, pts, fontSize, style, alpha){
+  if (!pts || pts.length<2) return;
+  const chars = (text || "").replace(/\s+/g," ").trim();
+  if (!chars) return;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = style.fill;
+
+  // distribute characters along points
+  const steps = pts.length;
+  const L = chars.length;
+
+  let k = 0;
+  for (let i=0;i<steps;i++){
+    const ch = chars[k % L];
+    const [x,y] = pts[i];
+    const [x2,y2] = pts[Math.min(i+1, steps-1)];
+    const ang = Math.atan2(y2-y, x2-x);
+
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(ang);
+    ctx.fillText(ch, 0, 0);
+    ctx.restore();
+    k++;
+  }
+  ctx.restore();
+}
+
+function drawCalligramInCell(ctx, cell, x, y, cs){
+  const pad = 2;
+  const g = cell.calligram;
+  const seg = cell.segment;
+
+  // background per view mode
+  if (state.viewMode === "zones"){
+    ctx.fillStyle = zoneColor(cell.zone);
+    ctx.fillRect(x,y,cs,cs);
+  } else {
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(x,y,cs,cs);
+  }
+
+  // gridlines
+  ctx.strokeStyle = "rgba(0,0,0,.06)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x+0.5,y+0.5,cs-1,cs-1);
+
+  // selection/traversal highlight handled later at grid level
+
+  // plain view shows small snippet only
+  if (state.viewMode === "plain"){
+    const t = seg ? seg.raw_text : "";
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,.75)";
+    ctx.font = `400 8px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`;
+    const lines = wrapText(t, "break_on_breath", 16).slice(0,3);
+    let yy = y + 10;
+    for (const ln of lines){
+      ctx.fillText(ln, x+4, yy);
+      yy += 9;
+    }
+    ctx.restore();
+    return;
+  }
+
+  // weights view: show stroke weight + scene
+  if (state.viewMode === "weights"){
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,.75)";
+    ctx.font = `600 9px ui-sans-serif, system-ui`;
+    const sw = g.stroke_weight || "—";
+    ctx.fillText(sw, x+4, y+12);
+    ctx.font = `400 8px ui-sans-serif, system-ui`;
+    ctx.fillStyle = "rgba(0,0,0,.55)";
+    ctx.fillText(cell.segment ? cell.segment.scene : (cell.is_silence_cell ? "SILENCE" : "—"), x+4, y+24);
+    ctx.restore();
+    return;
+  }
+
+  // calligram mode
+  const style = materialStyle(g.letter_material);
+  const fontMeta = weightToFont(g.stroke_weight);
+  const baseFont = 8.6;
+  const fontSize = clamp(baseFont - g.line_tension*2.0, 6.2, 10.0);
+  const alpha = clamp(fontMeta.alpha * (1 - (g.negative_space_ratio*0.55)), 0.06, 1);
+
+  // optional glow
+  ctx.save();
+  ctx.translate(x,y);
+
+  if (style.glow){
+    ctx.shadowColor = style.glow;
+    ctx.shadowBlur = 10;
+  } else if (style.shadow){
+    ctx.shadowColor = style.shadow;
+    ctx.shadowBlur = 6;
+  } else {
+    ctx.shadowBlur = 0;
+  }
+
+  ctx.fillStyle = style.fill;
+  ctx.globalAlpha = alpha;
+  ctx.textBaseline = "middle";
+
+  const font = `${fontMeta.weight} ${fontSize}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace`;
+  ctx.font = font;
+
+  const raw = seg ? seg.raw_text : "";
+  const content = raw.replace(/\s+/g, " ").trim();
+
+  // If silence: render only faint static / void fragments
+  const isVoidish = (g.calligram_function === "VOID") || cell.is_silence_cell;
+
+  // Operators effects
+  const hasOp = (id)=>cell.ops.includes(id);
+  const mirroring = (g.mirroring === true) || hasOp("MIRROR_AXIS");
+
+  // CARVE_SILHOUETTE: text along shape boundary
+  if (hasOp("CARVE_SILHOUETTE") && g.shape_outline){
+    const pts = shapePathPoints(g.shape_outline, cs);
+    // adjust local baseline
+    ctx.save();
+    ctx.translate(0,0);
+    ctx.globalAlpha = clamp(alpha, 0.08, 0.9);
+    drawAlongPath(ctx, content || " ", pts, fontSize, style, ctx.globalAlpha);
+    if (mirroring){
+      ctx.save();
+      ctx.translate(cs,0);
+      ctx.scale(-1,1);
+      drawAlongPath(ctx, content || " ", pts, fontSize, style, ctx.globalAlpha*0.85);
+      ctx.restore();
+    }
+    ctx.restore();
+    ctx.restore();
+    return;
+  }
+
+  // Determine placement anchors based on gravity
+  let ax = cs/2, ay = cs/2;
+  if (g.gravity==="TOP")    { ax = cs/2; ay = cs*0.30; }
+  if (g.gravity==="BOTTOM") { ax = cs/2; ay = cs*0.70; }
+  if (g.gravity==="LEFT")   { ax = cs*0.35; ay = cs/2; }
+  if (g.gravity==="RIGHT")  { ax = cs*0.65; ay = cs/2; }
+  if (g.gravity==="FLOAT")  { ax = cs*(0.35 + Math.random()*0.3); ay = cs*(0.35 + Math.random()*0.3); }
+
+  // Prepare lines
+  const maxLen = Math.max(8, Math.floor((cs - 2*pad) / (fontSize*0.6)));
+  const lines = wrapText(content, g.wrap_rule, maxLen);
+
+  // Fragment / scatter density
+  const density = clamp(1 - g.negative_space_ratio, 0.05, 1);
+  const jitter = style.jitter;
+
+  function drawLinear(){
+    let startX = pad, startY = pad + fontSize;
+    if (g.gravity==="CENTER") { startX = pad; startY = cs/2 - (lines.length*fontSize*0.6); }
+    if (g.gravity==="TOP")    { startX = pad; startY = pad + fontSize; }
+    if (g.gravity==="BOTTOM") { startX = pad; startY = cs - pad - (lines.length*fontSize*0.9); }
+    if (g.gravity==="LEFT")   { startX = pad; startY = cs/2 - (lines.length*fontSize*0.6); }
+    if (g.gravity==="RIGHT")  { startX = pad; startY = cs/2 - (lines.length*fontSize*0.6); }
+
+    for (let i=0;i<Math.min(lines.length, 6);i++){
+      const ln = lines[i];
+      if (Math.random() > density) continue;
+      const dx = (Math.random()-0.5)*jitter*2;
+      const dy = (Math.random()-0.5)*jitter*2;
+      ctx.fillText(ln, startX + dx, startY + i*(fontSize+1) + dy);
+    }
+  }
+
+  function drawColumn(){
+    const stream = content || "";
+    const chars = stream.replace(/\s+/g," ").trim().split("");
+    const cols = 2;
+    const x0 = pad + fontSize*0.8;
+    const y0 = pad + fontSize*0.6;
+    let k = 0;
+    for (let col=0; col<cols; col++){
+      for (let row=0; row<Math.floor((cs-2*pad)/(fontSize*0.95)); row++){
+        if (Math.random() > density) { k++; continue; }
+        const ch = chars[k % Math.max(chars.length,1)] || "·";
+        ctx.fillText(ch, x0 + col*(fontSize*1.2), y0 + row*(fontSize*0.95));
+        k++;
+      }
+    }
+  }
+
+  function drawWave(){
+    const stream = (content || " ").slice(0, 70);
+    const chars = stream.split("");
+    const baseY = cs/2;
+    const amp = cs*0.18;
+    const steps = Math.min(chars.length, 70);
+    for (let i=0;i<steps;i++){
+      if (Math.random() > density) continue;
+      const t = i/(steps-1 || 1);
+      const xx = pad + t*(cs-2*pad);
+      const yy = baseY + Math.sin(t*Math.PI*2) * amp;
+      ctx.fillText(chars[i], xx, yy);
+    }
+  }
+
+  function drawRadiate(){
+    const stream = (content || " ").slice(0, 120);
+    const words = stream.split(" ").filter(Boolean);
+    const rays = 8;
+    const cx = cs/2, cy = cs/2;
+    for (let r=0; r<rays; r++){
+      const ang = (Math.PI*2) * (r/rays) + 0.08;
+      const phrase = words.slice(r*2, r*2+3).join(" ") || words[r%words.length] || " ";
+      const len = cs*0.40;
+      const steps = 10;
+      for (let i=0;i<steps;i++){
+        if (Math.random() > density) continue;
+        const t = (i+1)/steps;
+        const xx = cx + Math.cos(ang) * (t*len);
+        const yy = cy + Math.sin(ang) * (t*len);
+        const ch = phrase[(i*2) % phrase.length] || "·";
+        ctx.fillText(ch, xx, yy);
+      }
+    }
+  }
+
+  function drawSpiral(){
+    const stream = (content || " ").slice(0, 140);
+    const chars = stream.split("");
+    const cx = cs/2, cy = cs/2;
+    const maxR = cs*0.40;
+    const steps = Math.min(chars.length, 60);
+    for (let i=0;i<steps;i++){
+      if (Math.random() > density) continue;
+      const t = i/(steps-1 || 1);
+      const ang = t * Math.PI * 3.2;
+      const rr = t * maxR;
+      const xx = cx + Math.cos(ang) * rr;
+      const yy = cy + Math.sin(ang) * rr;
+      ctx.fillText(chars[i], xx, yy);
+    }
+  }
+
+  function drawFracture(){
+    const stream = (content || " ").slice(0, 120);
+    const parts = stream.split(/[,;:—]/).map(s=>s.trim()).filter(Boolean);
+    const n = Math.min(parts.length, 5);
+    for (let i=0;i<n;i++){
+      if (Math.random() > density) continue;
+      const p = parts[i];
+      const xx = pad + Math.random()*(cs-pad*2);
+      const yy = pad + Math.random()*(cs-pad*2);
+      ctx.save();
+      ctx.translate(xx,yy);
+      ctx.rotate((Math.random()-0.5)*0.9);
+      ctx.globalAlpha = alpha * (0.7 + Math.random()*0.3);
+      ctx.fillText(p.slice(0, Math.max(8, maxLen-2)), 0, 0);
+      ctx.restore();
+    }
+  }
+
+  function drawCluster(){
+    const stream = (content || " ").slice(0, 120);
+    const words = stream.split(" ").filter(Boolean);
+    const cx = ax, cy = ay;
+    const n = Math.min(words.length, 10);
+    for (let i=0;i<n;i++){
+      if (Math.random() > density) continue;
+      const w = words[i];
+      const xx = cx + (Math.random()-0.5) * cs*0.35;
+      const yy = cy + (Math.random()-0.5) * cs*0.35;
+      ctx.fillText(w.slice(0, Math.max(6, maxLen-4)), xx, yy);
+    }
+  }
+
+  function drawScatter(){
+    const stream = (content || " ").slice(0, 160);
+    const chars = stream.split("");
+    const n = Math.min(70, chars.length);
+    for (let i=0;i<n;i++){
+      if (Math.random() > density*0.7) continue;
+      const xx = pad + Math.random()*(cs-2*pad);
+      const yy = pad + Math.random()*(cs-2*pad);
+      ctx.globalAlpha = alpha * (0.35 + Math.random()*0.6);
+      ctx.fillText(chars[i], xx, yy);
+    }
+  }
+
+  // If VOID-ish, bias to scatter
+  let flow = g.glyph_flow;
+  if (isVoidish && flow !== "WAVE") flow = "SCATTER";
+
+  // FLOW_TO_SHAPE: if shape is river -> wave; spiral_eye -> spiral; urn/door/knot -> cluster/fracture
+  if (hasOp("FLOW_TO_SHAPE") && g.shape_outline){
+    if (g.shape_outline==="river") flow = "WAVE";
+    if (g.shape_outline==="spiral_eye") flow = "SPIRAL";
+    if (g.shape_outline==="door") flow = "COLUMN";
+    if (g.shape_outline==="knot") flow = isVoidish ? "FRACTURE" : "CLUSTER";
+    if (g.shape_outline==="urn") flow = isVoidish ? "SCATTER" : "LINEAR";
+  }
+
+  // COMPRESS_TO_POINT
+  if (hasOp("COMPRESS_TO_POINT")){
+    // draw as tight cluster at center
+    ctx.globalAlpha = clamp(alpha*0.9, 0.1, 1);
+    const tight = (content || "").slice(0, 60);
+    ctx.fillText(tight, cs*0.18, cs*0.52);
+    if (mirroring){
+      ctx.save();
+      ctx.translate(cs,0); ctx.scale(-1,1);
+      ctx.fillText(tight, cs*0.18, cs*0.52);
+      ctx.restore();
+    }
+    ctx.restore();
+    return;
+  }
+
+  // render
+  switch(flow){
+    case "LINEAR": drawLinear(); break;
+    case "COLUMN": drawColumn(); break;
+    case "WAVE": drawWave(); break;
+    case "RADIATE": drawRadiate(); break;
+    case "SPIRAL": drawSpiral(); break;
+    case "FRACTURE": drawFracture(); break;
+    case "CLUSTER": drawCluster(); break;
+    case "SCATTER": drawScatter(); break;
+    default: drawLinear();
+  }
+
+  // mirroring pass
+  if (mirroring){
+    ctx.save();
+    ctx.translate(cs,0);
+    ctx.scale(-1,1);
+    ctx.globalAlpha = alpha*0.75;
+    // render a lighter echo in the same flow
+    switch(flow){
+      case "LINEAR": drawLinear(); break;
+      case "COLUMN": drawColumn(); break;
+      case "WAVE": drawWave(); break;
+      case "RADIATE": drawRadiate(); break;
+      case "SPIRAL": drawSpiral(); break;
+      case "FRACTURE": drawFracture(); break;
+      case "CLUSTER": drawCluster(); break;
+      case "SCATTER": drawScatter(); break;
+      default: drawLinear();
+    }
+    ctx.restore();
+  }
+
+  // STATIC material: overlay noise specks
+  if (g.letter_material === "STATIC"){
+    ctx.save();
+    ctx.globalAlpha = 0.25;
+    ctx.fillStyle = "rgba(0,0,0,.35)";
+    for (let i=0;i<10;i++){
+      ctx.fillRect(pad + Math.random()*(cs-2*pad), pad + Math.random()*(cs-2*pad), 1, 1);
+    }
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+function drawZoneBoundaries(ctx){
+  const N = state.gridSize;
+  const cs = state.cellSize;
+
+  // ring boundaries at d=0,2,5,8
+  const rings = [0,2,5,8];
+  ctx.save();
+  ctx.strokeStyle = "rgba(0,0,0,.12)";
+  ctx.lineWidth = 1;
+
+  function rectForD(d){
+    const x = d*cs;
+    const y = d*cs;
+    const w = (N - 2*d)*cs;
+    const h = (N - 2*d)*cs;
+    return {x,y,w,h};
+  }
+  for (const d of rings){
+    const R = rectForD(d);
+    ctx.strokeRect(R.x+0.5, R.y+0.5, R.w-1, R.h-1);
+  }
+  ctx.restore();
+}
+
+function drawTraversal(ctx){
+  if (!state.traversal.length) return;
+  const N = state.gridSize, cs = state.cellSize;
+
+  ctx.save();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(0,0,0,.55)";
+  ctx.fillStyle = "rgba(0,0,0,.75)";
+
+  const centers = state.traversal.map(idx=>{
+    const r = Math.floor(idx/N), c = idx%N;
+    return [c*cs + cs/2, r*cs + cs/2];
+  });
+
+  ctx.beginPath();
+  for (let i=0;i<centers.length;i++){
+    const [x,y] = centers[i];
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  // nodes
+  for (let i=0;i<centers.length;i++){
+    const [x,y] = centers[i];
+    ctx.beginPath();
+    ctx.arc(x,y, 3.5, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function drawSelection(ctx){
+  if (state.selected == null) return;
+  const N = state.gridSize, cs = state.cellSize;
+  const idx = state.selected;
+  const r = Math.floor(idx/N), c = idx%N;
+  const x = c*cs, y = r*cs;
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(0,0,0,.85)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x+1, y+1, cs-2, cs-2);
+
+  // corner marks
+  ctx.strokeStyle = "rgba(0,0,0,.85)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x+2,y+8); ctx.lineTo(x+2,y+2); ctx.lineTo(x+8,y+2);
+  ctx.moveTo(x+cs-2,y+8); ctx.lineTo(x+cs-2,y+2); ctx.lineTo(x+cs-8,y+2);
+  ctx.moveTo(x+2,y+cs-8); ctx.lineTo(x+2,y+cs-2); ctx.lineTo(x+8,y+cs-2);
+  ctx.moveTo(x+cs-2,y+cs-8); ctx.lineTo(x+cs-2,y+cs-2); ctx.lineTo(x+cs-8,y+cs-2);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function renderGrid(){
+  if (!state.dirty) return;
+  state.dirty = false;
+
+  const N = state.gridSize;
+  const cs = state.cellSize;
+
+  gridCtx.clearRect(0,0, N*cs, N*cs);
+
+  // draw each cell
+  for (let r=0;r<N;r++){
+    for (let c=0;c<N;c++){
+      const idx = r*N+c;
+      const cell = state.cells[idx];
+      if (!cell) continue;
+      drawCalligramInCell(gridCtx, cell, c*cs, r*cs, cs);
+    }
+  }
+
+  // zone boundary overlay
+  if (state.viewMode === "zones") drawZoneBoundaries(gridCtx);
+
+  // traversal + selection overlays
+  drawTraversal(gridCtx);
+  drawSelection(gridCtx);
+}
+
+/* ============================================================
+   Traversal evaluation (TP rules)
+   ============================================================ */
+function evaluateTraversal(){
+  const t = state.traversal;
+  if (!t.length) return { ok:false, summary:"No traversal.", score:0, details:[] };
+
+  const cells = t.map(i=>state.cells[i]).filter(Boolean);
+  const details = [];
+
+  // TP2 start function
+  const startFn = cells[0]?.calligram?.calligram_function;
+  const tp2 = (startFn === "IMAGE" || startFn === "CONTAINER");
+  details.push({id:"TP2", ok:tp2, msg:`Start is ${startFn || "?"} (must be IMAGE or CONTAINER)`});
+
+  // TP3 end function
+  const endFn = cells[cells.length-1]?.calligram?.calligram_function;
+  const tp3 = (endFn === "VOID");
+  details.push({id:"TP3", ok:tp3, msg:`End is ${endFn || "?"} (must be VOID)`});
+
+  // TP1 glyph flow diversity
+  const flows = uniq(cells.map(c=>c.calligram.glyph_flow));
+  const tp1 = flows.length >= 3;
+  details.push({id:"TP1", ok:tp1, msg:`GlyphFlow types encountered: ${flows.join(", ")} (need ≥ 3)`});
+
+  // TP4 stroke trend LIGHT→BLACK→HAIRLINE (approx)
+  const order = OPS.enums.StrokeWeight;
+  const idx = (w)=>order.indexOf(w);
+  const ws = cells.map(c=>c.calligram.stroke_weight);
+  // heuristic: first third near LIGHT/REGULAR, middle includes BLACK/BOLD, last third includes HAIRLINE/LIGHT
+  const n = ws.length;
+  const a = ws.slice(0, Math.ceil(n/3)).map(idx);
+  const b = ws.slice(Math.floor(n/3), Math.floor(2*n/3)).map(idx);
+  const c = ws.slice(Math.floor(2*n/3)).map(idx);
+
+  const hasDark = b.some(i=>i>=order.indexOf("BOLD"));
+  const startsLightish = a.some(i=>i<=order.indexOf("REGULAR"));
+  const endsHairish = c.some(i=>i<=order.indexOf("LIGHT"));
+
+  const tp4 = startsLightish && hasDark && endsHairish;
+  details.push({id:"TP4", ok:tp4, msg:`StrokeWeight trend heuristic: start light-ish=${startsLightish}, mid dark-ish=${hasDark}, end hair/light=${endsHairish}`});
+
+  const score = details.filter(d=>d.ok).length / details.length;
+  const ok = score >= 0.75;
+
+  const summary = ok
+    ? `Traversal passes most rules (${Math.round(score*100)}%).`
+    : `Traversal violates rules (${Math.round(score*100)}% pass).`;
+
+  return { ok, summary, score, details };
+}
+
+/* ============================================================
+   Manifest
+   ============================================================ */
+function buildManifest(){
+  const N = state.gridSize;
+  const cells = state.cells.map(c=>({
+    id: c.id,
+    index: c.index,
+    r: c.r, c: c.c,
+    zone: c.zone,
+    quad: c.quad,
+    is_silence_cell: c.is_silence_cell,
+    segment_id: c.segment ? c.segment.id : null,
+    segment_scene: c.segment ? c.segment.scene : null,
+    world_operation: c.segment ? c.segment.world_operation : null,
+    ritual_act: c.segment ? c.segment.ritual_act : null,
+    calligram: c.calligram,
+    typographic_operators: c.ops
+  }));
+
+  return {
+    meta: {
+      title: "Shield Grid: 24×24 Calligram Poem-Engine",
+      version: "1.0",
+      created_at: nowISO(),
+      grid: { rows:N, cols:N, cell_px: state.cellSize },
+      compiler: { segMode: state.segMode, scanMode: state.scanMode, silenceCells: state.silenceCells },
+      closing_seal: OPS.closing_seal
+    },
+    ops_schemas: OPS,
+    segments: state.segments,
+    traversal: state.traversal,
+    grid_cells: cells
+  };
+}
+
+/* ============================================================
+   UI wiring
+   ============================================================ */
+const el = (id)=>document.getElementById(id);
+
+function setTab(name){
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t=>{
+    const active = t.dataset.tab === name;
+    t.classList.toggle("active", active);
+    t.setAttribute("aria-selected", active ? "true" : "false");
+  });
+  el("tab_text").style.display = (name==="text") ? "block" : "none";
+  el("tab_spec").style.display = (name==="spec") ? "block" : "none";
+  el("tab_manifest").style.display = (name==="manifest") ? "block" : "none";
+}
+
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click", ()=> setTab(tab.dataset.tab));
+});
+
+function populateSelect(selectEl, arr){
+  selectEl.innerHTML = "";
+  for (const v of arr){
+    const o = document.createElement("option");
+    o.value = v; o.textContent = v;
+    selectEl.appendChild(o);
+  }
+}
+
+function openDrawer(idx){
+  state.selected = idx;
+  state.dirty = true;
+  renderGrid();
+
+  const cell = state.cells[idx];
+  if (!cell) return;
+
+  el("drawer").classList.add("open");
+  el("drawerTitle").textContent = `Cell r${cell.r} c${cell.c} · ${cell.zone}`;
+
+  // summary
+  const seg = cell.segment;
+  const summary = [
+    `<b>Address:</b> (${cell.r},${cell.c}) · <b>Zone:</b> ${cell.zone} · <b>Quad:</b> ${cell.quad}`,
+    seg ? `<b>Segment:</b> ${seg.id} · <b>Scene:</b> ${seg.scene} · <b>world_operation:</b> ${seg.world_operation} · <b>ritual_act:</b> ${seg.ritual_act}` : `<b>Segment:</b> — ${cell.is_silence_cell ? "(silence cell)" : ""}`,
+    seg ? `<div style="margin-top:8px"><b>Text:</b><div style="margin-top:6px; padding:8px 10px; border:1px solid var(--line); border-radius:14px; background:rgba(244,244,240,.55); font-family:ui-monospace,monospace">${escapeHTML(seg.raw_text).slice(0,420)}${seg.raw_text.length>420?"…":""}</div></div>` : ""
+  ].join("<br/>");
+  el("cellSummary").innerHTML = summary;
+
+  // fill form values
+  el("f_glyph_flow").value = cell.calligram.glyph_flow;
+  el("f_stroke_weight").value = cell.calligram.stroke_weight;
+  el("f_gravity").value = cell.calligram.gravity;
+  el("f_calligram_function").value = cell.calligram.calligram_function;
+  el("f_letter_material").value = cell.calligram.letter_material;
+  el("f_shape_outline").value = cell.calligram.shape_outline || "";
+  el("f_wrap_rule").value = cell.calligram.wrap_rule;
+  el("f_mirroring").value = String(!!cell.calligram.mirroring);
+
+  el("f_negative_space").value = cell.calligram.negative_space_ratio;
+  el("f_negative_space_lbl").textContent = Number(cell.calligram.negative_space_ratio).toFixed(2);
+
+  el("f_line_tension").value = cell.calligram.line_tension;
+  el("f_line_tension_lbl").textContent = Number(cell.calligram.line_tension).toFixed(2);
+
+  // ops list
+  const opsList = el("opsList");
+  opsList.innerHTML = "";
+  for (const op of OPS.operator_library){
+    const lab = document.createElement("label");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = cell.ops.includes(op.id);
+    cb.addEventListener("change", ()=>{
+      const has = cell.ops.includes(op.id);
+      if (cb.checked && !has) cell.ops.push(op.id);
+      if (!cb.checked && has) cell.ops = cell.ops.filter(x=>x!==op.id);
+      // apply special operators effects
+      if (op.id==="MIRROR_AXIS") cell.calligram.mirroring = cb.checked;
+      if (op.id==="DISSOLVE_TO_VOID" && cb.checked) cell.calligram.calligram_function = "VOID";
+      cell.dirty = true; state.dirty = true;
+      renderGrid();
+      refreshTraversalStatus();
+      openDrawer(idx); // refresh (cheap)
+    });
+    const span = document.createElement("span");
+    span.textContent = op.id;
+    lab.title = op.desc;
+    lab.appendChild(cb);
+    lab.appendChild(span);
+    opsList.appendChild(lab);
+  }
+
+  refreshTraversalStatus();
+}
+
+function closeDrawer(){
+  el("drawer").classList.remove("open");
+  state.selected = null;
+  state.dirty = true;
+  renderGrid();
+}
+
+el("btnCloseDrawer").addEventListener("click", closeDrawer);
+
+function escapeHTML(s){
+  return (s||"").replace(/[&<>"]/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+}
+
+function refreshTraversalStatus(){
+  const res = evaluateTraversal();
+  const parts = [];
+  const cls = res.ok ? "ok" : (res.score>=0.5 ? "warn" : "bad");
+  parts.push(`<span class="${cls}">${escapeHTML(res.summary)}</span>`);
+  if (state.traversal.length){
+    parts.push(`<div style="margin-top:6px"><b>Path length:</b> ${state.traversal.length}</div>`);
+  }
+  if (res.details.length){
+    parts.push(`<div style="margin-top:8px"><b>Checks:</b></div>`);
+    for (const d of res.details){
+      const c = d.ok ? "ok" : "bad";
+      parts.push(`<div><span class="${c}">${d.id}</span> — ${escapeHTML(d.msg)}</div>`);
+    }
+  }
+  el("traversalStatus").innerHTML = parts.join("");
+}
+
+function wireInspectorControls(){
+  const mapping = [
+    ["f_glyph_flow","glyph_flow"],
+    ["f_stroke_weight","stroke_weight"],
+    ["f_gravity","gravity"],
+    ["f_calligram_function","calligram_function"],
+    ["f_letter_material","letter_material"],
+    ["f_wrap_rule","wrap_rule"]
+  ];
+  for (const [id, key] of mapping){
+    el(id).addEventListener("change", ()=>{
+      const idx = state.selected;
+      if (idx == null) return;
+      const cell = state.cells[idx];
+      cell.calligram[key] = el(id).value;
+      cell.dirty = true;
+      state.dirty = true;
+      renderGrid();
+      refreshTraversalStatus();
+      openDrawer(idx);
+    });
+  }
+
+  el("f_shape_outline").addEventListener("change", ()=>{
+    const idx = state.selected;
+    if (idx == null) return;
+    const cell = state.cells[idx];
+    const v = el("f_shape_outline").value;
+    cell.calligram.shape_outline = v || null;
+    if (v && !cell.ops.includes("FLOW_TO_SHAPE")) cell.ops.push("FLOW_TO_SHAPE");
+    cell.dirty = true; state.dirty = true;
+    renderGrid();
+    openDrawer(idx);
+  });
+
+  el("f_mirroring").addEventListener("change", ()=>{
+    const idx = state.selected;
+    if (idx == null) return;
+    const cell = state.cells[idx];
+    cell.calligram.mirroring = (el("f_mirroring").value === "true");
+    if (cell.calligram.mirroring && !cell.ops.includes("MIRROR_AXIS")) cell.ops.push("MIRROR_AXIS");
+    if (!cell.calligram.mirroring) cell.ops = cell.ops.filter(x=>x!=="MIRROR_AXIS");
+    cell.dirty = true; state.dirty = true;
+    renderGrid();
+    openDrawer(idx);
+  });
+
+  el("f_negative_space").addEventListener("input", ()=>{
+    const idx = state.selected;
+    if (idx == null) return;
+    const cell = state.cells[idx];
+    cell.calligram.negative_space_ratio = Number(el("f_negative_space").value);
+    el("f_negative_space_lbl").textContent = Number(cell.calligram.negative_space_ratio).toFixed(2);
+    cell.dirty = true; state.dirty = true;
+    renderGrid();
+  });
+
+  el("f_line_tension").addEventListener("input", ()=>{
+    const idx = state.selected;
+    if (idx == null) return;
+    const cell = state.cells[idx];
+    cell.calligram.line_tension = Number(el("f_line_tension").value);
+    el("f_line_tension_lbl").textContent = Number(cell.calligram.line_tension).toFixed(2);
+    cell.dirty = true; state.dirty = true;
+    renderGrid();
+  });
+}
+
+/* ============================================================
+   Grid interaction
+   ============================================================ */
+function canvasIndexFromEvent(ev){
+  const rect = gridCanvas.getBoundingClientRect();
+  const x = (ev.clientX - rect.left) * (gridCanvas.width / rect.width) / (window.devicePixelRatio||1);
+  const y = (ev.clientY - rect.top) * (gridCanvas.height / rect.height) / (window.devicePixelRatio||1);
+  const cs = state.cellSize;
+  const c = Math.floor(x / cs);
+  const r = Math.floor(y / cs);
+  if (r<0||c<0||r>=state.gridSize||c>=state.gridSize) return null;
+  return r*state.gridSize + c;
+}
+
+gridCanvas.addEventListener("click", (ev)=>{
+  const idx = canvasIndexFromEvent(ev);
+  if (idx == null) return;
+
+  const traversalMode = el("traversalMode").checked || ev.shiftKey;
+  if (traversalMode){
+    // append if not last
+    if (state.traversal[state.traversal.length-1] !== idx){
+      state.traversal.push(idx);
+      state.dirty = true;
+      renderGrid();
+    }
+    openDrawer(idx);
+    refreshTraversalStatus();
+    return;
+  }
+
+  openDrawer(idx);
+});
+
+window.addEventListener("keydown", (ev)=>{
+  if (ev.key === "Escape") closeDrawer();
+  if ((ev.key === "Backspace" || ev.key === "Delete") && state.traversal.length){
+    // if focused on grid area, pop traversal
+    state.traversal.pop();
+    state.dirty = true;
+    renderGrid();
+    refreshTraversalStatus();
+  }
+});
+
+/* ============================================================
+   Controls
+   ============================================================ */
+el("segMode").addEventListener("change", ()=> state.segMode = el("segMode").value);
+el("scanMode").addEventListener("change", ()=> state.scanMode = el("scanMode").value);
+el("silenceCells").addEventListener("change", ()=> state.silenceCells = el("silenceCells").checked);
+
+el("zoom").addEventListener("input", ()=>{
+  state.zoom = Number(el("zoom").value);
+  document.documentElement.style.setProperty("--gridZoom", state.zoom);
+  el("zoomLabel").textContent = state.zoom.toFixed(2) + "×";
+});
+
+el("cellSize").addEventListener("input", ()=>{
+  state.cellSize = Number(el("cellSize").value);
+  document.documentElement.style.setProperty("--cell", state.cellSize);
+  el("cellLabel").textContent = String(state.cellSize);
+  setCanvasSize();
+  state.dirty = true;
+  renderGrid();
+});
+
+el("viewMode").addEventListener("change", ()=>{
+  state.viewMode = el("viewMode").value;
+  state.dirty = true;
+  renderGrid();
+});
+
+el("btnCompile").addEventListener("click", ()=>{
+  const text = el("sourceText").value;
+  state.segments = buildSegments(text);
+  state.cells = placeSegments(state.segments);
+  state.traversal = [];
+  state.selected = null;
+  closeDrawer();
+  setCanvasSize();
+  state.dirty = true;
+  renderGrid();
+
+  // update manifest tab
+  const man = buildManifest();
+  el("manifestText").value = safeJSON(man);
+});
+
+el("btnReset").addEventListener("click", ()=>{
+  state.cells = placeSegments([]); // empties
+  state.traversal = [];
+  closeDrawer();
+  setCanvasSize();
+  state.dirty = true;
+  renderGrid();
+  el("manifestText").value = safeJSON(buildManifest());
+});
+
+el("btnClearTraversal").addEventListener("click", ()=>{
+  state.traversal = [];
+  state.dirty = true;
+  renderGrid();
+  refreshTraversalStatus();
+});
+
+el("btnAutoTraversal").addEventListener("click", ()=>{
+  // forge -> war -> ocean (heuristic)
+  const N = state.gridSize;
+  const findFirst = (pred)=>{
+    for (let i=0;i<state.cells.length;i++){
+      const c = state.cells[i];
+      if (pred(c)) return i;
+    }
+    return null;
+  };
+
+  const a = findFirst(c=>c.segment && c.segment.scene==="FORGE");
+  const b = findFirst(c=>c.segment && c.segment.scene==="WAR");
+  const c = findFirst(c=>c.zone==="BORDER"); // ocean-ish
+
+  const path = [];
+  if (a!=null) path.push(a);
+  if (b!=null) path.push(b);
+  // add a small arc toward border
+  if (b!=null && c!=null){
+    const br = Math.floor(b/N), bc = b%N;
+    const cr = Math.floor(c/N), cc = c%N;
+    const steps = 6;
+    for (let i=1;i<=steps;i++){
+      const rr = Math.round(lerp(br, cr, i/steps));
+      const cc2 = Math.round(lerp(bc, cc, i/steps));
+      path.push(rr*N+cc2);
+    }
+  } else if (c!=null) path.push(c);
+
+  // make unique sequential
+  const cleaned = [];
+  for (const idx of path){
+    if (cleaned[cleaned.length-1] !== idx) cleaned.push(idx);
+  }
+
+  state.traversal = cleaned.slice(0, 24);
+  state.dirty = true;
+  renderGrid();
+  refreshTraversalStatus();
+});
+
+el("btnExport").addEventListener("click", ()=>{
+  const man = buildManifest();
+  const blob = new Blob([safeJSON(man)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "shield_grid_manifest.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+
+  el("manifestText").value = safeJSON(man);
+  setTab("manifest");
+});
+
+el("btnImport").addEventListener("click", ()=> el("fileImport").click());
+
+el("fileImport").addEventListener("change", async ()=>{
+  const file = el("fileImport").files?.[0];
+  if (!file) return;
+  try{
+    const txt = await file.text();
+    const man = JSON.parse(txt);
+
+    // restore basics
+    state.gridSize = man?.meta?.grid?.rows || 24;
+    state.cellSize = man?.meta?.grid?.cell_px || state.cellSize;
+
+    // restore segments and cells
+    state.segments = man.segments || [];
+    const N = state.gridSize;
+    state.cells = [];
+    for (let i=0;i<N*N;i++){
+      const base = makeEmptyCell(i, Math.floor(i/N), i%N);
+      state.cells.push(base);
+    }
+    const byId = new Map(state.segments.map(s=>[s.id,s]));
+    for (const c of (man.grid_cells || [])){
+      const idx = c.index;
+      if (idx == null || !state.cells[idx]) continue;
+      const cell = state.cells[idx];
+      cell.zone = c.zone || cell.zone;
+      cell.quad = c.quad || cell.quad;
+      cell.is_silence_cell = !!c.is_silence_cell;
+      cell.segment = c.segment_id ? (byId.get(c.segment_id) || null) : null;
+      cell.calligram = c.calligram || cell.calligram;
+      cell.ops = c.typographic_operators || [];
+      cell.dirty = true;
+    }
+    state.traversal = man.traversal || [];
+    state.selected = null;
+
+    document.documentElement.style.setProperty("--gridZoom", state.zoom);
+    el("cellSize").value = String(state.cellSize);
+    el("cellLabel").textContent = String(state.cellSize);
+
+    setCanvasSize();
+    state.dirty = true;
+    renderGrid();
+
+    el("manifestText").value = safeJSON(buildManifest());
+    setTab("manifest");
+  } catch(err){
+    alert("Import failed: " + err.message);
+  } finally {
+    el("fileImport").value = "";
+  }
+});
+
+/* ============================================================
+   Example content (your message, preloaded)
+   ============================================================ */
+const EXAMPLE_SHIELD = normalizeText(`
+{The Iliad, Book XVIII, [The Shield of Achilles]
+Homer
+
+Thetis goes to the palace of Vulcan to obtain new arms for her son.
+
+"Thee, welcome, goddess! what occasion calls
+(So long a stranger) to these honour'd walls?
+'Tis thine, fair Thetis, the command to lay,
+And Vulcan's joy and duty to obey."
+
+To whom the mournful mother thus replies:
+(The crystal drops stood trembling in her eyes:)
+"O Vulcan! say, was ever breast divine
+So pierced with sorrows, so o'erwhelm'd as mine?
+Of all the goddesses, did Jove prepare
+For Thetis only such a weight of care?
+I, only I, of all the watery race
+By force subjected to a man's embrace,
+Who, sinking now with age and sorrow, pays
+The mighty fine imposed on length of days.
+Sprung from my bed, a godlike hero came,
+The bravest sure that ever bore the name;
+Like some fair plant beneath my careful hand
+He grew, he flourish'd, and he graced the land:
+To Troy I sent him! but his native shore
+Never, ah never, shall receive him more;
+(Even while he lives, he wastes with secret woe;)
+Nor I, a goddess, can retard the blow!
+Robb'd of the prize the Grecian suffrage gave,
+The king of nations forced his royal slave:
+For this he grieved; and, till the Greeks oppress'd
+Required his arm, he sorrow'd unredress'd.
+Large gifts they promise, and their elders send;
+In vain--he arms not, but permits his friend
+His arms, his steeds, his forces to employ:
+He marches, combats, almost conquers Troy:
+Then slain by Phoebus (Hector had the name)
+At once resigns his armour, life, and fame.
+But thou, in pity, by my prayer be won:
+Grace with immortal arms this short-lived son,
+And to the field in martial pomp restore,
+To shine with glory, till he shines no more!"
+
+To her the artist-god: "Thy griefs resign,
+Secure, what Vulcan can, is ever thine.
+O could I hide him from the Fates, as well,
+Or with these hands the cruel stroke repel,
+As I shall forge most envied arms, the gaze
+Of wondering ages, and the world's amaze!"
+
+Thus having said, the father of the fires
+To the black labours of his forge retires.
+Soon as he bade them blow, the bellows turn'd
+Their iron mouths; and where the furnace burn'd,
+Resounding breathed: at once the blast expires,
+And twenty forges catch at once the fires;
+Just as the god directs, now loud, now low,
+They raise a tempest, or they gently blow;
+In hissing flames huge silver bars are roll'd,
+And stubborn brass, and tin, and solid gold;
+Before, deep fix'd, the eternal anvils stand;
+The ponderous hammer loads his better hand,
+His left with tongs turns the vex'd metal round,
+And thick, strong strokes, the doubling vaults rebound.
+
+Then first he form'd the immense and solid shield;
+Rich various artifice emblazed the field;
+Its utmost verge a threefold circle bound;
+A silver chain suspends the massy round;
+Five ample plates the broad expanse compose,
+And godlike labours on the surface rose.
+There shone the image of the master-mind:
+There earth, there heaven, there ocean he design'd;
+The unwearied sun, the moon completely round;
+The starry lights that heaven's high convex crown'd;
+The Pleiads, Hyads, with the northern team;
+And great Orion's more refulgent beam;
+To which, around the axle of the sky,
+The Bear, revolving, points his golden eye,
+Still shines exalted on the ethereal plain,
+Nor bathes his blazing forehead in the main.
+
+Two cities radiant on the shield appear,
+The image one of peace, and one of war.
+Here sacred pomp and genial feast delight,
+And solemn dance, and hymeneal rite;
+Along the street the new-made brides are led,
+With torches flaming, to the nuptial bed:
+The youthful dancers in a circle bound
+To the soft flute, and cithern's silver sound:
+Through the fair streets the matrons in a row
+Stand in their porches, and enjoy the show.
+
+There in the forum swarm a numerous train;
+The subject of debate, a townsman slain:
+One pleads the fine discharged, which one denied,
+And bade the public and the laws decide:
+The witness is produced on either hand:
+For this, or that, the partial people stand:
+The appointed heralds still the noisy bands,
+And form a ring, with sceptres in their hands:
+On seats of stone, within the sacred place,
+The reverend elders nodded o'er the case;
+Alternate, each the attesting sceptre took,
+And rising solemn, each his sentence spoke
+Two golden talents lay amidst, in sight,
+The prize of him who best adjudged the right.
+
+Another part (a prospect differing far)
+Glow'd with refulgent arms, and horrid war.
+Two mighty hosts a leaguer'd town embrace,
+And one would pillage, one would burn the place.
+Meantime the townsmen, arm'd with silent care,
+A secret ambush on the foe prepare:
+Their wives, their children, and the watchful band
+Of trembling parents, on the turrets stand.
+They march; by Pallas and by Mars made bold:
+Gold were the gods, their radiant garments gold,
+And gold their armour: these the squadron led,
+August, divine, superior by the head!
+A place for ambush fit they found, and stood,
+Cover'd with shields, beside a silver flood.
+Two spies at distance lurk, and watchful seem
+If sheep or oxen seek the winding stream.
+Soon the white flocks proceeded o'er the plains,
+And steers slow-moving, and two shepherd swains;
+Behind them piping on their reeds they go,
+Nor fear an ambush, nor suspect a foe.
+In arms the glittering squadron rising round
+Rush sudden; hills of slaughter heap the ground;
+Whole flocks and herds lie bleeding on the plains,
+And, all amidst them, dead, the shepherd swains!
+The bellowing oxen the besiegers hear;
+They rise, take horse, approach, and meet the war,
+They fight, they fall, beside the silver flood;
+The waving silver seem'd to blush with blood.
+There Tumult, there Contention stood confess'd;
+One rear'd a dagger at a captive's breast;
+One held a living foe, that freshly bled
+With new-made wounds; another dragg'd a dead;
+Now here, now there, the carcases they tore:
+Fate stalk'd amidst them, grim with human gore.
+And the whole war came out, and met the eye;
+And each bold figure seem'd to live or die.
+
+A field deep furrow'd next the god design'd,
+The third time labour'd by the sweating hind;
+The shining shares full many ploughmen guide,
+And turn their crooked yokes on every side.
+Still as at either end they wheel around,
+The master meets them with his goblet crown'd;
+The hearty draught rewards, renews their toil,
+Then back the turning ploughshares cleave the soil:
+Behind, the rising earth in ridges roll'd;
+And sable look'd, though form'd of molten gold.
+
+Another field rose high with waving grain;
+With bended sickles stand the reaper train:
+Here stretched in ranks the levell'd swarths are found,
+Sheaves heap'd on sheaves here thicken up the ground.
+With sweeping stroke the mowers strow the lands;
+The gatherers follow, and collect in bands;
+And last the children, in whose arms are borne
+(Too short to gripe them) the brown sheaves of corn.
+The rustic monarch of the field descries,
+With silent glee, the heaps around him rise.
+A ready banquet on the turf is laid,
+Beneath an ample oak's expanded shade.
+The victim ox the sturdy youth prepare;
+The reaper's due repast, the woman's care.
+
+Next, ripe in yellow gold, a vineyard shines,
+Bent with the ponderous harvest of its vines;
+A deeper dye the dangling clusters show,
+And curl'd on silver props, in order glow:
+A darker metal mix'd intrench'd the place;
+And pales of glittering tin the inclosure grace.
+To this, one pathway gently winding leads,
+Where march a train with baskets on their heads,
+(Fair maids and blooming youths,) that smiling bear
+The purple product of the autumnal year.
+To these a youth awakes the warbling strings,
+Whose tender lay the fate of Linus sings;
+In measured dance behind him move the train,
+Tune soft the voice, and answer to the strain.
+
+Here herds of oxen march, erect and bold,
+Rear high their horns, and seem to low in gold,
+And speed to meadows on whose sounding shores
+A rapid torrent through the rushes roars:
+Four golden herdsmen as their guardians stand,
+And nine sour dogs complete the rustic band.
+Two lions rushing from the wood appear'd;
+And seized a bull, the master of the herd:
+He roar'd: in vain the dogs, the men withstood;
+They tore his flesh, and drank his sable blood.
+The dogs (oft cheer'd in vain) desert the prey,
+Dread the grim terrors, and at distance bay.
+
+Next this, the eye the art of Vulcan leads
+Deep through fair forests, and a length of meads,
+And stalls, and folds, and scatter'd cots between;
+And fleecy flocks, that whiten all the scene.
+
+A figured dance succeeds; such once was seen
+In lofty Gnossus for the Cretan queen,
+Form'd by Daedalean art; a comely band
+Of youths and maidens, bounding hand in hand.
+The maids in soft simars of linen dress'd;
+The youths all graceful in the glossy vest:
+Of those the locks with flowery wreath inroll'd;
+Of these the sides adorn'd with swords of gold,
+That glittering gay, from silver belts depend.
+Now all at once they rise, at once descend,
+With well-taught feet: now shape in oblique ways,
+Confusedly regular, the moving maze:
+Now forth at once, too swift for sight, they spring,
+And undistinguish'd blend the flying ring:
+So whirls a wheel, in giddy circle toss'd,
+And, rapid as it runs, the single spokes are lost.
+The gazing multitudes admire around:
+Two active tumblers in the centre bound;
+Now high, now low, their pliant limbs they bend:
+And general songs the sprightly revel end.
+
+Thus the broad shield complete the artist crown'd
+With his last hand, and pour'd the ocean round:
+In living silver seem'd the waves to roll,
+And beat the buckler's verge, and bound the whole.
+
+This done, whate'er a warrior's use requires
+He forged; the cuirass that outshone the fires,
+The greaves of ductile tin, the helm impress'd
+With various sculpture, and the golden crest.
+At Thetis' feet the finished labour lay:
+She, as a falcon cuts the aerial way,
+Swift from Olympus' snowy summit flies,
+And bears the blazing present through the skies.
+}
+`);
+
+const EXAMPLE_SPEC_TEXT = normalizeText(`
+<prompt id="OPS-SCHEMAS-24x24-CALLIGRAM-v2" mode="system" audience="expert" tone="operative-poetic" output_form="schemas+rules">
+  <intent>
+    Merge the 24×24 spatial semantic grid with calligrammatic / spatial-poetry rendering so that text becomes geometry and geometry becomes argument.
+    Language must inhabit cells as shaped matter, not paragraphs.
+  </intent>
+  <enums>
+    <enum id="GlyphFlow">LINEAR | SPIRAL | COLUMN | FRACTURE | RADIATE | CLUSTER | SCATTER | WAVE</enum>
+    <enum id="StrokeWeight">HAIRLINE | LIGHT | REGULAR | BOLD | BLACK</enum>
+    <enum id="TypographicGravity">TOP | BOTTOM | LEFT | RIGHT | CENTER | FLOAT</enum>
+    <enum id="CalligramFunction">IMAGE | CONTAINER | BARRIER | PATH | VOID</enum>
+    <enum id="LetterMaterial">INK | STONE | ASH | NEON | BONE | LIGHT | STATIC</enum>
+  </enums>
+  <mapping_rules>
+    M1: PRODUCE→IMAGE
+    M2: MAINTAIN→CONTAINER
+    M3: REPAIR→PATH
+    M4: TRANSFORM→VOID
+    M5: INVOCATION→RADIATE
+    M6: CHANT→WAVE
+    M7: QUESTION→FRACTURE
+    M8: silence cell → negative_space_ratio ≥ 0.70
+  </mapping_rules>
+  <closing_seal>Language is now matter. The page is now terrain. The grid is now a poem-engine.</closing_seal>
+</prompt>
+`);
+
+el("btnExample").addEventListener("click", ()=>{
+  el("sourceText").value = EXAMPLE_SHIELD;
+  setTab("text");
+});
+
+el("btnExampleSpec").addEventListener("click", ()=>{
+  el("specText").value = EXAMPLE_SPEC_TEXT;
+  setTab("spec");
+});
+
+/* ============================================================
+   Init
+   ============================================================ */
+(function init(){
+  // populate inspector selects
+  populateSelect(el("f_glyph_flow"), OPS.enums.GlyphFlow);
+  populateSelect(el("f_stroke_weight"), OPS.enums.StrokeWeight);
+  populateSelect(el("f_gravity"), OPS.enums.TypographicGravity);
+  populateSelect(el("f_calligram_function"), OPS.enums.CalligramFunction);
+  populateSelect(el("f_letter_material"), OPS.enums.LetterMaterial);
+
+  // shape outlines: include catalog + empty
+  const shapeSel = el("f_shape_outline");
+  shapeSel.innerHTML = "";
+  const empty = document.createElement("option"); empty.value=""; empty.textContent="(null)";
+  shapeSel.appendChild(empty);
+  for (const k of Object.keys(OPS.shape_catalog)){
+    const o = document.createElement("option");
+    o.value = k; o.textContent = k;
+    shapeSel.appendChild(o);
+  }
+
+  // defaults
+  el("sourceText").value = EXAMPLE_SHIELD;
+  el("specText").value = EXAMPLE_SPEC_TEXT;
+
+  state.cells = placeSegments([]); // start empty grid
+  document.documentElement.style.setProperty("--gridZoom", state.zoom);
+
+  setCanvasSize();
+  wireInspectorControls();
+  renderGrid();
+
+  // render loop (cheap)
+  function loop(){
+    renderGrid();
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  // initial manifest
+  el("manifestText").value = safeJSON(buildManifest());
+})();
+
+</script>
+</body>
+</html>

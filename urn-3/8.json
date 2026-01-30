@@ -1,0 +1,563 @@
+Here is the complete **Ritual Cartography** of the *Ode on a Grecian Urn*, executed according to the James W. Carey “Ritual View” protocol.
+
+This map treats the poem not as a message to be decoded, but as a **ceremony** that the reader enacts to produce a shared reality of permanence, beauty, and communal solace.
+
+---
+
+### **I. CEREMONY DIAGRAMS (The Spatial Geometry)**
+
+These 5 "Chapels" represent the stanza-by-stanza architecture of the ritual.
+
+| **CHAPEL (Stanza)** | **ENTRY (Invitation)** | **CHANT (The Procession)** | **TURN ( The Paradox)** | **SEAL (The Binding)** |
+| --- | --- | --- | --- | --- |
+| **C1: The Invocation** | Address the Urn as "Bride/Child." Establish the sacred object. | Questions pile up ("What men? What gods?"). Shared wonder. | "Wild ecstasy" appears but is frozen in marble. | "Pipes and timbrels" start the music (unheard). |
+| **C2: The Suspension** | Invert the senses: Unheard > Heard. | Command the pipes ("Play on"). Address the youth. | The "Kiss" that never happens (infinite desire). | "For ever... fair." The promise of non-decay. |
+| **C3: The Saturation** | Litany of the "Happy" boughs. | Repetition of "Happy, happy love." A rhythmic trance. | Recognition of "cloy'd" human passion (the cost). | The Urn is elevated "far above" biological pain. |
+| **C4: The Sacrifice** | The procession appears ("Who are these?"). | The Heifer and Priest. The visual pageantry. | The **Empty Town**. Imagining what is absent/silent. | "Desolate." The silence is sealed as permanent loss. |
+| **C5: The Covenant** | "Attic Shape." Return to the object itself. | "Tease us out of thought." Mystical negation of logic. | "Cold Pastoral." Acknowledging the artifact's indifference. | "Beauty is Truth." The final creed/formula recited to bind the group. |
+
+---
+
+### **II. THE RITUAL MAP (Line-by-Line)**
+
+This is the compiled execution of the `rite_line` schema for all 50 lines.
+
+#### **CHAPEL C1: Invocation & Interrogation**
+
+```json
+[
+  {
+    "line_id": "URN-L01",
+    "text": "Thou still unravish'd bride of quietness,",
+    "rite_action": "Consecrates the object as a ceremonial partner. Initiates the 'I-Thou' relationship.",
+    "reader_role": "Pilgrim",
+    "function": "PRODUCE",
+    "altars": ["A_SILENCE", "A_DESIRE"],
+    "world_effect": "Establishes a reality where an object has agency and purity.",
+    "continuity_hook": "Links purity to the concept of time."
+  },
+  {
+    "line_id": "URN-L02",
+    "text": "Thou foster-child of silence and slow time,",
+    "rite_action": "Installs 'slow time' as the liturgical tempo. Slows the reader's biological clock.",
+    "reader_role": "Witness",
+    "function": "MAINTAIN",
+    "altars": ["A_TIME", "A_SILENCE"],
+    "world_effect": "Stabilizes an order where things age but do not decay.",
+    "continuity_hook": "Prepares the Urn's role as storyteller."
+  },
+  {
+    "line_id": "URN-L03",
+    "text": "Sylvan historian, who canst thus express",
+    "rite_action": "Invests the object with the office of 'Historian.' Legitimacy is granted.",
+    "reader_role": "Archivist",
+    "function": "PRODUCE",
+    "altars": ["A_TRUTH"],
+    "world_effect": "Constructs a world where art records history better than text.",
+    "continuity_hook": "Sets up the comparison to 'our rhyme'."
+  },
+  {
+    "line_id": "URN-L04",
+    "text": "A flowery tale more sweetly than our rhyme:",
+    "rite_action": "Humbles the poet/reader. Submits language to the authority of the image.",
+    "reader_role": "Judge",
+    "function": "TRANSFORM",
+    "altars": ["A_TRUTH"],
+    "world_effect": "Transfers trust from the spoken word to the silent form.",
+    "continuity_hook": "Opens the channel for the specific legend."
+  },
+  {
+    "line_id": "URN-L05",
+    "text": "What leaf-fring'd legend haunts about thy shape",
+    "rite_action": "Summons the legend as a ghost ('haunts'). Invites communal inference.",
+    "reader_role": "Seeker",
+    "function": "PRODUCE",
+    "altars": ["A_COMMUNITY"],
+    "world_effect": "Creates a mystery that demands the group's attention.",
+    "continuity_hook": "Categorizes the haunting (Gods vs Mortals)."
+  },
+  {
+    "line_id": "URN-L06",
+    "text": "Of deities or mortals, or of both,",
+    "rite_action": "Classifies the participants. Ritual taxonomy to make the chaos legible.",
+    "reader_role": "Classifier",
+    "function": "MAINTAIN",
+    "altars": ["A_COMMUNITY"],
+    "world_effect": "Maintains the boundary (and mixing) of the sacred and profane.",
+    "continuity_hook": "Locates the action geographically."
+  },
+  {
+    "line_id": "URN-L07",
+    "text": "In Tempe or the dales of Arcady?",
+    "rite_action": "Places the congregation in a mythic geography. Map-making as world-building.",
+    "reader_role": "Pilgrim",
+    "function": "PRODUCE",
+    "altars": ["A_TIME"],
+    "world_effect": "Produces 'There' as a shared cultural coordinate.",
+    "continuity_hook": "Triggers the rapid-fire interrogation."
+  },
+  {
+    "line_id": "URN-L08",
+    "text": "What men or gods are these? What maidens loth?",
+    "rite_action": "Accelerates the Question-Procession. Converts uncertainty into shared energy.",
+    "reader_role": "Witness",
+    "function": "REPAIR",
+    "altars": ["A_DESIRE"],
+    "world_effect": "Repairs the anxiety of not-knowing by ritualizing the question.",
+    "continuity_hook": "Introduces the conflict (pursuit)."
+  },
+  {
+    "line_id": "URN-L09",
+    "text": "What mad pursuit? What struggle to escape?",
+    "rite_action": "Stages the drama of predator/prey as a stylized dance.",
+    "reader_role": "Observer",
+    "function": "PRODUCE",
+    "altars": ["A_DESIRE"],
+    "world_effect": "Produces conflict as the engine of this static world.",
+    "continuity_hook": "Shifts from visual action to auditory implication."
+  },
+  {
+    "line_id": "URN-L10",
+    "text": "What pipes and timbrels? What wild ecstasy?",
+    "rite_action": "Reaches the crescendo of C1. Invokes sound that cannot be heard.",
+    "reader_role": "Listener",
+    "function": "MAINTAIN",
+    "altars": ["A_SILENCE"],
+    "world_effect": "Maintains the paradox: noise preserved in silence.",
+    "continuity_hook": "Hands off to Chapel 2's doctrine of 'unheard melodies'."
+  }
+]
+
+```
+
+#### **CHAPEL C2: Unheard Music & Suspended Kiss**
+
+```json
+[
+  {
+    "line_id": "URN-L11",
+    "text": "Heard melodies are sweet, but those unheard",
+    "rite_action": "Inverts the hierarchy of senses. Proclaims the dogma of the Inner Ear.",
+    "reader_role": "Initiate",
+    "function": "TRANSFORM",
+    "altars": ["A_SILENCE"],
+    "world_effect": "Transforms physical absence into spiritual presence.",
+    "continuity_hook": "Logic: 'Therefore'..."
+  },
+  {
+    "line_id": "URN-L12",
+    "text": "Are sweeter; therefore, ye soft pipes, play on;",
+    "rite_action": "Commands the inanimate object. The reader conducts the ritual music.",
+    "reader_role": "Conductor",
+    "function": "MAINTAIN",
+    "altars": ["A_SILENCE"],
+    "world_effect": "Sustains the impossible performance through collective belief.",
+    "continuity_hook": "Clarifies the target of the music (the spirit)."
+  },
+  {
+    "line_id": "URN-L13",
+    "text": "Not to the sensual ear, but, more endear'd,",
+    "rite_action": "Refines the ritual instruction. Rejects the biological body.",
+    "reader_role": "Mystic",
+    "function": "REPAIR",
+    "altars": ["A_TRUTH"],
+    "world_effect": "Repairs the limitations of human hearing.",
+    "continuity_hook": "Defines the nature of the song (no tone)."
+  },
+  {
+    "line_id": "URN-L14",
+    "text": "Pipe to the spirit ditties of no tone:",
+    "rite_action": "Establishes a telepathic communion. The message moves mind-to-mind.",
+    "reader_role": "Mystic",
+    "function": "PRODUCE",
+    "altars": ["A_SILENCE", "A_COMMUNITY"],
+    "world_effect": "Produces a 'spirit realm' accessible only via the poem.",
+    "continuity_hook": "Focuses on the specific figure (Fair Youth)."
+  },
+  {
+    "line_id": "URN-L15",
+    "text": "Fair youth, beneath the trees, thou canst not leave",
+    "rite_action": "Binds the actor to the scenery. Enacts the ritual of confinement.",
+    "reader_role": "Warden",
+    "function": "MAINTAIN",
+    "altars": ["A_TIME"],
+    "world_effect": "Maintains a world without departure or abandonment.",
+    "continuity_hook": "Links the youth to the song/trees."
+  },
+  {
+    "line_id": "URN-L16",
+    "text": "Thy song, nor ever can those trees be bare;",
+    "rite_action": "Banishes the season of winter/death. A fertility rite frozen in time.",
+    "reader_role": "Gardener",
+    "function": "MAINTAIN",
+    "altars": ["A_TIME"],
+    "world_effect": "Ensures perpetual harvest/summer.",
+    "continuity_hook": "Shifts focus to the Lover and the Kiss."
+  },
+  {
+    "line_id": "URN-L17",
+    "text": "Bold Lover, never, never canst thou kiss,",
+    "rite_action": "Pronounces the Curse of Tantalus, but reframes it as holy. Denies the act to save the feeling.",
+    "reader_role": "Judge",
+    "function": "TRANSFORM",
+    "altars": ["A_DESIRE", "A_TIME"],
+    "world_effect": "Transforms frustration into a monument.",
+    "continuity_hook": "Consoles the lover."
+  },
+  {
+    "line_id": "URN-L18",
+    "text": "Though winning near the goal yet, do not grieve;",
+    "rite_action": "Offers pastoral counseling. Replaces grief with perspective.",
+    "reader_role": "Comforter",
+    "function": "REPAIR",
+    "altars": ["A_DESIRE"],
+    "world_effect": "Repairs the pain of unfulfillment.",
+    "continuity_hook": "Explains the consolation (She cannot fade)."
+  },
+  {
+    "line_id": "URN-L19",
+    "text": "She cannot fade, though thou hast not thy bliss,",
+    "rite_action": "Codifies the trade-off: Loss of pleasure = Gain of permanence.",
+    "reader_role": "Economist",
+    "function": "MAINTAIN",
+    "altars": ["A_TRUTH"],
+    "world_effect": "Maintains value in a world where nothing depreciates.",
+    "continuity_hook": "Finalizes the promise."
+  },
+  {
+    "line_id": "URN-L20",
+    "text": "For ever wilt thou love, and she be fair!",
+    "rite_action": "Seals C2 with the 'Forever-Procession.' A chant of eternal stasis.",
+    "reader_role": "Believer",
+    "function": "MAINTAIN",
+    "altars": ["A_TIME", "A_DESIRE"],
+    "world_effect": "Locks the community into a shared vision of perfect, static love.",
+    "continuity_hook": "Transitions to the ecstatic chant of C3."
+  }
+]
+
+```
+
+#### **CHAPEL C3: Eternal Spring & Saturation**
+
+```json
+[
+  {
+    "line_id": "URN-L21",
+    "text": "Ah, happy, happy boughs! that cannot shed",
+    "rite_action": "Begins the 'Happy' Chant. Induces ritual trance through repetition.",
+    "reader_role": "Worshipper",
+    "function": "MAINTAIN",
+    "altars": ["A_TIME"],
+    "world_effect": "Reinforces the reality of the evergreen world.",
+    "continuity_hook": "Details the immunity to time."
+  },
+  {
+    "line_id": "URN-L22",
+    "text": "Your leaves, nor ever bid the Spring adieu;",
+    "rite_action": "Exorcises the ritual of farewell. Binds the timeline to 'Spring'.",
+    "reader_role": "Worshipper",
+    "function": "MAINTAIN",
+    "altars": ["A_TIME"],
+    "world_effect": "Creates a seasonless reality.",
+    "continuity_hook": "Moves to the musician."
+  },
+  {
+    "line_id": "URN-L23",
+    "text": "And, happy melodist, unwearied,",
+    "rite_action": "Celebrates the removal of fatigue. The ideal worker/artist.",
+    "reader_role": "Worshipper",
+    "function": "PRODUCE",
+    "altars": ["A_SILENCE"],
+    "world_effect": "Produces an image of effort without exhaustion.",
+    "continuity_hook": "The songs are forever new."
+  },
+  {
+    "line_id": "URN-L24",
+    "text": "For ever piping songs for ever new;",
+    "rite_action": "Paradox chant: Repetition (piping) produces Novelty (new).",
+    "reader_role": "Theologian",
+    "function": "MAINTAIN",
+    "altars": ["A_TIME", "A_TRUTH"],
+    "world_effect": "Stabilizes the fear of boredom in eternity.",
+    "continuity_hook": "Escalates to the lovers."
+  },
+  {
+    "line_id": "URN-L25",
+    "text": "More happy love! more happy, happy love!",
+    "rite_action": "Ecstatic Glossolalia. The peak of the verbal procession. Overloads the meaning of 'happy'.",
+    "reader_role": "Ecstatic",
+    "function": "TRANSFORM",
+    "altars": ["A_DESIRE"],
+    "world_effect": "Transforms language into pure emotional texture through excess.",
+    "continuity_hook": "Attributes of this love."
+  },
+  {
+    "line_id": "URN-L26",
+    "text": "For ever warm and still to be enjoy'd,",
+    "rite_action": "Sacralizes potentiality. The meal is always about to be eaten.",
+    "reader_role": "Lover",
+    "function": "MAINTAIN",
+    "altars": ["A_DESIRE"],
+    "world_effect": "Maintains the moment of highest appetite.",
+    "continuity_hook": "Panting/Young imagery."
+  },
+  {
+    "line_id": "URN-L27",
+    "text": "For ever panting, and for ever young;",
+    "rite_action": "Freezes the physiological state of arousal.",
+    "reader_role": "Lover",
+    "function": "MAINTAIN",
+    "altars": ["A_DESIRE", "A_TIME"],
+    "world_effect": "Denies the aging process.",
+    "continuity_hook": "The turn: contrasting this with human reality."
+  },
+  {
+    "line_id": "URN-L28",
+    "text": "All breathing human passion far above,",
+    "rite_action": "Elevates the Urn-World hierarchically above the 'breathing' (mortal) world.",
+    "reader_role": "Judge",
+    "function": "REPAIR",
+    "altars": ["A_TRUTH"],
+    "world_effect": "Creates a vertical cosmology: Art > Biology.",
+    "continuity_hook": "Describes the cost of human passion."
+  },
+  {
+    "line_id": "URN-L29",
+    "text": "That leaves a heart high-sorrowful and cloy'd,",
+    "rite_action": "Diagnoses the human condition: Satiety leads to sickness.",
+    "reader_role": "Patient",
+    "function": "REPAIR",
+    "altars": ["A_DESIRE"],
+    "world_effect": "Validates the reader's suffering by naming it.",
+    "continuity_hook": "Physical symptoms of passion."
+  },
+  {
+    "line_id": "URN-L30",
+    "text": "A burning forehead, and a parching tongue.",
+    "rite_action": "Seals C3 with the symptoms of the 'fever' of life. Clears the palate for C4.",
+    "reader_role": "Patient",
+    "function": "REPAIR",
+    "altars": ["A_DESIRE"],
+    "world_effect": "Exorcises the pain of desire by contrasting it with the Urn's cool.",
+    "continuity_hook": "Transition to a new scene (The Sacrifice)."
+  }
+]
+
+```
+
+#### **CHAPEL C4: Sacrifice & Empty Town**
+
+```json
+[
+  {
+    "line_id": "URN-L31",
+    "text": "Who are these coming to the sacrifice?",
+    "rite_action": "Opens the Civic Procession. Re-engages the collective 'Who'.",
+    "reader_role": "Citizen",
+    "function": "PRODUCE",
+    "altars": ["A_COMMUNITY"],
+    "world_effect": "Produces a society, not just lovers. The ritual becomes public.",
+    "continuity_hook": "Identifies the priest and altar."
+  },
+  {
+    "line_id": "URN-L32",
+    "text": "To what green altar, O mysterious priest,",
+    "rite_action": "Acknowledges the religious authority within the image.",
+    "reader_role": "Novice",
+    "function": "MAINTAIN",
+    "altars": ["A_COMMUNITY"],
+    "world_effect": "Maintains the structure of worship within the artifact.",
+    "continuity_hook": "The victim (heifer)."
+  },
+  {
+    "line_id": "URN-L33",
+    "text": "Lead'st thou that heifer lowing at the skies,",
+    "rite_action": "Enacts the visual sacrifice. Connects earth (beast) to heaven (skies).",
+    "reader_role": "Witness",
+    "function": "PRODUCE",
+    "altars": ["A_SILENCE"],
+    "world_effect": "Evokes sound (lowing) that is immediately silenced by the medium.",
+    "continuity_hook": "Decoration of the victim."
+  },
+  {
+    "line_id": "URN-L34",
+    "text": "And all her silken flanks with garlands drest?",
+    "rite_action": "Adorns the victim. Aestheticizes death.",
+    "reader_role": "Decorator",
+    "function": "TRANSFORM",
+    "altars": ["A_TRUTH"],
+    "world_effect": "Transforms animal slaughter into 'silken' beauty.",
+    "continuity_hook": "The Turn: Looking away from the Urn to the town."
+  },
+  {
+    "line_id": "URN-L35",
+    "text": "What little town by river or sea shore,",
+    "rite_action": "Conjures the 'Ghost Town.' The reader imagines what is NOT on the urn.",
+    "reader_role": "Architect",
+    "function": "PRODUCE",
+    "altars": ["A_COMMUNITY"],
+    "world_effect": "Expands the world beyond the frame. Creates a geography of absence.",
+    "continuity_hook": "Alternative location (Mountain)."
+  },
+  {
+    "line_id": "URN-L36",
+    "text": "Or mountain-built with peaceful citadel,",
+    "rite_action": "Stabilizes the imaginary town with images of peace/defense.",
+    "reader_role": "Architect",
+    "function": "PRODUCE",
+    "altars": ["A_COMMUNITY"],
+    "world_effect": "Solidifies the existence of the unseen home.",
+    "continuity_hook": "The emptying."
+  },
+  {
+    "line_id": "URN-L37",
+    "text": "Is emptied of this folk, this pious morn?",
+    "rite_action": "Links the visible crowd to the invisible emptiness. Cause and effect.",
+    "reader_role": "Logician",
+    "function": "MAINTAIN",
+    "altars": ["A_COMMUNITY", "A_SILENCE"],
+    "world_effect": "Maintains the logic: Presence here = Absence there.",
+    "continuity_hook": "Address to the town itself."
+  },
+  {
+    "line_id": "URN-L38",
+    "text": "And, little town, thy streets for evermore",
+    "rite_action": "Apostrophe to the void. Blesses/Curses the town with eternity.",
+    "reader_role": "Prophet",
+    "function": "TRANSFORM",
+    "altars": ["A_TIME", "A_SILENCE"],
+    "world_effect": "Transforms the temporary festival into eternal desolation.",
+    "continuity_hook": "The consequence of silence."
+  },
+  {
+    "line_id": "URN-L39",
+    "text": "Will silent be; and not a soul to tell",
+    "rite_action": "Removes the narrator. The town loses its history.",
+    "reader_role": "Historian",
+    "function": "TRANSFORM",
+    "altars": ["A_SILENCE", "A_COMMUNITY"],
+    "world_effect": "Creates a world where the story cannot be told from within, only observed from without.",
+    "continuity_hook": "The impossibility of return."
+  },
+  {
+    "line_id": "URN-L40",
+    "text": "Why thou art desolate, can e'er return.",
+    "rite_action": "Seals C4 with 'Desolation.' The shadow side of the Urn's eternal joy.",
+    "reader_role": "Mourner",
+    "function": "REPAIR",
+    "altars": ["A_COMMUNITY"],
+    "world_effect": "Repairs the reader's envy of the Urn by showing the cost (total loss of home).",
+    "continuity_hook": "Return to the Urn as object (C5)."
+  }
+]
+
+```
+
+#### **CHAPEL C5: Attic Shape & Aphorism Seal**
+
+```json
+[
+  {
+    "line_id": "URN-L41",
+    "text": "O Attic shape! Fair attitude! with brede",
+    "rite_action": "Re-Invocation. Objectifies the urn again as 'Shape' and 'Attitude.'",
+    "reader_role": "Critic",
+    "function": "MAINTAIN",
+    "altars": ["A_TRUTH"],
+    "world_effect": "Restores the distance between Viewer and Object.",
+    "continuity_hook": "Description of the surface (brede)."
+  },
+  {
+    "line_id": "URN-L42",
+    "text": "Of marble men and maidens overwrought,",
+    "rite_action": "Acknowledges the artifice. They are 'marble' and 'overwrought' (too much).",
+    "reader_role": "Critic",
+    "function": "MAINTAIN",
+    "altars": ["A_TRUTH"],
+    "world_effect": "Maintains the distinction between Art and Life.",
+    "continuity_hook": "Texture details (branches/weed)."
+  },
+  {
+    "line_id": "URN-L43",
+    "text": "With forest branches and the trodden weed;",
+    "rite_action": "Notices the synthesis of order (marble) and chaos (weed).",
+    "reader_role": "Observer",
+    "function": "MAINTAIN",
+    "altars": ["A_TIME"],
+    "world_effect": "Confirms the frozen ecosystem.",
+    "continuity_hook": "Direct address: 'Thou silent form'."
+  },
+  {
+    "line_id": "URN-L44",
+    "text": "Thou, silent form, dost tease us out of thought",
+    "rite_action": "The Mystical Negation. The Urn disables the intellect.",
+    "reader_role": "Mystic",
+    "function": "TRANSFORM",
+    "altars": ["A_SILENCE", "A_TRUTH"],
+    "world_effect": "Transforms the reading experience from analysis to awe.",
+    "continuity_hook": "Comparison to Eternity."
+  },
+  {
+    "line_id": "URN-L45",
+    "text": "As doth eternity: Cold Pastoral!",
+    "rite_action": "The Paradoxical Naming. 'Cold' yet 'Pastoral'. Recognition of the Urn's indifference.",
+    "reader_role": "Realist",
+    "function": "REPAIR",
+    "altars": ["A_TIME"],
+    "world_effect": "Repairs the seduction by admitting the object's lack of warmth.",
+    "continuity_hook": "Prophecy of the future."
+  },
+  {
+    "line_id": "URN-L46",
+    "text": "When old age shall this generation waste,",
+    "rite_action": "Memento Mori. Reminds the community of its own mortality.",
+    "reader_role": "Prophet",
+    "function": "MAINTAIN",
+    "altars": ["A_TIME"],
+    "world_effect": "Situates the ritual in the flow of dying generations.",
+    "continuity_hook": "The survival of the Urn."
+  },
+  {
+    "line_id": "URN-L47",
+    "text": "Thou shalt remain, in midst of other woe",
+    "rite_action": "Assigns the Urn the role of Eternal Survivor/Monument.",
+    "reader_role": "Prophet",
+    "function": "MAINTAIN",
+    "altars": ["A_TIME"],
+    "world_effect": "Guarantees a witness for future suffering.",
+    "continuity_hook": "The Urn's relationship to the future (Friend)."
+  },
+  {
+    "line_id": "URN-L48",
+    "text": "Than ours, a friend to man, to whom thou say'st,",
+    "rite_action": "Personifies the Urn as a benevolent teacher/friend.",
+    "reader_role": "Disciple",
+    "function": "REPAIR",
+    "altars": ["A_COMMUNITY"],
+    "world_effect": "Repairs the 'Cold Pastoral' by reclaiming it as a 'Friend'.",
+    "continuity_hook": "The Delivery of the Doctrine."
+  },
+  {
+    "line_id": "URN-L49",
+    "text": "\"Beauty is truth, truth beauty,—that is all",
+    "rite_action": "The Creed. A circular tautology chanted to ward off nihilism.",
+    "reader_role": "Believer",
+    "function": "MAINTAIN",
+    "altars": ["A_TRUTH"],
+    "world_effect": "Stabilizes the world with a final, unbreakable equation.",
+    "continuity_hook": "The Limit."
+  },
+  {
+    "line_id": "URN-L50",
+    "text": "Ye know on earth, and all ye need to know.\"",
+    "rite_action": "The Benediction/Seal. Limits human epistemology to aesthetic experience.",
+    "reader_role": "Believer",
+    "function": "TRANSFORM",
+    "altars": ["A_TRUTH"],
+    "world_effect": "Transforms 'not knowing' into a completed state of grace. The ritual ends.",
+    "continuity_hook": "End of Ritual."
+  }
+]
+
+```

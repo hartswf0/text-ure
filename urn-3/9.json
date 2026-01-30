@@ -1,0 +1,188 @@
+## Protocol: The Keats Projection
+
+### Operationalizing the "Grecian Urn" as Ritual Architecture
+
+We are not analyzing a poem. We are constructing a **ceremonial space**.
+
+Following Axiom C3 (*Maps do not represent space; maps constitute space*), the text of "Ode on a Grecian Urn" is hereby transmuted into a **Spatial-Semantic Grid**. This grid does not transmit a message about beauty or truth; it is a machine for *rehearsing* the experience of eternity.
+
+The reader does not "read" the grid; the reader *inhabits* the silence of the Urn.
+
+---
+
+### I. The Mapping Pipeline: Converting Semantic Categories to Acts
+
+We strip the text of its literary veneer to reveal the underlying ritual mechanics. We perceive six distinct ceremonial zones based on the **communicative acts** performed (Step P1).
+
+#### Zone A: The Invocations (PRODUCE)
+
+* **Function:** Call the sacred object into attendance. These acts establish the center of the grid.
+* **Text Fragments:** "Thou still unravish'd bride," "Sylvan historian," "O Attic shape! Fair attitude!"
+
+#### Zone B: The Interrogations (REPAIR)
+
+* **Function:** Destabilize the secular reality of the reader to make room for the sacred reality of the Urn. These occur at the *Edges*.
+* **Text Fragments:** "What men or gods are these?" "What mad pursuit?" "Who are these coming to the sacrifice?"
+
+#### Zone C: The Chants of Stasis (MAINTAIN)
+
+* **Function:** Enforce the law of the new world (Time = 0). Repetition binds the community of readers to the frozen moment.
+* **Text Fragments:** "Ah, happy, happy boughs!" "More happy love! more happy, happy love!" "For ever piping," "For ever young."
+
+#### Zone D: The Witnessing (WITNESS)
+
+* **Function:** Describe the scene not as a picture, but as a live event the reader is testifying to.
+* **Text Fragments:** "Fair youth, beneath the trees," "Lead'st thou that heifer," "Marble men and maidens."
+
+#### Zone E: The Exiles (TRANSFORM)
+
+* **Function:** Define what is *excluded* from the grid to give the grid definition. The emptiness that gives shape to the form.
+* **Text Fragments:** "Thy streets for evermore / Will silent be," "Desolate," "Old age shall this generation waste."
+
+#### Zone F: The Great Seal (SEAL)
+
+* **Function:** Authorize the reality. Close the ceremony.
+* **Text Fragments:** "Beauty is truth, truth beauty."
+
+---
+
+### II. The Spatial-Semantic Grid (24x24 Architecture)
+
+We arrange these acts not linearly, but spatially. The Grid is concentric.
+
+* **The Outer Rim (The Human Boundary):** Where the Reader enters. Defined by **QUESTION** and **INVOCATION**.
+* **The Middle Ring (The Frieze):** The Narrative Loop. Defined by **WITNESS** and **CHANT**.
+* **The Center (The Void):** The Silence. Defined by **SEAL** and **EXILE**.
+
+#### Architectural Layout Diagram
+
+| Coordinate Zone | Ritual Function | Dominant Act | Acoustic Quality |
+| --- | --- | --- | --- |
+| **Perimeter (Rings 1-5)** | Entry & Disorientation | **QUESTION / INVOCATION** | Cacophony ("Pipes," "Timbrels," "Questions") |
+| **Mid-Grid (Rings 6-15)** | The Frozen Loop | **CHANT / WITNESS** | Melodic Drone ("Happy," "For Ever," "Soft Pipes") |
+| **Core (Rings 16-24)** | The Eternal Static | **SEAL / SILENCE** | Silence ("Desolate," "Cold Pastoral") |
+
+---
+
+### III. Micro-Mapping: Cell Schema Examples
+
+Here we define the specific "sites of action" (Step P4).
+
+#### Cell: The Threshold (Outer Rim)
+
+```json
+{
+  "addr": "(02, 02)",
+  "act": "INVOCATION",
+  "text_fragment": "Thou foster-child of silence and slow time",
+  "world_function": "PRODUCE",
+  "role_offered_to_reader": "Pilgrim",
+  "continuity_hook": "Slow down reader's temporal clock",
+  "repetition_tag": "SILENCE_MOTIF"
+}
+
+```
+
+#### Cell: The Panic (Outer Rim)
+
+```json
+{
+  "addr": "(04, 20)",
+  "act": "QUESTION",
+  "text_fragment": "What struggle to escape? / What pipes and timbrels?",
+  "world_function": "REPAIR",
+  "role_offered_to_reader": "Investigator",
+  "continuity_hook": "Force movement toward the stable Center",
+  "repetition_tag": "CHAOS_MOTIF"
+}
+
+```
+
+#### Cell: The Infinite Loop (Mid-Grid)
+
+```json
+{
+  "addr": "(12, 10)",
+  "act": "CHANT",
+  "text_fragment": "For ever wilt thou love, and she be fair!",
+  "world_function": "MAINTAIN",
+  "role_offered_to_reader": "Congregant",
+  "continuity_hook": "Return to start of Chant Band (Do not proceed to bliss)",
+  "repetition_tag": "FOREVER_MOTIF"
+}
+
+```
+
+#### Cell: The Empty Town (The Void Core)
+
+*Note: This cell is critical. It contains the world *outside* the Urn, which must be sacrificed to maintain the Urn.*
+
+```json
+{
+  "addr": "(18, 18)",
+  "act": "COMMAND",
+  "text_fragment": "And, little town... thy streets for evermore / Will silent be",
+  "world_function": "TRANSFORM",
+  "role_offered_to_reader": "Exile",
+  "continuity_hook": "Establish the cost of eternity",
+  "repetition_tag": "SILENCE_MOTIF"
+}
+
+```
+
+#### Cell: The High Altar (The Core Center)
+
+```json
+{
+  "addr": "(24, 24)",
+  "act": "SEAL",
+  "text_fragment": "Beauty is truth, truth beauty",
+  "world_function": "MAINTAIN",
+  "role_offered_to_reader": "Believer",
+  "continuity_hook": "Exit Grid",
+  "repetition_tag": "TRUTH_MOTIF"
+}
+
+```
+
+---
+
+### IV. Traversal Paths (Step P6)
+
+Meaning is not retrieved; it is walked.
+
+**1. The Pilgrimage of Stasis (Spiral Inward)**
+
+* **Path:** Start at `(00,00)` (Invocation).
+* **Action:** Move through the QUESTIONS of the Outer Rim.
+* **Ordeal:** The reader is bombarded by "What? What? What?" until they seek the stability of the Middle Ring.
+* **Arrival:** The reader enters the CHANT loop ("Happy, Happy, Happy").
+* **Terminal:** The reader reaches the SEAL at the center.
+
+**2. The Circulation of "For Ever" (Closed Loop)**
+
+* **Path:** Restrict movement to Rows 10-15 (Mid-Grid).
+* **Action:** Read only the CHANT cells.
+* **Experience:** "For ever piping" -> "For ever new" -> "For ever warm" -> "For ever young."
+* **Result:** The reader simulates the paralysis of the figures on the Urn. Time is abolished through adjacency.
+
+**3. The Path of the Exile (The Negative Space)**
+
+* **Path:** Jump between cells tagged with "SILENCE" and "DESOLATION."
+* **Action:** Trace the geography of what is missing.
+* **Experience:** "Silence" -> "Heard melodies are sweet, but those unheard are sweeter" -> "Silent be" -> "Silent form."
+* **Result:** The reader constructs the *silence* as a physical object.
+
+---
+
+### V. Philosophical End State
+
+By converting Keats's ode into this grid, we affirm the Carey Logic:
+
+1. **Spatialization:** The poem is no longer a linear description of a pot. It is a circular temple.
+2. **Ritual:** The reader does not learn about the Urn; the reader performs the act of stopping time.
+3. **Reality:** The "Little Town" is not a fictional place in the poem; it is the *actual* emptiness created in the reader's mind when they enter the "Cold Pastoral."
+
+The grid has successfully repaired the fracture between the living reader (dying, breathing) and the marble men (eternal, dead).
+
+**Would you like me to render the specific "CHANT" band (the Middle Ring) as a visual ASCII table to demonstrate how adjacency produces the sensation of eternity?**

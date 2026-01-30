@@ -1,0 +1,1900 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>KITT-SHIELD GRID (24×24)</title>
+  <style>
+    :root{
+      --paper:#F4F4F0;
+      --ink:#111111;
+      --muted:#6B6B6B;
+      --line:#D7D7CF;
+      --panel:#FFFFFF;
+      --accent:#0F172A;
+      --ok:#0B3D2E;
+      --warn:#6B3D0B;
+      --bad:#5B0B0B;
+
+      --textCell:#FFFFFF;
+      --cacheCell:#F8FAFC;
+      --indexCell:#FFF7ED;
+      --archiveCell:#F3F4F6;
+      --noiseCell:#FEF2F2;
+
+      --shadow: 0 10px 30px rgba(0,0,0,.08);
+      --r:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background:var(--paper);
+      color:var(--ink);
+      font-family:var(--sans);
+      line-height:1.25;
+    }
+
+    /* Header */
+    header{
+      position:sticky; top:0; z-index:50;
+      padding:12px 12px 10px;
+      background:rgba(244,244,240,.92);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--line);
+    }
+    .topbar{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      max-width:1200px; margin:0 auto;
+    }
+    .brand{
+      display:flex; flex-direction:column; gap:2px; min-width:0;
+    }
+    .brand .title{
+      font-family:var(--mono);
+      font-weight:800;
+      letter-spacing:.02em;
+      font-size:14px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .brand .sub{
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--muted);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+
+    .actions{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .btn{
+      border:1px solid var(--line);
+      background:var(--panel);
+      color:var(--ink);
+      padding:9px 10px;
+      border-radius:12px;
+      font-family:var(--mono);
+      font-size:12px;
+      cursor:pointer;
+      box-shadow: 0 1px 0 rgba(0,0,0,.02);
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      background:var(--ink);
+      color:var(--paper);
+      border-color:var(--ink);
+    }
+    .btn.ghost{
+      background:transparent;
+    }
+    .pill{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--muted);
+      background:rgba(255,255,255,.55);
+      white-space:nowrap;
+    }
+
+    /* Layout */
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding:12px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:12px;
+    }
+    @media (max-width: 980px){
+      main{ grid-template-columns: 1fr; }
+      .actions{ gap:6px; }
+      .btn{ padding:9px 9px; }
+    }
+
+    .card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background:linear-gradient(to bottom, rgba(255,255,255,.9), rgba(255,255,255,.7));
+    }
+    .card .hd .h{
+      font-family:var(--mono);
+      font-weight:800;
+      font-size:12px;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+    }
+    .card .hd .meta{
+      font-family:var(--mono);
+      color:var(--muted);
+      font-size:11px;
+      white-space:nowrap;
+    }
+    .card .bd{ padding:12px; }
+
+    /* Tabs */
+    .tabs{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+    .tabbtn{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.65);
+      color:var(--ink);
+      padding:8px 10px;
+      border-radius:12px;
+      font-family:var(--mono);
+      font-size:12px;
+      cursor:pointer;
+    }
+    .tabbtn.active{
+      background:var(--ink);
+      color:var(--paper);
+      border-color:var(--ink);
+    }
+    .tabpane{ display:none; }
+    .tabpane.active{ display:block; }
+
+    /* Grid */
+    .gridTools{
+      display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .toggles{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    }
+    .toggle{
+      display:flex; gap:8px; align-items:center;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:8px 10px;
+      background:rgba(255,255,255,.7);
+      font-family:var(--mono);
+      font-size:12px;
+    }
+    .toggle input{ accent-color: var(--ink); }
+
+    .gridWrap{
+      border:1px solid var(--line);
+      border-radius:14px;
+      overflow:hidden;
+      background:rgba(250,250,248,.9);
+    }
+    .gridHeader{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 10px;
+      border-bottom:1px solid var(--line);
+      background:rgba(255,255,255,.75);
+      gap:10px;
+    }
+    .gridHeader .left, .gridHeader .right{
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    }
+    .gridHeader .readout{
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+    .grid{
+      display:grid;
+      gap:1px;
+      background:var(--line);
+      user-select:none;
+      touch-action: pan-x pan-y;
+    }
+
+    .cell{
+      background:var(--textCell);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family:var(--mono);
+      font-size:10px;
+      color:rgba(0,0,0,.65);
+      cursor:pointer;
+      min-width:0;
+    }
+    .cell small{
+      font-size:9px;
+      opacity:.8;
+      line-height:1.05;
+      text-align:center;
+    }
+    .cell[data-type="TEXT"]{ background:var(--textCell); }
+    .cell[data-type="CACHE"]{ background:var(--cacheCell); }
+    .cell[data-type="INDEX"]{ background:var(--indexCell); }
+    .cell[data-type="ARCHIVE"]{ background:var(--archiveCell); }
+    .cell[data-type="NOISE"]{ background:var(--noiseCell); }
+
+    .cell.selected{
+      outline:2px solid var(--ink);
+      outline-offset:-2px;
+      position:relative;
+      z-index:2;
+    }
+
+    /* Detail */
+    .kvs{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+      margin-bottom:10px;
+    }
+    @media (max-width: 520px){
+      .kvs{ grid-template-columns:1fr; }
+    }
+    .kv{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px;
+      background:rgba(255,255,255,.75);
+      min-width:0;
+    }
+    .kv .k{
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--muted);
+    }
+    .kv .v{
+      margin-top:4px;
+      font-family:var(--mono);
+      font-size:12px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      font-family:var(--mono);
+      font-size:11px;
+      background:rgba(255,255,255,.7);
+      white-space:nowrap;
+    }
+    .badge b{ font-weight:900; }
+    .badge.text{ color:var(--ok); }
+    .badge.cache{ color:var(--accent); }
+    .badge.index{ color:var(--warn); }
+    .badge.archive{ color:var(--muted); }
+    .badge.noise{ color:var(--bad); }
+
+    .mono{
+      font-family:var(--mono);
+      font-size:12px;
+      line-height:1.35;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    .mono.small{ font-size:11px; }
+
+    .split{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+
+    .panel{
+      border:1px solid var(--line);
+      border-radius:14px;
+      overflow:hidden;
+      background:rgba(255,255,255,.75);
+    }
+    .panel .phd{
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background:rgba(255,255,255,.8);
+    }
+    .panel .phd .h{
+      font-family:var(--mono);
+      font-weight:900;
+      font-size:12px;
+    }
+    .panel .phd .tools{
+      display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .panel .pbd{ padding:12px; }
+
+    .dpad{
+      display:grid;
+      grid-template-columns: 44px 44px 44px;
+      grid-template-rows: 44px 44px 44px;
+      gap:6px;
+      justify-content:start;
+    }
+    .dpad button{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.9);
+      border-radius:12px;
+      font-family:var(--mono);
+      font-size:12px;
+      cursor:pointer;
+    }
+    .dpad button:active{ transform: translateY(1px); }
+    .dpad .empty{ visibility:hidden; }
+
+    textarea{
+      width:100%;
+      min-height: 280px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      background:rgba(255,255,255,.85);
+      font-family:var(--mono);
+      font-size:12px;
+      line-height:1.35;
+      outline:none;
+      resize:vertical;
+    }
+    .row{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .field{
+      display:flex; gap:8px; align-items:center;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:8px 10px;
+      background:rgba(255,255,255,.7);
+      font-family:var(--mono);
+      font-size:12px;
+    }
+    .field input[type="number"]{
+      width:78px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:6px 8px;
+      font-family:var(--mono);
+      font-size:12px;
+      outline:none;
+      background:white;
+    }
+    .field input[type="checkbox"]{ accent-color: var(--ink); }
+
+    .searchBox{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    }
+    .searchBox input{
+      flex:1 1 260px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px 12px;
+      font-family:var(--mono);
+      font-size:12px;
+      outline:none;
+      background:rgba(255,255,255,.85);
+      min-width:0;
+    }
+    .list{
+      margin-top:10px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      overflow:hidden;
+      background:rgba(255,255,255,.75);
+    }
+    .list .item{
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+      cursor:pointer;
+      font-family:var(--mono);
+      font-size:12px;
+    }
+    .list .item:last-child{ border-bottom:none; }
+    .list .item:hover{ background:rgba(255,255,255,.95); }
+    .list .item .left{ min-width:0; }
+    .list .item .right{
+      color:var(--muted);
+      font-size:11px;
+      white-space:nowrap;
+      margin-left:12px;
+    }
+
+    .muted{ color:var(--muted); }
+    .ok{ color:var(--ok); }
+    .warn{ color:var(--warn); }
+    .bad{ color:var(--bad); }
+
+    .hr{
+      height:1px;
+      background:var(--line);
+      margin:10px 0;
+    }
+
+    .footerNote{
+      margin-top:10px;
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--muted);
+    }
+
+    /* Make grid usable on small screens */
+    .gridWrap{ width:100%; }
+    .gridViewport{
+      overflow:auto;
+      max-height: 56vh;
+      -webkit-overflow-scrolling: touch;
+    }
+    @media (max-width: 980px){
+      .gridViewport{ max-height: 52vh; }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <div class="title">KITT-SHIELD GRID · 24×24 ADDRESS SPACE</div>
+      <div class="sub" id="statusLine">UNCOMPILED · paste text → COMPILE → scan cells</div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="compileBtn">COMPILE</button>
+      <button class="btn" id="exportBtn">EXPORT JSON</button>
+      <span class="pill" id="summaryPill">lines:– blocks:–</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- LEFT: GRID + DETAIL -->
+  <section class="card">
+    <div class="hd">
+      <div class="h">Grid + Scan</div>
+      <div class="tabs" role="tablist" aria-label="Sections">
+        <button class="tabbtn active" data-tab="grid">GRID</button>
+        <button class="tabbtn" data-tab="input">INPUT</button>
+        <button class="tabbtn" data-tab="indices">INDICES</button>
+        <button class="tabbtn" data-tab="export">EXPORT</button>
+        <button class="tabbtn" data-tab="help">HELP</button>
+      </div>
+    </div>
+
+    <div class="bd">
+      <!-- GRID TAB -->
+      <div class="tabpane active" id="tab-grid">
+        <div class="gridTools">
+          <div class="toggles">
+            <label class="toggle"><input type="checkbox" id="viewportMode" checked /> VIEWPORT (12×12)</label>
+            <label class="toggle"><input type="checkbox" id="showCoords" checked /> COORDS</label>
+            <label class="toggle"><input type="checkbox" id="uppercaseToggle" checked /> UPPERCASE</label>
+          </div>
+          <div class="toggles">
+            <span class="badge text" id="typeBadge"><b>TYPE</b> —</span>
+            <span class="badge" id="addrBadge"><b>ADDR</b> —</span>
+          </div>
+        </div>
+
+        <div class="gridWrap">
+          <div class="gridHeader">
+            <div class="left">
+              <button class="btn" id="panUp">↑</button>
+              <button class="btn" id="panLeft">←</button>
+              <button class="btn" id="panRight">→</button>
+              <button class="btn" id="panDown">↓</button>
+              <span class="readout" id="viewReadout">VIEW x=0..11 y=0..11</span>
+            </div>
+            <div class="right">
+              <button class="btn ghost" id="prevAddr">PREV</button>
+              <button class="btn ghost" id="nextAddr">NEXT</button>
+            </div>
+          </div>
+
+          <div class="gridViewport" id="gridViewport">
+            <div class="grid" id="grid"></div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="split">
+          <div class="kvs">
+            <div class="kv">
+              <div class="k">CELL</div>
+              <div class="v" id="cellLabel">—</div>
+            </div>
+            <div class="kv">
+              <div class="k">CONTENT</div>
+              <div class="v" id="cellContentLabel">—</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="phd">
+              <div class="h">CELL PAYLOAD</div>
+              <div class="tools">
+                <button class="btn" id="copyCell">COPY</button>
+                <button class="btn" id="jumpPrimary">JUMP PRIMARY</button>
+              </div>
+            </div>
+            <div class="pbd">
+              <div class="mono" id="cellPayload">Select a cell.</div>
+              <div class="footerNote" id="cellFoot">Arrow keys: move · Prev/Next: linear scan-head · D-pad: 4-neighbor routing</div>
+              <div style="margin-top:10px; display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap;">
+                <div class="dpad" aria-label="D-pad routing">
+                  <button class="empty"> </button>
+                  <button id="moveUp">↑</button>
+                  <button class="empty"> </button>
+                  <button id="moveLeft">←</button>
+                  <button id="moveStay">•</button>
+                  <button id="moveRight">→</button>
+                  <button class="empty"> </button>
+                  <button id="moveDown">↓</button>
+                  <button class="empty"> </button>
+                </div>
+                <div class="mono small muted" id="neighborsBox" style="flex:1 1 260px;">
+                  neighbors: —
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- INPUT TAB -->
+      <div class="tabpane" id="tab-input">
+        <div class="mono small muted">
+          INPUT_TEXT is treated as inscription material. No interpretation. Segmentation is driven by strip width, windowing, and byte limits.
+        </div>
+
+        <div class="row" style="margin-top:12px;">
+          <label class="field"><input type="checkbox" id="mapParatext" checked /> MAP PARATEXT</label>
+          <label class="field">PANEL WINDOW (TEXT lines) <input type="number" id="panelWindow" min="4" max="48" value="12" /></label>
+          <label class="field">CHARS/STRIP <input type="number" id="charsPerStrip" min="48" max="200" value="96" /></label>
+          <label class="field">BYTES/CELL <input type="number" id="bytesPerCell" min="256" max="2048" value="640" /></label>
+          <label class="field">MAX STRIPS/BLOCK <input type="number" id="maxStrips" min="1" max="8" value="4" /></label>
+        </div>
+
+        <div style="margin-top:12px;">
+          <textarea id="inputText" spellcheck="false"></textarea>
+        </div>
+
+        <div class="row">
+          <button class="btn primary" id="compileBtn2">COMPILE</button>
+          <button class="btn" id="resetBtn">RESET DEFAULT</button>
+          <span class="pill" id="compileReport">ready</span>
+        </div>
+
+        <div class="footerNote">
+          Determinism note: same config + same input → same IDs, blocks, allocation, indices.
+        </div>
+      </div>
+
+      <!-- INDICES TAB -->
+      <div class="tabpane" id="tab-indices">
+        <div class="searchBox">
+          <input id="searchInput" placeholder="Search: SHLD-L###  |  SHLD-B####  |  ⟦SHLD|P..⟧  |  token" />
+          <button class="btn" id="searchBtn">SEARCH</button>
+          <button class="btn" id="clearSearch">CLEAR</button>
+        </div>
+
+        <div class="row">
+          <span class="pill" id="indexStats">indices: —</span>
+          <button class="btn" id="copyIndex">COPY RESULTS</button>
+        </div>
+
+        <div class="list" id="resultsList" aria-label="Search results"></div>
+
+        <div class="footerNote">
+          Indices are routing sectors: LINE → ADDR(s), BLOCK → primary/replicas, PANEL → ADDR(s), TOKEN → ADDR(s).
+        </div>
+      </div>
+
+      <!-- EXPORT TAB -->
+      <div class="tabpane" id="tab-export">
+        <div class="mono small muted">
+          Export is the manifest (grid + lines + blocks + indices). The “interface” is a surface effect.
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <button class="btn primary" id="downloadJson">DOWNLOAD JSON</button>
+          <button class="btn" id="copyJson">COPY JSON</button>
+          <button class="btn" id="copyMini">COPY SUMMARY</button>
+        </div>
+
+        <div class="hr"></div>
+        <div class="panel">
+          <div class="phd">
+            <div class="h">MANIFEST PREVIEW (TRUNCATED)</div>
+            <div class="tools"><span class="meta" id="manifestMeta">—</span></div>
+          </div>
+          <div class="pbd">
+            <div class="mono" id="manifestPreview">Compile to generate JSON.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HELP TAB -->
+      <div class="tabpane" id="tab-help">
+        <div class="mono">
+KITT-SHIELD GRID: RULES (IMPLEMENTED)
+
+1) GRID = ADDRESS SPACE (24×24). Tap a cell = read sector.
+2) SCAN-HEAD = selection. PREV/NEXT = linear address scan (y*24+x).
+3) BLOCKS = PANEL header + 1–4 STRIPS. STRIPS are fixed-width slices of compiled text.
+4) PANELS = deterministic windows (every N TEXT lines). No “importance” decisions.
+5) ALLOCATION = HYBRID:
+   - INDEX cells: directory sectors (rows y=0,8,16 plus column x=0)
+   - ARCHIVE cells: fixed anchors (corners + mid-edges + center)
+   - TEXT cells: one primary block each (as possible)
+   - CACHE cells: replicas, hashed distribution
+6) NOISE = overflow visible. If a cell exceeds bytes/cell, content is truncated and pointers route to ARCHIVE.
+
+Controls:
+- Tap cell, arrow keys, or D-pad to move.
+- SEARCH to jump to addresses via indices.
+- EXPORT to download the manifest.
+
+No interpretation. Only allocation, routing, retrieval, overflow.
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- RIGHT: SUMMARY + QUICK INDICES -->
+  <aside class="card">
+    <div class="hd">
+      <div class="h">System State</div>
+      <div class="meta" id="stateMeta">—</div>
+    </div>
+    <div class="bd">
+      <div class="panel">
+        <div class="phd">
+          <div class="h">ALLOC SUMMARY</div>
+          <div class="tools"><button class="btn" id="reseedBtn">RECOMPILE</button></div>
+        </div>
+        <div class="pbd">
+          <div class="mono" id="allocSummary">Compile to compute coverage.</div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="panel">
+        <div class="phd">
+          <div class="h">LEGEND</div>
+          <div class="tools"><span class="meta">cell types</span></div>
+        </div>
+        <div class="pbd mono small">
+          <div>TEXT = primary BLOCK</div>
+          <div>CACHE = replica BLOCK(s)</div>
+          <div>INDEX = pointers / routing sectors</div>
+          <div>ARCHIVE = dense storage / overflow bodies</div>
+          <div>NOISE = visible overflow + pointer(s)</div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="panel">
+        <div class="phd">
+          <div class="h">QUICK JUMP</div>
+          <div class="tools"><span class="meta">by address</span></div>
+        </div>
+        <div class="pbd">
+          <div class="row" style="margin-top:0;">
+            <label class="field">x <input type="number" id="jumpX" min="0" max="23" value="0" /></label>
+            <label class="field">y <input type="number" id="jumpY" min="0" max="23" value="0" /></label>
+            <button class="btn" id="jumpBtn">JUMP</button>
+          </div>
+          <div class="footerNote">addr = y*24 + x</div>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+</main>
+
+<script>
+/* ============================================================
+   KITT-SHIELD GRID · single-file artifact
+   Deterministic compilation + allocation + routing
+   No external libraries.
+   ============================================================ */
+
+(function(){
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+  const DEFAULT_TEXT = `{The Iliad, Book XVIII, [The Shield of Achilles]
+
+Homer
+
+Thetis goes to the palace of Vulcan to obtain new arms for her son.
+
+"Thee, welcome, goddess! what occasion calls
+(So long a stranger) to these honour'd walls?
+'Tis thine, fair Thetis, the command to lay,
+And Vulcan's joy and duty to obey."
+
+To whom the mournful mother thus replies:
+(The crystal drops stood trembling in her eyes:)
+"O Vulcan! say, was ever breast divine
+So pierced with sorrows, so o'erwhelm'd as mine?
+Of all the goddesses, did Jove prepare
+For Thetis only such a weight of care?
+I, only I, of all the watery race
+By force subjected to a man's embrace,
+Who, sinking now with age and sorrow, pays
+The mighty fine imposed on length of days.
+Sprung from my bed, a godlike hero came,
+The bravest sure that ever bore the name;
+Like some fair plant beneath my careful hand
+He grew, he flourish'd, and he graced the land:
+To Troy I sent him! but his native shore
+Never, ah never, shall receive him more;
+(Even while he lives, he wastes with secret woe;)
+Nor I, a goddess, can retard the blow!
+Robb'd of the prize the Grecian suffrage gave,
+The king of nations forced his royal slave:
+For this he grieved; and, till the Greeks oppress'd
+Required his arm, he sorrow'd unredress'd.
+Large gifts they promise, and their elders send;
+In vain--he arms not, but permits his friend
+His arms, his steeds, his forces to employ:
+He marches, combats, almost conquers Troy:
+Then slain by Phoebus (Hector had the name)
+At once resigns his armour, life, and fame.
+But thou, in pity, by my prayer be won:
+Grace with immortal arms this short-lived son,
+And to the field in martial pomp restore,
+To shine with glory, till he shines no more!"
+
+To her the artist-god: "Thy griefs resign,
+Secure, what Vulcan can, is ever thine.
+O could I hide him from the Fates, as well,
+Or with these hands the cruel stroke repel,
+As I shall forge most envied arms, the gaze
+Of wondering ages, and the world's amaze!"
+
+Thus having said, the father of the fires
+To the black labours of his forge retires.
+Soon as he bade them blow, the bellows turn'd
+Their iron mouths; and where the furnace burn'd,
+Resounding breathed: at once the blast expires,
+And twenty forges catch at once the fires;
+
+Then first he form'd the immense and solid shield;
+Rich various artifice emblazed the field;
+Its utmost verge a threefold circle bound;
+A silver chain suspends the massy round;
+Five ample plates the broad expanse compose,
+And godlike labours on the surface rose.
+
+There shone the image of the master-mind:
+There earth, there heaven, there ocean he design'd;
+The unwearied sun, the moon completely round;
+The starry lights that heaven's high convex crown'd;
+
+Two cities radiant on the shield appear,
+The image one of peace, and one of war.
+
+A field deep furrow'd next the god design'd,
+The third time labour'd by the sweating hind;
+
+Another field rose high with waving grain;
+
+Next, ripe in yellow gold, a vineyard shines,
+
+Here herds of oxen march, erect and bold,
+
+Next this, the eye the art of Vulcan leads
+Deep through fair forests, and a length of meads,
+
+A figured dance succeeds; such once was seen
+
+Thus the broad shield complete the artist crown'd
+With his last hand, and pour'd the ocean round:
+
+This done, whate'er a warrior's use requires
+He forged; the cuirass that outshone the fires,
+
+At Thetis' feet the finished labour lay:
+She, as a falcon cuts the aerial way,
+Swift from Olympus' snowy summit flies,
+And bears the blazing present through the skies.
+}`;
+
+  const STOP = new Set((
+    "THE A AN AND OR OF TO IN IS ARE WAS WERE BE BEEN BEING " +
+    "I YOU HE SHE IT THEY WE ME HIM HER THEM US MY YOUR HIS THEIR OUR " +
+    "THIS THAT THESE THOSE AS AT BY FOR FROM WITH NOT NO YES " +
+    "ON INTO OVER UNDER UP DOWN OUT NOW THEN BUT SO IF " +
+    "WHAT WHO WHOM WHICH WHERE WHEN WHY HOW " +
+    "SHALL SHOULD WOULD COULD CAN MAY MIGHT MUST " +
+    "DO DOES DID DONE " +
+    "THOU THEE THY THINE YE " +
+    "O"
+  ).split(/\s+/).filter(Boolean));
+
+  const TYPE_BADGE = {
+    "TEXT": ["text", "TEXT"],
+    "CACHE": ["cache", "CACHE"],
+    "INDEX": ["index", "INDEX"],
+    "ARCHIVE": ["archive", "ARCHIVE"],
+    "NOISE": ["noise", "NOISE"]
+  };
+
+  const state = {
+    manifest: null,
+    grid: null,
+    selected: { x:0, y:0 },
+    viewport: { enabled:true, x0:0, y0:0, size:12 },
+    ui: { showCoords:true, uppercase:true }
+  };
+
+  // ---------- CRC32 (real) ----------
+  const CRC32 = (function(){
+    const table = new Uint32Array(256);
+    for (let i=0;i<256;i++){
+      let c = i;
+      for (let k=0;k<8;k++) c = (c & 1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1);
+      table[i]=c>>>0;
+    }
+    return function(str){
+      const bytes = new TextEncoder().encode(str);
+      let crc = 0xFFFFFFFF;
+      for (const b of bytes){
+        crc = table[(crc ^ b) & 0xFF] ^ (crc >>> 8);
+      }
+      return ((crc ^ 0xFFFFFFFF) >>> 0).toString(16).padStart(8,"0");
+    };
+  })();
+
+  // ---------- FNV-1a (hash for placement) ----------
+  function fnv1a(str){
+    let h = 0x811c9dc5;
+    for (let i=0;i<str.length;i++){
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h >>> 0;
+  }
+
+  function clamp(a,b,x){ return Math.max(a, Math.min(b, x)); }
+  function zpad(n,w){ const s=String(n); return s.length>=w?s:("0".repeat(w-s.length)+s); }
+  function addrOf(x,y){ return y*24 + x; }
+  function xyOf(addr){ return { x: addr%24, y: Math.floor(addr/24) }; }
+  function bytesLen(s){ return new TextEncoder().encode(s).length; }
+
+  function punctSig(s){
+    const counts = { comma:0, semi:0, colon:0, dash:0, q:0, bang:0, quote:0, paren:0 };
+    for (const ch of s){
+      if (ch===',') counts.comma++;
+      else if (ch===';') counts.semi++;
+      else if (ch===':') counts.colon++;
+      else if (ch==='-' || ch==='—') counts.dash++;
+      else if (ch==='?') counts.q++;
+      else if (ch==='!') counts.bang++;
+      else if (ch==='\"' || ch==="'") counts.quote++;
+      else if (ch==='(' || ch===')') counts.paren++;
+    }
+    return counts;
+  }
+
+  function tokenize(s){
+    return s
+      .replace(/[^A-Za-z0-9'\- ]+/g," ")
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(t=>t.toUpperCase());
+  }
+
+  function entropyEstimate(tokens){
+    // Simple structural entropy proxy: unique/total + punctuation diversity
+    if (!tokens.length) return 0;
+    const uniq = new Set(tokens).size;
+    return clamp(0, 1, uniq / tokens.length);
+  }
+
+  function topTokens(lines, k=4){
+    const freq = new Map();
+    for (const L of lines){
+      const toks = tokenize(L.text);
+      for (const t of toks){
+        if (t.length < 2) continue;
+        if (STOP.has(t)) continue;
+        freq.set(t, (freq.get(t)||0) + 1);
+      }
+    }
+    return Array.from(freq.entries())
+      .sort((a,b)=> b[1]-a[1] || (a[0]<b[0]?-1:1))
+      .slice(0,k)
+      .map(x=>x[0]);
+  }
+
+  function classifyLine(raw){
+    const s = raw.trim();
+    if (!s) return "EMPTY";
+    const isBracket = /^\[.*\]$/.test(s);
+    const isAuthorish = (s.length <= 20 && /^[A-Z][a-z]+$/.test(s)); // "Homer"
+    const isTitleish = (s.length <= 48 && /^[A-Z][A-Za-z0-9 ,\[\]’'".:-]+$/.test(s) && s.split(/\s+/).length <= 8);
+    const isMeta = /BOOK|ILIAD|ACHILLES|HOMER|SHIELD/.test(s.toUpperCase()) && s.length < 80;
+    if (isBracket || isAuthorish || isTitleish || isMeta) return "PARATEXT";
+    return "TEXT";
+  }
+
+  function normalize(raw, config){
+    const rawLines = raw.replace(/\r\n/g,"\n").split("\n");
+    const lines = [];
+    let idx = 0;
+    for (const ln0 of rawLines){
+      const ln = ln0.trimEnd();
+      if (!ln.trim()) continue; // remove empties but structural breaks are implicitly lost; deterministic
+      idx++;
+      const cls = classifyLine(ln);
+      let text = ln.replace(/\s+/g," ").trim();
+      if (config.uppercase) text = text.toUpperCase();
+      const sig = punctSig(text);
+      const toks = tokenize(text);
+      const ent = entropyEstimate(toks);
+      lines.push({
+        id: `SHLD-L${zpad(idx,3)}`,
+        i: idx,
+        class: cls,
+        text,
+        sig,
+        entropy: +ent.toFixed(3),
+        token_sketch: [] // fill after
+      });
+    }
+    // token sketches are computed over all lines (mapped or not) to stay deterministic
+    const k = 4;
+    const allTop = topTokens(lines, k);
+    for (const L of lines) L.token_sketch = allTop;
+    return lines;
+  }
+
+  function makePanels(mappedLines, config){
+    const panels = [];
+    const windowN = config.panelWindowLines;
+    let p = 0;
+    let countText = 0;
+    let current = { id:`SHLD|P${zpad(p,2)}|W${windowN}`, header:`⟦SHLD|P${zpad(p,2)}|W${windowN}⟧`, lineIds:[] };
+
+    for (const L of mappedLines){
+      current.lineIds.push(L.id);
+      if (L.class === "TEXT") countText++;
+      if (countText >= windowN){
+        panels.push(current);
+        p++;
+        countText = 0;
+        current = { id:`SHLD|P${zpad(p,2)}|W${windowN}`, header:`⟦SHLD|P${zpad(p,2)}|W${windowN}⟧`, lineIds:[] };
+      }
+    }
+    if (current.lineIds.length) panels.push(current);
+    return panels;
+  }
+
+  function wrapStrips(s, width){
+    const strips = [];
+    for (let i=0;i<s.length;i+=width) strips.push(s.slice(i, i+width));
+    return strips;
+  }
+
+  function buildBlocks(mappedLines, panels, config){
+    const blocks = [];
+    const charsPerStrip = config.charsPerStrip;
+    const maxStrips = config.maxStripsPerBlock;
+    const maxChars = charsPerStrip * maxStrips;
+
+    // Build a quick map lineId->panelHeader (deterministic by panel membership)
+    const lineToPanel = new Map();
+    for (const P of panels){
+      for (const lid of P.lineIds) lineToPanel.set(lid, P.header);
+    }
+
+    let j = 0;
+    let cursor = 0;
+    while (cursor < mappedLines.length){
+      const header = lineToPanel.get(mappedLines[cursor].id) || "⟦SHLD|P00|W12⟧";
+      let buf = header;
+      const source = [];
+      // pack as many full lines as fit into maxChars (including separators)
+      while (cursor < mappedLines.length){
+        const nextLine = mappedLines[cursor];
+        const add = (source.length ? " / " : " / ") + nextLine.text;
+        if ((buf + add).length > maxChars){
+          if (!source.length){
+            // single line too long; hard truncate line in this block
+            const allowed = maxChars - (buf.length + 3);
+            buf = buf + " / " + nextLine.text.slice(0, Math.max(0, allowed));
+            source.push(nextLine.id);
+            cursor++;
+          }
+          break;
+        }
+        buf += add;
+        source.push(nextLine.id);
+        cursor++;
+        // if panel changes, allow boundary but do not enforce (inscription-driven only)
+        // stop early if we already used max strips worth (buf length close to maxChars)
+        if (buf.length >= maxChars - 12) break;
+      }
+
+      const strips = wrapStrips(buf, charsPerStrip);
+      const bytes = bytesLen(buf);
+      const crc = CRC32(buf);
+
+      blocks.push({
+        id: `SHLD-B${zpad(++j,4)}`,
+        header,
+        sourceLines: source,
+        strips,
+        bytes,
+        crc
+      });
+    }
+
+    return blocks;
+  }
+
+  function makeEmptyGrid(config){
+    const grid = [];
+    for (let y=0;y<24;y++){
+      for (let x=0;x<24;x++){
+        const addr = addrOf(x,y);
+        const neighbors = [];
+        if (x>0) neighbors.push(addrOf(x-1,y));
+        if (x<23) neighbors.push(addrOf(x+1,y));
+        if (y>0) neighbors.push(addrOf(x,y-1));
+        if (y<23) neighbors.push(addrOf(x,y+1));
+        grid.push({
+          x,y,addr,
+          type:"TEXT",
+          payload:[],
+          blocks:[],
+          tags:[],
+          neighbors,
+          retrieval_bias:{}
+        });
+      }
+    }
+    return grid;
+  }
+
+  function reserveCells(grid){
+    // index rows: y=0,8,16; index col: x=0
+    const indexSet = new Set();
+    for (const cell of grid){
+      if (cell.y===0 || cell.y===8 || cell.y===16 || cell.x===0) indexSet.add(cell.addr);
+    }
+
+    // archive anchors: corners + mid-edges + center
+    const anchors = [
+      addrOf(0,0), addrOf(23,0), addrOf(0,23), addrOf(23,23),
+      addrOf(12,0), addrOf(0,12), addrOf(12,23), addrOf(23,12),
+      addrOf(12,12)
+    ];
+    const archiveSet = new Set(anchors);
+
+    for (const cell of grid){
+      if (archiveSet.has(cell.addr)) cell.type = "ARCHIVE";
+      else if (indexSet.has(cell.addr)) cell.type = "INDEX";
+      else cell.type = "TEXT";
+    }
+
+    return { indexSet, archiveSet };
+  }
+
+  function allocateHybrid(lines, blocks, panels, config){
+    const grid = makeEmptyGrid(config);
+    const { indexSet, archiveSet } = reserveCells(grid);
+
+    // candidates
+    const textCells = grid.filter(c => c.type==="TEXT");
+    const indexCells = grid.filter(c => c.type==="INDEX");
+    const archiveCells = grid.filter(c => c.type==="ARCHIVE");
+
+    // choose CACHE cells as next deterministic slice of TEXT cells
+    const total = 24*24;
+    const targetIndexFrac = 0.15;
+    const targetCacheFrac = 0.25;
+
+    const cacheCount = Math.floor(total * targetCacheFrac);
+    // Keep determinism: pick first cacheCount TEXT cells by addr
+    const textSorted = [...textCells].sort((a,b)=>a.addr-b.addr);
+    const cacheCells = textSorted.slice(0, cacheCount);
+    const primaryCells = textSorted.slice(cacheCount);
+
+    for (const c of cacheCells) c.type = "CACHE";
+    // recompute lists
+    const TEXTS = primaryCells;
+    const CACHES = cacheCells;
+
+    // placement helpers
+    const occText = new Set(); // occupied primary slots (one block per TEXT cell)
+    const cacheLoad = new Map(); // addr -> count
+    const archiveLoad = new Map();
+
+    // build a quick line order mapping for normalization
+    const lineOrder = new Map(lines.map((L, idx)=>[L.id, idx])); // 0..N-1
+    const Nlines = Math.max(1, lines.length);
+
+    function placePrimary(block){
+      const firstLine = block.sourceLines[0] || lines[0]?.id;
+      const idx = lineOrder.has(firstLine) ? lineOrder.get(firstLine) : 0;
+      const orderKey = idx / (Nlines-1 || 1);
+      let pos = Math.floor(orderKey * (TEXTS.length-1));
+      pos = clamp(0, TEXTS.length-1, pos);
+
+      // linear probe for free cell
+      for (let k=0;k<TEXTS.length;k++){
+        const c = TEXTS[(pos+k) % TEXTS.length];
+        if (!occText.has(c.addr)){
+          occText.add(c.addr);
+          c.blocks.push(block.id);
+          // payload = strips (full)
+          c.payload = block.strips.slice();
+          c.tags.push("SHLD","TEXT");
+          c.retrieval_bias = { preferBlock: block.id };
+          return c.addr;
+        }
+      }
+      // no space → archive pointer
+      const a = archiveCells[fnv1a(block.id) % archiveCells.length];
+      a.blocks.push(block.id);
+      a.payload.push(`[ARCHIVE] ${block.id} (primary overflow)`);
+      return a.addr;
+    }
+
+    function replicationFactor(block){
+      const tau = 0.55;
+      const entBoost = (avgEntropy(block.sourceLines, lines) > tau) ? 1 : 0;
+      const base = 1 + Math.floor(block.bytes/160) + entBoost;
+      return clamp(1, 7, base);
+    }
+
+    function avgEntropy(lineIds, allLines){
+      const map = new Map(allLines.map(L=>[L.id, L.entropy]));
+      let s=0, n=0;
+      for (const id of lineIds){
+        if (map.has(id)){ s += map.get(id); n++; }
+      }
+      return n? (s/n) : 0;
+    }
+
+    function tryPlaceCache(block, replicaIndex){
+      // hashed slot into CACHE list
+      const h = fnv1a(block.crc + "|" + block.id + "|" + replicaIndex);
+      const start = h % CACHES.length;
+      const maxPerCache = 5; // technical constraint, not semantic
+
+      for (let k=0;k<CACHES.length;k++){
+        const c = CACHES[(start+k) % CACHES.length];
+        const load = cacheLoad.get(c.addr) || 0;
+        if (load < maxPerCache){
+          cacheLoad.set(c.addr, load+1);
+          c.blocks.push(block.id);
+          // cache payload is compact: first strip only
+          c.payload.push(block.strips[0]);
+          c.tags.push("SHLD","CACHE");
+          return c.addr;
+        }
+      }
+
+      // cache full → archive
+      const a = archiveCells[h % archiveCells.length];
+      const al = archiveLoad.get(a.addr) || 0;
+      archiveLoad.set(a.addr, al+1);
+      a.blocks.push(block.id);
+      a.payload.push(`[ARCHIVE] ${block.id} (cache overflow)`);
+      a.tags.push("SHLD","ARCHIVE");
+      return a.addr;
+    }
+
+    // Place blocks
+    const byBlock = {};
+    for (const b of blocks){
+      const primary = placePrimary(b);
+      const rf = replicationFactor(b);
+      const replicas = [];
+      for (let r=1;r<rf;r++){
+        replicas.push(tryPlaceCache(b, r));
+      }
+      byBlock[b.id] = { primary, replicas };
+    }
+
+    // Build indices
+    const byLine = {};
+    for (const L of lines) byLine[L.id] = [];
+    const byPanel = {};
+    for (const P of panels) byPanel[P.header] = [];
+    const byToken = {};
+
+    // Compute line->addrs from block placements
+    for (const b of blocks){
+      const addrs = [byBlock[b.id].primary, ...byBlock[b.id].replicas];
+      for (const lid of b.sourceLines){
+        if (!byLine[lid]) byLine[lid] = [];
+        for (const a of addrs) if (!byLine[lid].includes(a)) byLine[lid].push(a);
+      }
+      if (!byPanel[b.header]) byPanel[b.header] = [];
+      for (const a of addrs) if (!byPanel[b.header].includes(a)) byPanel[b.header].push(a);
+
+      // token index (mechanical): from block text
+      const tks = tokenize(b.strips.join(" "));
+      for (const t of tks){
+        if (t.length < 3) continue;
+        if (STOP.has(t)) continue;
+        if (!byToken[t]) byToken[t] = [];
+        for (const a of addrs) if (!byToken[t].includes(a)) byToken[t].push(a);
+      }
+    }
+
+    // Ensure each line has >=2 addresses (coverage), else replicate via archive pointer
+    const archiveFallback = archiveCells.length ? archiveCells[0] : null;
+    for (const lid of Object.keys(byLine)){
+      byLine[lid].sort((a,b)=>a-b);
+      if (byLine[lid].length < 2 && archiveFallback){
+        const ptr = archiveFallback.addr;
+        if (!byLine[lid].includes(ptr)) byLine[lid].push(ptr);
+        archiveFallback.payload.push(`[ARCHIVE PTR] LINE ${lid} coverage補`);
+      }
+    }
+
+    // Stuff index cells with directory payload lines
+    const directoryLines = [];
+    directoryLines.push("== INDEX: BLOCK → {PRIMARY, REPLICAS} ==");
+    for (const [bid, v] of Object.entries(byBlock)){
+      directoryLines.push(`${bid} → P:${v.primary} R:[${v.replicas.join(",")}]`);
+    }
+    directoryLines.push("");
+    directoryLines.push("== INDEX: LINE → ADDR(S) ==");
+    for (const [lid, addrs] of Object.entries(byLine)){
+      directoryLines.push(`${lid} → [${addrs.join(",")}]`);
+    }
+    directoryLines.push("");
+    directoryLines.push("== INDEX: PANEL → ADDR(S) ==");
+    for (const [ph, addrs] of Object.entries(byPanel)){
+      directoryLines.push(`${ph} → [${addrs.join(",")}]`);
+    }
+
+    // distribute directory lines sequentially across index cells (deterministic)
+    const idxSorted = [...indexCells].sort((a,b)=>a.addr-b.addr);
+    for (const c of idxSorted){
+      c.tags.push("SHLD","INDEX");
+      c.payload = [];
+    }
+    let p = 0;
+    for (const line of directoryLines){
+      const c = idxSorted[p % idxSorted.length];
+      c.payload.push(line);
+      p++;
+    }
+
+    // Enforce bytesPerCell with visible NOISE and archive pointers
+    const bytesLimit = config.bytesPerCell;
+    for (const c of grid){
+      const joined = c.payload.join("\n");
+      if (bytesLen(joined) > bytesLimit){
+        c.type = "NOISE";
+        const cut = Math.max(0, bytesLimit - 64);
+        const truncated = joined.slice(0, cut) + "\n[NOISE] TRUNCATED …\n[PTR] ARCHIVE @ " + archiveCells[0]?.addr;
+        c.payload = truncated.split("\n");
+        c.tags.push("SHLD","NOISE");
+        // push full content to archive[0]
+        if (archiveCells[0]){
+          archiveCells[0].payload.push(`[BODY] CELL ${c.addr} overflow body:`);
+          archiveCells[0].payload.push(joined);
+        }
+      }
+    }
+
+    const indices = { byLine, byBlock, byPanel, byToken };
+    return { grid, indices, byBlock, byLine, byPanel, byToken, panels };
+  }
+
+  function buildManifest(rawText){
+    const config = readConfig();
+    const linesAll = normalize(rawText, config);
+
+    const mapped = linesAll.filter(L => config.mapParatext ? true : (L.class === "TEXT"));
+    const panels = makePanels(mapped, config);
+    const blocks = buildBlocks(mapped, panels, config);
+    const alloc = allocateHybrid(linesAll, blocks, panels, config);
+
+    const manifest = {
+      gridSize: 24,
+      config: {
+        charsPerStrip: config.charsPerStrip,
+        bytesPerCell: config.bytesPerCell,
+        panelWindowLines: config.panelWindowLines,
+        maxStripsPerBlock: config.maxStripsPerBlock,
+        mapParatext: config.mapParatext,
+        uppercase: config.uppercase
+      },
+      lines: linesAll,
+      blocks,
+      cells: alloc.grid.map(c => ({
+        x:c.x,y:c.y,addr:c.addr,
+        type:c.type,
+        payload:c.payload,
+        blocks:c.blocks,
+        tags:Array.from(new Set(c.tags)),
+        neighbors:c.neighbors,
+        retrieval_bias:c.retrieval_bias
+      })),
+      indices: alloc.indices
+    };
+    return { manifest, alloc };
+  }
+
+  function readConfig(){
+    const cfg = {
+      charsPerStrip: +$("#charsPerStrip").value || 96,
+      bytesPerCell: +$("#bytesPerCell").value || 640,
+      panelWindowLines: +$("#panelWindow").value || 12,
+      maxStripsPerBlock: +$("#maxStrips").value || 4,
+      mapParatext: $("#mapParatext").checked,
+      uppercase: $("#uppercaseToggle").checked
+    };
+    cfg.charsPerStrip = clamp(48, 200, cfg.charsPerStrip);
+    cfg.bytesPerCell = clamp(256, 2048, cfg.bytesPerCell);
+    cfg.panelWindowLines = clamp(4, 48, cfg.panelWindowLines);
+    cfg.maxStripsPerBlock = clamp(1, 8, cfg.maxStripsPerBlock);
+    return cfg;
+  }
+
+  // ---------- UI RENDER ----------
+  function setStatus(s){
+    $("#statusLine").textContent = s;
+  }
+
+  function setSummary(manifest){
+    const lines = manifest.lines.length;
+    const blocks = manifest.blocks.length;
+    $("#summaryPill").textContent = `lines:${lines} blocks:${blocks}`;
+    $("#stateMeta").textContent = `lines ${lines} · blocks ${blocks} · cells 576`;
+    $("#manifestMeta").textContent = `lines ${lines} · blocks ${blocks}`;
+  }
+
+  function renderGrid(){
+    const m = state.manifest;
+    const gridEl = $("#grid");
+    gridEl.innerHTML = "";
+
+    if (!m){
+      // empty placeholder grid
+      const size = state.viewport.enabled ? state.viewport.size : 24;
+      gridEl.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+      for (let i=0;i<size*size;i++){
+        const d = document.createElement("div");
+        d.className = "cell";
+        d.dataset.type = "TEXT";
+        d.innerHTML = `<small>—</small>`;
+        gridEl.appendChild(d);
+      }
+      updateViewReadout();
+      return;
+    }
+
+    const cellsByAddr = new Map(m.cells.map(c=>[c.addr,c]));
+    const showCoords = $("#showCoords").checked;
+
+    const vp = state.viewport;
+    const vEnabled = $("#viewportMode").checked;
+    vp.enabled = vEnabled;
+
+    const size = vEnabled ? vp.size : 24;
+    gridEl.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+
+    const cellPx = (vEnabled ? 34 : 18);
+    gridEl.style.gridAutoRows = `${cellPx}px`;
+
+    const startX = vEnabled ? vp.x0 : 0;
+    const startY = vEnabled ? vp.y0 : 0;
+
+    for (let yy=0;yy<size;yy++){
+      for (let xx=0;xx<size;xx++){
+        const x = startX + xx;
+        const y = startY + yy;
+        if (x<0 || x>23 || y<0 || y>23) continue;
+
+        const addr = addrOf(x,y);
+        const c = cellsByAddr.get(addr);
+        const d = document.createElement("div");
+        d.className = "cell";
+        d.dataset.type = c.type;
+        d.dataset.x = x;
+        d.dataset.y = y;
+        d.dataset.addr = addr;
+        const label = showCoords ? `${x},${y}` : `${addr}`;
+        const tiny = showCoords ? `<small>${label}<br>${c.type[0]}</small>` : `<small>${label}</small>`;
+        d.innerHTML = tiny;
+
+        if (state.selected.x===x && state.selected.y===y) d.classList.add("selected");
+        d.addEventListener("click", ()=> selectCell(x,y,true));
+        gridEl.appendChild(d);
+      }
+    }
+
+    updateViewReadout();
+  }
+
+  function updateViewReadout(){
+    const vp = state.viewport;
+    if ($("#viewportMode").checked){
+      $("#viewReadout").textContent = `VIEW x=${vp.x0}..${vp.x0+vp.size-1} y=${vp.y0}..${vp.y0+vp.size-1}`;
+    } else {
+      $("#viewReadout").textContent = `VIEW x=0..23 y=0..23`;
+    }
+  }
+
+  function typeBadge(type){
+    const [cls, label] = TYPE_BADGE[type] || ["", type||"—"];
+    const b = $("#typeBadge");
+    b.className = `badge ${cls}`;
+    b.innerHTML = `<b>TYPE</b> ${label}`;
+  }
+
+  function selectCell(x,y,ensureVisible=false){
+    state.selected = { x, y };
+    $("#jumpX").value = x;
+    $("#jumpY").value = y;
+
+    // ensure viewport includes selection
+    if (ensureVisible && $("#viewportMode").checked){
+      const vp = state.viewport;
+      const pad = 2;
+      if (x < vp.x0+pad) vp.x0 = clamp(0, 24-vp.size, x-pad);
+      if (y < vp.y0+pad) vp.y0 = clamp(0, 24-vp.size, y-pad);
+      if (x > vp.x0 + vp.size-1 - pad) vp.x0 = clamp(0, 24-vp.size, x-(vp.size-1-pad));
+      if (y > vp.y0 + vp.size-1 - pad) vp.y0 = clamp(0, 24-vp.size, y-(vp.size-1-pad));
+    }
+
+    renderGrid();
+    renderCellDetail();
+  }
+
+  function renderCellDetail(){
+    const m = state.manifest;
+    if (!m){
+      $("#cellLabel").textContent = "—";
+      $("#cellContentLabel").textContent = "—";
+      $("#cellPayload").textContent = "Compile first.";
+      $("#addrBadge").innerHTML = `<b>ADDR</b> —`;
+      typeBadge("TEXT");
+      return;
+    }
+
+    const addr = addrOf(state.selected.x, state.selected.y);
+    const cell = m.cells.find(c=>c.addr===addr);
+    $("#addrBadge").innerHTML = `<b>ADDR</b> ${addr}`;
+    typeBadge(cell.type);
+
+    const label = `ADDR(${state.selected.x},${state.selected.y}) = ${addr}`;
+    $("#cellLabel").textContent = label;
+
+    const bCount = cell.blocks.length;
+    const pCount = cell.payload.length;
+    $("#cellContentLabel").textContent = `${cell.type} · blocks:${bCount} · payload:${pCount}`;
+
+    const payloadText = cell.payload.length ? cell.payload.join("\n") : "(empty)";
+    $("#cellPayload").textContent = payloadText;
+
+    $("#neighborsBox").textContent = "neighbors: " + cell.neighbors.map(a=>{
+      const {x,y} = xyOf(a);
+      return `${a}(${x},${y})`;
+    }).join(" · ");
+
+    // update "jump primary" button behavior: if this cell holds blocks, jump to first block primary
+    const firstBlock = cell.blocks[0];
+    $("#jumpPrimary").disabled = !firstBlock;
+    $("#jumpPrimary").onclick = () => {
+      const primary = m.indices.byBlock[firstBlock]?.primary;
+      if (primary==null) return;
+      const {x,y} = xyOf(primary);
+      selectCell(x,y,true);
+      setActiveTab("grid");
+    };
+  }
+
+  function setActiveTab(name){
+    $$(".tabbtn").forEach(b => b.classList.toggle("active", b.dataset.tab===name));
+    $$(".tabpane").forEach(p => p.classList.remove("active"));
+    $("#tab-"+name).classList.add("active");
+  }
+
+  // ---------- SEARCH ----------
+  function runSearch(){
+    const m = state.manifest;
+    const q = ($("#searchInput").value || "").trim();
+    const list = $("#resultsList");
+    list.innerHTML = "";
+    if (!m){
+      list.innerHTML = `<div class="item"><div class="left">Compile first.</div><div class="right">—</div></div>`;
+      return;
+    }
+    if (!q){
+      list.innerHTML = `<div class="item"><div class="left">Enter query.</div><div class="right">—</div></div>`;
+      return;
+    }
+
+    const results = [];
+
+    // exact line
+    if (m.indices.byLine[q]){
+      results.push({ kind:"LINE", key:q, addrs:m.indices.byLine[q] });
+    }
+    // exact block
+    if (m.indices.byBlock[q]){
+      const v = m.indices.byBlock[q];
+      results.push({ kind:"BLOCK", key:q, addrs:[v.primary, ...v.replicas] });
+    }
+    // exact panel header
+    if (m.indices.byPanel[q]){
+      results.push({ kind:"PANEL", key:q, addrs:m.indices.byPanel[q] });
+    }
+
+    // token (case-insensitive)
+    const tq = q.toUpperCase();
+    if (m.indices.byToken[tq]){
+      results.push({ kind:"TOKEN", key:tq, addrs:m.indices.byToken[tq].slice(0,80) });
+    }
+
+    // fuzzy: search in keys (bounded)
+    if (!results.length){
+      const pushSome = (kind, obj, limit=12) => {
+        const keys = Object.keys(obj).filter(k=>k.includes(tq)).slice(0,limit);
+        for (const k of keys){
+          const addrs = (kind==="BLOCK")
+            ? [obj[k].primary, ...obj[k].replicas]
+            : obj[k];
+          results.push({ kind, key:k, addrs });
+        }
+      };
+      pushSome("LINE", m.indices.byLine);
+      pushSome("BLOCK", m.indices.byBlock);
+      pushSome("PANEL", m.indices.byPanel);
+      pushSome("TOKEN", m.indices.byToken, 12);
+    }
+
+    $("#indexStats").textContent = `results: ${results.length}`;
+
+    if (!results.length){
+      list.innerHTML = `<div class="item"><div class="left">No matches.</div><div class="right">—</div></div>`;
+      return;
+    }
+
+    for (const r of results.slice(0,40)){
+      const item = document.createElement("div");
+      item.className = "item";
+      const a0 = r.addrs[0];
+      const xy = (a0!=null) ? xyOf(a0) : {x:"–",y:"–"};
+      item.innerHTML = `
+        <div class="left">
+          <div><b>${r.kind}</b> ${escapeHtml(r.key)}</div>
+          <div class="muted" style="margin-top:4px;">ADDRS: [${r.addrs.slice(0,20).join(",")}${r.addrs.length>20?"…":""}]</div>
+        </div>
+        <div class="right">jump → ${a0 ?? "—"} (${xy.x},${xy.y})</div>
+      `;
+      item.addEventListener("click", ()=>{
+        if (a0==null) return;
+        const {x,y} = xyOf(a0);
+        selectCell(x,y,true);
+        setActiveTab("grid");
+      });
+      list.appendChild(item);
+    }
+  }
+
+  function escapeHtml(s){
+    return (s||"").replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+    }[c]));
+  }
+
+  // ---------- EXPORT ----------
+  function manifestJSON(pretty=true){
+    if (!state.manifest) return "";
+    return JSON.stringify(state.manifest, null, pretty ? 2 : 0);
+  }
+
+  function download(filename, text){
+    const blob = new Blob([text], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+  }
+
+  async function copyText(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(e){
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand("copy"); }catch(_){}
+      ta.remove();
+      return false;
+    }
+  }
+
+  // ---------- COMPILE + SUMMARY ----------
+  function computeCoverageSummary(m){
+    const byLine = m.indices.byLine;
+    let covered2 = 0, total = 0;
+    let min = Infinity, max = 0;
+    for (const [lid, addrs] of Object.entries(byLine)){
+      total++;
+      const n = addrs.length;
+      if (n >= 2) covered2++;
+      min = Math.min(min, n);
+      max = Math.max(max, n);
+    }
+
+    const types = { TEXT:0, CACHE:0, INDEX:0, ARCHIVE:0, NOISE:0 };
+    for (const c of m.cells) types[c.type] = (types[c.type]||0) + 1;
+
+    const ok = (covered2 === total);
+    const lines = m.lines.length;
+    const blocks = m.blocks.length;
+
+    return [
+      `COVERAGE ≥2 ADDR/LINE: ${covered2}/${total} ${ok ? "OK" : "FAIL"}`,
+      `MIN_ADDRS_PER_LINE: ${min===Infinity?0:min} · MAX_ADDRS_PER_LINE: ${max}`,
+      `CELLS: TEXT ${types.TEXT} · CACHE ${types.CACHE} · INDEX ${types.INDEX} · ARCHIVE ${types.ARCHIVE} · NOISE ${types.NOISE}`,
+      `LINES: ${lines} · BLOCKS: ${blocks}`,
+      `CONFIG: charsPerStrip=${m.config.charsPerStrip} bytesPerCell=${m.config.bytesPerCell} window=${m.config.panelWindowLines} maxStrips=${m.config.maxStripsPerBlock} mapParatext=${m.config.mapParatext}`
+    ].join("\n");
+  }
+
+  function compile(){
+    const raw = $("#inputText").value;
+    setStatus("COMPILING… normalization → panels → blocks → allocation → indices → noise");
+    const { manifest } = buildManifest(raw);
+    state.manifest = manifest;
+
+    // reset view to 0,0 unless selection exists
+    if (state.selected.x==null) state.selected = {x:0,y:0};
+
+    // ensure view within bounds
+    state.viewport.x0 = clamp(0, 24-state.viewport.size, state.viewport.x0);
+    state.viewport.y0 = clamp(0, 24-state.viewport.size, state.viewport.y0);
+
+    setSummary(manifest);
+
+    const summary = computeCoverageSummary(manifest);
+    $("#allocSummary").textContent = summary;
+    $("#manifestPreview").textContent = manifestJSON(true).slice(0, 9000) + "\n…(truncated preview)…";
+    $("#compileReport").textContent = "compiled";
+    setStatus(`COMPILED · lines ${manifest.lines.length} · blocks ${manifest.blocks.length} · select cells to read sectors`);
+
+    // select current cell and render
+    renderGrid();
+    renderCellDetail();
+
+    // populate index tab with empty prompt
+    $("#resultsList").innerHTML = `<div class="item"><div class="left">Search indices (LINE/BLOCK/PANEL/TOKEN).</div><div class="right">ready</div></div>`;
+    $("#indexStats").textContent = `indices: line ${Object.keys(manifest.indices.byLine).length} · block ${Object.keys(manifest.indices.byBlock).length} · panel ${Object.keys(manifest.indices.byPanel).length} · token ${Object.keys(manifest.indices.byToken).length}`;
+  }
+
+  // ---------- NAV ----------
+  function move(dx,dy){
+    const x = clamp(0,23, state.selected.x + dx);
+    const y = clamp(0,23, state.selected.y + dy);
+    selectCell(x,y,true);
+  }
+  function stepLinear(delta){
+    const a = addrOf(state.selected.x, state.selected.y);
+    const b = clamp(0, 575, a + delta);
+    const {x,y} = xyOf(b);
+    selectCell(x,y,true);
+  }
+
+  function panViewport(dx,dy){
+    if (!$("#viewportMode").checked) return;
+    const vp = state.viewport;
+    vp.x0 = clamp(0, 24-vp.size, vp.x0 + dx);
+    vp.y0 = clamp(0, 24-vp.size, vp.y0 + dy);
+    renderGrid();
+  }
+
+  // ---------- EVENTS ----------
+  function wire(){
+    // tabs
+    $$(".tabbtn").forEach(b => b.addEventListener("click", ()=> setActiveTab(b.dataset.tab)));
+
+    // compile
+    $("#compileBtn").addEventListener("click", compile);
+    $("#compileBtn2").addEventListener("click", compile);
+    $("#reseedBtn").addEventListener("click", compile);
+
+    // export button in header
+    $("#exportBtn").addEventListener("click", ()=> setActiveTab("export"));
+
+    // grid options
+    $("#viewportMode").addEventListener("change", ()=> renderGrid());
+    $("#showCoords").addEventListener("change", ()=> renderGrid());
+    $("#uppercaseToggle").addEventListener("change", ()=> {
+      // affects normalization; mark stale
+      $("#compileReport").textContent = "stale (recompile)";
+    });
+
+    // panning
+    $("#panUp").addEventListener("click", ()=> panViewport(0,-1));
+    $("#panDown").addEventListener("click", ()=> panViewport(0,1));
+    $("#panLeft").addEventListener("click", ()=> panViewport(-1,0));
+    $("#panRight").addEventListener("click", ()=> panViewport(1,0));
+
+    // scan-head linear
+    $("#prevAddr").addEventListener("click", ()=> stepLinear(-1));
+    $("#nextAddr").addEventListener("click", ()=> stepLinear(1));
+
+    // d-pad
+    $("#moveUp").addEventListener("click", ()=> move(0,-1));
+    $("#moveDown").addEventListener("click", ()=> move(0,1));
+    $("#moveLeft").addEventListener("click", ()=> move(-1,0));
+    $("#moveRight").addEventListener("click", ()=> move(1,0));
+    $("#moveStay").addEventListener("click", ()=> selectCell(state.selected.x, state.selected.y, true));
+
+    // copy cell payload
+    $("#copyCell").addEventListener("click", async ()=>{
+      const t = $("#cellPayload").textContent || "";
+      await copyText(t);
+      $("#cellFoot").textContent = "copied payload to clipboard (best-effort).";
+      setTimeout(()=> $("#cellFoot").textContent = "Arrow keys: move · Prev/Next: linear scan-head · D-pad: 4-neighbor routing", 1400);
+    });
+
+    // jump
+    $("#jumpBtn").addEventListener("click", ()=>{
+      const x = clamp(0,23, +$("#jumpX").value || 0);
+      const y = clamp(0,23, +$("#jumpY").value || 0);
+      selectCell(x,y,true);
+      setActiveTab("grid");
+    });
+
+    // search
+    $("#searchBtn").addEventListener("click", runSearch);
+    $("#clearSearch").addEventListener("click", ()=>{
+      $("#searchInput").value = "";
+      $("#resultsList").innerHTML = "";
+      $("#indexStats").textContent = "indices: —";
+    });
+    $("#searchInput").addEventListener("keydown", (e)=>{
+      if (e.key === "Enter") runSearch();
+    });
+
+    $("#copyIndex").addEventListener("click", async ()=>{
+      const list = $("#resultsList");
+      const text = Array.from(list.querySelectorAll(".item"))
+        .map(it => it.innerText.replace(/\s+\n/g,"\n"))
+        .join("\n\n");
+      await copyText(text || "(no results)");
+    });
+
+    // export buttons
+    $("#downloadJson").addEventListener("click", ()=>{
+      const text = manifestJSON(true);
+      if (!text) return;
+      download("kitt-shield-grid-manifest.json", text);
+    });
+    $("#copyJson").addEventListener("click", async ()=>{
+      const text = manifestJSON(true);
+      if (!text) return;
+      await copyText(text);
+    });
+    $("#copyMini").addEventListener("click", async ()=>{
+      if (!state.manifest) return;
+      await copyText($("#allocSummary").textContent);
+    });
+
+    // reset input
+    $("#resetBtn").addEventListener("click", ()=>{
+      $("#inputText").value = DEFAULT_TEXT;
+      $("#compileReport").textContent = "reset";
+    });
+
+    // top-level key navigation
+    window.addEventListener("keydown", (e)=>{
+      const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+      if (tag === "textarea" || tag === "input") return;
+      if (!state.manifest) return;
+
+      if (e.key === "ArrowUp") { e.preventDefault(); move(0,-1); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); move(0,1); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); move(-1,0); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); move(1,0); }
+      else if (e.key === "[") { e.preventDefault(); stepLinear(-1); }
+      else if (e.key === "]") { e.preventDefault(); stepLinear(1); }
+    });
+
+    // drag-to-pan viewport (on grid area)
+    let dragging=false, lastX=0, lastY=0;
+    const vpEl = $("#gridViewport");
+    vpEl.addEventListener("pointerdown", (e)=>{
+      if (!$("#viewportMode").checked) return;
+      dragging = true;
+      lastX = e.clientX; lastY = e.clientY;
+      vpEl.setPointerCapture(e.pointerId);
+    });
+    vpEl.addEventListener("pointermove", (e)=>{
+      if (!dragging) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      // pan when moved enough
+      const step = 24;
+      if (Math.abs(dx) > step) panViewport(dx>0 ? -1 : 1, 0);
+      if (Math.abs(dy) > step) panViewport(0, dy>0 ? -1 : 1);
+    });
+    vpEl.addEventListener("pointerup", ()=> dragging=false);
+    vpEl.addEventListener("pointercancel", ()=> dragging=false);
+  }
+
+  // ---------- INIT ----------
+  function init(){
+    $("#inputText").value = DEFAULT_TEXT;
+    $("#compileReport").textContent = "ready";
+    renderGrid();
+    selectCell(0,0,false);
+    wire();
+  }
+
+  init();
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+### PROTOCOL: SHIELD_GRID_OPS // KITT-URN-GRID-v1 (ADAPTED)
+
+**STATUS:** INITIALIZED
+**INPUT:** *Iliad* XVIII, "The Shield of Achilles" (Pope trans.)
+**TARGET:** 24×24 Inscription Grid (576 Addressable Cells)
+
+---
+
+### 1. MEDIA-ARCHAEOLOGICAL PREMISE
+
+The input text describes the fabrication of a hardware device (The Shield). This is not poetry; it is a technical specification for a storage medium containing moving images (cinema) forged in bronze, tin, silver, and gold.
+
+We treat Vulcan not as a god, but as the primary engineer of a parallel processing inscription system. The Shield is a concentric storage disk. The 24×24 Grid is a raster display. The task is to transcode the concentric tracks of the Shield into the Cartesian coordinates of the Grid.
+
+**Axiom Override:** The "Keats/Urn" directive in the system parameters is essentially identical to the "Homer/Shield" input. Both are *ekphrasis*—verbal descriptions of visual media. We strictly apply the **Inscription Block** logic to the provided Homeric text.
+
+---
+
+### 2. SEGMENTATION PIPELINE (The Forge)
+
+We do not parse for "beauty" or "heroism." We parse for **Scene delimitation** and **Data density**.
+
+#### Step P1: Normalization & Serialization
+
+The text is stripped of typographic "breath" and reduced to a signal stream.
+
+* **Token:** `LINE_BREAK` preserves the couplet rhyming scheme (a rudimentary error-checking checksum).
+* **ID Generation:** `SHIELD-L001` to `SHIELD-L[N]`.
+
+#### Step P2: Block Compilation (The Tracks)
+
+The Shield is composed of 5 distinct metallic plates (tracks). We map the text segments to these tracks to create **Addressable Blocks**.
+
+* **Track 0 (Center):** The Cosmos (Earth, Sea, Sun, Moon, Stars).
+* **Track 1 (City A):** Peace (Weddings, Lawsuits).
+* **Track 2 (City B):** War (Siege, Ambush, Hate, Confusion).
+* **Track 3 (Agriculture):** Ploughing, Reaping, Vintage, Cattle, Lions.
+* **Track 4 (Rim):** The Dance, The Ocean.
+
+**Block Definition:**
+`BLOCK := { ID, TRACK_ID, PAYLOAD (3-5 lines), REPLICATION_COUNT }`
+
+#### Step P3: Allocation Regime (R3: Hybrid)
+
+We apply **Regime R3** to map the circular Shield onto the square Grid.
+
+* **Linear Unwinding:** The concentric circles are "read" like a vinyl groove or hard disk track, starting from the center (Cosmos) and spiraling outward to the Ocean rim.
+* **Grid Mapping:** This spiral is unwound linearly into the grid addresses `ADDR(0,0)` through `ADDR(23,23)`.
+* **Redundancy:** High-entropy scenes (City of War, The Lions) are assigned higher redundancy (cached copies) to prevent signal degradation during the read operation.
+
+---
+
+### 3. THE PROTOCOL MANIFEST (JSON SCHEMA)
+
+This is the implementation plan for the storage system. It defines how the *Iliad* text is serialized into the 24x24 address space.
+
+```json
+{
+  "protocol": "KITT-SHIELD-GRID-v1",
+  "storage_medium": "24x24_ADDRESS_SPACE",
+  "input_source": "ILIAD_XVIII_POPE",
+  "config": {
+    "total_cells": 576,
+    "chars_per_strip": 96,
+    "bytes_per_cell": 640,
+    "scan_direction": "SPIRAL_UNWIND_TO_LINEAR",
+    "encoding": "UTF-8_UPPERCASE"
+  },
+  "track_mapping": {
+    "TRACK_00_COSMOS": { "source_lines": [483, 489], "grid_sector": "CORE_CACHE" },
+    "TRACK_01_PEACE":  { "source_lines": [490, 508], "grid_sector": "Q1_DATA" },
+    "TRACK_02_WAR":    { "source_lines": [509, 540], "grid_sector": "Q2_DATA" },
+    "TRACK_03_AGRI":   { "source_lines": [541, 589], "grid_sector": "Q3_DATA" },
+    "TRACK_04_RIM":    { "source_lines": [590, 608], "grid_sector": "PERIMETER_BUFFER" }
+  },
+  "cell_structure_definition": {
+    "addr": "Integer [0-575]",
+    "type": "Enum [TEXT, CACHE, INDEX, NOISE]",
+    "content": {
+      "header": "String (e.g., '⟦SHIELD|TRK2|WAR⟧')",
+      "strips": "Array[String]",
+      "raw_bytes": "Hex"
+    },
+    "routing": {
+      "next_block": "ADDR",
+      "prev_block": "ADDR",
+      "replica_addr": "Array[ADDR]"
+    }
+  },
+  "inscription_sample": [
+    {
+      "id": "SHIELD-B012",
+      "header": "⟦SHIELD|TRK0|COSMOS⟧",
+      "source_lines": ["THERE EARTH, THERE HEAVEN, THERE OCEAN HE DESIGN'D", "THE UNWEARIED SUN, THE MOON COMPLETELY ROUND"],
+      "entropy_score": 0.12,
+      "allocation": {
+        "primary_addr": 276,
+        "mirror_addrs": [277, 278, 28, 540] 
+      }
+    }
+  ]
+}
+
+```
+
+---
+
+### 4. NOISE HANDLING (THE REAL)
+
+Vulcan's forge is noisy. The text contains interruptions ("The crystal drops stood trembling in her eyes").
+
+* **Signal:** Descriptions of the Shield's imagery (visual data).
+* **Noise:** Thetis's grief, Vulcan's dialogue, the mechanics of the bellows.
+* **Protocol:** "Noise" lines are stripped from the primary visual tracks and relegated to **INDEX_CELLS** or **NOISE_CELLS** at the grid edges. They are metadata, not image data.
+
+### 5. EXECUTION DIRECTIVE
+
+The system is ready to compile. The text has been ingested as raw material. The mapping logic is set to unwind the shield's spiral onto the grid's raster.
+
+**Next Step:**
+Would you like me to **execute the compilation** and output the JSON manifest for the first 8 rows (Address 0–191), focusing on the **Cosmos** and **City of Peace** tracks?

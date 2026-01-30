@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Digital Urn: A Carey Protocol Analysis</title>
+    <style>
+        /* --- CORE VARIABLES --- */
+        :root {
+            --bg-color: #f4f1ea; /* Marble/Paper tone */
+            --text-color: #2b2b2b;
+            --panel-bg: #1a1b1e;
+            --panel-text: #e0e0e0;
+            --accent-gold: #cfa146; /* Ritual Mode */
+            --accent-red: #cc4444; /* Transmission Mode */
+            --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: "JetBrains Mono", "Courier New", monospace;
+        }
+
+        /* --- RESET & BASE --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- HEADER --- */
+        header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(244, 241, 234, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .title-block h1 {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .title-block .subtitle {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        /* --- MODE SWITCHER --- */
+        .mode-switch {
+            display: flex;
+            background: #e0ded7;
+            border-radius: 8px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.6;
+        }
+
+        .mode-btn:hover { opacity: 0.8; }
+
+        .mode-btn.active {
+            opacity: 1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .mode-btn[data-mode="transmission"].active {
+            background-color: var(--accent-red);
+            color: white;
+        }
+
+        .mode-btn[data-mode="ritual"].active {
+            background-color: var(--accent-gold);
+            color: #1a1a1a;
+        }
+
+        /* --- MAIN LAYOUT --- */
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            overflow: hidden;
+        }
+
+        /* --- POEM COLUMN --- */
+        .artifact-container {
+            padding: 3rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .poem {
+            max-width: 600px;
+            margin: 0 auto;
+            font-family: var(--font-serif);
+            font-size: 1.25rem;
+            color: #333;
+        }
+
+        .stanza {
+            margin-bottom: 3rem;
+        }
+
+        .line {
+            display: block;
+            margin-bottom: 0.5rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            position: relative;
+            cursor: default;
+        }
+
+        /* Interactive Lines */
+        .line[data-analysis] {
+            cursor: pointer;
+            text-decoration-color: transparent;
+            text-decoration-thickness: 2px;
+            text-underline-offset: 4px;
+        }
+
+        /* Transmission Mode Styles */
+        body[data-mode="transmission"] .line[data-analysis]:hover {
+            background-color: rgba(204, 68, 68, 0.1);
+            color: var(--accent-red);
+        }
+        body[data-mode="transmission"] .line[data-analysis].selected {
+            background-color: rgba(204, 68, 68, 0.2);
+            border-left: 3px solid var(--accent-red);
+        }
+
+        /* Ritual Mode Styles */
+        body[data-mode="ritual"] .line[data-analysis]:hover {
+            background-color: rgba(207, 161, 70, 0.15);
+            color: #8a6a1f;
+        }
+        body[data-mode="ritual"] .line[data-analysis].selected {
+            background-color: rgba(207, 161, 70, 0.25);
+            border-left: 3px solid var(--accent-gold);
+        }
+
+        /* --- ANALYSIS PANEL --- */
+        .analysis-panel {
+            background-color: var(--panel-bg);
+            color: var(--panel-text);
+            padding: 2rem;
+            border-left: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .panel-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .panel-label {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #666;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .current-mode-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: var(--font-serif);
+        }
+
+        /* Dynamic Content Area */
+        .analysis-content {
+            flex: 1;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .analysis-content.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .analysis-quote {
+            font-family: var(--font-serif);
+            font-style: italic;
+            color: #888;
+            margin-bottom: 1.5rem;
+            border-left: 2px solid #444;
+            padding-left: 1rem;
+        }
+
+        .analysis-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+
+        .analysis-body {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #ccc;
+        }
+
+        .carey-concept-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-family: var(--font-mono);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        /* Theme specifics for panel */
+        body[data-mode="transmission"] .current-mode-display { color: var(--accent-red); }
+        body[data-mode="transmission"] .carey-concept-tag { background: rgba(204, 68, 68, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
+        
+        body[data-mode="ritual"] .current-mode-display { color: var(--accent-gold); }
+        body[data-mode="ritual"] .carey-concept-tag { background: rgba(207, 161, 70, 0.2); color: var(--accent-gold); border: 1px solid var(--accent-gold); }
+
+        /* --- EMPTY STATE --- */
+        .empty-state {
+            text-align: center;
+            color: #555;
+            margin-top: 50%;
+            transform: translateY(-50%);
+        }
+        .empty-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* --- FOOTER / TERMINAL THESIS --- */
+        .terminal-thesis {
+            margin-top: auto;
+            padding-top: 1.5rem;
+            border-top: 1px solid #333;
+        }
+        .thesis-text {
+            font-size: 0.85rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 900px) {
+            main { grid-template-columns: 1fr; grid-template-rows: 1fr 300px; }
+            .artifact-container { padding: 1.5rem; }
+            .analysis-panel { border-left: none; border-top: 1px solid #333; }
+        }
+    </style>
+</head>
+<body data-mode="ritual">
+
+    <header>
+        <div class="title-block">
+            <h1>The Cultural Approach</h1>
+            <div class="subtitle">Operational Analysis of "Ode on a Grecian Urn"</div>
+        </div>
+        <div class="mode-switch">
+            <button class="mode-btn" data-mode="transmission" onclick="setMode('transmission')">TRANSMISSION VIEW</button>
+            <button class="mode-btn active" data-mode="ritual" onclick="setMode('ritual')">RITUAL VIEW</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="artifact-container">
+            <div class="poem">
+                <!-- Stanza 1 -->
+                <div class="stanza">
+                    <span class="line" data-id="1">Thou still unravish'd bride of quietness,</span>
+                    <span class="line" data-id="2">Thou foster-child of silence and slow time,</span>
+                    <span class="line" data-id="3">Sylvan historian, who canst thus express</span>
+                    <span class="line" data-id="4">A flowery tale more sweetly than our rhyme:</span>
+                    <span class="line" data-id="5" data-analysis>What leaf-fring'd legend haunts about thy shape</span>
+                    <span class="line" data-id="6" data-analysis>Of deities or mortals, or of both,</span>
+                    <span class="line" data-id="7">In Tempe or the dales of Arcady?</span>
+                    <span class="line" data-id="8" data-analysis>What men or gods are these? What maidens loth?</span>
+                    <span class="line" data-id="9">What mad pursuit? What struggle to escape?</span>
+                    <span class="line" data-id="10">What pipes and timbrels? What wild ecstasy?</span>
+                </div>
+
+                <!-- Stanza 2 -->
+                <div class="stanza">
+                    <span class="line" data-id="11" data-analysis>Heard melodies are sweet, but those unheard</span>
+                    <span class="line" data-id="12">Are sweeter; therefore, ye soft pipes, play on;</span>
+                    <span class="line" data-id="13">Not to the sensual ear, but, more endear'd,</span>
+                    <span class="line" data-id="14">Pipe to the spirit ditties of no tone:</span>
+                    <span class="line" data-id="15">Fair youth, beneath the trees, thou canst not leave</span>
+                    <span class="line" data-id="16">Thy song, nor ever can those trees be bare;</span>
+                    <span class="line" data-id="17" data-analysis>Bold Lover, never, never canst thou kiss,</span>
+                    <span class="line" data-id="18" data-analysis>Though winning near the goal yet, do not grieve;</span>
+                    <span class="line" data-id="19">She cannot fade, though thou hast not thy bliss,</span>
+                    <span class="line" data-id="20">For ever wilt thou love, and she be fair!</span>
+                </div>
+
+                <!-- Stanza 4 (Selected for brevity/impact) -->
+                <div class="stanza">
+                    <span class="line" data-id="31" data-analysis>Who are these coming to the sacrifice?</span>
+                    <span class="line" data-id="32">To what green altar, O mysterious priest,</span>
+                    <span class="line" data-id="33">Lead'st thou that heifer lowing at the skies,</span>
+                    <span class="line" data-id="34">And all her silken flanks with garlands drest?</span>
+                    <span class="line" data-id="35" data-analysis>What little town by river or sea shore,</span>
+                    <span class="line" data-id="36">Or mountain-built with peaceful citadel,</span>
+                    <span class="line" data-id="37" data-analysis>Is emptied of this folk, this pious morn?</span>
+                    <span class="line" data-id="38">And, little town, thy streets for evermore</span>
+                    <span class="line" data-id="39">Will silent be; and not a soul to tell</span>
+                    <span class="line" data-id="40">Why thou art desolate, can e'er return.</span>
+                </div>
+
+                <!-- Stanza 5 -->
+                <div class="stanza">
+                    <span class="line" data-id="41">O Attic shape! Fair attitude! with brede</span>
+                    <span class="line" data-id="42">Of marble men and maidens overwrought,</span>
+                    <span class="line" data-id="43">With forest branches and the trodden weed;</span>
+                    <span class="line" data-id="44" data-analysis>Thou, silent form, dost tease us out of thought</span>
+                    <span class="line" data-id="45">As doth eternity: Cold Pastoral!</span>
+                    <span class="line" data-id="46">When old age shall this generation waste,</span>
+                    <span class="line" data-id="47">Thou shalt remain, in midst of other woe</span>
+                    <span class="line" data-id="48">Than ours, a friend to man, to whom thou say'st,</span>
+                    <span class="line" data-id="49" data-analysis>"Beauty is truth, truth beauty,—that is all</span>
+                    <span class="line" data-id="50">Ye know on earth, and all ye need to know."</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-panel">
+            <div class="panel-header">
+                <span class="panel-label">Current Operational Mode</span>
+                <div class="current-mode-display" id="modeDisplay">Ritual</div>
+            </div>
+
+            <div id="contentArea" class="analysis-content">
+                <!-- Content injected via JS -->
+            </div>
+            
+            <div id="emptyState" class="empty-state">
+                <div class="empty-icon">⚱️</div>
+                <p>Select a highlighted line to begin analysis.</p>
+            </div>
+
+            <div class="terminal-thesis">
+                <span class="panel-label">Terminal Thesis</span>
+                <div class="thesis-text">
+                    "Communication is not a tool inside the world. Communication is the activity by which worlds exist."
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Data Store containing the Carey Analysis
+        const analysisData = {
+            "5": {
+                quote: "What leaf-fring'd legend... / Of deities or mortals",
+                transmission: {
+                    concept: "Signal Ambiguity",
+                    title: "Data Corruption Detected",
+                    body: "The receiver is unable to decode the source message. The distinction between 'deities' and 'mortals' is lost noise. The channel fails to convey specific historical information."
+                },
+                ritual: {
+                    concept: "Productivity",
+                    title: "The Generative Gap",
+                    body: "The ambiguity is a feature, not a bug. By not specifying the figures, the symbol forces the participant to 'fill in' the world. The viewer becomes a co-creator of the legend."
+                }
+            },
+            "8": {
+                quote: "What men or gods are these?",
+                transmission: {
+                    concept: "Information Deficit",
+                    title: "Missing Identifiers",
+                    body: "The interrogation indicates a failure of the medium. The Urn fails to transmit the names, dates, or specific contexts of the figures."
+                },
+                ritual: {
+                    concept: "Invitation",
+                    title: "Ceremonial Entry",
+                    body: "The questions are not requests for data; they are the ritual steps the viewer must take to enter the mood of the piece. To ask is to participate."
+                }
+            },
+            "11": {
+                quote: "Heard melodies are sweet, but those unheard / Are sweeter",
+                transmission: {
+                    concept: "Channel Failure",
+                    title: "No Acoustic Signal",
+                    body: "An 'unheard melody' contains zero bits of information. In a transmission view, this is a broken connection—a radio playing static."
+                },
+                ritual: {
+                    concept: "Public Thought",
+                    title: "Internal Enactment",
+                    body: "The Urn provides the structural constraints (pipes), but the viewer must run the model internally. The 'sweetness' comes from the viewer's own cognitive performance of the music."
+                }
+            },
+            "17": {
+                quote: "Bold Lover, never, never canst thou kiss",
+                transmission: {
+                    concept: "Inefficiency",
+                    title: "Goal Unmet",
+                    body: "The action is frozen before completion. The objective (the kiss) is never achieved. The process is stalled and functionally useless."
+                },
+                ritual: {
+                    concept: "Maintenance",
+                    title: "Eternal Anticipation",
+                    body: "The suspension of the act prevents the decay of the act. By never kissing, the desire is maintained forever. The ritual prioritizes continuity over consummation."
+                }
+            },
+            "18": {
+                quote: "Though winning near the goal yet, do not grieve",
+                transmission: {
+                    concept: "Static Noise",
+                    title: "Frozen State",
+                    body: "The subject is trapped in a loop. No progress is possible. System error: Hang."
+                },
+                ritual: {
+                    concept: "Temporal Repair",
+                    title: "Defeating Entropy",
+                    body: "The Urn repairs the flaw of biological time (aging/fading). It constructs a 'Cold Pastoral' where the moment of highest potential is locked in place."
+                }
+            },
+            "31": {
+                quote: "Who are these coming to the sacrifice?",
+                transmission: {
+                    concept: "Context Missing",
+                    title: "Unidentified Agents",
+                    body: "More missing metadata. The purpose, destination, and identity of the procession are unavailable."
+                },
+                ritual: {
+                    concept: "Ceremony",
+                    title: "Communal Focus",
+                    body: "The focus shifts from individual desire (the lover) to communal obligation (the priest). The viewer joins the procession, moving toward the sacred center."
+                }
+            },
+            "35": {
+                quote: "What little town... / Is emptied of this folk",
+                transmission: {
+                    concept: "Null Reference",
+                    title: "Ghost Town",
+                    body: "The town is not depicted on the Urn. It is an off-screen variable with no coordinates. We cannot know where or what this town is."
+                },
+                ritual: {
+                    concept: "Displacement",
+                    title: "The Cost of the Sacred",
+                    body: "To create the sacred world of the Urn, the profane world (the town) must be abandoned. The silence of the town is the structural support for the eternal music of the Urn."
+                }
+            },
+            "37": {
+                quote: "Is emptied of this folk, this pious morn?",
+                transmission: {
+                    concept: "Depopulation",
+                    title: "System Empty",
+                    body: "The source location is void of content. The transmission has resulted in a loss of origin data."
+                },
+                ritual: {
+                    concept: "Sacrifice",
+                    title: "Operational Boundary",
+                    body: "The 'emptying' is necessary. You cannot inhabit the symbolic world of the procession without leaving the biological world of the town."
+                }
+            },
+            "44": {
+                quote: "Thou, silent form, dost tease us out of thought",
+                transmission: {
+                    concept: "Cognitive Noise",
+                    title: "Irrationality",
+                    body: "The object confuses the processing unit (the mind). It does not yield clear logic or data."
+                },
+                ritual: {
+                    concept: "Transformation",
+                    title: "Altered State",
+                    body: "The artifact functions to shift the user's consciousness. It moves us from 'thought' (linear processing) to 'eternity' (simultaneous experience)."
+                }
+            },
+            "49": {
+                quote: "Beauty is truth, truth beauty",
+                transmission: {
+                    concept: "Tautology",
+                    title: "Circular Logic",
+                    body: "This statement carries no information. X = Y, Y = X. It offers no proof and describes no external reality. It is logically empty."
+                },
+                ritual: {
+                    concept: "World-Construction",
+                    title: "The Ritual Equation",
+                    body: "In a ritual model, the Form (Beauty) *creates* the Reality (Truth). There is no truth outside the symbolic structure. The tautology is the definition of the world."
+                }
+            }
+        };
+
+        // State
+        let currentMode = 'ritual';
+        let selectedId = null;
+
+        // Elements
+        const body = document.body;
+        const modeDisplay = document.getElementById('modeDisplay');
+        const contentArea = document.getElementById('contentArea');
+        const emptyState = document.getElementById('emptyState');
+        const modeBtns = document.querySelectorAll('.mode-btn');
+
+        // Functions
+        function setMode(mode) {
+            currentMode = mode;
+            body.setAttribute('data-mode', mode);
+            
+            // Update Text
+            modeDisplay.textContent = mode === 'transmission' ? 'Transmission (Failure)' : 'Ritual (Success)';
+            
+            // Update Buttons
+            modeBtns.forEach(btn => {
+                if (btn.dataset.mode === mode) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+
+            // Refresh content if something is selected
+            if (selectedId) {
+                renderAnalysis(selectedId);
+            }
+        }
+
+        function handleLineClick(e) {
+            const line = e.target;
+            // Only react to lines with data-analysis
+            if (!line.hasAttribute('data-analysis')) return;
+
+            const id = line.dataset.id;
+            
+            // UI Selection
+            document.querySelectorAll('.line').forEach(l => l.classList.remove('selected'));
+            line.classList.add('selected');
+            
+            selectedId = id;
+            renderAnalysis(id);
+        }
+
+        function renderAnalysis(id) {
+            const data = analysisData[id];
+            if (!data) return;
+
+            const modeData = data[currentMode];
+            
+            // Hide empty state
+            emptyState.style.display = 'none';
+
+            // Build HTML
+            const html = `
+                <div class="analysis-quote">"${data.quote}"</div>
+                <div class="carey-concept-tag">${modeData.concept}</div>
+                <h3 class="analysis-title">${modeData.title}</h3>
+                <p class="analysis-body">${modeData.body}</p>
+            `;
+
+            // Inject
+            contentArea.innerHTML = html;
+            
+            // Animation reset
+            contentArea.classList.remove('visible');
+            setTimeout(() => {
+                contentArea.classList.add('visible');
+            }, 10);
+        }
+
+        // Init
+        document.querySelectorAll('.line').forEach(line => {
+            line.addEventListener('click', handleLineClick);
+        });
+
+    </script>
+</body>
+</html>

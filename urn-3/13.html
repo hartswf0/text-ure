@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPS-SCHEMAS: 24x24 Calligram Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --urn-bg: #fdfbf7;
+            --urn-stone: #2c2c2c;
+            --urn-ash: #a8a29e;
+            --grid-gap: 2px;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            color: var(--urn-stone);
+            font-family: 'Cinzel', serif;
+            overflow: hidden; /* App-like feel */
+        }
+
+        /* The Grid Container */
+        #urn-grid {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            grid-template-rows: repeat(24, 1fr);
+            gap: 1px;
+            width: 90vmin;
+            height: 90vmin;
+            background-color: #e5e5e5;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            position: relative;
+            transition: transform 0.5s ease;
+        }
+
+        /* Individual Cell */
+        .cell {
+            background-color: var(--urn-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            position: relative;
+            cursor: crosshair;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .cell:hover {
+            z-index: 10;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            transform: scale(1.2);
+        }
+
+        /* --- LETTER MATERIALS --- */
+        .mat-STONE {
+            color: #1f1f1f;
+            text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+            font-weight: 700;
+        }
+        
+        .mat-ASH {
+            color: var(--urn-ash);
+            filter: blur(0.5px);
+            opacity: 0.7;
+        }
+
+        .mat-NEON {
+            color: #ffffff;
+            text-shadow: 0 0 5px #00ffcc, 0 0 10px #00ffcc;
+        }
+
+        .mat-STATIC {
+            font-family: 'Space Mono', monospace;
+            animation: jitter 0.2s infinite;
+        }
+
+        /* --- STROKE WEIGHTS --- */
+        .w-HAIRLINE { font-weight: 100; opacity: 0.8; }
+        .w-LIGHT { font-weight: 300; }
+        .w-REGULAR { font-weight: 400; }
+        .w-BOLD { font-weight: 700; }
+        .w-BLACK { font-weight: 900; letter-spacing: -1px; }
+
+        /* --- GLYPH FLOWS (Simulated via transforms) --- */
+        .flow-SPIRAL { transform: rotate(var(--rot, 0deg)); }
+        .flow-SCATTER { transform: translate(var(--tx, 0), var(--ty, 0)); }
+        .flow-FRACTURE { border-bottom: 1px dashed rgba(0,0,0,0.2); }
+        
+        /* --- ANIMATIONS --- */
+        @keyframes jitter {
+            0% { transform: translate(0,0); }
+            25% { transform: translate(1px, 1px); }
+            50% { transform: translate(-1px, 0); }
+            75% { transform: translate(0, -1px); }
+            100% { transform: translate(0,0); }
+        }
+
+        @keyframes breathe {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        .traversal-active {
+            background-color: #ffd700 !important;
+            color: black !important;
+            transform: scale(1.1);
+            z-index: 20;
+        }
+
+        /* UI Panel */
+        #schema-inspector {
+            font-family: 'Space Mono', monospace;
+            background: rgba(0,0,0,0.9);
+            color: #00ff00;
+            backdrop-filter: blur(10px);
+            border-right: 1px solid #333;
+        }
+
+        .code-block {
+            font-size: 0.7rem;
+            line-height: 1.4;
+        }
+
+        .hidden-ui {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body class="flex h-screen w-screen">
+
+    <!-- LEFT PANEL: CONTROLS & SCHEMA -->
+    <aside id="schema-inspector" class="w-1/4 h-full p-6 flex flex-col justify-between transition-all duration-300 z-50">
+        <div>
+            <h1 class="text-xl font-bold mb-2 border-b border-green-500 pb-2">OPS-SCHEMAS-24x24</h1>
+            <div class="mb-6 text-xs text-gray-400">
+                <p>SUBJECT: Ode on a Grecian Urn</p>
+                <p>MODE: Calligrammatic Topology</p>
+                <p>STATUS: <span id="system-status" class="text-green-500 animate-pulse">ACTIVE</span></p>
+            </div>
+
+            <!-- DYNAMIC CELL DATA -->
+            <div id="inspector-data" class="opacity-50 transition-opacity duration-200">
+                <p class="text-xs text-gray-500 mb-1">SELECTED CELL SCHEMA:</p>
+                <pre id="json-display" class="code-block text-green-400 bg-black p-4 rounded border border-gray-800 h-64 overflow-auto">
+HOVER OVER A CELL
+TO INSPECT SCHEMA
+                </pre>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div class="text-xs text-gray-500">OPERATORS</div>
+            <button onclick="GridEngine.reset()" class="w-full border border-green-700 text-green-500 hover:bg-green-900 px-4 py-2 text-xs uppercase tracking-widest transition-colors">
+                Reset Surface
+            </button>
+            <button onclick="GridEngine.traverse()" class="w-full bg-green-700 text-black font-bold hover:bg-green-500 px-4 py-2 text-xs uppercase tracking-widest transition-colors shadow-[0_0_15px_rgba(0,255,0,0.3)]">
+                Initiate Traversal
+            </button>
+        </div>
+    </aside>
+
+    <!-- RIGHT PANEL: THE ARTIFACT -->
+    <main class="flex-1 flex items-center justify-center bg-stone-900 relative">
+        <!-- The Marble Surface -->
+        <div id="urn-grid">
+            <!-- Cells generated via JS -->
+        </div>
+
+        <!-- Floating Label -->
+        <div class="absolute bottom-8 right-8 text-stone-500 text-xs font-serif italic opacity-50">
+            "Beauty is truth, truth beauty"
+        </div>
+    </main>
+
+<script>
+/**
+ * OPS-SCHEMAS 24x24 ENGINE
+ * Core Logic for Spatial Poetry Generation
+ */
+
+const CONFIG = {
+    gridSize: 24,
+    zones: {
+        RIM: { startRow: 0, endRow: 4 },
+        FRIEZE: { startRow: 5, endRow: 15 },
+        VOID: { startRow: 16, endRow: 20 },
+        BASE: { startRow: 21, endRow: 23 }
+    }
+};
+
+const POEM_DATA = [
+    { text: "THOU STILL UNRAVISH'D BRIDE OF QUIETNESS", zone: "RIM", style: "STONE", flow: "CLUSTER" },
+    { text: "THOU FOSTER-CHILD OF SILENCE AND SLOW TIME", zone: "RIM", style: "STONE", flow: "LINEAR" },
+    { text: "SYLVAN HISTORIAN WHO CANST THUS EXPRESS", zone: "RIM", style: "STONE", flow: "LINEAR" },
+    { text: "WHAT MEN OR GODS ARE THESE? WHAT MAIDENS LOTH?", zone: "FRIEZE", style: "STATIC", flow: "SCATTER" },
+    { text: "WHAT MAD PURSUIT? WHAT STRUGGLE TO ESCAPE?", zone: "FRIEZE", style: "STATIC", flow: "SCATTER" },
+    { text: "PIPING SONGS FOR EVER NEW", zone: "FRIEZE", style: "NEON", flow: "SPIRAL" },
+    { text: "BOLD LOVER NEVER NEVER CANST THOU KISS", zone: "FRIEZE", style: "STONE", flow: "SPIRAL" },
+    { text: "SHE CANNOT FADE THOUGH THOU HAST NOT THY BLISS", zone: "FRIEZE", style: "ASH", flow: "WAVE" },
+    { text: "FOR EVER WARM AND STILL TO BE ENJOY'D", zone: "FRIEZE", style: "STONE", flow: "SPIRAL" },
+    { text: "WHO ARE THESE COMING TO THE SACRIFICE?", zone: "VOID", style: "ASH", flow: "SCATTER" },
+    { text: "LITTLE TOWN THY STREETS FOR EVERMORE WILL SILENT BE", zone: "VOID", style: "ASH", flow: "DISSOLVE" },
+    { text: "NOT A SOUL TO TELL WHY THOU ART DESOLATE", zone: "VOID", style: "ASH", flow: "DISSOLVE" },
+    { text: "BEAUTY IS TRUTH TRUTH BEAUTY", zone: "BASE", style: "STONE", flow: "COLUMN" },
+    { text: "THAT IS ALL YE KNOW ON EARTH AND ALL YE NEED TO KNOW", zone: "BASE", style: "STONE", flow: "LINEAR" }
+];
+
+class CellSchema {
+    constructor(id, row, col) {
+        this.id = id;
+        this.row = row;
+        this.col = col;
+        this.content = "";
+        this.layers = {
+            glyph_flow: "LINEAR",
+            stroke_weight: "REGULAR",
+            gravity: "CENTER",
+            calligram_function: "VOID",
+            letter_material: "STONE",
+            negative_space: 1.0,
+            meta: {}
+        };
+    }
+
+    toJSON() {
+        return {
+            coordinates: `[${this.row}, ${this.col}]`,
+            ...this.layers,
+            content: this.content || "(empty)"
+        };
+    }
+}
+
+const GridEngine = {
+    cells: [],
+    
+    init() {
+        const gridEl = document.getElementById('urn-grid');
+        gridEl.innerHTML = '';
+        this.cells = [];
+
+        // 1. Generate 24x24 Grid
+        for (let r = 0; r < CONFIG.gridSize; r++) {
+            for (let c = 0; c < CONFIG.gridSize; c++) {
+                const cellId = r * CONFIG.gridSize + c;
+                const cellEl = document.createElement('div');
+                cellEl.classList.add('cell');
+                cellEl.dataset.index = cellId;
+                cellEl.dataset.row = r;
+                cellEl.dataset.col = c;
+                
+                // Interaction
+                cellEl.addEventListener('mouseenter', () => this.inspect(r, c));
+                cellEl.addEventListener('mouseleave', () => this.clearInspect());
+
+                gridEl.appendChild(cellEl);
+                
+                // Logic Object
+                this.cells.push({
+                    element: cellEl,
+                    schema: new CellSchema(cellId, r, c)
+                });
+            }
+        }
+
+        // 2. Apply Poem Logic
+        this.renderCalligram();
+    },
+
+    renderCalligram() {
+        // --- ZONE A: RIM (Dense Block) ---
+        this.fillRegion(0, 3, 2, 22, POEM_DATA[0].text, { material: 'STONE', weight: 'BOLD', flow: 'LINEAR' });
+        this.fillRegion(1, 3, 2, 22, POEM_DATA[1].text, { material: 'STONE', weight: 'REGULAR', flow: 'LINEAR' });
+
+        // --- ZONE B: FRIEZE (Spirals & Waves) ---
+        // The Spiral for "Bold Lover"
+        const spiralCenter = { r: 10, c: 12 };
+        this.createSpiral(spiralCenter, POEM_DATA[6].text, { material: 'STONE', weight: 'BOLD' });
+        
+        // The Wave for "She cannot fade"
+        this.createWave(13, POEM_DATA[7].text, { material: 'ASH', weight: 'LIGHT' });
+
+        // The Scattering for "Mad Pursuit"
+        this.fillRandomly(6, 9, 4, 20, POEM_DATA[4].text, { material: 'STATIC', weight: 'HAIRLINE' });
+
+        // --- ZONE C: VOID (Desolation) ---
+        // High negative space
+        this.fillRandomly(17, 20, 2, 22, POEM_DATA[10].text, { material: 'ASH', weight: 'LIGHT', scatter: true });
+
+        // --- ZONE D: BASE (Truth) ---
+        this.fillColumn(21, 12, "BEAUTY", { material: 'STONE', weight: 'BLACK' });
+        this.fillColumn(21, 14, "TRUTH", { material: 'STONE', weight: 'BLACK' });
+        this.fillRegion(23, 23, 4, 20, POEM_DATA[13].text, { material: 'STONE', weight: 'HAIRLINE', flow: 'LINEAR' });
+    },
+
+    // --- GEOMETRIC GENERATORS ---
+
+    // Fills a rectangular region linearly
+    fillRegion(rStart, rEnd, cStart, cEnd, text, props) {
+        let textIdx = 0;
+        for (let r = rStart; r <= rEnd; r++) {
+            for (let c = cStart; c <= cEnd; c++) {
+                if (textIdx >= text.length) return;
+                const cell = this.getCell(r, c);
+                if (text[textIdx] !== ' ') {
+                    this.hydrateCell(cell, text[textIdx], props);
+                }
+                textIdx++;
+            }
+        }
+    },
+
+    // Fills a region with random placements (high negative space)
+    fillRandomly(rStart, rEnd, cStart, cEnd, text, props) {
+        let attempts = 0;
+        let charIdx = 0;
+        while (charIdx < text.length && attempts < 500) {
+            const r = Math.floor(Math.random() * (rEnd - rStart + 1)) + rStart;
+            const c = Math.floor(Math.random() * (cEnd - cStart + 1)) + cStart;
+            const cell = this.getCell(r, c);
+            
+            if (cell.schema.content === "" && text[charIdx] !== ' ') {
+                const scatterX = props.scatter ? (Math.random() * 10 - 5) + 'px' : '0';
+                const scatterY = props.scatter ? (Math.random() * 10 - 5) + 'px' : '0';
+                
+                this.hydrateCell(cell, text[charIdx], {
+                    ...props, 
+                    cssVar: {'--tx': scatterX, '--ty': scatterY},
+                    flow: 'SCATTER'
+                });
+                charIdx++;
+            }
+            attempts++;
+            if (text[charIdx] === ' ') charIdx++;
+        }
+    },
+
+    createSpiral(center, text, props) {
+        // Simple rectangular spiral algorithm
+        let x = 0, y = 0;
+        let dx = 0, dy = -1;
+        let t = Math.max(CONFIG.gridSize, CONFIG.gridSize);
+        let maxI = t * t;
+        let charIdx = 0;
+
+        for (let i = 0; i < maxI; i++) {
+            if ((-CONFIG.gridSize / 2 < x && x <= CONFIG.gridSize / 2) && (-CONFIG.gridSize / 2 < y && y <= CONFIG.gridSize / 2)) {
+                if (charIdx >= text.length) break;
+                
+                const r = center.r + y;
+                const c = center.c + x;
+                
+                if (r >= 0 && r < CONFIG.gridSize && c >= 0 && c < CONFIG.gridSize) {
+                    const cell = this.getCell(r, c);
+                    if (text[charIdx] !== ' ') {
+                        // Calculate rotation based on position relative to center
+                        const angle = Math.atan2(y, x) * (180 / Math.PI) + 90;
+                        this.hydrateCell(cell, text[charIdx], {
+                            ...props,
+                            flow: 'SPIRAL',
+                            cssVar: {'--rot': `${angle}deg`}
+                        });
+                    }
+                    charIdx++;
+                }
+            }
+            if (x === y || (x < 0 && x === -y) || (x > 0 && x === 1 - y)) {
+                let temp = dx;
+                dx = -dy;
+                dy = temp;
+            }
+            x += dx;
+            y += dy;
+        }
+    },
+
+    createWave(rowBase, text, props) {
+        let charIdx = 0;
+        for (let c = 2; c < 22; c++) {
+            if (charIdx >= text.length) break;
+            const offset = Math.round(Math.sin(c * 0.8) * 1.5); // Sine wave offset
+            const r = rowBase + offset;
+            
+            if (r >= 0 && r < CONFIG.gridSize) {
+                const cell = this.getCell(r, c);
+                if (text[charIdx] !== ' ') {
+                     this.hydrateCell(cell, text[charIdx], props);
+                }
+                charIdx++;
+            }
+        }
+    },
+
+    fillColumn(rStart, col, text, props) {
+        for (let i = 0; i < text.length; i++) {
+            if (rStart + i < CONFIG.gridSize) {
+                const cell = this.getCell(rStart + i, col);
+                this.hydrateCell(cell, text[i], props);
+            }
+        }
+    },
+
+    // --- CORE HYDRATION ---
+
+    getCell(r, c) {
+        return this.cells[r * CONFIG.gridSize + c];
+    },
+
+    hydrateCell(cellObj, char, props) {
+        if (!cellObj) return;
+        
+        // Update DOM
+        const el = cellObj.element;
+        el.textContent = char;
+        el.className = 'cell'; // reset
+        
+        // Add Material Class
+        if (props.material) el.classList.add(`mat-${props.material}`);
+        
+        // Add Weight Class
+        if (props.weight) el.classList.add(`w-${props.weight}`);
+
+        // Add Flow Class
+        if (props.flow) el.classList.add(`flow-${props.flow}`);
+
+        // Set CSS Variables for transforms
+        if (props.cssVar) {
+            for (const [key, val] of Object.entries(props.cssVar)) {
+                el.style.setProperty(key, val);
+            }
+        }
+
+        // Update Schema Data
+        cellObj.schema.content = char;
+        cellObj.schema.layers.letter_material = props.material || "INK";
+        cellObj.schema.layers.stroke_weight = props.weight || "REGULAR";
+        cellObj.schema.layers.glyph_flow = props.flow || "LINEAR";
+        cellObj.schema.layers.calligram_function = "IMAGE";
+        cellObj.schema.layers.negative_space = 0.0;
+    },
+
+    // --- INSPECTOR LOGIC ---
+
+    inspect(r, c) {
+        const cell = this.getCell(r, c);
+        const display = document.getElementById('json-display');
+        const inspector = document.getElementById('inspector-data');
+        
+        inspector.style.opacity = '1';
+        
+        // Format JSON for display
+        const json = JSON.stringify(cell.schema.toJSON(), null, 2);
+        display.textContent = json;
+    },
+
+    clearInspect() {
+        const inspector = document.getElementById('inspector-data');
+        inspector.style.opacity = '0.5';
+    },
+
+    reset() {
+        this.init();
+    },
+
+    // --- TRAVERSAL LOGIC ---
+    
+    async traverse() {
+        const activeCells = this.cells.filter(c => c.schema.content !== "");
+        
+        // Sort by Row then Column
+        activeCells.sort((a, b) => {
+            if (a.schema.row !== b.schema.row) return a.schema.row - b.schema.row;
+            return a.schema.col - b.schema.col;
+        });
+
+        // Highlight loop
+        for (const cell of activeCells) {
+            cell.element.classList.add('traversal-active');
+            
+            // Auto-scroll inspect
+            this.inspect(cell.schema.row, cell.schema.col);
+
+            // Speed based on zone
+            let delay = 30; 
+            if (cell.schema.layers.glyph_flow === 'SPIRAL') delay = 100; // Slow down for spirals
+            if (cell.schema.layers.letter_material === 'ASH') delay = 150; // Slow drag in the void
+
+            await new Promise(r => setTimeout(r, delay));
+            
+            cell.element.classList.remove('traversal-active');
+        }
+        
+        this.clearInspect();
+    }
+};
+
+// Start Engine on Load
+window.onload = () => GridEngine.init();
+
+</script>
+</body>
+</html>

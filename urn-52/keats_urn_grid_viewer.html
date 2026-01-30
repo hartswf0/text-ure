@@ -1,0 +1,1235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Keats Urn — 24×24 Operative Ekphrasis Grid</title>
+  <style>
+    :root {
+      --paper: #F4F4F0;
+      --ink: #111111;
+      --muted: rgba(17,17,17,0.55);
+      --hair: rgba(17,17,17,0.12);
+      --hair2: rgba(17,17,17,0.18);
+      --shadow: 0 10px 30px rgba(0,0,0,0.12);
+      --r: 14px;
+
+      --cell: clamp(10px, calc((min(100vw, 68vh) - 24px)/24), 22px);
+      --gap: 1px;
+
+      --ui: clamp(12px, 1.5vw, 14px);
+      --ui2: clamp(14px, 2vw, 16px);
+
+      --accent: #1f6feb;
+      --good: #2ea043;
+      --warn: #d29922;
+      --bad: #f85149;
+
+      --scale: 1;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: var(--paper);
+      color: var(--ink);
+      overflow: hidden;
+    }
+
+    .app {
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    header {
+      padding: 10px 12px 8px;
+      border-bottom: 1px solid var(--hair);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .title h1 {
+      margin: 0;
+      font-size: var(--ui2);
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .subtitle {
+      font-size: var(--ui);
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hdrBtns {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    button, .pill {
+      appearance: none;
+      border: 1px solid var(--hair2);
+      background: rgba(255,255,255,0.65);
+      color: var(--ink);
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: var(--ui);
+      line-height: 1;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+    }
+    button:active { transform: translateY(1px); }
+    button.primary {
+      border-color: rgba(31,111,235,0.35);
+      background: rgba(31,111,235,0.10);
+    }
+    button.ghost {
+      background: transparent;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 1fr;
+      min-height: 0;
+    }
+
+    /* Wide layout: add sidebar */
+    @media (min-width: 980px) {
+      main {
+        grid-template-columns: 1fr 420px;
+      }
+      .sidebar {
+        display: block;
+      }
+    }
+
+    .viewport {
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
+      touch-action: none; /* we implement pan/zoom */
+    }
+
+    .gridWrap {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform-origin: 0 0;
+      transform: translate(var(--tx, -50%), var(--ty, -50%)) scale(var(--scale));
+      will-change: transform;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(24, var(--cell));
+      grid-template-rows: repeat(24, var(--cell));
+      gap: var(--gap);
+      background: var(--hair);
+      padding: var(--gap);
+      border-radius: calc(var(--r) + 2px);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--hair2);
+    }
+
+    .cell {
+      background: rgba(255,255,255,0.70);
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .cell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(var(--rgb, 31,111,235), var(--tint, 0.08));
+      pointer-events: none;
+    }
+    .cell .mini {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 9px;
+      color: rgba(17,17,17,0.70);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.2px;
+      opacity: 0.0;
+      transform: translateY(1px);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* show mini label when zoomed */
+    body.zoomed .cell .mini { opacity: 0.95; }
+
+    .cell.selected {
+      outline: 2px solid rgba(31,111,235,0.8);
+      outline-offset: -2px;
+    }
+    .cell.highlight {
+      outline: 2px solid rgba(46,160,67,0.85);
+      outline-offset: -2px;
+    }
+    .cell.dim {
+      opacity: 0.25;
+    }
+
+    .legend {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.75);
+      border: 1px solid var(--hair2);
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.10);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      max-width: min(720px, calc(100vw - 20px));
+    }
+    .legend .kv {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      font-size: var(--ui);
+      color: var(--muted);
+    }
+    .dot {
+      width: 10px; height: 10px; border-radius: 999px;
+      background: rgba(var(--rgb, 31,111,235), 0.5);
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+    .legend strong {
+      color: var(--ink);
+      font-weight: 650;
+    }
+
+    .hud {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      display: grid;
+      gap: 8px;
+      justify-items: end;
+    }
+
+    .hudCard {
+      padding: 10px 10px;
+      width: min(320px, calc(100vw - 20px));
+      background: rgba(255,255,255,0.75);
+      border: 1px solid var(--hair2);
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.10);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .hudRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: var(--ui);
+      color: var(--muted);
+    }
+    .hudRow input[type="range"] {
+      width: 180px;
+    }
+
+    .sidebar {
+      display: none;
+      border-left: 1px solid var(--hair);
+      min-height: 0;
+      overflow: hidden;
+    }
+    .sideInner {
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 0;
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 10px 10px 0;
+      flex-wrap: wrap;
+    }
+    .tabBtn {
+      padding: 8px 10px;
+      border-radius: 999px;
+    }
+    .tabBtn.active {
+      border-color: rgba(31,111,235,0.55);
+      background: rgba(31,111,235,0.10);
+    }
+    .panel {
+      padding: 10px;
+      overflow: auto;
+      min-height: 0;
+    }
+    .search {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--hair2);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.75);
+      font-size: var(--ui);
+      outline: none;
+    }
+    .list {
+      margin-top: 10px;
+      display: grid;
+      gap: 8px;
+    }
+    .card {
+      border: 1px solid var(--hair2);
+      background: rgba(255,255,255,0.70);
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+    .card .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+    }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-variant-numeric: tabular-nums;
+    }
+    .card .txt {
+      margin-top: 6px;
+      font-size: var(--ui);
+      line-height: 1.35;
+    }
+    .chipRow {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--hair2);
+      background: rgba(255,255,255,0.55);
+      color: rgba(17,17,17,0.72);
+    }
+
+    footer {
+      border-top: 1px solid var(--hair);
+      padding: 8px 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footerLeft {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+    }
+    .status {
+      font-size: var(--ui);
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 60vw;
+    }
+
+    /* Bottom sheet inspector (mobile) */
+    .sheet {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: min(62vh, 560px);
+      transform: translateY(calc(100% - 56px));
+      transition: transform 180ms ease;
+      background: rgba(255,255,255,0.82);
+      border-top: 1px solid var(--hair2);
+      border-radius: 18px 18px 0 0;
+      box-shadow: 0 -12px 30px rgba(0,0,0,0.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: grid;
+      grid-template-rows: 56px 1fr;
+      z-index: 30;
+    }
+    .sheet.open {
+      transform: translateY(0);
+    }
+    .sheetHandle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      gap: 10px;
+    }
+    .grab {
+      width: 44px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(17,17,17,0.18);
+      margin: 0 auto;
+    }
+    .sheetBody {
+      padding: 0 12px 12px;
+      overflow: auto;
+      min-height: 0;
+    }
+
+    .kgrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .k {
+      border: 1px solid var(--hair2);
+      background: rgba(255,255,255,0.68);
+      border-radius: 14px;
+      padding: 8px 10px;
+      font-size: var(--ui);
+    }
+    .k .lab {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
+    .k .val {
+      color: var(--ink);
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .divider {
+      height: 1px;
+      background: var(--hair);
+      margin: 12px 0;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    /* Small helper for tap targets */
+    .rowBtns {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <div class="title">
+      <h1>Keats Urn — 24×24 Grid</h1>
+      <div class="subtitle">Operative ekphrasis viewer (URN_FRIEZE). Tap a cell → inspect. Tap a line → highlight its footprint.</div>
+    </div>
+    <div class="hdrBtns">
+      <button class="primary" id="btnLines">Lines</button>
+      <button id="btnAudit">Audit</button>
+      <button class="ghost" id="btnReset">Reset</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="viewport" id="viewport" aria-label="Grid viewport">
+      <div class="legend" id="legend">
+        <div class="kv"><span class="dot" style="--rgb:31,111,235;"></span><strong>Zones</strong></div>
+        <div class="kv"><span class="dot" style="--rgb:46,160,67;"></span>Highlight = line footprint</div>
+        <div class="kv"><span class="dot" style="--rgb:209,153,34;"></span>Selected cell</div>
+      </div>
+
+      <div class="hud">
+        <div class="hudCard">
+          <div class="hudRow">
+            <span class="mono">Zoom</span>
+            <input id="zoom" type="range" min="0.75" max="3" step="0.01" value="1" />
+          </div>
+          <div class="hudRow" style="margin-top:8px;">
+            <span class="mono">Mode</span>
+            <div class="rowBtns">
+              <button id="modePanel" class="pill">Panel</button>
+              <button id="modeTag" class="pill">Tag</button>
+              <button id="modeNone" class="pill primary">None</button>
+            </div>
+          </div>
+          <div class="hudRow" style="margin-top:8px;">
+            <span class="mono">Filter</span>
+            <select id="filterSelect" class="pill" style="max-width:180px;"></select>
+          </div>
+          <div class="hint" style="margin-top:8px;">
+            Pan: drag. Zoom: slider (or pinch). Seam spine is <span class="mono">x=0</span>.
+          </div>
+        </div>
+      </div>
+
+      <div class="gridWrap" id="gridWrap">
+        <div class="grid" id="grid" role="grid" aria-label="24 by 24 grid"></div>
+      </div>
+    </section>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sideInner">
+        <div class="tabs">
+          <button class="tabBtn active" data-tab="lines">Lines</button>
+          <button class="tabBtn" data-tab="cell">Cell</button>
+          <button class="tabBtn" data-tab="audit">Audit</button>
+        </div>
+        <div class="panel" id="sidePanel"></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="footerLeft">
+      <button id="btnInspector" class="primary">Inspector</button>
+      <div class="status" id="status">Ready. Tap a cell.</div>
+    </div>
+    <div class="rowBtns">
+      <button id="btnClear">Clear highlight</button>
+      <button id="btnCenter">Center</button>
+    </div>
+  </footer>
+</div>
+
+<!-- Bottom sheet inspector (mobile & always available) -->
+<section class="sheet" id="sheet" aria-label="Inspector">
+  <div class="sheetHandle" id="sheetHandle">
+    <div style="width:36px;"></div>
+    <div style="flex:1;">
+      <div class="grab"></div>
+    </div>
+    <button id="sheetClose">Close</button>
+  </div>
+  <div class="sheetBody" id="sheetBody"></div>
+</section>
+
+<!-- Embedded manifest JSON -->
+<script type="application/json" id="manifest-data">{"grid":[[{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51,52],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","place","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","silence","time","urn_frieze","zone:Z_RIM"]}],[{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52,51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","place","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52,51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","place","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52,51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","place","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52,51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","place","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52,51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","place","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52,51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","place","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52,51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","place","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52,51],"weight":0.852,"tags":["form","motif_header","operative","panel:P0_RIM","place","silence","time","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]},{"zone":"Z_RIM","panel":"P0_RIM","line_ids":[52],"weight":0.741,"tags":["form","motif_header","operative","panel:P0_RIM","place","urn_frieze","zone:Z_RIM"]}],[{"zone":"Z_P1","panel":"P1","line_ids":[53,52],"weight":0.741,"tags":["form","motif_header","music","operative","panel:P1","place","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[1,53],"weight":0.741,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[1,53],"weight":0.741,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[1,53],"weight":0.741,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[53],"weight":0.741,"tags":["motif_header","music","operative","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[1,53],"weight":0.741,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[1,53],"weight":0.741,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[1,53],"weight":0.741,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[53],"weight":0.741,"tags":["motif_header","music","operative","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[1,53],"weight":0.741,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[1,53],"weight":0.741,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[1,53],"weight":0.741,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[53],"weight":0.741,"tags":["motif_header","music","operative","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[1,53],"weight":0.741,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[1,53],"weight":0.741,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[1,53],"weight":0.741,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[53],"weight":0.741,"tags":["motif_header","music","operative","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2,53],"weight":0.926,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","time","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2,53],"weight":0.926,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","time","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2,53],"weight":0.926,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","time","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[53],"weight":0.741,"tags":["motif_header","music","operative","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2,53],"weight":0.926,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","time","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2,53],"weight":0.926,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","time","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2,53],"weight":0.926,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","time","urn_frieze","zone:Z_P1"]}],[{"zone":"Z_P1","panel":"P1","line_ids":[6,52,53],"weight":0.741,"tags":["authored","divine","form","human","motif_header","music","operative","panel:P1","place","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[5],"weight":0.407,"tags":["authored","form","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[5],"weight":0.407,"tags":["authored","form","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[5],"weight":0.407,"tags":["authored","form","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[5],"weight":0.407,"tags":["authored","form","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[5],"weight":0.407,"tags":["authored","form","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[5,53],"weight":0.741,"tags":["authored","form","motif_header","music","operative","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[5],"weight":0.407,"tags":["authored","form","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[4],"weight":0.185,"tags":["authored","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[4],"weight":0.185,"tags":["authored","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[4],"weight":0.185,"tags":["authored","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[3],"weight":0.185,"tags":["authored","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[3,53],"weight":0.741,"tags":["authored","motif_header","music","operative","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[3],"weight":0.185,"tags":["authored","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2],"weight":0.926,"tags":["apostrophe","authored","panel:P1","silence","time","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2],"weight":0.926,"tags":["apostrophe","authored","panel:P1","silence","time","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2],"weight":0.926,"tags":["apostrophe","authored","panel:P1","silence","time","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2],"weight":0.926,"tags":["apostrophe","authored","panel:P1","silence","time","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2,53],"weight":0.926,"tags":["apostrophe","authored","motif_header","music","operative","panel:P1","silence","time","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2],"weight":0.926,"tags":["apostrophe","authored","panel:P1","silence","time","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2],"weight":0.926,"tags":["apostrophe","authored","panel:P1","silence","time","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2],"weight":0.926,"tags":["apostrophe","authored","panel:P1","silence","time","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2],"weight":0.926,"tags":["apostrophe","authored","panel:P1","silence","time","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[2],"weight":0.926,"tags":["apostrophe","authored","panel:P1","silence","time","urn_frieze","zone:Z_P1"]}],[{"zone":"Z_P1","panel":"P1","line_ids":[6,52,53],"weight":0.741,"tags":["authored","divine","form","human","motif_header","music","operative","panel:P1","place","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[6],"weight":0.389,"tags":["authored","divine","human","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[6],"weight":0.389,"tags":["authored","divine","human","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[6],"weight":0.389,"tags":["authored","divine","human","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[6],"weight":0.389,"tags":["authored","divine","human","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[6],"weight":0.389,"tags":["authored","divine","human","panel:P1","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[7,53],"weight":0.741,"tags":["authored","motif_header","music","operative","panel:P1","place","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[7],"weight":0.546,"tags":["authored","panel:P1","place","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[7],"weight":0.546,"tags":["authored","panel:P1","place","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[7],"weight":0.546,"tags":["authored","panel:P1","place","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[7],"weight":0.546,"tags":["authored","panel:P1","place","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[7],"weight":0.546,"tags":["authored","panel:P1","place","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[7,53],"weight":0.741,"tags":["authored","motif_header","music","operative","panel:P1","place","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[7],"weight":0.546,"tags":["authored","panel:P1","place","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[7],"weight":0.546,"tags":["authored","panel:P1","place","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[7],"weight":0.546,"tags":["authored","panel:P1","place","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[8],"weight":0.648,"tags":["authored","divine","human","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[8],"weight":0.648,"tags":["authored","divine","human","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[8,53],"weight":0.741,"tags":["authored","divine","human","motif_header","music","operative","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[8],"weight":0.648,"tags":["authored","divine","human","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[8],"weight":0.648,"tags":["authored","divine","human","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[8],"weight":0.648,"tags":["authored","divine","human","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[8],"weight":0.648,"tags":["authored","divine","human","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[8],"weight":0.648,"tags":["authored","divine","human","panel:P1","question","urn_frieze","zone:Z_P1"]}],[{"zone":"Z_P1","panel":"P1","line_ids":[10,52,53],"weight":0.741,"tags":["authored","form","motif_header","music","operative","panel:P1","place","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[10],"weight":0.546,"tags":["authored","music","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[10],"weight":0.546,"tags":["authored","music","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[10],"weight":0.546,"tags":["authored","music","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[10],"weight":0.546,"tags":["authored","music","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[10],"weight":0.546,"tags":["authored","music","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[10,53],"weight":0.741,"tags":["authored","motif_header","music","operative","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[10],"weight":0.546,"tags":["authored","music","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[10],"weight":0.546,"tags":["authored","music","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[10],"weight":0.546,"tags":["authored","music","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[9],"weight":0.546,"tags":["authored","chase","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[9],"weight":0.546,"tags":["authored","chase","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[9,53],"weight":0.741,"tags":["authored","chase","motif_header","music","operative","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[9],"weight":0.546,"tags":["authored","chase","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[9],"weight":0.546,"tags":["authored","chase","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[9],"weight":0.546,"tags":["authored","chase","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[9],"weight":0.546,"tags":["authored","chase","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[9],"weight":0.546,"tags":["authored","chase","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[9,53],"weight":0.741,"tags":["authored","chase","motif_header","music","operative","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[9],"weight":0.546,"tags":["authored","chase","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[8],"weight":0.648,"tags":["authored","divine","human","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[8],"weight":0.648,"tags":["authored","divine","human","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[8],"weight":0.648,"tags":["authored","divine","human","panel:P1","question","urn_frieze","zone:Z_P1"]},{"zone":"Z_P1","panel":"P1","line_ids":[8],"weight":0.648,"tags":["authored","divine","human","panel:P1","question","urn_frieze","zone:Z_P1"]}],[{"zone":"Z_P2","panel":"P2","line_ids":[54,52],"weight":0.741,"tags":["form","love","motif_header","music","operative","panel:P2","place","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[11,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[11,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[11,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[54],"weight":0.741,"tags":["love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[11,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[11,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[11,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[54],"weight":0.741,"tags":["love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[11,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[12,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[12,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[54],"weight":0.741,"tags":["love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[12,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[12,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[12,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[54],"weight":0.741,"tags":["love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[12,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[12,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[13,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[54],"weight":0.741,"tags":["love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[13,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[13,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[13,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]}],[{"zone":"Z_P2","panel":"P2","line_ids":[16,52,54],"weight":0.741,"tags":["authored","form","love","motif_header","music","nature","operative","panel:P2","place","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[16],"weight":0.389,"tags":["authored","music","nature","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[16],"weight":0.389,"tags":["authored","music","nature","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[16],"weight":0.389,"tags":["authored","music","nature","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[16],"weight":0.389,"tags":["authored","music","nature","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[16],"weight":0.389,"tags":["authored","music","nature","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[16,54],"weight":0.741,"tags":["authored","love","motif_header","music","nature","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[15],"weight":0.389,"tags":["authored","love","nature","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[15],"weight":0.389,"tags":["authored","love","nature","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[15],"weight":0.389,"tags":["authored","love","nature","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[15],"weight":0.389,"tags":["authored","love","nature","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[15],"weight":0.389,"tags":["authored","love","nature","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[15,54],"weight":0.741,"tags":["authored","love","motif_header","music","nature","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[15],"weight":0.389,"tags":["authored","love","nature","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[15],"weight":0.389,"tags":["authored","love","nature","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[15],"weight":0.389,"tags":["authored","love","nature","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[14],"weight":0.287,"tags":["authored","music","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[14],"weight":0.287,"tags":["authored","music","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[14,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[14],"weight":0.287,"tags":["authored","music","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[14],"weight":0.287,"tags":["authored","music","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[14],"weight":0.287,"tags":["authored","music","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[14],"weight":0.287,"tags":["authored","music","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[13],"weight":0.185,"tags":["authored","panel:P2","urn_frieze","zone:Z_P2"]}],[{"zone":"Z_P2","panel":"P2","line_ids":[16,52,54],"weight":0.741,"tags":["authored","form","love","motif_header","music","nature","operative","panel:P2","place","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[16],"weight":0.389,"tags":["authored","music","nature","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[17],"weight":0.435,"tags":["authored","love","panel:P2","refrain","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[17],"weight":0.435,"tags":["authored","love","panel:P2","refrain","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[17],"weight":0.435,"tags":["authored","love","panel:P2","refrain","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[17],"weight":0.435,"tags":["authored","love","panel:P2","refrain","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[17,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","refrain","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[17],"weight":0.435,"tags":["authored","love","panel:P2","refrain","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[17],"weight":0.435,"tags":["authored","love","panel:P2","refrain","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[17],"weight":0.435,"tags":["authored","love","panel:P2","refrain","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[17],"weight":0.435,"tags":["authored","love","panel:P2","refrain","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[17],"weight":0.435,"tags":["authored","love","panel:P2","refrain","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[17,54],"weight":0.741,"tags":["authored","love","motif_header","music","operative","panel:P2","refrain","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[18],"weight":0.287,"tags":["authored","chase","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[18],"weight":0.287,"tags":["authored","chase","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[18],"weight":0.287,"tags":["authored","chase","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[18],"weight":0.287,"tags":["authored","chase","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[18],"weight":0.287,"tags":["authored","chase","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[18,54],"weight":0.741,"tags":["authored","chase","love","motif_header","music","operative","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[18],"weight":0.287,"tags":["authored","chase","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[19],"weight":0.287,"tags":["authored","love","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[19],"weight":0.287,"tags":["authored","love","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[19],"weight":0.287,"tags":["authored","love","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[19],"weight":0.287,"tags":["authored","love","panel:P2","urn_frieze","zone:Z_P2"]}],[{"zone":"Z_P2","panel":"P2","line_ids":[20,52,54],"weight":0.861,"tags":["authored","exclamation","form","love","motif_header","music","operative","panel:P2","place","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20,54],"weight":0.861,"tags":["authored","exclamation","love","motif_header","music","operative","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20,54],"weight":0.861,"tags":["authored","exclamation","love","motif_header","music","operative","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20,54],"weight":0.861,"tags":["authored","exclamation","love","motif_header","music","operative","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[20],"weight":0.861,"tags":["authored","exclamation","love","panel:P2","time","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[19],"weight":0.287,"tags":["authored","love","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[19],"weight":0.287,"tags":["authored","love","panel:P2","urn_frieze","zone:Z_P2"]},{"zone":"Z_P2","panel":"P2","line_ids":[19],"weight":0.287,"tags":["authored","love","panel:P2","urn_frieze","zone:Z_P2"]}],[{"zone":"Z_P3","panel":"P3","line_ids":[55,52],"weight":0.741,"tags":["form","motif_header","nature","operative","panel:P3","place","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[55],"weight":0.741,"tags":["motif_header","nature","operative","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[55],"weight":0.741,"tags":["motif_header","nature","operative","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[55],"weight":0.741,"tags":["motif_header","nature","operative","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[55],"weight":0.741,"tags":["motif_header","nature","operative","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[55],"weight":0.741,"tags":["motif_header","nature","operative","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[21,55],"weight":0.917,"tags":["apostrophe","authored","exclamation","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[22,55],"weight":0.741,"tags":["authored","motif_header","nature","operative","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[22,55],"weight":0.741,"tags":["authored","motif_header","nature","operative","panel:P3","time","urn_frieze","zone:Z_P3"]}],[{"zone":"Z_P3","panel":"P3","line_ids":[25,52,55],"weight":0.741,"tags":["authored","exclamation","form","love","motif_header","nature","operative","panel:P3","place","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[25],"weight":0.62,"tags":["authored","exclamation","love","panel:P3","refrain","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[24],"weight":0.824,"tags":["authored","music","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[24],"weight":0.824,"tags":["authored","music","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[24],"weight":0.824,"tags":["authored","music","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[24],"weight":0.824,"tags":["authored","music","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[24,55],"weight":0.824,"tags":["authored","motif_header","music","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[24],"weight":0.824,"tags":["authored","music","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[24],"weight":0.824,"tags":["authored","music","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[24],"weight":0.824,"tags":["authored","music","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[24],"weight":0.824,"tags":["authored","music","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[24],"weight":0.824,"tags":["authored","music","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[24,55],"weight":0.824,"tags":["authored","motif_header","music","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[24],"weight":0.824,"tags":["authored","music","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[24],"weight":0.824,"tags":["authored","music","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[24],"weight":0.824,"tags":["authored","music","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[23],"weight":0.287,"tags":["authored","music","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[23],"weight":0.287,"tags":["authored","music","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[23,55],"weight":0.741,"tags":["authored","motif_header","music","nature","operative","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[23],"weight":0.287,"tags":["authored","music","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[23],"weight":0.287,"tags":["authored","music","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[22],"weight":0.287,"tags":["authored","nature","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[22],"weight":0.287,"tags":["authored","nature","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[22],"weight":0.287,"tags":["authored","nature","panel:P3","urn_frieze","zone:Z_P3"]}],[{"zone":"Z_P3","panel":"P3","line_ids":[25,52,55],"weight":0.741,"tags":["authored","exclamation","form","love","motif_header","nature","operative","panel:P3","place","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[25],"weight":0.62,"tags":["authored","exclamation","love","panel:P3","refrain","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[25],"weight":0.62,"tags":["authored","exclamation","love","panel:P3","refrain","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[25],"weight":0.62,"tags":["authored","exclamation","love","panel:P3","refrain","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[25],"weight":0.62,"tags":["authored","exclamation","love","panel:P3","refrain","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[25],"weight":0.62,"tags":["authored","exclamation","love","panel:P3","refrain","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[25,55],"weight":0.741,"tags":["authored","exclamation","love","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[25],"weight":0.62,"tags":["authored","exclamation","love","panel:P3","refrain","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[25],"weight":0.62,"tags":["authored","exclamation","love","panel:P3","refrain","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[26],"weight":0.574,"tags":["authored","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[26],"weight":0.574,"tags":["authored","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[26],"weight":0.574,"tags":["authored","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[26,55],"weight":0.741,"tags":["authored","motif_header","nature","operative","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[26],"weight":0.574,"tags":["authored","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[26],"weight":0.574,"tags":["authored","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[26],"weight":0.574,"tags":["authored","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[26],"weight":0.574,"tags":["authored","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[26],"weight":0.574,"tags":["authored","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[26,55],"weight":0.741,"tags":["authored","motif_header","nature","operative","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[27],"weight":0.722,"tags":["authored","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[27],"weight":0.722,"tags":["authored","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[27],"weight":0.722,"tags":["authored","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[27],"weight":0.722,"tags":["authored","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[27],"weight":0.722,"tags":["authored","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]}],[{"zone":"Z_P3","panel":"P3","line_ids":[30,52,55],"weight":0.741,"tags":["authored","form","motif_header","nature","operative","panel:P3","place","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[30],"weight":0.407,"tags":["authored","form","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[30],"weight":0.407,"tags":["authored","form","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[30],"weight":0.407,"tags":["authored","form","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[30],"weight":0.407,"tags":["authored","form","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[30],"weight":0.407,"tags":["authored","form","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[30,55],"weight":0.741,"tags":["authored","form","motif_header","nature","operative","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[29],"weight":0.287,"tags":["authored","nature","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[29],"weight":0.287,"tags":["authored","nature","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[29],"weight":0.287,"tags":["authored","nature","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[29],"weight":0.287,"tags":["authored","nature","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[29],"weight":0.287,"tags":["authored","nature","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[28,55],"weight":0.741,"tags":["authored","human","motif_header","nature","operative","panel:P3","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[28],"weight":0.287,"tags":["authored","human","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[28],"weight":0.287,"tags":["authored","human","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[28],"weight":0.287,"tags":["authored","human","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[28],"weight":0.287,"tags":["authored","human","panel:P3","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[27],"weight":0.722,"tags":["authored","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[27,55],"weight":0.741,"tags":["authored","motif_header","nature","operative","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[27],"weight":0.722,"tags":["authored","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[27],"weight":0.722,"tags":["authored","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[27],"weight":0.722,"tags":["authored","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[27],"weight":0.722,"tags":["authored","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]},{"zone":"Z_P3","panel":"P3","line_ids":[27],"weight":0.722,"tags":["authored","panel:P3","refrain","time","urn_frieze","zone:Z_P3"]}],[{"zone":"Z_P4","panel":"P4","line_ids":[56,52],"weight":0.741,"tags":["form","motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[31,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[31,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[31,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[56],"weight":0.741,"tags":["motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[31,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[31,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[31,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[56],"weight":0.741,"tags":["motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[31,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[31,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[31,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[56],"weight":0.741,"tags":["motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[31,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[31,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[32,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[56],"weight":0.741,"tags":["motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[32,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[32,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[32,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[56],"weight":0.741,"tags":["motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[32,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[32,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[33,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]}],[{"zone":"Z_P4","panel":"P4","line_ids":[36,52,56],"weight":0.741,"tags":["authored","form","motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[36],"weight":0.287,"tags":["authored","panel:P4","place","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[35],"weight":0.287,"tags":["authored","panel:P4","place","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[35],"weight":0.287,"tags":["authored","panel:P4","place","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[35],"weight":0.287,"tags":["authored","panel:P4","place","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[35],"weight":0.287,"tags":["authored","panel:P4","place","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[35,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[35],"weight":0.287,"tags":["authored","panel:P4","place","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[34],"weight":0.546,"tags":["authored","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[34],"weight":0.546,"tags":["authored","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[34],"weight":0.546,"tags":["authored","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[34],"weight":0.546,"tags":["authored","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[34,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[34],"weight":0.546,"tags":["authored","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[34],"weight":0.546,"tags":["authored","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[34],"weight":0.546,"tags":["authored","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[34],"weight":0.546,"tags":["authored","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[34],"weight":0.546,"tags":["authored","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[34,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[33],"weight":0.287,"tags":["authored","panel:P4","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[33],"weight":0.287,"tags":["authored","panel:P4","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[33],"weight":0.287,"tags":["authored","panel:P4","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[33],"weight":0.287,"tags":["authored","panel:P4","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[33],"weight":0.287,"tags":["authored","panel:P4","ritual","urn_frieze","zone:Z_P4"]}],[{"zone":"Z_P4","panel":"P4","line_ids":[36,52,56],"weight":0.741,"tags":["authored","form","motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[36],"weight":0.287,"tags":["authored","panel:P4","place","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[36],"weight":0.287,"tags":["authored","panel:P4","place","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[36],"weight":0.287,"tags":["authored","panel:P4","place","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[37],"weight":0.648,"tags":["authored","human","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[37],"weight":0.648,"tags":["authored","human","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[37,56],"weight":0.741,"tags":["authored","human","motif_header","operative","panel:P4","place","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[37],"weight":0.648,"tags":["authored","human","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[37],"weight":0.648,"tags":["authored","human","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[37],"weight":0.648,"tags":["authored","human","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[37],"weight":0.648,"tags":["authored","human","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[37],"weight":0.648,"tags":["authored","human","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[37,56],"weight":0.741,"tags":["authored","human","motif_header","operative","panel:P4","place","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[37],"weight":0.648,"tags":["authored","human","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[37],"weight":0.648,"tags":["authored","human","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[37],"weight":0.648,"tags":["authored","human","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[37],"weight":0.648,"tags":["authored","human","panel:P4","question","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[38],"weight":0.778,"tags":["authored","nature","panel:P4","place","time","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[38,56],"weight":0.778,"tags":["authored","motif_header","nature","operative","panel:P4","place","ritual","time","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[38],"weight":0.778,"tags":["authored","nature","panel:P4","place","time","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[38],"weight":0.778,"tags":["authored","nature","panel:P4","place","time","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[38],"weight":0.778,"tags":["authored","nature","panel:P4","place","time","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[38],"weight":0.778,"tags":["authored","nature","panel:P4","place","time","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[38],"weight":0.778,"tags":["authored","nature","panel:P4","place","time","urn_frieze","zone:Z_P4"]}],[{"zone":"Z_P4","panel":"P4","line_ids":[40,52,56],"weight":0.741,"tags":["authored","form","motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[40],"weight":0.407,"tags":["authored","form","panel:P4","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[40],"weight":0.407,"tags":["authored","form","panel:P4","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[40],"weight":0.407,"tags":["authored","form","panel:P4","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[40],"weight":0.407,"tags":["authored","form","panel:P4","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[40],"weight":0.407,"tags":["authored","form","panel:P4","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[40,56],"weight":0.741,"tags":["authored","form","motif_header","operative","panel:P4","place","ritual","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[40],"weight":0.407,"tags":["authored","form","panel:P4","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[39],"weight":0.407,"tags":["authored","panel:P4","silence","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[39],"weight":0.407,"tags":["authored","panel:P4","silence","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[39],"weight":0.407,"tags":["authored","panel:P4","silence","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[39],"weight":0.407,"tags":["authored","panel:P4","silence","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[39,56],"weight":0.741,"tags":["authored","motif_header","operative","panel:P4","place","ritual","silence","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[39],"weight":0.407,"tags":["authored","panel:P4","silence","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[39],"weight":0.407,"tags":["authored","panel:P4","silence","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[39],"weight":0.407,"tags":["authored","panel:P4","silence","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[38],"weight":0.778,"tags":["authored","nature","panel:P4","place","time","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[38],"weight":0.778,"tags":["authored","nature","panel:P4","place","time","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[38,56],"weight":0.778,"tags":["authored","motif_header","nature","operative","panel:P4","place","ritual","time","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[38],"weight":0.778,"tags":["authored","nature","panel:P4","place","time","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[38],"weight":0.778,"tags":["authored","nature","panel:P4","place","time","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[38],"weight":0.778,"tags":["authored","nature","panel:P4","place","time","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[38],"weight":0.778,"tags":["authored","nature","panel:P4","place","time","urn_frieze","zone:Z_P4"]},{"zone":"Z_P4","panel":"P4","line_ids":[38],"weight":0.778,"tags":["authored","nature","panel:P4","place","time","urn_frieze","zone:Z_P4"]}],[{"zone":"Z_P5A","panel":"P5A","line_ids":[57,52],"weight":0.741,"tags":["form","motif_header","operative","panel:P5A","place","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[57],"weight":0.741,"tags":["form","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[57],"weight":0.741,"tags":["form","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[57],"weight":0.741,"tags":["form","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[57],"weight":0.741,"tags":["form","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[57],"weight":0.741,"tags":["form","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41,57],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]}],[{"zone":"Z_P5A","panel":"P5A","line_ids":[44,52,57],"weight":0.806,"tags":["apostrophe","authored","form","mind","motif_header","operative","panel:P5A","place","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[44],"weight":0.806,"tags":["apostrophe","authored","mind","panel:P5A","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[44],"weight":0.806,"tags":["apostrophe","authored","mind","panel:P5A","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[44],"weight":0.806,"tags":["apostrophe","authored","mind","panel:P5A","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[44],"weight":0.806,"tags":["apostrophe","authored","mind","panel:P5A","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[44],"weight":0.806,"tags":["apostrophe","authored","mind","panel:P5A","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[43,57],"weight":0.741,"tags":["authored","form","motif_header","nature","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[43],"weight":0.287,"tags":["authored","nature","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[43],"weight":0.287,"tags":["authored","nature","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[43],"weight":0.287,"tags":["authored","nature","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[43],"weight":0.287,"tags":["authored","nature","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[43],"weight":0.287,"tags":["authored","nature","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[42,57],"weight":0.741,"tags":["authored","form","human","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[42],"weight":0.509,"tags":["authored","form","human","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[42],"weight":0.509,"tags":["authored","form","human","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[42],"weight":0.509,"tags":["authored","form","human","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[42],"weight":0.509,"tags":["authored","form","human","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[42],"weight":0.509,"tags":["authored","form","human","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[42,57],"weight":0.741,"tags":["authored","form","human","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[42],"weight":0.509,"tags":["authored","form","human","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[42],"weight":0.509,"tags":["authored","form","human","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[42],"weight":0.509,"tags":["authored","form","human","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[41],"weight":0.991,"tags":["apostrophe","authored","exclamation","form","love","panel:P5A","urn_frieze","zone:Z_P5A"]}],[{"zone":"Z_P5A","panel":"P5A","line_ids":[44,52,57],"weight":0.806,"tags":["apostrophe","authored","form","mind","motif_header","operative","panel:P5A","place","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[44],"weight":0.806,"tags":["apostrophe","authored","mind","panel:P5A","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[44],"weight":0.806,"tags":["apostrophe","authored","mind","panel:P5A","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[44],"weight":0.806,"tags":["apostrophe","authored","mind","panel:P5A","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[44],"weight":0.806,"tags":["apostrophe","authored","mind","panel:P5A","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[44],"weight":0.806,"tags":["apostrophe","authored","mind","panel:P5A","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[44,57],"weight":0.806,"tags":["apostrophe","authored","form","mind","motif_header","operative","panel:P5A","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[44],"weight":0.806,"tags":["apostrophe","authored","mind","panel:P5A","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[44],"weight":0.806,"tags":["apostrophe","authored","mind","panel:P5A","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[44],"weight":0.806,"tags":["apostrophe","authored","mind","panel:P5A","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[44],"weight":0.806,"tags":["apostrophe","authored","mind","panel:P5A","silence","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45],"weight":0.815,"tags":["authored","exclamation","form","panel:P5A","time","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45,57],"weight":0.815,"tags":["authored","exclamation","form","motif_header","operative","panel:P5A","time","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45],"weight":0.815,"tags":["authored","exclamation","form","panel:P5A","time","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45],"weight":0.815,"tags":["authored","exclamation","form","panel:P5A","time","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45],"weight":0.815,"tags":["authored","exclamation","form","panel:P5A","time","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45],"weight":0.815,"tags":["authored","exclamation","form","panel:P5A","time","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45],"weight":0.815,"tags":["authored","exclamation","form","panel:P5A","time","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45,57],"weight":0.815,"tags":["authored","exclamation","form","motif_header","operative","panel:P5A","time","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45],"weight":0.815,"tags":["authored","exclamation","form","panel:P5A","time","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45],"weight":0.815,"tags":["authored","exclamation","form","panel:P5A","time","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45],"weight":0.815,"tags":["authored","exclamation","form","panel:P5A","time","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45],"weight":0.815,"tags":["authored","exclamation","form","panel:P5A","time","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45],"weight":0.815,"tags":["authored","exclamation","form","panel:P5A","time","urn_frieze","zone:Z_P5A"]}],[{"zone":"Z_P5A","panel":"P5A","line_ids":[48,52,57],"weight":0.741,"tags":["authored","form","human","motif_header","operative","panel:P5A","place","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[48],"weight":0.287,"tags":["authored","human","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[48],"weight":0.287,"tags":["authored","human","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[48],"weight":0.287,"tags":["authored","human","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[48],"weight":0.287,"tags":["authored","human","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[48],"weight":0.287,"tags":["authored","human","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[47,57],"weight":0.741,"tags":["apostrophe","authored","form","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[47],"weight":0.481,"tags":["apostrophe","authored","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[47],"weight":0.481,"tags":["apostrophe","authored","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[47],"weight":0.481,"tags":["apostrophe","authored","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[47],"weight":0.481,"tags":["apostrophe","authored","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[47],"weight":0.481,"tags":["apostrophe","authored","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[47,57],"weight":0.741,"tags":["apostrophe","authored","form","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[47],"weight":0.481,"tags":["apostrophe","authored","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[47],"weight":0.481,"tags":["apostrophe","authored","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[47],"weight":0.481,"tags":["apostrophe","authored","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[46],"weight":0.185,"tags":["authored","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[46],"weight":0.185,"tags":["authored","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[46,57],"weight":0.741,"tags":["authored","form","motif_header","operative","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[46],"weight":0.185,"tags":["authored","panel:P5A","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45],"weight":0.815,"tags":["authored","exclamation","form","panel:P5A","time","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45],"weight":0.815,"tags":["authored","exclamation","form","panel:P5A","time","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45],"weight":0.815,"tags":["authored","exclamation","form","panel:P5A","time","urn_frieze","zone:Z_P5A"]},{"zone":"Z_P5A","panel":"P5A","line_ids":[45],"weight":0.815,"tags":["authored","exclamation","form","panel:P5A","time","urn_frieze","zone:Z_P5A"]}],[{"zone":"Z_P5B","panel":"P5B","line_ids":[58,52],"weight":0.741,"tags":["axiom","form","motif_header","operative","panel:P5B","place","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[58],"weight":0.741,"tags":["axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[58],"weight":0.741,"tags":["axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[58],"weight":0.741,"tags":["axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[58],"weight":0.741,"tags":["axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[58],"weight":0.741,"tags":["axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[58],"weight":0.741,"tags":["axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[58],"weight":0.741,"tags":["axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]}],[{"zone":"Z_P5B","panel":"P5B","line_ids":[50,52,58],"weight":0.741,"tags":["apostrophe","authored","axiom","form","motif_header","operative","panel:P5B","place","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[50],"weight":0.481,"tags":["apostrophe","authored","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[50],"weight":0.481,"tags":["apostrophe","authored","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[50],"weight":0.481,"tags":["apostrophe","authored","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[50,58],"weight":0.741,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[50],"weight":0.481,"tags":["apostrophe","authored","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[50,58],"weight":0.741,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[50],"weight":0.481,"tags":["apostrophe","authored","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[50,58],"weight":0.741,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[50],"weight":0.481,"tags":["apostrophe","authored","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[50],"weight":0.481,"tags":["apostrophe","authored","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[50],"weight":0.481,"tags":["apostrophe","authored","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[50,58],"weight":0.741,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49],"weight":1.0,"tags":["apostrophe","authored","axiom","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49],"weight":1.0,"tags":["apostrophe","authored","axiom","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49],"weight":1.0,"tags":["apostrophe","authored","axiom","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49],"weight":1.0,"tags":["apostrophe","authored","axiom","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49],"weight":1.0,"tags":["apostrophe","authored","axiom","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49,58],"weight":1.0,"tags":["apostrophe","authored","axiom","motif_header","operative","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49],"weight":1.0,"tags":["apostrophe","authored","axiom","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49],"weight":1.0,"tags":["apostrophe","authored","axiom","panel:P5B","urn_frieze","zone:Z_P5B"]},{"zone":"Z_P5B","panel":"P5B","line_ids":[49],"weight":1.0,"tags":["apostrophe","authored","axiom","panel:P5B","urn_frieze","zone:Z_P5B"]}]],"line_index":[{"id":1,"text":"Thou still unravish'd bride of quietness,","tags":["apostrophe","authored","silence"],"scene":"INVOCATION+LEGEND","canonical_zone":"Z_P1"},{"id":2,"text":"Thou foster-child of silence and slow time,","tags":["apostrophe","authored","silence","time"],"scene":"INVOCATION+LEGEND","canonical_zone":"Z_P1"},{"id":3,"text":"Sylvan historian, who canst thus express","tags":["authored"],"scene":"INVOCATION+LEGEND","canonical_zone":"Z_P1"},{"id":4,"text":"A flowery tale more sweetly than our rhyme:","tags":["authored"],"scene":"INVOCATION+LEGEND","canonical_zone":"Z_P1"},{"id":5,"text":"What leaf-fring'd legend haunts about thy shape","tags":["authored","form"],"scene":"INVOCATION+LEGEND","canonical_zone":"Z_P1"},{"id":6,"text":"Of deities or mortals, or of both,","tags":["authored","divine","human"],"scene":"INVOCATION+LEGEND","canonical_zone":"Z_P1"},{"id":7,"text":"In Tempe or the dales of Arcady?","tags":["authored","place","question"],"scene":"INVOCATION+LEGEND","canonical_zone":"Z_P1"},{"id":8,"text":"What men or gods are these? What maidens loth?","tags":["authored","divine","human","question"],"scene":"INVOCATION+LEGEND","canonical_zone":"Z_P1"},{"id":9,"text":"What mad pursuit? What struggle to escape?","tags":["authored","chase","question"],"scene":"INVOCATION+LEGEND","canonical_zone":"Z_P1"},{"id":10,"text":"What pipes and timbrels? What wild ecstasy?","tags":["authored","music","question"],"scene":"INVOCATION+LEGEND","canonical_zone":"Z_P1"},{"id":11,"text":"Heard melodies are sweet, but those unheard","tags":["authored","music"],"scene":"UNHEARD_MUSIC+LOVER","canonical_zone":"Z_P2"},{"id":12,"text":"Are sweeter; therefore, ye soft pipes, play on;","tags":["authored","music"],"scene":"UNHEARD_MUSIC+LOVER","canonical_zone":"Z_P2"},{"id":13,"text":"Not to the sensual ear, but, more endear'd,","tags":["authored"],"scene":"UNHEARD_MUSIC+LOVER","canonical_zone":"Z_P2"},{"id":14,"text":"Pipe to the spirit ditties of no tone:","tags":["authored","music"],"scene":"UNHEARD_MUSIC+LOVER","canonical_zone":"Z_P2"},{"id":15,"text":"Fair youth, beneath the trees, thou canst not leave","tags":["authored","love","nature"],"scene":"UNHEARD_MUSIC+LOVER","canonical_zone":"Z_P2"},{"id":16,"text":"Thy song, nor ever can those trees be bare;","tags":["authored","music","nature"],"scene":"UNHEARD_MUSIC+LOVER","canonical_zone":"Z_P2"},{"id":17,"text":"Bold Lover, never, never canst thou kiss,","tags":["authored","love","refrain"],"scene":"UNHEARD_MUSIC+LOVER","canonical_zone":"Z_P2"},{"id":18,"text":"Though winning near the goal yet, do not grieve;","tags":["authored","chase"],"scene":"UNHEARD_MUSIC+LOVER","canonical_zone":"Z_P2"},{"id":19,"text":"She cannot fade, though thou hast not thy bliss,","tags":["authored","love"],"scene":"UNHEARD_MUSIC+LOVER","canonical_zone":"Z_P2"},{"id":20,"text":"For ever wilt thou love, and she be fair!","tags":["authored","exclamation","love","time"],"scene":"UNHEARD_MUSIC+LOVER","canonical_zone":"Z_P2"},{"id":21,"text":"Ah, happy, happy boughs! that cannot shed","tags":["apostrophe","authored","exclamation","nature","refrain"],"scene":"HAPPY_REFRAIN","canonical_zone":"Z_P3"},{"id":22,"text":"Your leaves, nor ever bid the Spring adieu;","tags":["authored","nature"],"scene":"HAPPY_REFRAIN","canonical_zone":"Z_P3"},{"id":23,"text":"And, happy melodist, unwearied,","tags":["authored","music"],"scene":"HAPPY_REFRAIN","canonical_zone":"Z_P3"},{"id":24,"text":"For ever piping songs for ever new;","tags":["authored","music","refrain","time"],"scene":"HAPPY_REFRAIN","canonical_zone":"Z_P3"},{"id":25,"text":"More happy love! more happy, happy love!","tags":["authored","exclamation","love","refrain"],"scene":"HAPPY_REFRAIN","canonical_zone":"Z_P3"},{"id":26,"text":"For ever warm and still to be enjoy'd,","tags":["authored","time"],"scene":"HAPPY_REFRAIN","canonical_zone":"Z_P3"},{"id":27,"text":"For ever panting, and for ever young;","tags":["authored","refrain","time"],"scene":"HAPPY_REFRAIN","canonical_zone":"Z_P3"},{"id":28,"text":"All breathing human passion far above,","tags":["authored","human"],"scene":"HAPPY_REFRAIN","canonical_zone":"Z_P3"},{"id":29,"text":"That leaves a heart high-sorrowful and cloy'd,","tags":["authored","nature"],"scene":"HAPPY_REFRAIN","canonical_zone":"Z_P3"},{"id":30,"text":"A burning forehead, and a parching tongue.","tags":["authored","form"],"scene":"HAPPY_REFRAIN","canonical_zone":"Z_P3"},{"id":31,"text":"Who are these coming to the sacrifice?","tags":["authored","question","ritual"],"scene":"SACRIFICE+TOWN","canonical_zone":"Z_P4"},{"id":32,"text":"To what green altar, O mysterious priest,","tags":["authored","ritual"],"scene":"SACRIFICE+TOWN","canonical_zone":"Z_P4"},{"id":33,"text":"Lead'st thou that heifer lowing at the skies,","tags":["authored","ritual"],"scene":"SACRIFICE+TOWN","canonical_zone":"Z_P4"},{"id":34,"text":"And all her silken flanks with garlands drest?","tags":["authored","question","ritual"],"scene":"SACRIFICE+TOWN","canonical_zone":"Z_P4"},{"id":35,"text":"What little town by river or sea shore,","tags":["authored","place"],"scene":"SACRIFICE+TOWN","canonical_zone":"Z_P4"},{"id":36,"text":"Or mountain-built with peaceful citadel,","tags":["authored","place"],"scene":"SACRIFICE+TOWN","canonical_zone":"Z_P4"},{"id":37,"text":"Is emptied of this folk, this pious morn?","tags":["authored","human","question","ritual"],"scene":"SACRIFICE+TOWN","canonical_zone":"Z_P4"},{"id":38,"text":"And, little town, thy streets for evermore","tags":["authored","nature","place","time"],"scene":"SACRIFICE+TOWN","canonical_zone":"Z_P4"},{"id":39,"text":"Will silent be; and not a soul to tell","tags":["authored","silence"],"scene":"SACRIFICE+TOWN","canonical_zone":"Z_P4"},{"id":40,"text":"Why thou art desolate, can e'er return.","tags":["authored","form"],"scene":"SACRIFICE+TOWN","canonical_zone":"Z_P4"},{"id":41,"text":"O Attic shape! Fair attitude! with brede","tags":["apostrophe","authored","exclamation","form","love"],"scene":"ATTIC_FORM+THOUGHT","canonical_zone":"Z_P5A"},{"id":42,"text":"Of marble men and maidens overwrought,","tags":["authored","form","human"],"scene":"ATTIC_FORM+THOUGHT","canonical_zone":"Z_P5A"},{"id":43,"text":"With forest branches and the trodden weed;","tags":["authored","nature"],"scene":"ATTIC_FORM+THOUGHT","canonical_zone":"Z_P5A"},{"id":44,"text":"Thou, silent form, dost tease us out of thought","tags":["apostrophe","authored","mind","silence"],"scene":"ATTIC_FORM+THOUGHT","canonical_zone":"Z_P5A"},{"id":45,"text":"As doth eternity: Cold Pastoral!","tags":["authored","exclamation","form","time"],"scene":"ATTIC_FORM+THOUGHT","canonical_zone":"Z_P5A"},{"id":46,"text":"When old age shall this generation waste,","tags":["authored"],"scene":"ATTIC_FORM+THOUGHT","canonical_zone":"Z_P5A"},{"id":47,"text":"Thou shalt remain, in midst of other woe","tags":["apostrophe","authored"],"scene":"ATTIC_FORM+THOUGHT","canonical_zone":"Z_P5A"},{"id":48,"text":"Than ours, a friend to man, to whom thou say'st,","tags":["authored","human"],"scene":"ATTIC_FORM+THOUGHT","canonical_zone":"Z_P5A"},{"id":49,"text":"\"Beauty is truth, truth beauty,—that is all","tags":["apostrophe","authored","axiom"],"scene":"EPIGRAM","canonical_zone":"Z_P5B"},{"id":50,"text":"Ye know on earth, and all ye need to know.\"","tags":["apostrophe","authored"],"scene":"EPIGRAM","canonical_zone":"Z_P5B"},{"id":51,"text":"ODE ON A GRECIAN URN — RIM: STILLNESS / SILENCE / SLOW TIME","tags":["form","motif_header","operative","silence","time"],"scene":"HEADER","canonical_zone":"Z_RIM"},{"id":52,"text":"URN SEAM: TURN / READ / RETURN","tags":["form","motif_header","operative","place"],"scene":"HEADER","canonical_zone":"Z_RIM"},{"id":53,"text":"P1 FRIEZE: LEAF-FRING'D LEGEND / CHASE / PIPES","tags":["motif_header","music","operative"],"scene":"HEADER","canonical_zone":"Z_P1"},{"id":54,"text":"P2 FRIEZE: UNHEARD MELODIES / BOLD LOVER","tags":["love","motif_header","music","operative"],"scene":"HEADER","canonical_zone":"Z_P2"},{"id":55,"text":"P3 FRIEZE: HAPPY BOUGHS / FOR EVER","tags":["motif_header","nature","operative","time"],"scene":"HEADER","canonical_zone":"Z_P3"},{"id":56,"text":"P4 FRIEZE: SACRIFICE PROCESSION / EMPTY TOWN","tags":["motif_header","operative","place","ritual"],"scene":"HEADER","canonical_zone":"Z_P4"},{"id":57,"text":"P5A FRIEZE: ATTIC SHAPE / COLD PASTORAL","tags":["form","motif_header","operative"],"scene":"HEADER","canonical_zone":"Z_P5A"},{"id":58,"text":"P5B BASE: BEAUTY ⇄ TRUTH","tags":["axiom","motif_header","operative"],"scene":"HEADER","canonical_zone":"Z_P5B"}],"panels":[{"id":"P0_RIM","title":"Rim Inscription / Handle Seam","zone":"Z_RIM","line_ids":[51,52],"motif_headers":[{"line_id":51,"text":"ODE ON A GRECIAN URN — RIM: STILLNESS / SILENCE / SLOW TIME"},{"line_id":52,"text":"URN SEAM: TURN / READ / RETURN"}]},{"id":"P1","title":"Unravish'd Bride / Leaf-fring'd Legend (Chase + Pipes)","zone":"Z_P1","line_ids":[53,1,2,3,4,5,6,7,8,9,10],"motif_headers":[{"line_id":53,"text":"P1 FRIEZE: LEAF-FRING'D LEGEND / CHASE / PIPES"}]},{"id":"P2","title":"Unheard Melodies / Bold Lover (Near-Kiss Suspension)","zone":"Z_P2","line_ids":[54,11,12,13,14,15,16,17,18,19,20],"motif_headers":[{"line_id":54,"text":"P2 FRIEZE: UNHEARD MELODIES / BOLD LOVER"}]},{"id":"P3","title":"Happy Boughs / For Ever (Refrain Engine)","zone":"Z_P3","line_ids":[55,21,22,23,24,25,26,27,28,29,30],"motif_headers":[{"line_id":55,"text":"P3 FRIEZE: HAPPY BOUGHS / FOR EVER"}]},{"id":"P4","title":"Sacrifice Procession / Empty Town (Absent Return)","zone":"Z_P4","line_ids":[56,31,32,33,34,35,36,37,38,39,40],"motif_headers":[{"line_id":56,"text":"P4 FRIEZE: SACRIFICE PROCESSION / EMPTY TOWN"}]},{"id":"P5A","title":"Attic Shape / Silent Form (Tease Out of Thought)","zone":"Z_P5A","line_ids":[57,41,42,43,44,45,46,47,48],"motif_headers":[{"line_id":57,"text":"P5A FRIEZE: ATTIC SHAPE / COLD PASTORAL"}]},{"id":"P5B","title":"Beauty ⇄ Truth (Terminal Inscription)","zone":"Z_P5B","line_ids":[58,49,50],"motif_headers":[{"line_id":58,"text":"P5B BASE: BEAUTY ⇄ TRUTH"}]}],"allocation_report":[{"line_id":1,"authored":true,"canonical_zone":"Z_P1","weight_raw":3.8,"cells_primary":12,"cells_total":12,"why":["silence motif boosts structural persistence","direct address acts as navigation attractor"],"cells":[{"x":1,"y":2},{"x":2,"y":2},{"x":3,"y":2},{"x":5,"y":2},{"x":6,"y":2},{"x":7,"y":2},{"x":9,"y":2},{"x":10,"y":2},{"x":11,"y":2},{"x":13,"y":2},{"x":14,"y":2},{"x":15,"y":2}]},{"line_id":2,"authored":true,"canonical_zone":"Z_P1","weight_raw":5.0,"cells_primary":16,"cells_total":16,"why":["time/eternity motif boosts repetition","silence motif boosts structural persistence","direct address acts as navigation attractor"],"cells":[{"x":17,"y":2},{"x":18,"y":2},{"x":19,"y":2},{"x":21,"y":2},{"x":22,"y":2},{"x":23,"y":2},{"x":14,"y":3},{"x":15,"y":3},{"x":16,"y":3},{"x":17,"y":3},{"x":18,"y":3},{"x":19,"y":3},{"x":20,"y":3},{"x":21,"y":3},{"x":22,"y":3},{"x":23,"y":3}]},{"line_id":3,"authored":true,"canonical_zone":"Z_P1","weight_raw":1.0,"cells_primary":3,"cells_total":3,"why":["baseline lineation-preserving allocation"],"cells":[{"x":11,"y":3},{"x":12,"y":3},{"x":13,"y":3}]},{"line_id":4,"authored":true,"canonical_zone":"Z_P1","weight_raw":1.0,"cells_primary":3,"cells_total":3,"why":["baseline lineation-preserving allocation"],"cells":[{"x":8,"y":3},{"x":9,"y":3},{"x":10,"y":3}]},{"line_id":5,"authored":true,"canonical_zone":"Z_P1","weight_raw":2.2,"cells_primary":7,"cells_total":7,"why":["baseline lineation-preserving allocation"],"cells":[{"x":1,"y":3},{"x":2,"y":3},{"x":3,"y":3},{"x":4,"y":3},{"x":5,"y":3},{"x":6,"y":3},{"x":7,"y":3}]},{"line_id":6,"authored":true,"canonical_zone":"Z_P1","weight_raw":2.1,"cells_primary":7,"cells_total":7,"why":["baseline lineation-preserving allocation"],"cells":[{"x":0,"y":3},{"x":0,"y":4},{"x":1,"y":4},{"x":2,"y":4},{"x":3,"y":4},{"x":4,"y":4},{"x":5,"y":4}]},{"line_id":7,"authored":true,"canonical_zone":"Z_P1","weight_raw":2.95,"cells_primary":10,"cells_total":10,"why":["interrogative drives calligram scanning behavior"],"cells":[{"x":6,"y":4},{"x":7,"y":4},{"x":8,"y":4},{"x":9,"y":4},{"x":10,"y":4},{"x":11,"y":4},{"x":12,"y":4},{"x":13,"y":4},{"x":14,"y":4},{"x":15,"y":4}]},{"line_id":8,"authored":true,"canonical_zone":"Z_P1","weight_raw":3.5,"cells_primary":12,"cells_total":12,"why":["interrogative drives calligram scanning behavior"],"cells":[{"x":16,"y":4},{"x":17,"y":4},{"x":18,"y":4},{"x":19,"y":4},{"x":20,"y":4},{"x":21,"y":4},{"x":22,"y":4},{"x":23,"y":4},{"x":20,"y":5},{"x":21,"y":5},{"x":22,"y":5},{"x":23,"y":5}]},{"line_id":9,"authored":true,"canonical_zone":"Z_P1","weight_raw":2.95,"cells_primary":10,"cells_total":10,"why":["interrogative drives calligram scanning behavior"],"cells":[{"x":10,"y":5},{"x":11,"y":5},{"x":12,"y":5},{"x":13,"y":5},{"x":14,"y":5},{"x":15,"y":5},{"x":16,"y":5},{"x":17,"y":5},{"x":18,"y":5},{"x":19,"y":5}]},{"line_id":10,"authored":true,"canonical_zone":"Z_P1","weight_raw":2.95,"cells_primary":10,"cells_total":10,"why":["music motif supports frieze 'signal' continuity","interrogative drives calligram scanning behavior"],"cells":[{"x":0,"y":5},{"x":1,"y":5},{"x":2,"y":5},{"x":3,"y":5},{"x":4,"y":5},{"x":5,"y":5},{"x":6,"y":5},{"x":7,"y":5},{"x":8,"y":5},{"x":9,"y":5}]},{"line_id":11,"authored":true,"canonical_zone":"Z_P2","weight_raw":1.55,"cells_primary":7,"cells_total":7,"why":["music motif supports frieze 'signal' continuity"],"cells":[{"x":1,"y":6},{"x":2,"y":6},{"x":3,"y":6},{"x":5,"y":6},{"x":6,"y":6},{"x":7,"y":6},{"x":9,"y":6}]},{"line_id":12,"authored":true,"canonical_zone":"Z_P2","weight_raw":1.55,"cells_primary":7,"cells_total":7,"why":["music motif supports frieze 'signal' continuity"],"cells":[{"x":10,"y":6},{"x":11,"y":6},{"x":13,"y":6},{"x":14,"y":6},{"x":15,"y":6},{"x":17,"y":6},{"x":18,"y":6}]},{"line_id":13,"authored":true,"canonical_zone":"Z_P2","weight_raw":1.0,"cells_primary":5,"cells_total":5,"why":["baseline lineation-preserving allocation"],"cells":[{"x":19,"y":6},{"x":21,"y":6},{"x":22,"y":6},{"x":23,"y":6},{"x":23,"y":7}]},{"line_id":14,"authored":true,"canonical_zone":"Z_P2","weight_raw":1.55,"cells_primary":7,"cells_total":7,"why":["music motif supports frieze 'signal' continuity"],"cells":[{"x":16,"y":7},{"x":17,"y":7},{"x":18,"y":7},{"x":19,"y":7},{"x":20,"y":7},{"x":21,"y":7},{"x":22,"y":7}]},{"line_id":15,"authored":true,"canonical_zone":"Z_P2","weight_raw":2.1,"cells_primary":9,"cells_total":9,"why":["love motif supports suspended action banding"],"cells":[{"x":7,"y":7},{"x":8,"y":7},{"x":9,"y":7},{"x":10,"y":7},{"x":11,"y":7},{"x":12,"y":7},{"x":13,"y":7},{"x":14,"y":7},{"x":15,"y":7}]},{"line_id":16,"authored":true,"canonical_zone":"Z_P2","weight_raw":2.1,"cells_primary":9,"cells_total":9,"why":["music motif supports frieze 'signal' continuity"],"cells":[{"x":0,"y":7},{"x":1,"y":7},{"x":2,"y":7},{"x":3,"y":7},{"x":4,"y":7},{"x":5,"y":7},{"x":6,"y":7},{"x":0,"y":8},{"x":1,"y":8}]},{"line_id":17,"authored":true,"canonical_zone":"Z_P2","weight_raw":2.35,"cells_primary":11,"cells_total":11,"why":["love motif supports suspended action banding"],"cells":[{"x":2,"y":8},{"x":3,"y":8},{"x":4,"y":8},{"x":5,"y":8},{"x":6,"y":8},{"x":7,"y":8},{"x":8,"y":8},{"x":9,"y":8},{"x":10,"y":8},{"x":11,"y":8},{"x":12,"y":8}]},{"line_id":18,"authored":true,"canonical_zone":"Z_P2","weight_raw":1.55,"cells_primary":7,"cells_total":7,"why":["baseline lineation-preserving allocation"],"cells":[{"x":13,"y":8},{"x":14,"y":8},{"x":15,"y":8},{"x":16,"y":8},{"x":17,"y":8},{"x":18,"y":8},{"x":19,"y":8}]},{"line_id":19,"authored":true,"canonical_zone":"Z_P2","weight_raw":1.55,"cells_primary":7,"cells_total":7,"why":["love motif supports suspended action banding"],"cells":[{"x":20,"y":8},{"x":21,"y":8},{"x":22,"y":8},{"x":23,"y":8},{"x":21,"y":9},{"x":22,"y":9},{"x":23,"y":9}]},{"line_id":20,"authored":true,"canonical_zone":"Z_P2","weight_raw":4.65,"cells_primary":21,"cells_total":21,"why":["time/eternity motif boosts repetition","love motif supports suspended action banding"],"cells":[{"x":0,"y":9},{"x":1,"y":9},{"x":2,"y":9},{"x":3,"y":9},{"x":4,"y":9},{"x":5,"y":9},{"x":6,"y":9},{"x":7,"y":9},{"x":8,"y":9},{"x":9,"y":9},{"x":10,"y":9},{"x":11,"y":9},{"x":12,"y":9},{"x":13,"y":9},{"x":14,"y":9},{"x":15,"y":9},{"x":16,"y":9},{"x":17,"y":9},{"x":18,"y":9},{"x":19,"y":9},{"x":20,"y":9}]},{"line_id":21,"authored":true,"canonical_zone":"Z_P3","weight_raw":4.95,"cells_primary":16,"cells_total":16,"why":["direct address acts as navigation attractor"],"cells":[{"x":1,"y":10},{"x":2,"y":10},{"x":3,"y":10},{"x":5,"y":10},{"x":6,"y":10},{"x":7,"y":10},{"x":9,"y":10},{"x":10,"y":10},{"x":11,"y":10},{"x":13,"y":10},{"x":14,"y":10},{"x":15,"y":10},{"x":17,"y":10},{"x":18,"y":10},{"x":19,"y":10},{"x":21,"y":10}]},{"line_id":22,"authored":true,"canonical_zone":"Z_P3","weight_raw":1.55,"cells_primary":5,"cells_total":5,"why":["baseline lineation-preserving allocation"],"cells":[{"x":22,"y":10},{"x":23,"y":10},{"x":21,"y":11},{"x":22,"y":11},{"x":23,"y":11}]},{"line_id":23,"authored":true,"canonical_zone":"Z_P3","weight_raw":1.55,"cells_primary":5,"cells_total":5,"why":["music motif supports frieze 'signal' continuity"],"cells":[{"x":16,"y":11},{"x":17,"y":11},{"x":18,"y":11},{"x":19,"y":11},{"x":20,"y":11}]},{"line_id":24,"authored":true,"canonical_zone":"Z_P3","weight_raw":4.45,"cells_primary":14,"cells_total":14,"why":["time/eternity motif boosts repetition","music motif supports frieze 'signal' continuity"],"cells":[{"x":2,"y":11},{"x":3,"y":11},{"x":4,"y":11},{"x":5,"y":11},{"x":6,"y":11},{"x":7,"y":11},{"x":8,"y":11},{"x":9,"y":11},{"x":10,"y":11},{"x":11,"y":11},{"x":12,"y":11},{"x":13,"y":11},{"x":14,"y":11},{"x":15,"y":11}]},{"line_id":25,"authored":true,"canonical_zone":"Z_P3","weight_raw":3.35,"cells_primary":11,"cells_total":11,"why":["love motif supports suspended action banding"],"cells":[{"x":0,"y":11},{"x":1,"y":11},{"x":0,"y":12},{"x":1,"y":12},{"x":2,"y":12},{"x":3,"y":12},{"x":4,"y":12},{"x":5,"y":12},{"x":6,"y":12},{"x":7,"y":12},{"x":8,"y":12}]},{"line_id":26,"authored":true,"canonical_zone":"Z_P3","weight_raw":3.1,"cells_primary":10,"cells_total":10,"why":["time/eternity motif boosts repetition"],"cells":[{"x":9,"y":12},{"x":10,"y":12},{"x":11,"y":12},{"x":12,"y":12},{"x":13,"y":12},{"x":14,"y":12},{"x":15,"y":12},{"x":16,"y":12},{"x":17,"y":12},{"x":18,"y":12}]},{"line_id":27,"authored":true,"canonical_zone":"Z_P3","weight_raw":3.9,"cells_primary":12,"cells_total":12,"why":["time/eternity motif boosts repetition"],"cells":[{"x":19,"y":12},{"x":20,"y":12},{"x":21,"y":12},{"x":22,"y":12},{"x":23,"y":12},{"x":17,"y":13},{"x":18,"y":13},{"x":19,"y":13},{"x":20,"y":13},{"x":21,"y":13},{"x":22,"y":13},{"x":23,"y":13}]},{"line_id":28,"authored":true,"canonical_zone":"Z_P3","weight_raw":1.55,"cells_primary":5,"cells_total":5,"why":["baseline lineation-preserving allocation"],"cells":[{"x":12,"y":13},{"x":13,"y":13},{"x":14,"y":13},{"x":15,"y":13},{"x":16,"y":13}]},{"line_id":29,"authored":true,"canonical_zone":"Z_P3","weight_raw":1.55,"cells_primary":5,"cells_total":5,"why":["baseline lineation-preserving allocation"],"cells":[{"x":7,"y":13},{"x":8,"y":13},{"x":9,"y":13},{"x":10,"y":13},{"x":11,"y":13}]},{"line_id":30,"authored":true,"canonical_zone":"Z_P3","weight_raw":2.2,"cells_primary":7,"cells_total":7,"why":["baseline lineation-preserving allocation"],"cells":[{"x":0,"y":13},{"x":1,"y":13},{"x":2,"y":13},{"x":3,"y":13},{"x":4,"y":13},{"x":5,"y":13},{"x":6,"y":13}]},{"line_id":31,"authored":true,"canonical_zone":"Z_P4","weight_raw":2.95,"cells_primary":11,"cells_total":11,"why":["ritual motif anchors procession sub-band","interrogative drives calligram scanning behavior"],"cells":[{"x":1,"y":14},{"x":2,"y":14},{"x":3,"y":14},{"x":5,"y":14},{"x":6,"y":14},{"x":7,"y":14},{"x":9,"y":14},{"x":10,"y":14},{"x":11,"y":14},{"x":13,"y":14},{"x":14,"y":14}]},{"line_id":32,"authored":true,"canonical_zone":"Z_P4","weight_raw":1.55,"cells_primary":6,"cells_total":6,"why":["ritual motif anchors procession sub-band"],"cells":[{"x":15,"y":14},{"x":17,"y":14},{"x":18,"y":14},{"x":19,"y":14},{"x":21,"y":14},{"x":22,"y":14}]},{"line_id":33,"authored":true,"canonical_zone":"Z_P4","weight_raw":1.55,"cells_primary":6,"cells_total":6,"why":["ritual motif anchors procession sub-band"],"cells":[{"x":23,"y":14},{"x":19,"y":15},{"x":20,"y":15},{"x":21,"y":15},{"x":22,"y":15},{"x":23,"y":15}]},{"line_id":34,"authored":true,"canonical_zone":"Z_P4","weight_raw":2.95,"cells_primary":11,"cells_total":11,"why":["ritual motif anchors procession sub-band","interrogative drives calligram scanning behavior"],"cells":[{"x":8,"y":15},{"x":9,"y":15},{"x":10,"y":15},{"x":11,"y":15},{"x":12,"y":15},{"x":13,"y":15},{"x":14,"y":15},{"x":15,"y":15},{"x":16,"y":15},{"x":17,"y":15},{"x":18,"y":15}]},{"line_id":35,"authored":true,"canonical_zone":"Z_P4","weight_raw":1.55,"cells_primary":6,"cells_total":6,"why":["baseline lineation-preserving allocation"],"cells":[{"x":2,"y":15},{"x":3,"y":15},{"x":4,"y":15},{"x":5,"y":15},{"x":6,"y":15},{"x":7,"y":15}]},{"line_id":36,"authored":true,"canonical_zone":"Z_P4","weight_raw":1.55,"cells_primary":6,"cells_total":6,"why":["baseline lineation-preserving allocation"],"cells":[{"x":0,"y":15},{"x":1,"y":15},{"x":0,"y":16},{"x":1,"y":16},{"x":2,"y":16},{"x":3,"y":16}]},{"line_id":37,"authored":true,"canonical_zone":"Z_P4","weight_raw":3.5,"cells_primary":13,"cells_total":13,"why":["ritual motif anchors procession sub-band","interrogative drives calligram scanning behavior"],"cells":[{"x":4,"y":16},{"x":5,"y":16},{"x":6,"y":16},{"x":7,"y":16},{"x":8,"y":16},{"x":9,"y":16},{"x":10,"y":16},{"x":11,"y":16},{"x":12,"y":16},{"x":13,"y":16},{"x":14,"y":16},{"x":15,"y":16},{"x":16,"y":16}]},{"line_id":38,"authored":true,"canonical_zone":"Z_P4","weight_raw":4.2,"cells_primary":15,"cells_total":15,"why":["time/eternity motif boosts repetition"],"cells":[{"x":17,"y":16},{"x":18,"y":16},{"x":19,"y":16},{"x":20,"y":16},{"x":21,"y":16},{"x":22,"y":16},{"x":23,"y":16},{"x":16,"y":17},{"x":17,"y":17},{"x":18,"y":17},{"x":19,"y":17},{"x":20,"y":17},{"x":21,"y":17},{"x":22,"y":17},{"x":23,"y":17}]},{"line_id":39,"authored":true,"canonical_zone":"Z_P4","weight_raw":2.2,"cells_primary":8,"cells_total":8,"why":["silence motif boosts structural persistence"],"cells":[{"x":8,"y":17},{"x":9,"y":17},{"x":10,"y":17},{"x":11,"y":17},{"x":12,"y":17},{"x":13,"y":17},{"x":14,"y":17},{"x":15,"y":17}]},{"line_id":40,"authored":true,"canonical_zone":"Z_P4","weight_raw":2.2,"cells_primary":8,"cells_total":8,"why":["baseline lineation-preserving allocation"],"cells":[{"x":0,"y":17},{"x":1,"y":17},{"x":2,"y":17},{"x":3,"y":17},{"x":4,"y":17},{"x":5,"y":17},{"x":6,"y":17},{"x":7,"y":17}]},{"line_id":41,"authored":true,"canonical_zone":"Z_P5A","weight_raw":5.35,"cells_primary":20,"cells_total":20,"why":["love motif supports suspended action banding","direct address acts as navigation attractor"],"cells":[{"x":1,"y":18},{"x":2,"y":18},{"x":3,"y":18},{"x":5,"y":18},{"x":6,"y":18},{"x":7,"y":18},{"x":9,"y":18},{"x":10,"y":18},{"x":11,"y":18},{"x":13,"y":18},{"x":14,"y":18},{"x":15,"y":18},{"x":17,"y":18},{"x":18,"y":18},{"x":19,"y":18},{"x":21,"y":18},{"x":22,"y":18},{"x":23,"y":18},{"x":22,"y":19},{"x":23,"y":19}]},{"line_id":42,"authored":true,"canonical_zone":"Z_P5A","weight_raw":2.75,"cells_primary":10,"cells_total":10,"why":["baseline lineation-preserving allocation"],"cells":[{"x":12,"y":19},{"x":13,"y":19},{"x":14,"y":19},{"x":15,"y":19},{"x":16,"y":19},{"x":17,"y":19},{"x":18,"y":19},{"x":19,"y":19},{"x":20,"y":19},{"x":21,"y":19}]},{"line_id":43,"authored":true,"canonical_zone":"Z_P5A","weight_raw":1.55,"cells_primary":6,"cells_total":6,"why":["baseline lineation-preserving allocation"],"cells":[{"x":6,"y":19},{"x":7,"y":19},{"x":8,"y":19},{"x":9,"y":19},{"x":10,"y":19},{"x":11,"y":19}]},{"line_id":44,"authored":true,"canonical_zone":"Z_P5A","weight_raw":4.35,"cells_primary":17,"cells_total":17,"why":["silence motif boosts structural persistence","direct address acts as navigation attractor"],"cells":[{"x":0,"y":19},{"x":1,"y":19},{"x":2,"y":19},{"x":3,"y":19},{"x":4,"y":19},{"x":5,"y":19},{"x":0,"y":20},{"x":1,"y":20},{"x":2,"y":20},{"x":3,"y":20},{"x":4,"y":20},{"x":5,"y":20},{"x":6,"y":20},{"x":7,"y":20},{"x":8,"y":20},{"x":9,"y":20},{"x":10,"y":20}]},{"line_id":45,"authored":true,"canonical_zone":"Z_P5A","weight_raw":4.4,"cells_primary":17,"cells_total":17,"why":["time/eternity motif boosts repetition"],"cells":[{"x":11,"y":20},{"x":12,"y":20},{"x":13,"y":20},{"x":14,"y":20},{"x":15,"y":20},{"x":16,"y":20},{"x":17,"y":20},{"x":18,"y":20},{"x":19,"y":20},{"x":20,"y":20},{"x":21,"y":20},{"x":22,"y":20},{"x":23,"y":20},{"x":20,"y":21},{"x":21,"y":21},{"x":22,"y":21},{"x":23,"y":21}]},{"line_id":46,"authored":true,"canonical_zone":"Z_P5A","weight_raw":1.0,"cells_primary":4,"cells_total":4,"why":["baseline lineation-preserving allocation"],"cells":[{"x":16,"y":21},{"x":17,"y":21},{"x":18,"y":21},{"x":19,"y":21}]},{"line_id":47,"authored":true,"canonical_zone":"Z_P5A","weight_raw":2.6,"cells_primary":10,"cells_total":10,"why":["direct address acts as navigation attractor"],"cells":[{"x":6,"y":21},{"x":7,"y":21},{"x":8,"y":21},{"x":9,"y":21},{"x":10,"y":21},{"x":11,"y":21},{"x":12,"y":21},{"x":13,"y":21},{"x":14,"y":21},{"x":15,"y":21}]},{"line_id":48,"authored":true,"canonical_zone":"Z_P5A","weight_raw":1.55,"cells_primary":6,"cells_total":6,"why":["baseline lineation-preserving allocation"],"cells":[{"x":0,"y":21},{"x":1,"y":21},{"x":2,"y":21},{"x":3,"y":21},{"x":4,"y":21},{"x":5,"y":21}]},{"line_id":49,"authored":true,"canonical_zone":"Z_P5B","weight_raw":5.4,"cells_primary":27,"cells_total":27,"why":["axiom motif (beauty/truth) boosts weight","direct address acts as navigation attractor"],"cells":[{"x":1,"y":22},{"x":2,"y":22},{"x":4,"y":22},{"x":5,"y":22},{"x":7,"y":22},{"x":8,"y":22},{"x":10,"y":22},{"x":11,"y":22},{"x":13,"y":22},{"x":14,"y":22},{"x":16,"y":22},{"x":17,"y":22},{"x":19,"y":22},{"x":20,"y":22},{"x":22,"y":22},{"x":23,"y":22},{"x":13,"y":23},{"x":14,"y":23},{"x":15,"y":23},{"x":16,"y":23},{"x":17,"y":23},{"x":18,"y":23},{"x":19,"y":23},{"x":20,"y":23},{"x":21,"y":23},{"x":22,"y":23},{"x":23,"y":23}]},{"line_id":50,"authored":true,"canonical_zone":"Z_P5B","weight_raw":2.6,"cells_primary":13,"cells_total":13,"why":["direct address acts as navigation attractor"],"cells":[{"x":0,"y":23},{"x":1,"y":23},{"x":2,"y":23},{"x":3,"y":23},{"x":4,"y":23},{"x":5,"y":23},{"x":6,"y":23},{"x":7,"y":23},{"x":8,"y":23},{"x":9,"y":23},{"x":10,"y":23},{"x":11,"y":23},{"x":12,"y":23}]},{"line_id":51,"authored":false,"canonical_zone":"Z_RIM","weight_raw":4.6,"cells_primary":24,"cells_total":32,"why":["time/eternity motif boosts repetition","silence motif boosts structural persistence","panel self-identification header (R4)"],"cells":[{"x":0,"y":0},{"x":1,"y":0},{"x":2,"y":0},{"x":3,"y":0},{"x":4,"y":0},{"x":5,"y":0},{"x":6,"y":0},{"x":7,"y":0},{"x":8,"y":0},{"x":9,"y":0},{"x":10,"y":0},{"x":11,"y":0},{"x":12,"y":0},{"x":13,"y":0},{"x":14,"y":0},{"x":15,"y":0},{"x":16,"y":0},{"x":17,"y":0},{"x":18,"y":0},{"x":19,"y":0},{"x":20,"y":0},{"x":21,"y":0},{"x":22,"y":0},{"x":23,"y":0},{"x":0,"y":1},{"x":3,"y":1},{"x":6,"y":1},{"x":9,"y":1},{"x":12,"y":1},{"x":15,"y":1},{"x":18,"y":1},{"x":21,"y":1}]},{"line_id":52,"authored":false,"canonical_zone":"Z_RIM","weight_raw":4.0,"cells_primary":24,"cells_total":47,"why":["panel self-identification header (R4)"],"cells":[{"x":0,"y":0},{"x":0,"y":1},{"x":1,"y":1},{"x":2,"y":1},{"x":3,"y":1},{"x":4,"y":1},{"x":5,"y":1},{"x":6,"y":1},{"x":7,"y":1},{"x":8,"y":1},{"x":9,"y":1},{"x":10,"y":1},{"x":11,"y":1},{"x":12,"y":1},{"x":13,"y":1},{"x":14,"y":1},{"x":15,"y":1},{"x":16,"y":1},{"x":17,"y":1},{"x":18,"y":1},{"x":19,"y":1},{"x":20,"y":1},{"x":21,"y":1},{"x":22,"y":1},{"x":23,"y":1},{"x":0,"y":2},{"x":0,"y":3},{"x":0,"y":4},{"x":0,"y":5},{"x":0,"y":6},{"x":0,"y":7},{"x":0,"y":8},{"x":0,"y":9},{"x":0,"y":10},{"x":0,"y":11},{"x":0,"y":12},{"x":0,"y":13},{"x":0,"y":14},{"x":0,"y":15},{"x":0,"y":16},{"x":0,"y":17},{"x":0,"y":18},{"x":0,"y":19},{"x":0,"y":20},{"x":0,"y":21},{"x":0,"y":22},{"x":0,"y":23}]},{"line_id":53,"authored":false,"canonical_zone":"Z_P1","weight_raw":4.0,"cells_primary":6,"cells_total":36,"why":["music motif supports frieze 'signal' continuity","panel self-identification header (R4)"],"cells":[{"x":0,"y":2},{"x":1,"y":2},{"x":2,"y":2},{"x":3,"y":2},{"x":4,"y":2},{"x":5,"y":2},{"x":6,"y":2},{"x":7,"y":2},{"x":8,"y":2},{"x":9,"y":2},{"x":10,"y":2},{"x":11,"y":2},{"x":12,"y":2},{"x":13,"y":2},{"x":14,"y":2},{"x":15,"y":2},{"x":16,"y":2},{"x":17,"y":2},{"x":18,"y":2},{"x":19,"y":2},{"x":20,"y":2},{"x":21,"y":2},{"x":22,"y":2},{"x":23,"y":2},{"x":0,"y":3},{"x":6,"y":3},{"x":12,"y":3},{"x":18,"y":3},{"x":0,"y":4},{"x":6,"y":4},{"x":12,"y":4},{"x":18,"y":4},{"x":0,"y":5},{"x":6,"y":5},{"x":12,"y":5},{"x":18,"y":5}]},{"line_id":54,"authored":false,"canonical_zone":"Z_P2","weight_raw":4.0,"cells_primary":6,"cells_total":36,"why":["music motif supports frieze 'signal' continuity","love motif supports suspended action banding","panel self-identification header (R4)"],"cells":[{"x":0,"y":6},{"x":1,"y":6},{"x":2,"y":6},{"x":3,"y":6},{"x":4,"y":6},{"x":5,"y":6},{"x":6,"y":6},{"x":7,"y":6},{"x":8,"y":6},{"x":9,"y":6},{"x":10,"y":6},{"x":11,"y":6},{"x":12,"y":6},{"x":13,"y":6},{"x":14,"y":6},{"x":15,"y":6},{"x":16,"y":6},{"x":17,"y":6},{"x":18,"y":6},{"x":19,"y":6},{"x":20,"y":6},{"x":21,"y":6},{"x":22,"y":6},{"x":23,"y":6},{"x":0,"y":7},{"x":6,"y":7},{"x":12,"y":7},{"x":18,"y":7},{"x":0,"y":8},{"x":6,"y":8},{"x":12,"y":8},{"x":18,"y":8},{"x":0,"y":9},{"x":6,"y":9},{"x":12,"y":9},{"x":18,"y":9}]},{"line_id":55,"authored":false,"canonical_zone":"Z_P3","weight_raw":4.0,"cells_primary":6,"cells_total":36,"why":["time/eternity motif boosts repetition","panel self-identification header (R4)"],"cells":[{"x":0,"y":10},{"x":1,"y":10},{"x":2,"y":10},{"x":3,"y":10},{"x":4,"y":10},{"x":5,"y":10},{"x":6,"y":10},{"x":7,"y":10},{"x":8,"y":10},{"x":9,"y":10},{"x":10,"y":10},{"x":11,"y":10},{"x":12,"y":10},{"x":13,"y":10},{"x":14,"y":10},{"x":15,"y":10},{"x":16,"y":10},{"x":17,"y":10},{"x":18,"y":10},{"x":19,"y":10},{"x":20,"y":10},{"x":21,"y":10},{"x":22,"y":10},{"x":23,"y":10},{"x":0,"y":11},{"x":6,"y":11},{"x":12,"y":11},{"x":18,"y":11},{"x":0,"y":12},{"x":6,"y":12},{"x":12,"y":12},{"x":18,"y":12},{"x":0,"y":13},{"x":6,"y":13},{"x":12,"y":13},{"x":18,"y":13}]},{"line_id":56,"authored":false,"canonical_zone":"Z_P4","weight_raw":4.0,"cells_primary":6,"cells_total":36,"why":["ritual motif anchors procession sub-band","panel self-identification header (R4)"],"cells":[{"x":0,"y":14},{"x":1,"y":14},{"x":2,"y":14},{"x":3,"y":14},{"x":4,"y":14},{"x":5,"y":14},{"x":6,"y":14},{"x":7,"y":14},{"x":8,"y":14},{"x":9,"y":14},{"x":10,"y":14},{"x":11,"y":14},{"x":12,"y":14},{"x":13,"y":14},{"x":14,"y":14},{"x":15,"y":14},{"x":16,"y":14},{"x":17,"y":14},{"x":18,"y":14},{"x":19,"y":14},{"x":20,"y":14},{"x":21,"y":14},{"x":22,"y":14},{"x":23,"y":14},{"x":0,"y":15},{"x":6,"y":15},{"x":12,"y":15},{"x":18,"y":15},{"x":0,"y":16},{"x":6,"y":16},{"x":12,"y":16},{"x":18,"y":16},{"x":0,"y":17},{"x":6,"y":17},{"x":12,"y":17},{"x":18,"y":17}]},{"line_id":57,"authored":false,"canonical_zone":"Z_P5A","weight_raw":4.0,"cells_primary":6,"cells_total":36,"why":["panel self-identification header (R4)"],"cells":[{"x":0,"y":18},{"x":1,"y":18},{"x":2,"y":18},{"x":3,"y":18},{"x":4,"y":18},{"x":5,"y":18},{"x":6,"y":18},{"x":7,"y":18},{"x":8,"y":18},{"x":9,"y":18},{"x":10,"y":18},{"x":11,"y":18},{"x":12,"y":18},{"x":13,"y":18},{"x":14,"y":18},{"x":15,"y":18},{"x":16,"y":18},{"x":17,"y":18},{"x":18,"y":18},{"x":19,"y":18},{"x":20,"y":18},{"x":21,"y":18},{"x":22,"y":18},{"x":23,"y":18},{"x":0,"y":19},{"x":6,"y":19},{"x":12,"y":19},{"x":18,"y":19},{"x":0,"y":20},{"x":6,"y":20},{"x":12,"y":20},{"x":18,"y":20},{"x":0,"y":21},{"x":6,"y":21},{"x":12,"y":21},{"x":18,"y":21}]},{"line_id":58,"authored":false,"canonical_zone":"Z_P5B","weight_raw":4.0,"cells_primary":8,"cells_total":32,"why":["axiom motif (beauty/truth) boosts weight","panel self-identification header (R4)"],"cells":[{"x":0,"y":22},{"x":1,"y":22},{"x":2,"y":22},{"x":3,"y":22},{"x":4,"y":22},{"x":5,"y":22},{"x":6,"y":22},{"x":7,"y":22},{"x":8,"y":22},{"x":9,"y":22},{"x":10,"y":22},{"x":11,"y":22},{"x":12,"y":22},{"x":13,"y":22},{"x":14,"y":22},{"x":15,"y":22},{"x":16,"y":22},{"x":17,"y":22},{"x":18,"y":22},{"x":19,"y":22},{"x":20,"y":22},{"x":21,"y":22},{"x":22,"y":22},{"x":23,"y":22},{"x":0,"y":23},{"x":4,"y":23},{"x":6,"y":23},{"x":8,"y":23},{"x":12,"y":23},{"x":16,"y":23},{"x":18,"y":23},{"x":20,"y":23}]}],"audit_log":{"deterministic_seed":"KEATS_URN_2026-01-29::URN_FRIEZE::APOLLINAIRE_BAJOHR_GRID_v1","grid_size":{"w":24,"h":24},"calligram_topology":"URN_FRIEZE","grid_indexing":"grid[y][x] (y=0 top, x=0 seam/spine)","named_rules":{"S0_LineationLock":"Poem lines preserved as authored IDs 1..50. Derived motif headers are operative IDs 51..58.","S1_Panelization":"Panels align to stanzas; final stanza split into P5A (reflection) and P5B (epigram).","S2_TopologyProjection":"URN_FRIEZE via vertical bands (y) and wrapped serpentine fill (x). Column x=0 is the urn seam.","S3_CellBudgeting":{"total_cells":576,"region_budgets":{"P0_RIM":48,"P1":96,"P2":96,"P3":96,"P4":96,"P5A":96,"P5B":48},"header_primary_budgets":{"P1":6,"P2":6,"P3":6,"P4":6,"P5A":6,"P5B":8,"P0_RIM":48},"poem_primary_budgets":{"P1":90,"P2":90,"P3":90,"P4":90,"P5A":90,"P5B":40},"weight_function":"heuristic weight_score(tags, apostrophe, question, motif keywords); largest-remainder rounding"},"S4_OverprintOrchestration":{"seam_overlay":"line 52 added to every cell where x==0","panel_header_overlay":"panel header added inside its band when x%6==0 or y==band_top_row","base_header_overlay":"line 58 added when x%4==0 in base band"},"S5_Audit":"Continuity enforced by repeating motif headers and seam spine; reversible mapping exported via per-line cell lists."},"zone_bands":[{"zone":"Z_RIM","panel":"P0_RIM","y_start":0,"y_end":1,"description":"RIM / INSCRIPTION"},{"zone":"Z_P1","panel":"P1","y_start":2,"y_end":5,"description":"STANZA 1 — INVOCATION / LEGEND"},{"zone":"Z_P2","panel":"P2","y_start":6,"y_end":9,"description":"STANZA 2 — UNHEARD MUSIC / LOVER"},{"zone":"Z_P3","panel":"P3","y_start":10,"y_end":13,"description":"STANZA 3 — HAPPY / FOR EVER"},{"zone":"Z_P4","panel":"P4","y_start":14,"y_end":17,"description":"STANZA 4 — SACRIFICE / TOWN"},{"zone":"Z_P5A","panel":"P5A","y_start":18,"y_end":21,"description":"STANZA 5A — ATTIC SHAPE / THOUGHT"},{"zone":"Z_P5B","panel":"P5B","y_start":22,"y_end":23,"description":"STANZA 5B — EPIGRAM"}],"constraint_checks":{"R1_topology_first":true,"R2_asymmetry_allowed":true,"R3_no_random_placement":true,"R4_panel_fragment_self_identify":true,"R5_reversible_mapping":true}}}</script>
+
+<script>
+(() => {
+  const manifest = JSON.parse(document.getElementById('manifest-data').textContent);
+
+  // ---- Indexes (reversible mapping) ----
+  const lineById = new Map(manifest.line_index.map(l => [l.id, l]));
+  const allocByLineId = new Map(manifest.allocation_report.map(a => [a.line_id, a]));
+  const panels = manifest.panels;
+
+  // cellsByLineId comes from allocation_report (total cells, includes overlays)
+  const cellsByLineId = new Map();
+  for (const a of manifest.allocation_report) {
+    cellsByLineId.set(a.line_id, new Set(a.cells.map(c => `${c.x},${c.y}`)));
+  }
+
+  // ---- UI refs ----
+  const gridEl = document.getElementById('grid');
+  const gridWrap = document.getElementById('gridWrap');
+  const viewport = document.getElementById('viewport');
+  const sheet = document.getElementById('sheet');
+  const sheetBody = document.getElementById('sheetBody');
+  const statusEl = document.getElementById('status');
+
+  const zoomEl = document.getElementById('zoom');
+  const btnReset = document.getElementById('btnReset');
+  const btnClear = document.getElementById('btnClear');
+  const btnCenter = document.getElementById('btnCenter');
+  const btnInspector = document.getElementById('btnInspector');
+
+  const btnLines = document.getElementById('btnLines');
+  const btnAudit = document.getElementById('btnAudit');
+
+  const modePanelBtn = document.getElementById('modePanel');
+  const modeTagBtn = document.getElementById('modeTag');
+  const modeNoneBtn = document.getElementById('modeNone');
+  const filterSelect = document.getElementById('filterSelect');
+
+  const sidebar = document.getElementById('sidebar');
+  const sidePanel = document.getElementById('sidePanel');
+
+  // ---- Color mapping by panel ----
+  const panelRGB = {
+    "P0_RIM": [120, 120, 120],
+    "P1": [31, 111, 235],
+    "P2": [112, 67, 215],
+    "P3": [46, 160, 67],
+    "P4": [209, 153, 34],
+    "P5A": [245, 120, 22],
+    "P5B": [248, 81, 73],
+  };
+
+  const panelLabel = (p) => (p || "—").replace("P0_RIM","RIM");
+
+  // ---- Render grid ----
+  const cellEls = Array.from({length: 24}, () => Array(24).fill(null));
+  let selected = null; // {x,y}
+  let highlightedLineId = null;
+  let highlightSet = null;
+
+  function cellKey(x,y) { return `${x},${y}`; }
+
+  function renderGrid() {
+    gridEl.innerHTML = "";
+    for (let y=0; y<24; y++) {
+      for (let x=0; x<24; x++) {
+        const cell = manifest.grid[y][x];
+        const el = document.createElement("div");
+        el.className = "cell";
+        el.setAttribute("role", "gridcell");
+        el.dataset.x = x;
+        el.dataset.y = y;
+        el.dataset.zone = cell.zone;
+        el.dataset.panel = cell.panel;
+
+        const rgb = panelRGB[cell.panel] || [31,111,235];
+        el.style.setProperty("--rgb", rgb.join(","));
+        el.style.setProperty("--tint", String(Math.max(0.06, Math.min(0.22, cell.weight * 0.28))));
+
+        const primary = cell.line_ids?.[0] ?? null;
+        el.innerHTML = `<div class="mini">${panelLabel(cell.panel)}·${primary ?? "?"}</div>`;
+
+        el.addEventListener("click", (ev) => {
+          ev.preventDefault();
+          selectCell(x,y);
+          openSheet(true);
+          setSidebarTab("cell");
+        });
+
+        cellEls[y][x] = el;
+        gridEl.appendChild(el);
+      }
+    }
+  }
+
+  // ---- Selection & highlight ----
+  function clearSelection() {
+    if (selected) {
+      const el = cellEls[selected.y][selected.x];
+      if (el) el.classList.remove("selected");
+    }
+    selected = null;
+  }
+
+  function applyHighlight() {
+    for (let y=0; y<24; y++) {
+      for (let x=0; x<24; x++) {
+        const el = cellEls[y][x];
+        el.classList.remove("highlight", "dim");
+        if (highlightSet) {
+          const k = cellKey(x,y);
+          if (highlightSet.has(k)) {
+            el.classList.add("highlight");
+          } else {
+            el.classList.add("dim");
+          }
+        }
+      }
+    }
+  }
+
+  function clearHighlight() {
+    highlightedLineId = null;
+    highlightSet = null;
+    for (let y=0; y<24; y++) for (let x=0; x<24; x++) {
+      cellEls[y][x].classList.remove("highlight","dim");
+    }
+    statusEl.textContent = selected
+      ? `Cell (${selected.x},${selected.y}) — highlight cleared`
+      : "Ready. Tap a cell.";
+  }
+
+  function selectCell(x,y) {
+    clearSelection();
+    selected = {x,y};
+    cellEls[y][x].classList.add("selected");
+    const c = manifest.grid[y][x];
+
+    statusEl.textContent = `Cell (${x},${y}) — ${c.panel} / ${c.zone} — lines: ${c.line_ids.length}`;
+    renderInspectorForCell(x,y);
+    renderSidebarCell();
+  }
+
+  function highlightLine(lineId) {
+    highlightedLineId = lineId;
+    highlightSet = cellsByLineId.get(lineId) || null;
+    applyHighlight();
+
+    const line = lineById.get(lineId);
+    const a = allocByLineId.get(lineId);
+    const txt = line?.text ?? "(unknown)";
+    const count = a?.cells_total ?? (highlightSet ? highlightSet.size : 0);
+    statusEl.textContent = `Highlight line #${lineId} — ${count} cells — "${txt}"`;
+    renderInspectorForLine(lineId);
+    renderSidebarLines(); // keep list updated (so it can show selected state)
+  }
+
+  // ---- Inspector renderers ----
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, (ch) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
+  }
+
+  function tagChips(tags) {
+    return (tags || []).map(t => `<span class="chip">${esc(t)}</span>`).join("");
+  }
+
+  function lineCard(lineId, opts={}) {
+    const line = lineById.get(lineId);
+    const alloc = allocByLineId.get(lineId);
+    const id = lineId;
+    const authored = line?.tags?.includes("authored");
+    const kind = authored ? "AUTHORED" : "OPERATIVE";
+    const primary = alloc?.cells_primary ?? 0;
+    const total = alloc?.cells_total ?? 0;
+    const why = (alloc?.why || []).slice(0, 4);
+
+    const active = (highlightedLineId === lineId) ? `style="border-color: rgba(46,160,67,0.75);"` : "";
+    return `
+      <div class="card" ${active}>
+        <div class="top">
+          <div class="mono">#${id} · ${kind}</div>
+          <div class="mono" style="color: rgba(17,17,17,0.55);">primary ${primary} · total ${total}</div>
+        </div>
+        <div class="txt">${esc(line?.text || "(missing line)")}</div>
+        <div class="chipRow">${tagChips(line?.tags || [])}</div>
+        <div class="divider"></div>
+        <div class="hint"><span class="mono">Why:</span> ${esc(why.join(" · "))}</div>
+        <div class="rowBtns" style="margin-top:10px;">
+          <button class="primary" data-act="highlight" data-line="${id}">Highlight footprint</button>
+          <button data-act="jump" data-line="${id}">Jump to first cell</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderInspectorForCell(x,y) {
+    const c = manifest.grid[y][x];
+    const rgb = panelRGB[c.panel] || [31,111,235];
+
+    const lines = (c.line_ids || []).map(id => lineCard(id)).join("");
+
+    const tagList = (c.tags || []).slice(0, 16).map(t => `<span class="chip">${esc(t)}</span>`).join("");
+
+    sheetBody.innerHTML = `
+      <div class="kgrid">
+        <div class="k"><div class="lab">Cell</div><div class="val mono">x=${x} · y=${y}</div></div>
+        <div class="k"><div class="lab">Zone / Panel</div><div class="val mono">${esc(c.zone)} · ${esc(c.panel)}</div></div>
+        <div class="k"><div class="lab">Weight</div><div class="val mono">${c.weight}</div></div>
+        <div class="k"><div class="lab">Overprint</div><div class="val mono">${c.line_ids.length} line_ids</div></div>
+      </div>
+
+      <div class="card">
+        <div class="top">
+          <div class="mono">Cell tags (sample)</div>
+          <div class="dot" style="--rgb:${rgb.join(",")};"></div>
+        </div>
+        <div class="chipRow">${tagList}</div>
+        <div class="hint" style="margin-top:10px;">
+          <span class="mono">Reversible mapping:</span> this cell contains these <span class="mono">line_ids</span>
+          because of band projection (zone→panel) plus overlay rules (seam spine at x=0, motif headers at x%6==0 / band-top).
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="hint" style="margin-bottom:8px;"><span class="mono">Lines in this cell:</span></div>
+      <div class="list">${lines}</div>
+    `;
+
+    wireInspectorActions(sheetBody);
+  }
+
+  function renderInspectorForLine(lineId) {
+    sheetBody.innerHTML = `
+      <div class="card">
+        <div class="top">
+          <div class="mono">Line focus</div>
+          <div class="mono" style="color: rgba(17,17,17,0.55);">highlighted footprint</div>
+        </div>
+        ${lineCard(lineId)}
+      </div>
+    `;
+    wireInspectorActions(sheetBody);
+  }
+
+  function wireInspectorActions(root) {
+    root.querySelectorAll('[data-act="highlight"]').forEach(btn => {
+      btn.addEventListener("click", () => highlightLine(Number(btn.dataset.line)));
+    });
+    root.querySelectorAll('[data-act="jump"]').forEach(btn => {
+      btn.addEventListener("click", () => jumpToFirstCell(Number(btn.dataset.line)));
+    });
+  }
+
+  function jumpToFirstCell(lineId) {
+    const a = allocByLineId.get(lineId);
+    const first = a?.cells?.[0];
+    if (!first) return;
+    // Select the cell and center it
+    selectCell(first.x, first.y);
+    centerOnCell(first.x, first.y);
+    openSheet(true);
+  }
+
+  // ---- Sidebar content ----
+  let sideTab = "lines";
+  function setSidebarTab(tab) {
+    sideTab = tab;
+    document.querySelectorAll('.tabBtn').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    if (tab === "lines") renderSidebarLines();
+    if (tab === "cell") renderSidebarCell();
+    if (tab === "audit") renderSidebarAudit();
+  }
+
+  function renderSidebarLines() {
+    if (!sidebar || getComputedStyle(sidebar).display === "none") return;
+
+    const lines = manifest.line_index;
+    const panelHtml = `
+      <input id="lineSearch" class="search" placeholder="Search lines (id, text, tags)..." />
+      <div class="list" id="lineList">
+        ${lines.map(l => {
+          const a = allocByLineId.get(l.id);
+          const isActive = highlightedLineId === l.id;
+          return `
+            <div class="card" style="${isActive ? 'border-color: rgba(46,160,67,0.75);' : ''}">
+              <div class="top">
+                <div class="mono">#${l.id} · ${l.tags.includes('authored') ? 'AUTHORED' : 'OPERATIVE'}</div>
+                <div class="mono" style="color: rgba(17,17,17,0.55);">${l.canonical_zone || '—'} · ${a ? a.cells_total : 0} cells</div>
+              </div>
+              <div class="txt">${esc(l.text)}</div>
+              <div class="chipRow">${tagChips(l.tags)}</div>
+              <div class="rowBtns" style="margin-top:10px;">
+                <button class="primary" data-act="hl" data-line="${l.id}">Highlight</button>
+                <button data-act="jp" data-line="${l.id}">Jump</button>
+              </div>
+            </div>
+          `;
+        }).join("")}</div>
+    `;
+    sidePanel.innerHTML = panelHtml;
+
+    const searchEl = document.getElementById("lineSearch");
+    const listEl = document.getElementById("lineList");
+
+    function applySearch() {
+      const q = (searchEl.value || "").trim().toLowerCase();
+      const cards = listEl.querySelectorAll(".card");
+      cards.forEach(card => {
+        const txt = card.textContent.toLowerCase();
+        card.style.display = (!q || txt.includes(q)) ? "" : "none";
+      });
+    }
+    searchEl.addEventListener("input", applySearch);
+
+    sidePanel.querySelectorAll('[data-act="hl"]').forEach(btn => {
+      btn.addEventListener("click", () => highlightLine(Number(btn.dataset.line)));
+    });
+    sidePanel.querySelectorAll('[data-act="jp"]').forEach(btn => {
+      btn.addEventListener("click", () => jumpToFirstCell(Number(btn.dataset.line)));
+    });
+  }
+
+  function renderSidebarCell() {
+    if (!sidebar || getComputedStyle(sidebar).display === "none") return;
+    if (!selected) {
+      sidePanel.innerHTML = `<div class="hint">No cell selected yet. Tap any cell in the grid.</div>`;
+      return;
+    }
+    // Reuse the sheet HTML content for convenience
+    sidePanel.innerHTML = sheetBody.innerHTML;
+    // Rewire actions because we copied HTML
+    wireInspectorActions(sidePanel);
+  }
+
+  function renderSidebarAudit() {
+    if (!sidebar || getComputedStyle(sidebar).display === "none") return;
+
+    const a = manifest.audit_log || {};
+    const rules = a.named_rules || {};
+
+    const zoneBands = (a.zone_bands || []).map(z => `
+      <div class="card">
+        <div class="top"><div class="mono">${esc(z.panel)} · ${esc(z.zone)}</div><div class="mono" style="color: rgba(17,17,17,0.55);">y=${z.y_start}..${z.y_end}</div></div>
+        <div class="txt">${esc(z.description || "")}</div>
+      </div>
+    `).join("");
+
+    sidePanel.innerHTML = `
+      <div class="card">
+        <div class="top"><div class="mono">Determinism</div><div class="mono" style="color: rgba(17,17,17,0.55);">seeded</div></div>
+        <div class="txt"><span class="mono">Seed:</span> ${esc(a.deterministic_seed || "—")}</div>
+        <div class="txt"><span class="mono">Topology:</span> ${esc(a.calligram_topology || "—")}</div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="hint" style="margin-bottom:8px;"><span class="mono">Named rules (operative text):</span></div>
+      ${Object.entries(rules).map(([k,v]) => `
+        <div class="card">
+          <div class="top"><div class="mono">${esc(k)}</div></div>
+          <div class="txt">${esc(typeof v === "string" ? v : JSON.stringify(v, null, 2))}</div>
+        </div>
+      `).join("")}
+
+      <div class="divider"></div>
+      <div class="hint" style="margin-bottom:8px;"><span class="mono">Zone bands (URN_FRIEZE projection):</span></div>
+      <div class="list">${zoneBands}</div>
+    `;
+  }
+
+  // Sidebar tabs wiring
+  document.querySelectorAll(".tabBtn").forEach(btn => {
+    btn.addEventListener("click", () => setSidebarTab(btn.dataset.tab));
+  });
+
+  // ---- Filtering: Panel/Tag/None ----
+  let filterMode = "none"; // "panel" | "tag" | "none"
+  function setFilterMode(mode) {
+    filterMode = mode;
+    modePanelBtn.classList.toggle("primary", mode === "panel");
+    modeTagBtn.classList.toggle("primary", mode === "tag");
+    modeNoneBtn.classList.toggle("primary", mode === "none");
+    populateFilterSelect();
+    applyFilter();
+  }
+
+  function populateFilterSelect() {
+    filterSelect.innerHTML = "";
+    if (filterMode === "none") {
+      filterSelect.disabled = true;
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "—";
+      filterSelect.appendChild(opt);
+      return;
+    }
+
+    filterSelect.disabled = false;
+    const options = [];
+    if (filterMode === "panel") {
+      for (const p of panels) options.push(p.id);
+    } else if (filterMode === "tag") {
+      const tags = new Set();
+      for (const l of manifest.line_index) for (const t of (l.tags || [])) tags.add(t);
+      for (const cRow of manifest.grid) for (const c of cRow) for (const t of (c.tags || [])) tags.add(t);
+      options.push(...Array.from(tags).sort());
+    }
+
+    const opt0 = document.createElement("option");
+    opt0.value = "";
+    opt0.textContent = "(choose)";
+    filterSelect.appendChild(opt0);
+
+    for (const v of options) {
+      const opt = document.createElement("option");
+      opt.value = v;
+      opt.textContent = v;
+      filterSelect.appendChild(opt);
+    }
+  }
+
+  function applyFilter() {
+    const v = filterSelect.value;
+    for (let y=0; y<24; y++) {
+      for (let x=0; x<24; x++) {
+        const el = cellEls[y][x];
+        el.classList.remove("dim");
+        if (!v || filterMode === "none") continue;
+        const c = manifest.grid[y][x];
+
+        let ok = true;
+        if (filterMode === "panel") ok = (c.panel === v);
+        if (filterMode === "tag") ok = (c.tags || []).includes(v);
+
+        if (!ok) el.classList.add("dim");
+      }
+    }
+  }
+
+  modePanelBtn.addEventListener("click", () => setFilterMode("panel"));
+  modeTagBtn.addEventListener("click", () => setFilterMode("tag"));
+  modeNoneBtn.addEventListener("click", () => setFilterMode("none"));
+  filterSelect.addEventListener("change", applyFilter);
+
+  // ---- Pan/Zoom (pointer events) ----
+  const state = {
+    scale: 1,
+    tx: -50, // percent as string? We'll store px after first center.
+    ty: -50,
+    txPx: 0,
+    tyPx: 0,
+  };
+
+  // We'll use CSS variables --tx/--ty in px
+  function setTransform() {
+    gridWrap.style.setProperty("--scale", state.scale.toFixed(4));
+    gridWrap.style.setProperty("--tx", `${state.txPx}px`);
+    gridWrap.style.setProperty("--ty", `${state.tyPx}px`);
+
+    document.body.classList.toggle("zoomed", state.scale >= 1.35);
+    zoomEl.value = String(state.scale);
+  }
+
+  function center() {
+    // Put grid in the center of viewport
+    const vp = viewport.getBoundingClientRect();
+    const cell = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cell"));
+    const gridW = 24 * (cell + parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gap"))) + 2;
+    const gridH = 24 * (cell + parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gap"))) + 2;
+    // GridWrap is positioned at 50%/50% with transform translate(tx,ty) scale
+    // We want the grid's center to align to viewport center.
+    state.txPx = -gridW/2;
+    state.tyPx = -gridH/2;
+    setTransform();
+  }
+
+  function centerOnCell(x,y) {
+    const vp = viewport.getBoundingClientRect();
+    const cell = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cell"));
+    const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gap"));
+    const cellSpan = cell + gap;
+    // cell center in grid coords
+    const cx = (x + 0.5) * cellSpan;
+    const cy = (y + 0.5) * cellSpan;
+    // We want (gridWrap anchor + scale*cx) to align to viewport center.
+    // gridWrap anchor is at vp center, plus translate(txPx,tyPx), then scale.
+    state.txPx = -cx;
+    state.tyPx = -cy;
+    setTransform();
+  }
+
+  // Pointer tracking
+  const pointers = new Map(); // id -> {x,y}
+  let lastDist = null;
+  let lastCenter = null;
+
+  function getCenterAndDist() {
+    const pts = Array.from(pointers.values());
+    if (pts.length === 0) return null;
+    if (pts.length === 1) return {center: pts[0], dist: 0};
+    const a = pts[0], b = pts[1];
+    const cx = (a.x + b.x) / 2;
+    const cy = (a.y + b.y) / 2;
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const dist = Math.hypot(dx, dy);
+    return {center: {x: cx, y: cy}, dist};
+  }
+
+  function onPointerDown(e) {
+    viewport.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, {x: e.clientX, y: e.clientY});
+    const cd = getCenterAndDist();
+    lastDist = cd?.dist ?? null;
+    lastCenter = cd?.center ?? null;
+  }
+
+  function onPointerMove(e) {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, {x: e.clientX, y: e.clientY});
+    const cd = getCenterAndDist();
+    if (!cd || !lastCenter) return;
+
+    const dx = cd.center.x - lastCenter.x;
+    const dy = cd.center.y - lastCenter.y;
+
+    if (pointers.size === 1) {
+      // pan
+      state.txPx += dx / state.scale;
+      state.tyPx += dy / state.scale;
+      setTransform();
+    } else if (pointers.size >= 2) {
+      // pinch zoom around center
+      if (lastDist && cd.dist) {
+        const scaleMul = cd.dist / lastDist;
+        const next = Math.max(0.75, Math.min(3.0, state.scale * scaleMul));
+        state.scale = next;
+      }
+      // also pan a bit while pinching
+      state.txPx += dx / state.scale;
+      state.tyPx += dy / state.scale;
+      setTransform();
+      lastDist = cd.dist;
+    }
+
+    lastCenter = cd.center;
+  }
+
+  function onPointerUp(e) {
+    pointers.delete(e.pointerId);
+    const cd = getCenterAndDist();
+    lastDist = cd?.dist ?? null;
+    lastCenter = cd?.center ?? null;
+  }
+
+  viewport.addEventListener("pointerdown", onPointerDown);
+  viewport.addEventListener("pointermove", onPointerMove);
+  viewport.addEventListener("pointerup", onPointerUp);
+  viewport.addEventListener("pointercancel", onPointerUp);
+  viewport.addEventListener("pointerleave", onPointerUp);
+
+  // Slider zoom
+  zoomEl.addEventListener("input", () => {
+    state.scale = Number(zoomEl.value);
+    setTransform();
+  });
+
+  // Buttons
+  btnReset.addEventListener("click", () => {
+    clearSelection();
+    clearHighlight();
+    state.scale = 1;
+    center();
+    setSidebarTab("lines");
+  });
+  btnClear.addEventListener("click", clearHighlight);
+  btnCenter.addEventListener("click", center);
+
+  // ---- Sheet open/close ----
+  function openSheet(open) {
+    sheet.classList.toggle("open", !!open);
+  }
+  document.getElementById("sheetHandle").addEventListener("click", () => {
+    openSheet(!sheet.classList.contains("open"));
+  });
+  document.getElementById("sheetClose").addEventListener("click", () => openSheet(false));
+  btnInspector.addEventListener("click", () => openSheet(true));
+
+  // ---- Header quick buttons ----
+  btnLines.addEventListener("click", () => {
+    openSheet(true);
+    // Populate with line list "overview" (use sidebar lines style but in sheet)
+    renderMobileLines();
+  });
+  btnAudit.addEventListener("click", () => {
+    openSheet(true);
+    renderMobileAudit();
+  });
+
+  function renderMobileLines() {
+    const lines = manifest.line_index;
+    sheetBody.innerHTML = `
+      <div class="card">
+        <div class="top"><div class="mono">Lines</div><div class="mono" style="color: rgba(17,17,17,0.55);">${lines.length} total</div></div>
+        <input id="mobileSearch" class="search" placeholder="Search..." />
+        <div class="divider"></div>
+        <div class="list" id="mobileList">
+          ${lines.map(l => {
+            const a = allocByLineId.get(l.id);
+            return `
+              <div class="card">
+                <div class="top">
+                  <div class="mono">#${l.id} · ${l.tags.includes('authored') ? 'AUTHORED' : 'OPERATIVE'}</div>
+                  <div class="mono" style="color: rgba(17,17,17,0.55);">${a ? a.cells_total : 0} cells</div>
+                </div>
+                <div class="txt">${esc(l.text)}</div>
+                <div class="chipRow">${tagChips(l.tags)}</div>
+                <div class="rowBtns" style="margin-top:10px;">
+                  <button class="primary" data-act="hl" data-line="${l.id}">Highlight</button>
+                  <button data-act="jp" data-line="${l.id}">Jump</button>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+
+    const s = document.getElementById("mobileSearch");
+    const list = document.getElementById("mobileList");
+    s.addEventListener("input", () => {
+      const q = (s.value||"").toLowerCase().trim();
+      list.querySelectorAll(".card").forEach(card => {
+        const ok = !q || card.textContent.toLowerCase().includes(q);
+        card.style.display = ok ? "" : "none";
+      });
+    });
+
+    sheetBody.querySelectorAll('[data-act="hl"]').forEach(btn => {
+      btn.addEventListener("click", () => highlightLine(Number(btn.dataset.line)));
+    });
+    sheetBody.querySelectorAll('[data-act="jp"]').forEach(btn => {
+      btn.addEventListener("click", () => jumpToFirstCell(Number(btn.dataset.line)));
+    });
+  }
+
+  function renderMobileAudit() {
+    const a = manifest.audit_log || {};
+    sheetBody.innerHTML = `
+      <div class="card">
+        <div class="top"><div class="mono">Audit</div><div class="mono" style="color: rgba(17,17,17,0.55);">deterministic</div></div>
+        <div class="txt"><span class="mono">Seed:</span> ${esc(a.deterministic_seed || "—")}</div>
+        <div class="txt"><span class="mono">Topology:</span> ${esc(a.calligram_topology || "—")}</div>
+        <div class="divider"></div>
+        <div class="hint"><span class="mono">Named rules</span> (operative text) are in the sidebar on desktop, or scroll below:</div>
+      </div>
+      ${Object.entries(a.named_rules || {}).map(([k,v]) => `
+        <div class="card">
+          <div class="top"><div class="mono">${esc(k)}</div></div>
+          <div class="txt">${esc(typeof v === "string" ? v : JSON.stringify(v, null, 2))}</div>
+        </div>
+      `).join("")}
+    `;
+  }
+
+  // ---- Init ----
+  renderGrid();
+  center();
+  setTransform();
+  
+  // ---- Init filter select (after grid is rendered) ----
+  setFilterMode("none");
+  setSidebarTab("lines");
+
+  // Select a default cell for first-time clarity
+  selectCell(0, 0);
+  openSheet(false);
+
+  // Keep sidebar cell tab in sync if user toggles
+  window.addEventListener("resize", () => {
+    // re-center so it stays pleasant on rotate
+    center();
+    setTransform();
+    renderSidebarLines();
+    if (sideTab === "audit") renderSidebarAudit();
+    if (sideTab === "cell") renderSidebarCell();
+  });
+
+  // Also allow keyboard shortcuts on desktop
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") openSheet(false);
+    if (e.key === "l") { openSheet(true); renderMobileLines(); }
+    if (e.key === "a") { openSheet(true); renderMobileAudit(); }
+  });
+})();
+</script>
+</body>
+</html>

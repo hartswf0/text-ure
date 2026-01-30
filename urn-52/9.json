@@ -1,0 +1,544 @@
+I’ll turn your Keats input into enforceable *operational schemas + rules* for (1) cells, (2) zones, and (3) traversal, then give a concrete set of default Carey-ring zones and motif constraints tailored to **Ode on a Grecian Urn**.
+
+
+Below is a **machine-parseable, enforceable schema+rules attachment** that treats the 24×24 as **ritual world** (Carey) and binds your Keats text to **cell/zone/traversal operations** (not “content in a table”). It is designed to be *drop-in compatible* with your existing enums/schemas, while adding: **poem-aware motifs, zone roles/acts, validation, and deterministic binding rules**.
+
+---
+
+## 1) Poem Binding Rules (Keats → Motifs → Cells)
+
+### 1.1 Canonical line index (source of truth)
+
+**Rule PB1 (canonicalization):**
+
+* Input poem is normalized into `line_id` entries with:
+
+  * `stanza_index` (1–5)
+  * `line_index` within stanza
+  * `raw_text` (verbatim)
+  * `normalized_text` (trim + collapse whitespace; preserve punctuation)
+* This line index is the only permitted *source_ref* for poem content.
+
+```json
+{
+  "PoemIndexSchema": {
+    "poem_id": "KEATS_URN_1819",
+    "title": "Ode on a Grecian Urn",
+    "author": "John Keats",
+    "lines": [
+      {
+        "line_id": "S1.L01",
+        "stanza": 1,
+        "line": 1,
+        "raw_text": "Thou still unravish'd bride of quietness,",
+        "normalized_text": "Thou still unravish'd bride of quietness,"
+      }
+    ],
+    "rules": {
+      "PB1_canonical_source": true,
+      "PB2_no_freeform_quotes": true
+    }
+  }
+}
+```
+
+### 1.2 Motif dictionary (poem-specific, enforceable)
+
+**Rule PB2 (motif mapping):**
+
+* Every non-silence cell must include **≥1** `motif_id`.
+* Every `motif_id` is defined in `MotifSchema` with:
+
+  * `motif_kind`: `"IMAGE" | "SOUND" | "TIME" | "DESIRE" | "RITUAL" | "EPISTEME" | "MATERIAL"`
+  * `seed_lines`: list of canonical `line_id`s
+  * `reuse_target`: minimum reuse count and zones
+
+```json
+{
+  "MotifSchema": {
+    "motifs": [
+      {
+        "motif_id": "URN_SILENCE",
+        "motif_kind": "SOUND",
+        "seed_lines": ["S1.L02", "S4.L04", "S4.L05"],
+        "reuse_target": { "min_cells": 4, "min_zones": 2 },
+        "note": "silence / slow time / teasing out of thought"
+      },
+      {
+        "motif_id": "UNHEARD_MELODY",
+        "motif_kind": "SOUND",
+        "seed_lines": ["S2.L01", "S2.L02", "S2.L03", "S2.L04"],
+        "reuse_target": { "min_cells": 4, "min_zones": 2 }
+      },
+      {
+        "motif_id": "FROZEN_DESIRE",
+        "motif_kind": "DESIRE",
+        "seed_lines": ["S2.L07", "S2.L08", "S2.L09", "S2.L10"],
+        "reuse_target": { "min_cells": 4, "min_zones": 2 }
+      },
+      {
+        "motif_id": "FOREVERNESS",
+        "motif_kind": "TIME",
+        "seed_lines": ["S2.L10", "S3.L02", "S3.L04", "S3.L07", "S4.L08"],
+        "reuse_target": { "min_cells": 6, "min_zones": 3 }
+      },
+      {
+        "motif_id": "SACRIFICE_PROCESSION",
+        "motif_kind": "RITUAL",
+        "seed_lines": ["S4.L01", "S4.L02", "S4.L03", "S4.L04"],
+        "reuse_target": { "min_cells": 4, "min_zones": 2 }
+      },
+      {
+        "motif_id": "EMPTY_TOWN",
+        "motif_kind": "IMAGE",
+        "seed_lines": ["S4.L05", "S4.L06", "S4.L07", "S4.L08", "S4.L09", "S4.L10"],
+        "reuse_target": { "min_cells": 5, "min_zones": 2 }
+      },
+      {
+        "motif_id": "COLD_PASTORAL",
+        "motif_kind": "EPISTEME",
+        "seed_lines": ["S5.L05"],
+        "reuse_target": { "min_cells": 3, "min_zones": 2 }
+      },
+      {
+        "motif_id": "BEAUTY_TRUTH_SEAL",
+        "motif_kind": "EPISTEME",
+        "seed_lines": ["S5.L09", "S5.L10"],
+        "reuse_target": { "min_cells": 3, "min_zones": 2 }
+      }
+    ]
+  }
+}
+```
+
+**Rule PB3 (no singleton motifs):** already in your global constraints; this makes it *poem-aware* via `reuse_target`.
+
+---
+
+## 2) Zone System (Carey rings + poem stanzas as ritual districts)
+
+You already have Carey ring defaults. Here is an enforceable **zone plan** that binds:
+
+* **Rings** (center→outer = PRODUCE→MAINTAIN→REPAIR→TRANSFORM)
+* **Stanzas** as district “currents” inside rings
+
+### 2.1 Zone layout contract (24×24)
+
+**Rule ZL1 (ring partition):**
+
+* Coordinates assume `x,y` in `[0..23]`.
+* Define rings by Manhattan distance from center `(11,11)` / `(12,12)` averaged center.
+* Rings are computed, not hand-drawn, unless `coord_set` is explicitly provided.
+
+```json
+{
+  "ZoneLayoutSchema": {
+    "layout_id": "CAREY_RINGS_24",
+    "method": "computed_rings",
+    "centers": ["(11,11)", "(12,12)"],
+    "rings": [
+      { "zone_id": "CENTER_CORE", "d_min": 0, "d_max": 3 },
+      { "zone_id": "INNER_RING", "d_min": 4, "d_max": 7 },
+      { "zone_id": "MIDDLE_RING", "d_min": 8, "d_max": 11 },
+      { "zone_id": "OUTER_RING", "d_min": 12, "d_max": 20 }
+    ],
+    "rules": {
+      "ZL1_cover_all_cells": true,
+      "ZL2_unique_zone_per_cell": true
+    }
+  }
+}
+```
+
+### 2.2 Stanza currents (subzones inside rings)
+
+**Rule ZS1 (stanza currents):**
+
+* Each ring must expose at least **one gate** whose payload references each stanza (1–5) across the full map.
+* This prevents the poem from becoming “chaptered” linearly; instead, stanzas cross rings.
+
+```json
+{
+  "StanzaCurrentSchema": {
+    "currents": [
+      { "current_id": "STANZA_1_INVOCATION", "stanza": 1, "preferred_worldop": "PRODUCE" },
+      { "current_id": "STANZA_2_UNHEARD", "stanza": 2, "preferred_worldop": "MAINTAIN" },
+      { "current_id": "STANZA_3_FOREVER", "stanza": 3, "preferred_worldop": "MAINTAIN" },
+      { "current_id": "STANZA_4_RITUAL_TOWN", "stanza": 4, "preferred_worldop": "REPAIR" },
+      { "current_id": "STANZA_5_SEAL", "stanza": 5, "preferred_worldop": "TRANSFORM" }
+    ],
+    "rules": {
+      "ZS1_currents_cross_rings": true,
+      "ZS2_no_stanza_is_single_ring": true
+    }
+  }
+}
+```
+
+### 2.3 Zone requirements (bind acts/roles/motifs)
+
+Each zone must state **required motifs** that force poem semantics into spatial practice.
+
+```json
+{
+  "ZoneSchemaInstances": [
+    {
+      "zone_id": "CENTER_CORE",
+      "name": "The Urn Speaks (Claim Engine)",
+      "bounds": { "coord_set": [] },
+      "world_operation": "PRODUCE",
+      "allowed_acts": ["INVOCATION", "SEAL"],
+      "dominant_roles": ["JUDGE", "ARCHIVIST"],
+      "ritual_purpose": "manufacture the urn’s authority as an object that talks",
+      "zone_motifs_required": ["BEAUTY_TRUTH_SEAL", "URN_SILENCE"],
+      "zone_constraints": {
+        "max_broken_cells_pct": 0.05,
+        "silence_cells_pct": 0.05,
+        "must_include_seal_gate": true,
+        "must_include_question_gate": true
+      }
+    },
+    {
+      "zone_id": "INNER_RING",
+      "name": "The Freeze (Unheard Song / Unkissed Kiss)",
+      "bounds": { "coord_set": [] },
+      "world_operation": "MAINTAIN",
+      "allowed_acts": ["CHANT", "WITNESS"],
+      "dominant_roles": ["CONGREGANT", "WITNESS"],
+      "ritual_purpose": "repeat motifs until they become the real",
+      "zone_motifs_required": ["UNHEARD_MELODY", "FROZEN_DESIRE", "FOREVERNESS"],
+      "zone_constraints": {
+        "max_broken_cells_pct": 0.05,
+        "silence_cells_pct": 0.08,
+        "must_include_seal_gate": true,
+        "must_include_question_gate": true
+      }
+    },
+    {
+      "zone_id": "MIDDLE_RING",
+      "name": "The Wound of Time (Paradox Maintenance / Repair)",
+      "bounds": { "coord_set": [] },
+      "world_operation": "REPAIR",
+      "allowed_acts": ["QUESTION", "WITNESS"],
+      "dominant_roles": ["ARCHIVIST", "PILGRIM"],
+      "ritual_purpose": "surface contradictions (sweet/unheard, desire/fixity) and route repairs",
+      "zone_motifs_required": ["FOREVERNESS", "COLD_PASTORAL", "URN_SILENCE"],
+      "zone_constraints": {
+        "max_broken_cells_pct": 0.05,
+        "silence_cells_pct": 0.10,
+        "must_include_seal_gate": true,
+        "must_include_question_gate": true
+      }
+    },
+    {
+      "zone_id": "OUTER_RING",
+      "name": "Procession & Empty Town (World Transposition)",
+      "bounds": { "coord_set": [] },
+      "world_operation": "TRANSFORM",
+      "allowed_acts": ["QUESTION"],
+      "dominant_roles": ["PILGRIM", "HERALD"],
+      "ritual_purpose": "transpose image→social world; town becomes absence-engine",
+      "zone_motifs_required": ["SACRIFICE_PROCESSION", "EMPTY_TOWN"],
+      "zone_constraints": {
+        "max_broken_cells_pct": 0.05,
+        "silence_cells_pct": 0.12,
+        "must_include_seal_gate": true,
+        "must_include_question_gate": true
+      }
+    }
+  ]
+}
+```
+
+---
+
+## 3) Cell Rules (enforce ritual, not storage)
+
+You already have a CellSchema; below are **binding enforcement rules** that make it non-tabular.
+
+### 3.1 Mandatory ritual structure per active cell
+
+**Rule C1 (act integrity):**
+
+* If `cell_state=ACTIVE`, then:
+
+  * `ritual_act` must be present
+  * `operators.perform` length ≥ 1
+  * `payload.symbolic_form` cannot be `"note"` or `"annotation"` (disallowed forms)
+
+**Rule C2 (poem anchoring):**
+
+* If `payload.evidence_level` is `QUOTE`, then:
+
+  * `payload.text_fragment` must equal exactly one `raw_text` line from `PoemIndex`
+  * `payload.source_ref` must be `"KEATS_URN_1819:<line_id>"`
+
+**Rule C3 (paraphrase discipline):**
+
+* If `evidence_level=PARAPHRASE`, then `source_ref` required and `text_fragment` must not contain >8 consecutive words from the referenced `raw_text` (enforced by validator).
+
+```json
+{
+  "CellRules": [
+    {
+      "id": "C1_act_integrity",
+      "when": "cell_state == 'ACTIVE'",
+      "must": [
+        "ritual_act != null",
+        "operators.perform.length >= 1",
+        "payload.symbolic_form NOT IN ['note','annotation']"
+      ],
+      "block": true
+    },
+    {
+      "id": "C2_quote_source_lock",
+      "when": "payload.evidence_level == 'QUOTE'",
+      "must": [
+        "payload.source_ref MATCHES '^KEATS_URN_1819:S\\d+\\.L\\d+$'",
+        "payload.text_fragment == PoemIndex.lines[line_id].raw_text"
+      ],
+      "block": true
+    },
+    {
+      "id": "C3_paraphrase_has_anchor",
+      "when": "payload.evidence_level == 'PARAPHRASE'",
+      "must": [
+        "payload.source_ref != null",
+        "payload.source_ref STARTS_WITH 'KEATS_URN_1819:'"
+      ],
+      "block": true
+    }
+  ]
+}
+```
+
+### 3.2 Silence cells as ritual technology (not empty cells)
+
+**Rule S1 (silence must do work):**
+
+* If `silence.is_silence_cell=true`, then:
+
+  * `payload.text_fragment` must be `""` OR a *single glyph* token (e.g. `"—"`)
+  * `operators.perform` must include `"OPEN_GAP"` or `"ROLE_SHIFT"`
+  * `silence.silence_rule` required
+
+```json
+{
+  "SilenceRules": [
+    {
+      "id": "S1_silence_is_operational",
+      "when": "silence.is_silence_cell == true",
+      "must": [
+        "payload.text_fragment IN ['', '—', '⋯']",
+        "operators.perform CONTAINS_ONE_OF ['OPEN_GAP','ROLE_SHIFT']",
+        "silence.silence_kind != null",
+        "silence.silence_rule != null"
+      ],
+      "block": true
+    }
+  ]
+}
+```
+
+### 3.3 Diagonal tension must be literal contradiction (not vibe)
+
+You already require diagonal contradiction by act/role/claim. Make it enforceable:
+
+**Rule T1 (tension proof):**
+
+* If a cell declares a diagonal neighbor as valid, it must include a `tension_proof` field listing which of:
+
+  * `ritual_act_conflict`
+  * `role_conflict`
+  * `claim_conflict`
+* Minimum 1.
+
+```json
+{
+  "TensionAttachment": {
+    "CellSchema_extension": {
+      "tension_proof": {
+        "with": "(x,y)",
+        "contradictions": ["ritual_act_conflict|role_conflict|claim_conflict"],
+        "note": "string"
+      }
+    },
+    "rule": {
+      "id": "T1_diagonal_requires_proof",
+      "when": "adjacency_diagonal == true",
+      "must": ["tension_proof.contradictions.length >= 1"],
+      "block": true
+    }
+  }
+}
+```
+
+---
+
+## 4) Traversal (reading as ritual traversal, not browsing)
+
+### 4.1 Traversal types tailored to Keats’ structure
+
+Bind traversals to the ode’s logic: **invocation → unheard → forever → procession/emptiness → seal**.
+
+```json
+{
+  "TraversalTemplates": [
+    {
+      "traversal_id": "TRV_URN_PILGRIMAGE_V1",
+      "name": "Pilgrimage of the Unheard",
+      "mode": "PILGRIMAGE",
+      "start_cells": ["(11,11)", "(12,12)"],
+      "end_cells": ["(11,12)", "(12,11)"],
+      "entry_conditions": [
+        { "requires_role": "PILGRIM" },
+        { "requires_act": "INVOCATION" }
+      ],
+      "path_constraints": {
+        "must_touch_acts": ["INVOCATION", "WITNESS", "QUESTION", "SEAL"],
+        "min_silence_encounters": 3,
+        "min_role_shifts": 2,
+        "min_tension_diagonals": 4,
+        "must_enter_zones": ["OUTER_RING", "MIDDLE_RING", "INNER_RING", "CENTER_CORE"]
+      },
+      "completion": {
+        "seal_required": true,
+        "seal_cells": ["(11,11)", "(12,12)"],
+        "completion_artifact": "thesis-line"
+      },
+      "failure": {
+        "if_stuck": "route_to_repair",
+        "repair_zone_id": "MIDDLE_RING",
+        "repair_steps": []
+      }
+    }
+  ]
+}
+```
+
+### 4.2 Traversal validation rules (poem-aware)
+
+Add poem-aware constraints on top of your existing V1–V5:
+
+**Rule TVP1 (stanza dispersion):**
+
+* A traversal must reference **≥3 stanzas** via `payload.source_ref` across its visited cells.
+
+**Rule TVP2 (motif arc):**
+
+* A traversal must include motifs in this partial order (not necessarily consecutive):
+
+  1. `URN_SILENCE`
+  2. `UNHEARD_MELODY`
+  3. `FROZEN_DESIRE`
+  4. `SACRIFICE_PROCESSION` or `EMPTY_TOWN`
+  5. `BEAUTY_TRUTH_SEAL`
+
+```json
+{
+  "TraversalPoemRules": [
+    {
+      "id": "TVP1_stanza_dispersion",
+      "when": "traversal_complete == true",
+      "must": [
+        "COUNT_DISTINCT(visited_cells.payload.source_ref.stanza) >= 3"
+      ],
+      "block": true
+    },
+    {
+      "id": "TVP2_motif_arc",
+      "when": "traversal_complete == true",
+      "must": [
+        "MOTIF_ARC_EXISTS(['URN_SILENCE','UNHEARD_MELODY','FROZEN_DESIRE','EMPTY_TOWN|SACRIFICE_PROCESSION','BEAUTY_TRUTH_SEAL'])"
+      ],
+      "block": true
+    }
+  ]
+}
+```
+
+---
+
+## 5) Operator Library Extensions (Keats-specific operators)
+
+You have a solid base. These additions make the ode’s paradox mechanics explicit.
+
+```json
+{
+  "OperatorExtensions": [
+    {
+      "op_id": "FREEZE_MOMENT",
+      "description": "Converts an action into a maintained eternal near-action (kiss nearly, pipes play unheard). Requires MAINTAIN."
+    },
+    {
+      "op_id": "MAKE_UNHEARD_SWEETER",
+      "description": "Increases EvidenceLevel while reducing sensory literalness; encourages SILENCE_KIND=VEIL."
+    },
+    {
+      "op_id": "EMPTY_THE_TOWN",
+      "description": "Transforms a populated world into an absence engine; must create at least one adjacent silence cell."
+    },
+    {
+      "op_id": "UTTER_FINAL_COUPLET",
+      "description": "Generates or seals the Beauty/Truth claim; must mark cell SEALED; forbids expansion beyond it."
+    }
+  ],
+  "OperatorRules": [
+    {
+      "id": "OPR1_freeze_requires_foreverness",
+      "when": "operators.perform CONTAINS 'FREEZE_MOMENT'",
+      "must": ["motif_ids CONTAINS 'FOREVERNESS'"],
+      "block": true
+    },
+    {
+      "id": "OPR2_empty_town_spawns_silence",
+      "when": "operators.perform CONTAINS 'EMPTY_THE_TOWN'",
+      "must": ["NEIGHBOR_HAS(silence.is_silence_cell == true)"],
+      "block": true
+    },
+    {
+      "id": "OPR3_final_couplet_must_seal",
+      "when": "operators.perform CONTAINS 'UTTER_FINAL_COUPLET'",
+      "must": ["cell_state == 'SEALED'", "motif_ids CONTAINS 'BEAUTY_TRUTH_SEAL'"],
+      "block": true
+    }
+  ]
+}
+```
+
+---
+
+## 6) Enforceability: Validator Contract (what must be checked)
+
+This makes the whole thing “binding” in the way you want.
+
+```json
+{
+  "ValidatorContract": {
+    "checks": [
+      "GridSchema.global_constraints",
+      "ZoneLayoutSchema.ZL1/ZL2",
+      "ZoneSchema.zone_constraints (gates present, silence pct, broken pct)",
+      "CellRules C1-C3",
+      "SilenceRules S1",
+      "Adjacency rules A1-A3 + T1 tension_proof",
+      "TraversalSchema constraints",
+      "TraversalPoemRules TVP1-TVP2",
+      "Motif reuse targets (MotifSchema.reuse_target)"
+    ],
+    "fail_behavior": {
+      "on_blocking_error": "mark_cells_QUARANTINED",
+      "repair_operator": "REPAIR_BREAK",
+      "required_repair_zone": "MIDDLE_RING"
+    }
+  }
+}
+```
+
+---
+
+## Closing Seal (binding)
+
+These schemas are binding.
+**The poem is not placed into the grid; the grid is the poem’s operational world.**
+Reading is traversal; traversal is ritual; ritual manufactures the urn’s authority.

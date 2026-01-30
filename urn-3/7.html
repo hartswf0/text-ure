@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KEATS_URN_24 // Hybrid Inscription Grid</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+        
+        :root {
+            --phosphor-main: #33ff00;
+            --phosphor-dim: #1a8000;
+            --zone-rim: #d69e2e;
+            --zone-frieze: #3182ce;
+            --zone-belly: #48bb78;
+            --zone-absence: #718096;
+            --zone-seal: #e53e3e;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: #000;
+            margin: 0;
+            font-family: 'VT323', monospace;
+            color: var(--phosphor-main);
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.2) 50%,
+                rgba(0,0,0,0.2)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .glow-text {
+            text-shadow: 0 0 5px var(--phosphor-dim), 0 0 10px var(--phosphor-dim);
+        }
+
+        .crt-flicker {
+            animation: flicker 0.15s infinite;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.97; }
+            100% { opacity: 1; }
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            grid-template-rows: repeat(24, 1fr);
+            gap: 1px;
+            aspect-ratio: 1/1;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: var(--phosphor-dim); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--phosphor-main); }
+
+        .link-button {
+            background: transparent;
+            border: 1px solid var(--phosphor-dim);
+            color: var(--phosphor-main);
+            padding: 4px 8px;
+            font-family: inherit;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .link-button:hover {
+            background: var(--phosphor-dim);
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // --- TEXT-URE INDEX (K-01...K-50) aligned with 5.json ---
+        const LINES_INDEX = [
+            { id: "K-01", text: "Thou still unravish'd bride of quietness,", fn: "invocation", zone: "RIM_TOP", weight: 9 },
+            { id: "K-02", text: "Thou foster-child of silence and slow time,", fn: "invocation", zone: "RIM_TOP", weight: 8 },
+            { id: "K-03", text: "Sylvan historian, who canst thus express", fn: "invocation", zone: "RIM_TOP", weight: 7 },
+            { id: "K-04", text: "A flowery tale more sweetly than our rhyme:", fn: "transition", zone: "RIM_TOP", weight: 6 },
+            { id: "K-05", text: "What leaf-fring'd legend haunts about thy shape", fn: "scene_question", zone: "UPPER_FRIEZE", weight: 8 },
+            { id: "K-06", text: "Of deities or mortals, or of both,", fn: "scene_question", zone: "UPPER_FRIEZE", weight: 7 },
+            { id: "K-07", text: "In Tempe or the dales of Arcady?", fn: "scene_question", zone: "UPPER_FRIEZE", weight: 7 },
+            { id: "K-08", text: "What men or gods are these? What maidens loth?", fn: "scene_question", zone: "UPPER_FRIEZE", weight: 8 },
+            { id: "K-09", text: "What mad pursuit? What struggle to escape?", fn: "scene_question", zone: "UPPER_FRIEZE", weight: 8 },
+            { id: "K-10", text: "What pipes and timbrels? What wild ecstasy?", fn: "scene_question", zone: "UPPER_FRIEZE", weight: 8 },
+            { id: "K-11", text: "Heard melodies are sweet, but those unheard", fn: "paradox", zone: "BELLY", weight: 6 },
+            { id: "K-12", text: "Are sweeter; therefore, ye soft pipes, play on;", fn: "paradox", zone: "BELLY", weight: 6 },
+            { id: "K-13", text: "Not to the sensual ear, but, more endear'd,", fn: "paradox", zone: "BELLY", weight: 5 },
+            { id: "K-14", text: "Pipe to the spirit ditties of no tone:", fn: "paradox", zone: "BELLY", weight: 5 },
+            { id: "K-15", text: "Fair youth, beneath the trees, thou canst not leave", fn: "scene_stasis", zone: "BELLY", weight: 7 },
+            { id: "K-16", text: "Thy song, nor ever can those trees be bare;", fn: "scene_stasis", zone: "BELLY", weight: 7 },
+            { id: "K-17", text: "Bold Lover, never, never canst thou kiss,", fn: "scene_stasis", zone: "BELLY", weight: 8 },
+            { id: "K-18", text: "Though winning near the goal yet, do not grieve;", fn: "scene_stasis", zone: "BELLY", weight: 6 },
+            { id: "K-19", text: "She cannot fade, though thou hast not thy bliss,", fn: "eternity", zone: "BELLY", weight: 7 },
+            { id: "K-20", text: "For ever wilt thou love, and she be fair!", fn: "eternity", zone: "BELLY", weight: 8 },
+            { id: "K-21", text: "Ah, happy, happy boughs! that cannot shed", fn: "chorus_loop", zone: "BELLY", weight: 5 },
+            { id: "K-22", text: "Your leaves, nor ever bid the Spring adieu;", fn: "chorus_loop", zone: "BELLY", weight: 5 },
+            { id: "K-23", text: "And, happy melodist, unwearied,", fn: "chorus_loop", zone: "BELLY", weight: 5 },
+            { id: "K-24", text: "For ever piping songs for ever new;", fn: "chorus_loop", zone: "BELLY", weight: 5 },
+            { id: "K-25", text: "More happy love! more happy, happy love!", fn: "chorus_loop", zone: "BELLY", weight: 6 },
+            { id: "K-26", text: "For ever warm and still to be enjoy'd,", fn: "chorus_loop", zone: "BELLY", weight: 5 },
+            { id: "K-27", text: "For ever panting, and for ever young;", fn: "chorus_loop", zone: "BELLY", weight: 6 },
+            { id: "K-28", text: "All breathing human passion far above,", fn: "contrast", zone: "BELLY", weight: 4 },
+            { id: "K-29", text: "That leaves a heart high-sorrowful and cloy'd,", fn: "contrast", zone: "BELLY", weight: 4 },
+            { id: "K-30", text: "A burning forehead, and a parching tongue.", fn: "contrast", zone: "BELLY", weight: 4 },
+            { id: "K-31", text: "Who are these coming to the sacrifice?", fn: "scene_procession", zone: "LOWER_FRIEZE", weight: 8 },
+            { id: "K-32", text: "To what green altar, O mysterious priest,", fn: "scene_procession", zone: "LOWER_FRIEZE", weight: 7 },
+            { id: "K-33", text: "Lead'st thou that heifer lowing at the skies,", fn: "scene_procession", zone: "LOWER_FRIEZE", weight: 7 },
+            { id: "K-34", text: "And all her silken flanks with garlands drest?", fn: "scene_procession", zone: "LOWER_FRIEZE", weight: 7 },
+            { id: "K-35", text: "What little town by river or sea shore,", fn: "absence", zone: "ABSENCE_FIELD", weight: 3 },
+            { id: "K-36", text: "Or mountain-built with peaceful citadel,", fn: "absence", zone: "ABSENCE_FIELD", weight: 3 },
+            { id: "K-37", text: "Is emptied of this folk, this pious morn?", fn: "absence", zone: "ABSENCE_FIELD", weight: 3 },
+            { id: "K-38", text: "And, little town, thy streets for evermore", fn: "absence", zone: "ABSENCE_FIELD", weight: 3 },
+            { id: "K-39", text: "Will silent be; and not a soul to tell", fn: "absence", zone: "ABSENCE_FIELD", weight: 3 },
+            { id: "K-40", text: "Why thou art desolate, can e'er return.", fn: "absence", zone: "ABSENCE_FIELD", weight: 3 },
+            { id: "K-41", text: "O Attic shape! Fair attitude! with brede", fn: "meta_address", zone: "RIM_BOTTOM", weight: 7 },
+            { id: "K-42", text: "Of marble men and maidens overwrought,", fn: "meta_address", zone: "RIM_BOTTOM", weight: 6 },
+            { id: "K-43", text: "With forest branches and the trodden weed;", fn: "meta_address", zone: "RIM_BOTTOM", weight: 6 },
+            { id: "K-44", text: "Thou, silent form, dost tease us out of thought", fn: "meta_address", zone: "CENTER_APPROACH", weight: 8 },
+            { id: "K-45", text: "As doth eternity: Cold Pastoral!", fn: "meta_address", zone: "CENTER_APPROACH", weight: 8 },
+            { id: "K-46", text: "When old age shall this generation waste,", fn: "meta_address", zone: "RIM_BOTTOM", weight: 5 },
+            { id: "K-47", text: "Thou shalt remain, in midst of other woe", fn: "meta_address", zone: "RIM_BOTTOM", weight: 6 },
+            { id: "K-48", text: "Than ours, a friend to man, to whom thou say'st,", fn: "meta_address", zone: "CENTER_APPROACH", weight: 6 },
+            { id: "K-49", text: "\"Beauty is truth, truth beauty,—that is all", fn: "axiom", zone: "SEAL", weight: 10 },
+            { id: "K-50", text: "Ye know on earth, and all ye need to know.\"", fn: "axiom", zone: "SEAL", weight: 10 }
+        ];
+
+        // Zone configuration
+        const ZONE_CONFIG = {
+            "RIM_TOP": { color: "#d69e2e", label: "RIM_TOP", role: "ADDR" },
+            "UPPER_FRIEZE": { color: "#3182ce", label: "UPPER_FRIEZE", role: "GLUE" },
+            "BELLY": { color: "#48bb78", label: "BELLY", role: "ECHO" },
+            "LOWER_FRIEZE": { color: "#805ad5", label: "LOWER_FRIEZE", role: "GLUE" },
+            "ABSENCE_FIELD": { color: "#718096", label: "ABSENCE_FIELD", role: "NULL" },
+            "RIM_BOTTOM": { color: "#dd6b20", label: "RIM_BOTTOM", role: "ADDR" },
+            "CENTER_APPROACH": { color: "#d53f8c", label: "CENTER_APPROACH", role: "HINGE" },
+            "SEAL": { color: "#e53e3e", label: "SEAL", role: "CORE" }
+        };
+
+        // --- CONSTANTS ---
+        const GRID_SIZE = 24;
+        const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
+
+        // --- UTILS ---
+        const formatAddress = (idx) => {
+            const hex = idx.toString(16).toUpperCase().padStart(3, '0');
+            const y = Math.floor(idx / GRID_SIZE);
+            const x = idx % GRID_SIZE;
+            return `0x${hex} [${x},${y}]`;
+        };
+
+        const simpleHash = (str) => {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = (hash << 5) - hash + char;
+                hash = hash & hash;
+            }
+            return Math.abs(hash);
+        };
+
+        function App() {
+            const [gridData, setGridData] = useState([]);
+            const [hoveredCell, setHoveredCell] = useState(null);
+            const [activeFilter, setActiveFilter] = useState(null);
+            const [bootSequence, setBootSequence] = useState(true);
+
+            // --- INITIALIZATION PIPELINE ---
+            useEffect(() => {
+                // Initialize 24x24 Memory
+                const newGrid = Array(TOTAL_CELLS).fill(null).map((_, idx) => ({
+                    idx,
+                    addr: formatAddress(idx),
+                    type: 'NOISE',
+                    content: null,
+                    refId: null,
+                    zone: null,
+                    fn: null
+                }));
+
+                const seed = 1819;
+
+                // Place Zone Index Nodes (Fixed locations for UI)
+                const zoneIndexPositions = [
+                    { pos: 36, zone: "RIM_TOP" },
+                    { pos: 37, zone: "UPPER_FRIEZE" },
+                    { pos: 38, zone: "BELLY" },
+                    { pos: 39, zone: "LOWER_FRIEZE" },
+                    { pos: 60, zone: "ABSENCE_FIELD" },
+                    { pos: 61, zone: "RIM_BOTTOM" },
+                    { pos: 62, zone: "CENTER_APPROACH" },
+                    { pos: 63, zone: "SEAL" }
+                ];
+
+                zoneIndexPositions.forEach(({ pos, zone }) => {
+                    const config = ZONE_CONFIG[zone];
+                    newGrid[pos] = {
+                        ...newGrid[pos],
+                        type: 'INDEX',
+                        content: `ZONE: ${config.label}`,
+                        refId: zone,
+                        zone: zone,
+                        fn: config.role
+                    };
+                });
+
+                // Place Primary Lines (using TEXT-URE index)
+                LINES_INDEX.forEach((line, bIdx) => {
+                    let pos = (simpleHash(line.text) + seed) % TOTAL_CELLS;
+                    while (newGrid[pos].type !== 'NOISE') {
+                        pos = (pos + 13) % TOTAL_CELLS;
+                    }
+                    newGrid[pos] = {
+                        ...newGrid[pos],
+                        type: 'TEXT',
+                        content: line.text.toUpperCase(),
+                        header: `⟦${line.id}⟧`,
+                        refId: line.id,
+                        zone: line.zone,
+                        fn: line.fn,
+                        isPrimary: true,
+                        weight: line.weight
+                    };
+
+                    // Create redundancy copies based on weight
+                    const copies = Math.floor(line.weight / 3);
+                    for (let r = 0; r < copies; r++) {
+                        let repPos = (pos + (r + 1) * 100 + 42) % TOTAL_CELLS;
+                        while (newGrid[repPos].type !== 'NOISE') {
+                            repPos = (repPos + 7) % TOTAL_CELLS;
+                        }
+                        newGrid[repPos] = {
+                            ...newGrid[repPos],
+                            type: 'CACHE',
+                            content: line.text.toUpperCase(),
+                            header: `⟦${line.id}⟧ [ECHO]`,
+                            refId: line.id,
+                            zone: line.zone,
+                            fn: line.fn,
+                            isPrimary: false,
+                            weight: line.weight
+                        };
+                    }
+                });
+
+                // Generate Noise for remaining cells
+                const noiseChars = "▒░▓█▄▀■·····";
+                newGrid.forEach((cell, idx) => {
+                    if (cell.type === 'NOISE') {
+                        const noiseContent = Array(12).fill(0).map(() => 
+                            noiseChars[Math.floor(Math.random() * noiseChars.length)]
+                        ).join('');
+                        newGrid[idx].content = `NULL_SEGMENT // ${noiseContent}`;
+                    }
+                });
+
+                setGridData(newGrid);
+                setTimeout(() => setBootSequence(false), 1500);
+            }, []);
+
+            const handleCellEnter = (cell) => setHoveredCell(cell);
+
+            const handleCellClick = (cell) => {
+                if (cell.type === 'INDEX') {
+                    setActiveFilter(activeFilter === cell.zone ? null : cell.zone);
+                } else if (cell.zone) {
+                    setActiveFilter(activeFilter === cell.zone ? null : cell.zone);
+                } else {
+                    setActiveFilter(null);
+                }
+            };
+
+            const getCellStyle = (cell) => {
+                const isActive = activeFilter && cell.zone === activeFilter;
+                const isDimmed = activeFilter && cell.zone !== activeFilter && cell.type !== 'NOISE';
+                const zoneColor = cell.zone ? ZONE_CONFIG[cell.zone]?.color : null;
+
+                let base = "w-full h-full border transition-all duration-75 cursor-crosshair ";
+
+                if (isDimmed) return base + "opacity-10 border-gray-900";
+
+                switch (cell.type) {
+                    case 'INDEX':
+                        return base + `border-2 animate-pulse` + (isActive ? ' scale-110' : '');
+                    case 'TEXT':
+                        return base + (isActive ? 'border-white' : 'border-opacity-30 hover:border-opacity-60');
+                    case 'CACHE':
+                        return base + (isActive ? 'border-white opacity-80' : 'opacity-40 hover:opacity-70');
+                    case 'NOISE':
+                        return base + "opacity-5 hover:opacity-20 border-gray-900";
+                    default:
+                        return base + "border-gray-900";
+                }
+            };
+
+            const getCellBg = (cell) => {
+                if (cell.type === 'NOISE') return '#0a0a0a';
+                const zoneColor = cell.zone ? ZONE_CONFIG[cell.zone]?.color : '#333';
+                const isActive = activeFilter && cell.zone === activeFilter;
+                switch (cell.type) {
+                    case 'INDEX': return zoneColor;
+                    case 'TEXT': return isActive ? zoneColor : `${zoneColor}66`;
+                    case 'CACHE': return `${zoneColor}33`;
+                    default: return '#111';
+                }
+            };
+
+            const usedCells = gridData.filter(c => c.type !== 'NOISE').length;
+
+            if (bootSequence) {
+                return (
+                    <div className="flex items-center justify-center h-screen w-screen text-2xl animate-pulse bg-black text-green-400 font-mono flex-col">
+                        <div>&gt; INITIALIZING INSCRIPTION SYSTEM...</div>
+                        <div>&gt; MAPPING URN TO 24×24 ADDRESS SPACE...</div>
+                        <div className="mt-4 text-sm opacity-60">&gt; LOADING TEXT-URE INDEX (K-01...K-50)...</div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-black text-green-400 font-mono overflow-hidden">
+                    <div className="scanlines"></div>
+
+                    <div className="flex h-screen w-full p-4 gap-4 max-w-7xl mx-auto crt-flicker">
+
+                        {/* LEFT: THE GRID */}
+                        <div className="flex-1 flex flex-col items-center justify-center">
+                            <div className="w-full max-w-[80vh] aspect-square relative border-2 border-green-900 p-1">
+                                <div className="absolute -top-6 left-0 text-xs opacity-70">ADDRESS_SPACE_24×24 [HYBRID_REGIME]</div>
+                                <div className="absolute -bottom-6 right-0 text-xs opacity-70">MEMORY_USAGE: {usedCells}/576 BLOCKS</div>
+
+                                <div className="grid-container w-full h-full">
+                                    {gridData.map((cell) => (
+                                        <div
+                                            key={cell.idx}
+                                            className={getCellStyle(cell)}
+                                            style={{ 
+                                                backgroundColor: getCellBg(cell),
+                                                borderColor: cell.zone ? ZONE_CONFIG[cell.zone]?.color : '#222'
+                                            }}
+                                            onMouseEnter={() => handleCellEnter(cell)}
+                                            onClick={() => handleCellClick(cell)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* RIGHT: THE APPARATUS */}
+                        <div className="w-96 flex flex-col gap-4 border-l border-green-900 pl-4 py-4 overflow-hidden">
+
+                            {/* HEADER */}
+                            <div className="border-b border-green-900 pb-2">
+                                <h1 className="text-2xl font-bold glow-text">KEATS_URN_24</h1>
+                                <div className="text-xs opacity-70">TEXT-URE INSCRIPTION GRID v2.0</div>
+                                <div className="flex gap-2 mt-2">
+                                    <a href="5.html" className="link-button">→ CARTOGRAPHY</a>
+                                    <a href="5.json" className="link-button">→ INDEX.JSON</a>
+                                    <a href="6.html" className="link-button">→ KIS-01</a>
+                                </div>
+                            </div>
+
+                            {/* ZONE LEGEND */}
+                            <div className="text-xs border border-green-900 p-2">
+                                <div className="mb-1 opacity-60">ZONE_LEGEND:</div>
+                                <div className="grid grid-cols-2 gap-1">
+                                    {Object.entries(ZONE_CONFIG).map(([key, cfg]) => (
+                                        <div 
+                                            key={key} 
+                                            className="flex items-center gap-1 cursor-pointer hover:opacity-100"
+                                            style={{ opacity: activeFilter === key ? 1 : 0.6 }}
+                                            onClick={() => setActiveFilter(activeFilter === key ? null : key)}
+                                        >
+                                            <div 
+                                                className="w-3 h-3 border" 
+                                                style={{ backgroundColor: cfg.color, borderColor: cfg.color }}
+                                            />
+                                            <span style={{ color: cfg.color }}>{key.replace('_', ' ')}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* SCANNER HEAD INFO */}
+                            <div className="border border-green-900 p-3 min-h-[140px] bg-black/50">
+                                <div className="text-xs mb-2 border-b border-green-900 pb-1 flex justify-between">
+                                    <span>SCAN_HEAD</span>
+                                    <span>{hoveredCell ? hoveredCell.addr : "IDLE"}</span>
+                                </div>
+
+                                {hoveredCell ? (
+                                    <div className="space-y-1 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="opacity-60">TYPE:</span>
+                                            <span className={hoveredCell.type === 'INDEX' ? 'font-bold' : ''}>{hoveredCell.type}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="opacity-60">REF_ID:</span>
+                                            <span style={{ color: hoveredCell.zone ? ZONE_CONFIG[hoveredCell.zone]?.color : '#fff' }}>
+                                                {hoveredCell.refId || "N/A"}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="opacity-60">ZONE:</span>
+                                            <span style={{ color: hoveredCell.zone ? ZONE_CONFIG[hoveredCell.zone]?.color : '#666' }}>
+                                                {hoveredCell.zone || "NULL"}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="opacity-60">FUNCTION:</span>
+                                            <span>{hoveredCell.fn || "—"}</span>
+                                        </div>
+                                        {hoveredCell.isPrimary !== undefined && (
+                                            <div className="flex justify-between">
+                                                <span className="opacity-60">STATUS:</span>
+                                                <span>{hoveredCell.isPrimary ? "PRIMARY" : "ECHO"}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="h-full flex items-center justify-center opacity-30 text-center text-sm">
+                                        AWAITING INPUT...<br/>HOVER GRID TO SCAN
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* PAYLOAD DECODER */}
+                            <div className="flex-1 border border-green-900 p-3 flex flex-col relative overflow-hidden">
+                                <div className="text-xs mb-2 border-b border-green-900 pb-1">DECODED_PAYLOAD</div>
+
+                                <div className="text-base leading-6 break-words whitespace-pre-wrap flex-1 overflow-auto">
+                                    {hoveredCell && hoveredCell.type !== 'NOISE' ? (
+                                        <>
+                                            <span className="block mb-2 text-sm" style={{ color: hoveredCell.zone ? ZONE_CONFIG[hoveredCell.zone]?.color : '#666' }}>
+                                                {hoveredCell.header}
+                                            </span>
+                                            <div className="text-green-300">{hoveredCell.content}</div>
+                                        </>
+                                    ) : (
+                                        <span className="opacity-30 text-sm">
+                                            {hoveredCell?.type === 'NOISE' ? ">>> PARITY BIT ERROR\n>>> SIGNAL LOST" : ""}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Hex Dump */}
+                                <div className="mt-2 pt-2 border-t border-green-900 opacity-40 text-[9px] h-16 overflow-hidden">
+                                    {Array(4).fill(0).map((_, i) => (
+                                        <div key={i} className="flex justify-between">
+                                            <span>0x{(i * 16 + (hoveredCell?.idx || 0)).toString(16).padStart(4, '0').toUpperCase()}</span>
+                                            <span>
+                                                {Array(8).fill(0).map(() => Math.floor(Math.random() * 255).toString(16).padStart(2, '0')).join(' ')}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* INSTRUCTION */}
+                            <div className="text-[10px] opacity-50 text-center">
+                                CLICK ZONES TO FILTER · INDEX: K-01...K-50
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

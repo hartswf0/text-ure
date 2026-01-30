@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <title>Shield of Achilles — Calligram Grid Bridge (24×24)</title>
+  <style>
+    :root{
+      --ink:#121212;
+      --paper:#f6f5f2;
+      --panel:#ffffff;
+      --muted:#6b6b6b;
+      --line:#e6e2dc;
+      --accent:#0f766e;
+      --warn:#b91c1c;
+      --shadow: 0 10px 30px rgba(0,0,0,.08);
+      --radius: 16px;
+      --cell: 18px; /* base; zoom scales this */
+    }
+
+    *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+    html,body{height:100%; background:var(--paper); color:var(--ink); margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;}
+    button,input,select{font:inherit; color:inherit;}
+    a{color:inherit;}
+
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding: env(safe-area-inset-top) 10px env(safe-area-inset-bottom) 10px;
+      gap:10px;
+    }
+
+    .topbar{
+      display:flex;
+      gap:10px;
+      align-items:stretch;
+      flex-wrap:wrap;
+    }
+    .card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+    .card.pad{padding:10px;}
+    .title{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:10px;
+    }
+    .title h1{
+      margin:0;
+      font-size:14px;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .title .meta{
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+    .controls{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .controls .group{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+    .pill{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .pill b{font-size:12px;}
+    .pill input[type="range"]{width:120px;}
+    .pill input[type="text"]{
+      border:none; outline:none;
+      width: 200px;
+      min-width: 140px;
+      font-size:12px;
+      background:transparent;
+    }
+    .pill select{
+      border:none; outline:none;
+      font-size:12px;
+      background:transparent;
+      cursor:pointer;
+    }
+    .btn{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:12px;
+      padding:8px 10px;
+      font-size:12px;
+      cursor:pointer;
+    }
+    .btn.primary{
+      border-color: rgba(15,118,110,.35);
+      background: rgba(15,118,110,.08);
+    }
+    .btn.danger{
+      border-color: rgba(185,28,28,.35);
+      background: rgba(185,28,28,.06);
+    }
+    .btn:active{transform:translateY(1px);}
+
+    .main{
+      flex:1;
+      min-height:0;
+      display:grid;
+      grid-template-columns: 1.3fr .9fr;
+      gap:10px;
+    }
+
+    @media (max-width: 980px){
+      .main{grid-template-columns: 1fr;}
+    }
+
+    .gridWrap{
+      position:relative;
+      overflow:hidden;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .gridStage{
+      position:relative;
+      flex:1;
+      min-height:0;
+      overflow:hidden;
+      border-radius:var(--radius);
+    }
+
+    .gridCanvas{
+      position:absolute;
+      inset:0;
+      overflow:hidden;
+      touch-action:none; /* pan */
+      background:
+        radial-gradient(circle at 30% 20%, rgba(15,118,110,.06), transparent 45%),
+        radial-gradient(circle at 70% 60%, rgba(0,0,0,.03), transparent 50%),
+        #fff;
+    }
+
+    .grid{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform: translate(-50%,-50%) scale(1);
+      transform-origin: center center;
+      display:grid;
+      grid-template-columns: repeat(24, var(--cell));
+      grid-template-rows: repeat(24, var(--cell));
+      gap:1px;
+      padding:10px;
+      border-radius: 18px;
+      background: var(--line);
+      user-select:none;
+    }
+
+    .cell{
+      width:var(--cell);
+      height:var(--cell);
+      background:#fff;
+      border-radius:3px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:9px;
+      line-height:1;
+      color: rgba(18,18,18,.72);
+      cursor:pointer;
+      position:relative;
+    }
+    .cell::after{
+      content:"";
+      position:absolute; inset:0;
+      border:1px solid rgba(0,0,0,.03);
+      border-radius:3px;
+      pointer-events:none;
+    }
+    .cell.sel{
+      outline: 2px solid rgba(15,118,110,.75);
+      outline-offset: 1px;
+      z-index:2;
+    }
+    .cell.visited{
+      box-shadow: inset 0 0 0 1px rgba(15,118,110,.18);
+    }
+
+    .cell .mini{
+      font-weight:700;
+      opacity:.9;
+      font-size:9px;
+      transform: translateY(.2px);
+    }
+
+    .hud{
+      position:absolute;
+      left:12px;
+      top:12px;
+      right:12px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      pointer-events:none;
+    }
+    .hud .chip{
+      pointer-events:auto;
+      background:rgba(255,255,255,.92);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      color:var(--muted);
+      box-shadow:var(--shadow);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      backdrop-filter: blur(6px);
+    }
+    .hud .chip b{color:var(--ink);}
+
+    .dpad{
+      position:absolute;
+      right:12px;
+      bottom:12px;
+      display:grid;
+      grid-template-columns: 42px 42px 42px;
+      grid-template-rows: 42px 42px 42px;
+      gap:6px;
+      pointer-events:auto;
+    }
+    .dpad button{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.92);
+      border-radius:14px;
+      box-shadow:var(--shadow);
+      cursor:pointer;
+      font-size:14px;
+    }
+    .dpad button:active{transform:translateY(1px);}
+    .dpad .blank{opacity:0; pointer-events:none;}
+
+    .side{
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .panelHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .panelHeader h2{
+      margin:0;
+      font-size:12px;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+
+    .kv{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+      margin-top:8px;
+    }
+    .kv .box{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:8px 10px;
+      background:#fff;
+    }
+    .kv .k{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em;}
+    .kv .v{font-size:12px; margin-top:2px; color:var(--ink);}
+
+    .layers{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-top:10px;
+      min-height:0;
+    }
+    .layerItem{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:8px 10px;
+      background:#fff;
+      cursor:pointer;
+    }
+    .layerTop{
+      display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+    }
+    .layerTop b{font-size:12px;}
+    .layerTop span{font-size:11px; color:var(--muted);}
+    .layerMeta{
+      margin-top:6px;
+      font-size:11px;
+      color:var(--muted);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .textView{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px;
+      background:#fff;
+      overflow:auto;
+      min-height: 180px;
+      max-height: 40vh;
+      white-space:pre-wrap;
+      line-height:1.35;
+      font-size:12px;
+    }
+
+    .tiny{
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+
+    details{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+      padding:8px 10px;
+    }
+    summary{
+      cursor:pointer;
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:.02em;
+      text-transform:uppercase;
+      list-style:none;
+    }
+    summary::-webkit-details-marker{display:none;}
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:18px;
+      transform:translateX(-50%);
+      background:rgba(18,18,18,.92);
+      color:#fff;
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:12px;
+      box-shadow:var(--shadow);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease;
+      max-width: calc(100vw - 24px);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .toast.show{opacity:1;}
+
+    .tag{
+      font-size:10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:2px 8px;
+      color:var(--muted);
+      background:#fff;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="card pad" style="flex:1; min-width:280px;">
+      <div class="title">
+        <h1>Calligram Grid Bridge</h1>
+        <div class="meta"><b>Shield of Achilles</b> · 24×24 address space</div>
+      </div>
+
+      <div class="controls" style="margin-top:10px;">
+        <div class="group">
+          <div class="pill" title="Zoom (visual scale only)">
+            <b>Zoom</b>
+            <input id="zoom" type="range" min="0.55" max="2.4" step="0.05" value="1.00"/>
+            <span id="zoomLabel" style="font-variant-numeric: tabular-nums; width:46px; text-align:right;">1.00×</span>
+          </div>
+
+          <div class="pill" title="Render style for cells">
+            <b>View</b>
+            <select id="viewMode">
+              <option value="heat">Heat (layers)</option>
+              <option value="glyph">Glyph (revealed)</option>
+              <option value="none">Blank (pure geometry)</option>
+            </select>
+          </div>
+
+          <div class="pill" title="Reveal behavior: entering a cell reveals one more layer for that cell">
+            <b>Auto-reveal</b>
+            <select id="autoReveal">
+              <option value="on" selected>On</option>
+              <option value="off">Off</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="pill" title="Search across chunk titles + text">
+            <b>Search</b>
+            <input id="search" type="text" placeholder="war, ocean, harvest, dance…" />
+          </div>
+
+          <button id="copyManifest" class="btn primary" title="Copy CODE-TEXT manifest (chunks + cell refs) as JSON">
+            Copy Manifest JSON
+          </button>
+          <button id="reset" class="btn danger" title="Reset visited + reveal state">
+            Reset Traversal
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card pad" style="min-width:280px;">
+      <div class="tiny">
+        <b>Rule:</b> Cells store references, not full text. Reading = traversal. Geometry leads; language follows.
+        <div style="margin-top:6px; display:flex; flex-wrap:wrap; gap:6px;">
+          <span class="tag">GEOMETRY→FIELD</span>
+          <span class="tag">DENSITY→CELL*</span>
+          <span class="tag">OVERLAP ALLOWED</span>
+          <span class="tag">INCREMENTAL REVEAL</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="gridWrap card">
+      <div class="gridStage">
+        <div id="gridCanvas" class="gridCanvas">
+          <div id="grid" class="grid" aria-label="24 by 24 calligram grid"></div>
+
+          <div class="hud">
+            <div class="chip" id="addrChip">
+              <span>Address</span>
+              <b id="addr">r01:c01</b>
+              <span id="addrMeta">layers 0 · revealed 0</span>
+            </div>
+            <div class="chip" id="chunkChip">
+              <span>Focus</span>
+              <b id="focusName">—</b>
+              <span id="focusMeta">tap a layer</span>
+            </div>
+          </div>
+
+          <div class="dpad" aria-label="Traversal controls">
+            <button class="blank"></button>
+            <button id="up" title="Up">↑</button>
+            <button class="blank"></button>
+            <button id="left" title="Left">←</button>
+            <button id="reveal" title="Reveal next layer">◎</button>
+            <button id="right" title="Right">→</button>
+            <button class="blank"></button>
+            <button id="down" title="Down">↓</button>
+            <button class="blank"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="card pad" style="min-height:0;">
+        <div class="panelHeader">
+          <h2>Selected Cell</h2>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button id="prevLayer" class="btn" title="Step focus backward (if you focused a chunk)">◀</button>
+            <button id="nextLayer" class="btn" title="Step focus forward (if you focused a chunk)">▶</button>
+          </div>
+        </div>
+
+        <div class="kv">
+          <div class="box">
+            <div class="k">Coordinate</div>
+            <div class="v" id="coord">r01:c01</div>
+          </div>
+          <div class="box">
+            <div class="k">State</div>
+            <div class="v" id="state">unvisited</div>
+          </div>
+          <div class="box">
+            <div class="k">Layers</div>
+            <div class="v" id="layerCount">0</div>
+          </div>
+          <div class="box">
+            <div class="k">Revealed</div>
+            <div class="v" id="revealCount">0</div>
+          </div>
+        </div>
+
+        <div class="layers" style="margin-top:10px;">
+          <div class="tiny">Tap a layer to read its text (the cell only stores references).</div>
+          <div id="layersList" style="display:flex; flex-direction:column; gap:8px; min-height:0;"></div>
+        </div>
+      </div>
+
+      <div class="card pad" style="min-height:0;">
+        <div class="panelHeader">
+          <h2>Focused Chunk</h2>
+          <button id="clearFocus" class="btn" title="Clear focus/highlight">Clear</button>
+        </div>
+        <div class="tiny" id="chunkHint" style="margin-top:6px;">
+          Focus highlights where a chunk lives in the grid (a “surface-text shadow” of the code-text).
+        </div>
+
+        <div class="kv" id="chunkKV" style="display:none;">
+          <div class="box">
+            <div class="k">Geometry</div>
+            <div class="v" id="chunkGeom">—</div>
+          </div>
+          <div class="box">
+            <div class="k">Field</div>
+            <div class="v" id="chunkField">—</div>
+          </div>
+          <div class="box">
+            <div class="k">Density</div>
+            <div class="v" id="chunkDensity">—</div>
+          </div>
+          <div class="box">
+            <div class="k">Tags</div>
+            <div class="v" id="chunkTags">—</div>
+          </div>
+        </div>
+
+        <div class="textView" id="chunkText" style="margin-top:10px; display:none;"></div>
+
+        <details style="margin-top:10px;">
+          <summary>POML (bridge schema)</summary>
+          <div class="textView" id="pomlBox" style="margin-top:10px;"></div>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* =========================================================
+   SOURCE TEXT (Shield of Achilles passage) + POML schema
+   ========================================================= */
+
+const SOURCE_TEXT = String.raw`The Iliad, Book XVIII, [The Shield of Achilles]
+
+Homer
+
+Thetis goes to the palace of Vulcan to obtain new arms for her son.
+
+"Thee, welcome, goddess! what occasion calls
+(So long a stranger) to these honour'd walls?
+'Tis thine, fair Thetis, the command to lay,
+And Vulcan's joy and duty to obey."
+
+To whom the mournful mother thus replies:
+(The crystal drops stood trembling in her eyes:)
+"O Vulcan! say, was ever breast divine
+So pierced with sorrows, so o'erwhelm'd as mine?
+Of all the goddesses, did Jove prepare
+For Thetis only such a weight of care?
+I, only I, of all the watery race
+By force subjected to a man's embrace,
+Who, sinking now with age and sorrow, pays
+The mighty fine imposed on length of days.
+Sprung from my bed, a godlike hero came,
+The bravest sure that ever bore the name;
+Like some fair plant beneath my careful hand
+He grew, he flourish'd, and he graced the land:
+To Troy I sent him! but his native shore
+Never, ah never, shall receive him more;
+(Even while he lives, he wastes with secret woe;)
+Nor I, a goddess, can retard the blow!
+Robb'd of the prize the Grecian suffrage gave,
+The king of nations forced his royal slave:
+For this he grieved; and, till the Greeks oppress'd
+Required his arm, he sorrow'd unredress'd.
+Large gifts they promise, and their elders send;
+In vain--he arms not, but permits his friend
+His arms, his steeds, his forces to employ:
+He marches, combats, almost conquers Troy:
+Then slain by Phoebus (Hector had the name)
+At once resigns his armour, life, and fame.
+But thou, in pity, by my prayer be won:
+Grace with immortal arms this short-lived son,
+And to the field in martial pomp restore,
+To shine with glory, till he shines no more!"
+
+To her the artist-god: "Thy griefs resign,
+Secure, what Vulcan can, is ever thine.
+O could I hide him from the Fates, as well,
+Or with these hands the cruel stroke repel,
+As I shall forge most envied arms, the gaze
+Of wondering ages, and the world's amaze!"
+
+Thus having said, the father of the fires
+To the black labours of his forge retires.
+Soon as he bade them blow, the bellows turn'd
+Their iron mouths; and where the furnace burn'd,
+Resounding breathed: at once the blast expires,
+And twenty forges catch at once the fires;
+Just as the god directs, now loud, now low,
+They raise a tempest, or they gently blow;
+In hissing flames huge silver bars are roll'd,
+And stubborn brass, and tin, and solid gold;
+Before, deep fix'd, the eternal anvils stand;
+The ponderous hammer loads his better hand,
+His left with tongs turns the vex'd metal round,
+And thick, strong strokes, the doubling vaults rebound.
+
+Then first he form'd the immense and solid shield;
+Rich various artifice emblazed the field;
+Its utmost verge a threefold circle bound;
+A silver chain suspends the massy round;
+Five ample plates the broad expanse compose,
+And godlike labours on the surface rose.
+There shone the image of the master-mind:
+There earth, there heaven, there ocean he design'd;
+The unwearied sun, the moon completely round;
+The starry lights that heaven's high convex crown'd;
+The Pleiads, Hyads, with the northern team;
+And great Orion's more refulgent beam;
+To which, around the axle of the sky,
+The Bear, revolving, points his golden eye,
+Still shines exalted on the ethereal plain,
+Nor bathes his blazing forehead in the main.
+
+Two cities radiant on the shield appear,
+The image one of peace, and one of war.
+Here sacred pomp and genial feast delight,
+And solemn dance, and hymeneal rite;
+Along the street the new-made brides are led,
+With torches flaming, to the nuptial bed:
+The youthful dancers in a circle bound
+To the soft flute, and cithern's silver sound:
+Through the fair streets the matrons in a row
+Stand in their porches, and enjoy the show.
+
+There in the forum swarm a numerous train;
+The subject of debate, a townsman slain:
+One pleads the fine discharged, which one denied,
+And bade the public and the laws decide:
+The witness is produced on either hand:
+For this, or that, the partial people stand:
+The appointed heralds still the noisy bands,
+And form a ring, with sceptres in their hands:
+On seats of stone, within the sacred place,
+The reverend elders nodded o'er the case;
+Alternate, each the attesting sceptre took,
+And rising solemn, each his sentence spoke
+Two golden talents lay amidst, in sight,
+The prize of him who best adjudged the right.
+
+Another part (a prospect differing far)
+Glow'd with refulgent arms, and horrid war.
+Two mighty hosts a leaguer'd town embrace,
+And one would pillage, one would burn the place.
+Meantime the townsmen, arm'd with silent care,
+A secret ambush on the foe prepare:
+Their wives, their children, and the watchful band
+Of trembling parents, on the turrets stand.
+They march; by Pallas and by Mars made bold:
+Gold were the gods, their radiant garments gold,
+And gold their armour: these the squadron led,
+August, divine, superior by the head!
+A place for ambush fit they found, and stood,
+Cover'd with shields, beside a silver flood.
+Two spies at distance lurk, and watchful seem
+If sheep or oxen seek the winding stream.
+Soon the white flocks proceeded o'er the plains,
+And steers slow-moving, and two shepherd swains;
+Behind them piping on their reeds they go,
+Nor fear an ambush, nor suspect a foe.
+In arms the glittering squadron rising round
+Rush sudden; hills of slaughter heap the ground;
+Whole flocks and herds lie bleeding on the plains,
+And, all amidst them, dead, the shepherd swains!
+The bellowing oxen the besiegers hear;
+They rise, take horse, approach, and meet the war,
+They fight, they fall, beside the silver flood;
+The waving silver seem'd to blush with blood.
+There Tumult, there Contention stood confess'd;
+One rear'd a dagger at a captive's breast;
+One held a living foe, that freshly bled
+With new-made wounds; another dragg'd a dead;
+Now here, now there, the carcases they tore:
+Fate stalk'd amidst them, grim with human gore.
+And the whole war came out, and met the eye;
+And each bold figure seem'd to live or die.
+
+A field deep furrow'd next the god design'd,
+The third time labour'd by the sweating hind;
+The shining shares full many ploughmen guide,
+And turn their crooked yokes on every side.
+Still as at either end they wheel around,
+The master meets them with his goblet crown'd;
+The hearty draught rewards, renews their toil,
+Then back the turning ploughshares cleave the soil:
+Behind, the rising earth in ridges roll'd;
+And sable look'd, though form'd of molten gold.
+
+Another field rose high with waving grain;
+With bended sickles stand the reaper train:
+Here stretched in ranks the levell'd swarths are found,
+Sheaves heap'd on sheaves here thicken up the ground.
+With sweeping stroke the mowers strow the lands;
+The gatherers follow, and collect in bands;
+And last the children, in whose arms are borne
+(Too short to gripe them) the brown sheaves of corn.
+The rustic monarch of the field descries,
+With silent glee, the heaps around him rise.
+A ready banquet on the turf is laid,
+Beneath an ample oak's expanded shade.
+The victim ox the sturdy youth prepare;
+The reaper's due repast, the woman's care.
+
+Next, ripe in yellow gold, a vineyard shines,
+Bent with the ponderous harvest of its vines;
+A deeper dye the dangling clusters show,
+And curl'd on silver props, in order glow:
+A darker metal mix'd intrench'd the place;
+And pales of glittering tin the inclosure grace.
+To this, one pathway gently winding leads,
+Where march a train with baskets on their heads,
+(Fair maids and blooming youths,) that smiling bear
+The purple product of the autumnal year.
+To these a youth awakes the warbling strings,
+Whose tender lay the fate of Linus sings;
+In measured dance behind him move the train,
+Tune soft the voice, and answer to the strain.
+
+Here herds of oxen march, erect and bold,
+Rear high their horns, and seem to low in gold,
+And speed to meadows on whose sounding shores
+A rapid torrent through the rushes roars:
+Four golden herdsmen as their guardians stand,
+And nine sour dogs complete the rustic band.
+Two lions rushing from the wood appear'd;
+And seized a bull, the master of the herd:
+He roar'd: in vain the dogs, the men withstood;
+They tore his flesh, and drank his sable blood.
+The dogs (oft cheer'd in vain) desert the prey,
+Dread the grim terrors, and at distance bay.
+
+Next this, the eye the art of Vulcan leads
+Deep through fair forests, and a length of meads,
+And stalls, and folds, and scatter'd cots between;
+And fleecy flocks, that whiten all the scene.
+
+A figured dance succeeds; such once was seen
+In lofty Gnossus for the Cretan queen,
+Form'd by Daedalean art; a comely band
+Of youths and maidens, bounding hand in hand.
+The maids in soft simars of linen dress'd;
+The youths all graceful in the glossy vest:
+Of those the locks with flowery wreath inroll'd;
+Of these the sides adorn'd with swords of gold,
+That glittering gay, from silver belts depend.
+Now all at once they rise, at once descend,
+With well-taught feet: now shape in oblique ways,
+Confusedly regular, the moving maze:
+Now forth at once, too swift for sight, they spring,
+And undistinguish'd blend the flying ring:
+So whirls a wheel, in giddy circle toss'd,
+And, rapid as it runs, the single spokes are lost.
+The gazing multitudes admire around:
+Two active tumblers in the centre bound;
+Now high, now low, their pliant limbs they bend:
+And general songs the sprightly revel end.
+
+Thus the broad shield complete the artist crown'd
+With his last hand, and pour'd the ocean round:
+In living silver seem'd the waves to roll,
+And beat the buckler's verge, and bound the whole.
+
+This done, whate'er a warrior's use requires
+He forged; the cuirass that outshone the fires,
+The greaves of ductile tin, the helm impress'd
+With various sculpture, and the golden crest.
+At Thetis' feet the finished labour lay:
+She, as a falcon cuts the aerial way,
+Swift from Olympus' snowy summit flies,
+And bears the blazing present through the skies.`;
+
+const POML_TEXT = String.raw`<poml>
+  <meta>
+    <name>Apollinaire Calligram Grid Bridge</name>
+    <version>1.0</version>
+    <intent>
+      Transform linear text into spatial-semantic structures
+      where geometry precedes reading and topology encodes meaning.
+    </intent>
+  </meta>
+  <axioms>
+    <axiom>A1: Text may function as geometry.</axiom>
+    <axiom>A2: Geometry is a carrier of semantic force.</axiom>
+    <axiom>A3: Reading is an act of traversal.</axiom>
+    <axiom>A4: Layout is interpretation.</axiom>
+    <axiom>A5: No chunk is placed before its shape is declared.</axiom>
+  </axioms>
+  <entities>
+    <entity id="TEXT_CHUNK"><properties>
+      <property>raw_text</property><property>semantic_tags</property>
+      <property>emotional_weight</property><property>symbolic_weight</property>
+    </properties></entity>
+    <entity id="GEOMETRIC_INTENT"><values>LINE COLUMN RADIAL SPIRAL WAVE GRID CLUSTER FRACTAL</values></entity>
+    <entity id="DENSITY"><scale>1..10</scale></entity>
+    <entity id="FIELD"><values>CENTER_OUT EDGE_IN TOP_DOWN BOTTOM_UP LEFT_RIGHT RIGHT_LEFT ORBIT SINK FLOAT</values></entity>
+    <entity id="CELL"><properties><property>layers[]</property></properties></entity>
+  </entities>
+  <morphisms>
+    <morphism><from>TEXT_CHUNK</from><to>GEOMETRIC_INTENT</to><rule>derive shape from dominant semantic_tags</rule></morphism>
+    <morphism><from>TEXT_CHUNK</from><to>DENSITY</to><rule>map emotional_weight + symbolic_weight → density</rule></morphism>
+    <morphism><from>GEOMETRIC_INTENT</from><to>FIELD</to><rule>assign directional behavior consistent with shape</rule></morphism>
+    <morphism><from>(TEXT_CHUNK, GEOMETRIC_INTENT, DENSITY, FIELD)</from><to>CELL*</to><rule>emit multiple cell addresses</rule></morphism>
+  </morphisms>
+  <procedures>
+    <procedure id="CALLIGRAM_MAP">
+      <step>For each TEXT_CHUNK: infer GEOMETRIC_INTENT, compute DENSITY, assign FIELD, rasterize geometry into grid coords, write chunk reference into CELL.layers.</step>
+    </procedure>
+  </procedures>
+  <constraints>
+    <constraint>No TEXT_CHUNK may be assigned to a single CELL unless density=1.</constraint>
+    <constraint>Multiple TEXT_CHUNKS may overlap within a CELL.</constraint>
+    <constraint>Cells store references, not full text.</constraint>
+    <constraint>Traversal reveals layers incrementally.</constraint>
+  </constraints>
+</poml>`;
+
+/* =========================================================
+   GRID MODEL
+   ========================================================= */
+
+const GRID = 24;
+const CELLS_N = GRID * GRID;
+
+const cells = Array.from({length: CELLS_N}, (_,i)=>({
+  i,
+  r: Math.floor(i/GRID),
+  c: i % GRID,
+  layers: [],      // chunk ids (references)
+  visited: 0,
+  revealed: 0,     // how many layers are revealed
+}));
+
+/* =========================================================
+   SEEDED RNG (deterministic shapes)
+   ========================================================= */
+function xmur3(str){
+  let h = 1779033703 ^ str.length;
+  for (let i=0;i<str.length;i++){
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return function(){
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return (h ^= (h >>> 16)) >>> 0;
+  }
+}
+function sfc32(a,b,c,d){
+  return function(){
+    a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0;
+    let t = (a + b) | 0;
+    a = b ^ (b >>> 9);
+    b = (c + (c << 3)) | 0;
+    c = (c << 21) | (c >>> 11);
+    d = (d + 1) | 0;
+    t = (t + d) | 0;
+    c = (c + t) | 0;
+    return (t >>> 0) / 4294967296;
+  }
+}
+const seedFn = xmur3("SHIELD-OF-ACHILLES-24x24");
+const rand = sfc32(seedFn(), seedFn(), seedFn(), seedFn());
+
+/* =========================================================
+   TEXT → CHUNKS
+   ========================================================= */
+
+function normalizeLines(text){
+  return text
+    .replace(/\r/g,"")
+    .split("\n")
+    .map(l => l.trimEnd())
+    .filter(l => l.trim().length > 0);
+}
+
+function chunkShield(lines){
+  // Section triggers (coarse, but deterministic + readable)
+  const triggers = [
+    { id:"C1", title:"Summons & Welcome", re:/^"Thee, welcome, goddess!/i },
+    { id:"C2", title:"Thetis’ Lament & Petition", re:/^To whom the mournful mother/i },
+    { id:"C3", title:"Vulcan’s Reply", re:/^To her the artist-god/i },
+    { id:"C4", title:"Forge Operations", re:/^Thus having said/i },
+    { id:"C5", title:"Shield Begins: The Plates & Chain", re:/^Then first he form'd the immense/i },
+    { id:"C6", title:"Cosmos: Earth, Heaven, Ocean, Stars", re:/^There shone the image of the master-mind/i },
+    { id:"C7", title:"City of Peace: Marriage, Dance, Law", re:/^Two cities radiant on the shield appear/i },
+    { id:"C8", title:"City of War: Ambush, Tumult, Fate", re:/^Another part/i },
+    { id:"C9", title:"Ploughed Field: Third Labour", re:/^A field deep furrow'd/i },
+    { id:"C10", title:"Harvest Field: Reapers & Feast", re:/^Another field rose high/i },
+    { id:"C11", title:"Vineyard: Linus Song & Procession", re:/^Next, ripe in yellow gold, a vineyard/i },
+    { id:"C12", title:"Herd & Predation: Lions Take the Bull", re:/^Here herds of oxen march/i },
+    { id:"C13", title:"Pastoral: Forests, Meads, Flocks, Cots", re:/^Next this, the eye the art of Vulcan leads/i },
+    { id:"C14", title:"Dance of Daedalus: The Moving Maze", re:/^A figured dance succeeds/i },
+    { id:"C15", title:"Ocean Rim: The Boundary Wave", re:/^Thus the broad shield complete/i },
+    { id:"C16", title:"Other Arms: Cuirass, Greaves, Helm", re:/^This done, whate'er a warrior's use requires/i },
+  ];
+
+  // Build chunks by scanning; any preface lines before first trigger go into a header chunk.
+  const chunks = [];
+  let cur = { id:"C0", title:"Header / Title Block", lines:[] };
+  let curTriggerIndex = -1;
+
+  function pushCur(){
+    if (cur.lines.length){
+      chunks.push(cur);
+    }
+  }
+
+  for (const line of lines){
+    const idx = triggers.findIndex(t => t.re.test(line));
+    if (idx !== -1 && idx !== curTriggerIndex){
+      pushCur();
+      curTriggerIndex = idx;
+      cur = { id: triggers[idx].id, title: triggers[idx].title, lines: [line] };
+    } else {
+      cur.lines.push(line);
+    }
+  }
+  pushCur();
+
+  return chunks.map(ch => ({
+    id: ch.id,
+    title: ch.title,
+    raw_text: ch.lines.join("\n"),
+    semantic_tags: [],
+    emotional_weight: 1,
+    symbolic_weight: 1,
+    GEOMETRIC_INTENT: "CLUSTER",
+    FIELD: "FLOAT",
+    DENSITY: 1,
+    cell_addrs: [],
+  }));
+}
+
+/* =========================================================
+   SEMANTIC TAGS + WEIGHTS (heuristics)
+   ========================================================= */
+
+const TAG_LEX = [
+  { tag:"fire/forge", words:["forge","fires","furnace","anvils","hammer","tongs","bellows","molten","gold","brass","tin","silver"] },
+  { tag:"grief", words:["mournful","sorrows","overwhelm","woe","grieved","secret woe","pierced","trembling","never"] },
+  { tag:"fate", words:["Fates","Fate","doom","cruel stroke"] },
+  { tag:"cosmos", words:["earth","heaven","ocean","sun","moon","stars","Pleiads","Hyads","Orion","Bear","axle","sky","ethereal"] },
+  { tag:"peace/civic", words:["peace","pomp","feast","hymeneal","brides","nuptial","dance","forum","laws","heralds","elders","sentence","adjudged"] },
+  { tag:"war", words:["war","arms","hosts","pillage","burn","ambush","shields","slaughter","blood","dagger","wounds","carcases","captive"] },
+  { tag:"agriculture", words:["field","furrow","plough","shares","yokes","toil","soil","grain","sickles","reaper","sheaves","banquet","oak"] },
+  { tag:"vineyard/music", words:["vineyard","vines","clusters","baskets","purple","strings","lay","Linus","strain","dance"] },
+  { tag:"predation", words:["lions","seized","bull","tore","flesh","blood","dogs","prey","bay"] },
+  { tag:"pastoral", words:["forests","meads","stalls","folds","cots","fleecy","flocks"] },
+  { tag:"maze/dance", words:["Daedalean","maze","ring","wheel","tumblers","revel"] },
+  { tag:"ocean/rim", words:["ocean","waves","verge","bound","buckler"] },
+  { tag:"armour", words:["cuirass","greaves","helm","crest","sculpture"] },
+];
+
+function scoreTags(text){
+  const low = text.toLowerCase();
+  const tags = [];
+  for (const entry of TAG_LEX){
+    let hits = 0;
+    for (const w of entry.words){
+      const ww = w.toLowerCase();
+      if (low.includes(ww)) hits++;
+    }
+    if (hits > 0){
+      tags.push({tag: entry.tag, hits});
+    }
+  }
+  tags.sort((a,b)=> b.hits - a.hits);
+  return tags.map(t=>t.tag);
+}
+
+function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+function weightEmotion(text){
+  const low = text.toLowerCase();
+  let w = 1;
+  const griefWords = ["mournful","sorrows","woe","trembling","never","cruel","pierced","blood","slaughter","dead","gore"];
+  for (const g of griefWords){
+    if (low.includes(g)) w += 1;
+  }
+  const ex = (text.match(/!/g)||[]).length;
+  w += Math.min(3, Math.floor(ex/2));
+  return clamp(w, 1, 10);
+}
+
+function weightSymbol(text){
+  const low = text.toLowerCase();
+  let w = 1;
+  const sym = ["earth","heaven","ocean","sun","moon","stars","fate","gods","divine","eternal","world"];
+  for (const s of sym){
+    if (low.includes(s)) w += 1;
+  }
+  // long chunks tend to be “symbolically dense” in this schema
+  const len = text.length;
+  if (len > 1200) w += 2;
+  else if (len > 800) w += 1;
+  return clamp(w, 1, 10);
+}
+
+/* =========================================================
+   TAGS → GEOMETRY → FIELD
+   ========================================================= */
+
+function deriveGeometry(tags, title){
+  const t = (title||"").toLowerCase();
+  if (tags.includes("ocean/rim")) return "RADIAL";
+  if (tags.includes("cosmos")) return "RADIAL";
+  if (tags.includes("peace/civic")) return "GRID";
+  if (tags.includes("war")) return "FRACTAL";
+  if (tags.includes("agriculture")) return (t.includes("harvest") ? "COLUMN" : "LINE");
+  if (tags.includes("vineyard/music")) return "SPIRAL";
+  if (tags.includes("predation")) return "WAVE";
+  if (tags.includes("maze/dance")) return "RADIAL";
+  if (tags.includes("fire/forge")) return "SPIRAL";
+  if (tags.includes("armour")) return "LINE";
+  if (tags.includes("pastoral")) return "CLUSTER";
+  if (tags.includes("grief")) return "COLUMN";
+  return "CLUSTER";
+}
+
+function geometryToField(geom, tags, title){
+  const t = (title||"").toLowerCase();
+  switch(geom){
+    case "RADIAL":
+      if (tags.includes("ocean/rim")) return "ORBIT";
+      return "CENTER_OUT";
+    case "SPIRAL":
+      return t.includes("thetis") || tags.includes("grief") ? "SINK" : "EDGE_IN";
+    case "GRID":
+      return "LEFT_RIGHT";
+    case "LINE":
+      return t.includes("arm") ? "RIGHT_LEFT" : "LEFT_RIGHT";
+    case "COLUMN":
+      return "TOP_DOWN";
+    case "WAVE":
+      return "LEFT_RIGHT";
+    case "FRACTAL":
+      return "CENTER_OUT";
+    case "CLUSTER":
+    default:
+      return "FLOAT";
+  }
+}
+
+function densityFromWeights(e,s){
+  return clamp(Math.round((e + s)/2), 1, 10);
+}
+
+/* =========================================================
+   GEOMETRY RASTERIZERS
+   ========================================================= */
+
+function idx(r,c){ return r*GRID + c; }
+function inBounds(r,c){ return r>=0 && r<GRID && c>=0 && c<GRID; }
+
+function uniqueCells(arr){
+  const seen = new Set();
+  const out = [];
+  for (const p of arr){
+    const k = p.r + "," + p.c;
+    if (!seen.has(k)){
+      seen.add(k);
+      out.push(p);
+    }
+  }
+  return out;
+}
+
+function takeN(list, n){
+  if (list.length <= n) return list;
+  // deterministic downsample
+  const step = list.length / n;
+  const out = [];
+  for (let i=0;i<n;i++){
+    out.push(list[Math.floor(i*step)]);
+  }
+  return out;
+}
+
+function rasterRim(){
+  const pts = [];
+  for (let c=0;c<GRID;c++){
+    pts.push({r:0,c}); pts.push({r:GRID-1,c});
+  }
+  for (let r=1;r<GRID-1;r++){
+    pts.push({r,c:0}); pts.push({r,c:GRID-1});
+  }
+  return uniqueCells(pts);
+}
+
+function rasterRadial(targetN, field){
+  const center = { r: Math.floor(GRID/2), c: Math.floor(GRID/2) };
+  const pts = [];
+  if (field === "ORBIT"){
+    // circle-ish ring near perimeter but not on border
+    const r0 = Math.floor(GRID*0.38);
+    for (let a=0;a<360;a+=3){
+      const rad = a * Math.PI / 180;
+      const rr = Math.round(center.r + Math.sin(rad)*r0);
+      const cc = Math.round(center.c + Math.cos(rad)*r0);
+      if (inBounds(rr,cc)) pts.push({r:rr,c:cc});
+    }
+  } else {
+    // rays from center
+    const rays = 10;
+    for (let k=0;k<rays;k++){
+      const ang = (k/rays) * Math.PI * 2;
+      for (let t=0;t<GRID; t++){
+        const rr = Math.round(center.r + Math.sin(ang)*t*0.6);
+        const cc = Math.round(center.c + Math.cos(ang)*t*0.6);
+        if (inBounds(rr,cc)) pts.push({r:rr,c:cc});
+      }
+    }
+    // include a small central disk
+    for (let dr=-2; dr<=2; dr++){
+      for (let dc=-2; dc<=2; dc++){
+        if (dr*dr+dc*dc <= 4) pts.push({r:center.r+dr, c:center.c+dc});
+      }
+    }
+  }
+  return takeN(uniqueCells(pts), targetN);
+}
+
+function rasterSpiral(targetN, field){
+  // classic spiral walk (edge-in or sink-in)
+  const pts = [];
+  let top=0, left=0, bottom=GRID-1, right=GRID-1;
+  while (top<=bottom && left<=right){
+    for (let c=left;c<=right;c++) pts.push({r:top,c});
+    for (let r=top+1;r<=bottom;r++) pts.push({r,c:right});
+    if (top<bottom){
+      for (let c=right-1;c>=left;c--) pts.push({r:bottom,c});
+    }
+    if (left<right){
+      for (let r=bottom-1;r>top;r--) pts.push({r,c:left});
+    }
+    top++; left++; bottom--; right--;
+  }
+  if (field === "SINK"){
+    // sink favors lower half: rotate by cutting and rejoining
+    const cut = Math.floor(pts.length * 0.35);
+    const rotated = pts.slice(cut).concat(pts.slice(0,cut));
+    return takeN(uniqueCells(rotated), targetN);
+  }
+  return takeN(uniqueCells(pts), targetN);
+}
+
+function rasterLine(targetN, field, bandIndex){
+  const pts = [];
+  const r = clamp(2 + (bandIndex % (GRID-4)), 0, GRID-1);
+  if (field === "RIGHT_LEFT"){
+    for (let c=GRID-1;c>=0;c--) pts.push({r,c});
+  } else {
+    for (let c=0;c<GRID;c++) pts.push({r,c});
+  }
+  // thicken line for density
+  const thick = Math.max(0, Math.floor(targetN/24)-1);
+  for (let t=1;t<=thick;t++){
+    for (let c=0;c<GRID;c++){
+      if (inBounds(r+t,c)) pts.push({r:r+t,c});
+      if (inBounds(r-t,c)) pts.push({r:r-t,c});
+    }
+  }
+  return takeN(uniqueCells(pts), targetN);
+}
+
+function rasterColumn(targetN, field, bandIndex){
+  const pts = [];
+  const c = clamp(2 + (bandIndex % (GRID-4)), 0, GRID-1);
+  if (field === "BOTTOM_UP"){
+    for (let r=GRID-1;r>=0;r--) pts.push({r,c});
+  } else {
+    for (let r=0;r<GRID;r++) pts.push({r,c});
+  }
+  const thick = Math.max(0, Math.floor(targetN/24)-1);
+  for (let t=1;t<=thick;t++){
+    for (let r=0;r<GRID;r++){
+      if (inBounds(r,c+t)) pts.push({r,c:c+t});
+      if (inBounds(r,c-t)) pts.push({r,c:c-t});
+    }
+  }
+  return takeN(uniqueCells(pts), targetN);
+}
+
+function rasterGrid(targetN){
+  // allocate a rectangle block; size derived from targetN
+  const area = clamp(targetN, 12, 160);
+  const side = Math.floor(Math.sqrt(area));
+  const h = clamp(side, 3, 12);
+  const w = clamp(Math.floor(area / h), 3, 14);
+  const startR = clamp(Math.floor((GRID - h)/2) + Math.floor((rand()-0.5)*6), 0, GRID-h);
+  const startC = clamp(Math.floor((GRID - w)/2) + Math.floor((rand()-0.5)*6), 0, GRID-w);
+  const pts = [];
+  for (let r=0;r<h;r++){
+    for (let c=0;c<w;c++){
+      pts.push({r:startR+r, c:startC+c});
+    }
+  }
+  return takeN(uniqueCells(pts), targetN);
+}
+
+function rasterCluster(targetN){
+  const center = { r: Math.floor(GRID/2) + Math.floor((rand()-0.5)*8), c: Math.floor(GRID/2) + Math.floor((rand()-0.5)*8) };
+  const pts = [];
+  const attempts = targetN * 8;
+  for (let k=0;k<attempts;k++){
+    // gaussian-ish
+    const rr = Math.round(center.r + (rand()-0.5)*Math.sqrt(targetN));
+    const cc = Math.round(center.c + (rand()-0.5)*Math.sqrt(targetN));
+    if (inBounds(rr,cc)) pts.push({r:rr,c:cc});
+  }
+  // guarantee at least 2 if targetN>1
+  if (pts.length < 2 && targetN > 1){
+    pts.push({r:clamp(center.r,0,GRID-1), c:clamp(center.c,0,GRID-1)});
+    pts.push({r:clamp(center.r+1,0,GRID-1), c:clamp(center.c,0,GRID-1)});
+  }
+  return takeN(uniqueCells(pts), targetN);
+}
+
+function rasterWave(targetN, bandIndex){
+  const pts = [];
+  const baseR = clamp(4 + (bandIndex % (GRID-8)), 0, GRID-1);
+  const amp = clamp(Math.floor(targetN/25), 1, 5);
+  for (let c=0;c<GRID;c++){
+    const rr = Math.round(baseR + Math.sin((c/GRID)*Math.PI*2)*amp);
+    if (inBounds(rr,c)) pts.push({r:rr,c});
+  }
+  // thicken a bit
+  for (let c=0;c<GRID;c+=2){
+    const rr = Math.round(baseR + Math.sin((c/GRID)*Math.PI*2)*amp);
+    if (inBounds(rr+1,c)) pts.push({r:rr+1,c});
+  }
+  return takeN(uniqueCells(pts), targetN);
+}
+
+function rasterFractal(targetN){
+  // branching walk from center (tree-ish)
+  const pts = [];
+  const start = { r: Math.floor(GRID/2), c: Math.floor(GRID/2) };
+  pts.push(start);
+  const branches = 6;
+  for (let b=0;b<branches;b++){
+    let r = start.r, c = start.c;
+    const steps = Math.floor(targetN/branches) + 8;
+    const ang = (b/branches) * Math.PI*2 + (rand()-0.5)*0.6;
+    for (let s=0;s<steps;s++){
+      r += Math.round(Math.sin(ang) + (rand()-0.5));
+      c += Math.round(Math.cos(ang) + (rand()-0.5));
+      r = clamp(r, 0, GRID-1);
+      c = clamp(c, 0, GRID-1);
+      pts.push({r,c});
+      // occasional micro-branch
+      if (rand() < 0.12){
+        const rr = clamp(r + Math.round((rand()-0.5)*3), 0, GRID-1);
+        const cc = clamp(c + Math.round((rand()-0.5)*3), 0, GRID-1);
+        pts.push({r:rr,c:cc});
+      }
+    }
+  }
+  return takeN(uniqueCells(pts), targetN);
+}
+
+function rasterForChunk(chunk, bandIndex){
+  const target = clamp(chunk.DENSITY * 7, 2, 170);
+  if (chunk.semantic_tags.includes("ocean/rim")){
+    // Ocean rim owns the border, full stop.
+    return rasterRim();
+  }
+  switch(chunk.GEOMETRIC_INTENT){
+    case "RADIAL": return rasterRadial(target, chunk.FIELD);
+    case "SPIRAL": return rasterSpiral(target, chunk.FIELD);
+    case "GRID": return rasterGrid(target);
+    case "LINE": return rasterLine(target, chunk.FIELD, bandIndex);
+    case "COLUMN": return rasterColumn(target, chunk.FIELD, bandIndex);
+    case "WAVE": return rasterWave(target, bandIndex);
+    case "FRACTAL": return rasterFractal(target);
+    case "CLUSTER":
+    default:
+      return rasterCluster(target);
+  }
+}
+
+/* =========================================================
+   COMPILE: TEXT → CHUNKS → CELLS
+   ========================================================= */
+
+const chunks = (() => {
+  const lines = normalizeLines(SOURCE_TEXT);
+  const cs = chunkShield(lines);
+
+  // annotate
+  for (const ch of cs){
+    ch.semantic_tags = scoreTags(ch.raw_text);
+    ch.emotional_weight = weightEmotion(ch.raw_text);
+    ch.symbolic_weight = weightSymbol(ch.raw_text);
+    ch.DENSITY = densityFromWeights(ch.emotional_weight, ch.symbolic_weight);
+    ch.GEOMETRIC_INTENT = deriveGeometry(ch.semantic_tags, ch.title);
+    ch.FIELD = geometryToField(ch.GEOMETRIC_INTENT, ch.semantic_tags, ch.title);
+  }
+
+  // deterministic raster assignment with bandIndex = chunk order
+  cs.forEach((ch, i) => {
+    const pts = rasterForChunk(ch, i);
+    ch.cell_addrs = pts.map(p => ({r:p.r,c:p.c, i: idx(p.r,p.c)}));
+    // write references into cells.layers (not full text)
+    for (const a of ch.cell_addrs){
+      const cell = cells[a.i];
+      if (cell) cell.layers.push(ch.id);
+    }
+  });
+
+  // enforce: if density>1, ensure it spans >1 cell (should already)
+  // also sort layers in each cell by chunk density desc (thicker chunks "surface" first)
+  const densityMap = new Map(cs.map(c => [c.id, c.DENSITY]));
+  for (const cell of cells){
+    cell.layers.sort((a,b)=> (densityMap.get(b)||0) - (densityMap.get(a)||0));
+  }
+
+  return cs;
+})();
+
+/* =========================================================
+   UI STATE
+   ========================================================= */
+
+const elGrid = document.getElementById("grid");
+const elCanvas = document.getElementById("gridCanvas");
+
+const elZoom = document.getElementById("zoom");
+const elZoomLabel = document.getElementById("zoomLabel");
+const elViewMode = document.getElementById("viewMode");
+const elAutoReveal = document.getElementById("autoReveal");
+const elSearch = document.getElementById("search");
+
+const elAddr = document.getElementById("addr");
+const elAddrMeta = document.getElementById("addrMeta");
+const elFocusName = document.getElementById("focusName");
+const elFocusMeta = document.getElementById("focusMeta");
+
+const elCoord = document.getElementById("coord");
+const elState = document.getElementById("state");
+const elLayerCount = document.getElementById("layerCount");
+const elRevealCount = document.getElementById("revealCount");
+const elLayersList = document.getElementById("layersList");
+
+const elChunkKV = document.getElementById("chunkKV");
+const elChunkGeom = document.getElementById("chunkGeom");
+const elChunkField = document.getElementById("chunkField");
+const elChunkDensity = document.getElementById("chunkDensity");
+const elChunkTags = document.getElementById("chunkTags");
+const elChunkText = document.getElementById("chunkText");
+const elChunkHint = document.getElementById("chunkHint");
+
+document.getElementById("pomlBox").textContent = POML_TEXT;
+
+const toast = document.getElementById("toast");
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(()=> toast.classList.remove("show"), 1200);
+}
+
+const chunkById = new Map(chunks.map(c => [c.id, c]));
+
+let selected = 0; // cell index
+let focusedChunk = null; // chunk id
+let focusCycle = []; // used by prev/next focus stepping
+let focusCycleIndex = 0;
+
+let viewMode = elViewMode.value;
+let autoReveal = elAutoReveal.value === "on";
+
+let pan = { x:0, y:0 };
+let zoom = parseFloat(elZoom.value);
+
+/* =========================================================
+   DOM GRID
+   ========================================================= */
+
+const cellEls = Array.from({length: CELLS_N}, () => null);
+
+function cellLabel(cell){
+  if (viewMode === "none") return "";
+  const layers = cell.layers;
+  if (layers.length === 0) return "";
+  if (viewMode === "heat") return "";
+  // glyph: show revealed top layer as a 1–2 letter code
+  const n = Math.min(cell.revealed || 0, layers.length);
+  if (n <= 0) return "·";
+  const topId = layers[n-1];
+  const ch = chunkById.get(topId);
+  if (!ch) return "·";
+  const w = ch.title.replace(/[^A-Za-z]/g,"").toUpperCase();
+  return (w.slice(0,2) || ch.id);
+}
+
+function heat(cell){
+  // subtle, ink-safe: intensity by layers + visited
+  const L = cell.layers.length;
+  const v = cell.visited;
+  const base = Math.min(0.22, L * 0.03);
+  const add = Math.min(0.10, v * 0.02);
+  return base + add;
+}
+
+function isChunkInCell(cell, chunkId){
+  return cell.layers.includes(chunkId);
+}
+
+function renderCell(i){
+  const cell = cells[i];
+  const el = cellEls[i];
+  if (!el) return;
+
+  el.classList.toggle("sel", i === selected);
+  el.classList.toggle("visited", cell.visited > 0);
+
+  // focus highlight: if focused, dim others
+  if (focusedChunk){
+    const inIt = isChunkInCell(cell, focusedChunk);
+    el.style.opacity = inIt ? "1" : "0.22";
+  } else {
+    el.style.opacity = "1";
+  }
+
+  // view modes
+  if (viewMode === "heat"){
+    const a = heat(cell);
+    el.style.background = `rgba(15,118,110,${a})`;
+    el.textContent = "";
+  } else if (viewMode === "glyph"){
+    el.style.background = cell.layers.length ? "rgba(15,118,110,.06)" : "#fff";
+    const lab = cellLabel(cell);
+    el.innerHTML = lab ? `<span class="mini">${lab}</span>` : "";
+  } else {
+    el.style.background = cell.layers.length ? "rgba(15,118,110,.04)" : "#fff";
+    el.textContent = "";
+  }
+}
+
+function renderAll(){
+  for (let i=0;i<CELLS_N;i++) renderCell(i);
+  syncSelectionPanel();
+}
+
+function buildGrid(){
+  const frag = document.createDocumentFragment();
+  for (let i=0;i<CELLS_N;i++){
+    const d = document.createElement("div");
+    d.className = "cell";
+    d.role = "button";
+    d.tabIndex = -1;
+    d.dataset.i = String(i);
+    frag.appendChild(d);
+    cellEls[i] = d;
+  }
+  elGrid.appendChild(frag);
+  renderAll();
+}
+
+buildGrid();
+
+/* =========================================================
+   SELECTION + TRAVERSAL
+   ========================================================= */
+
+function rc(i){
+  return { r: Math.floor(i/GRID), c: i%GRID };
+}
+function fmtRC(r,c){
+  return `r${String(r+1).padStart(2,"0")}:c${String(c+1).padStart(2,"0")}`;
+}
+function clampSel(i){
+  return clamp(i, 0, CELLS_N-1);
+}
+
+function visitCell(i){
+  const cell = cells[i];
+  cell.visited += 1;
+  if (autoReveal){
+    cell.revealed = clamp(cell.revealed + 1, 0, cell.layers.length);
+  }
+}
+
+function setSelected(i, fromUser=true){
+  const prev = selected;
+  selected = clampSel(i);
+  if (fromUser) visitCell(selected);
+  renderCell(prev);
+  renderCell(selected);
+  syncSelectionPanel();
+}
+
+function move(dr,dc){
+  const {r,c} = rc(selected);
+  const nr = clamp(r + dr, 0, GRID-1);
+  const nc = clamp(c + dc, 0, GRID-1);
+  setSelected(idx(nr,nc));
+}
+
+document.getElementById("up").addEventListener("click", ()=> move(-1,0));
+document.getElementById("down").addEventListener("click", ()=> move(1,0));
+document.getElementById("left").addEventListener("click", ()=> move(0,-1));
+document.getElementById("right").addEventListener("click", ()=> move(0,1));
+document.getElementById("reveal").addEventListener("click", ()=> {
+  const cell = cells[selected];
+  if (cell.layers.length === 0){ showToast("No layers here."); return; }
+  cell.revealed = clamp(cell.revealed + 1, 0, cell.layers.length);
+  renderCell(selected);
+  syncSelectionPanel();
+});
+
+window.addEventListener("keydown", (e)=>{
+  if (e.key === "ArrowUp") { e.preventDefault(); move(-1,0); }
+  if (e.key === "ArrowDown") { e.preventDefault(); move(1,0); }
+  if (e.key === "ArrowLeft") { e.preventDefault(); move(0,-1); }
+  if (e.key === "ArrowRight") { e.preventDefault(); move(0,1); }
+  if (e.key.toLowerCase() === " ") { e.preventDefault(); document.getElementById("reveal").click(); }
+});
+
+/* =========================================================
+   CLICK HANDLING (event delegation)
+   ========================================================= */
+
+elGrid.addEventListener("click", (e)=>{
+  const target = e.target.closest(".cell");
+  if (!target) return;
+  const i = parseInt(target.dataset.i, 10);
+  setSelected(i);
+});
+
+/* =========================================================
+   PANEL: SELECTED CELL
+   ========================================================= */
+
+function syncSelectionPanel(){
+  const cell = cells[selected];
+  const {r,c} = cell;
+  const addr = fmtRC(r,c);
+
+  elAddr.textContent = addr;
+  elCoord.textContent = addr;
+
+  elLayerCount.textContent = String(cell.layers.length);
+  elRevealCount.textContent = String(cell.revealed);
+
+  const state = cell.visited ? `visited ×${cell.visited}` : "unvisited";
+  elState.textContent = state;
+
+  elAddrMeta.textContent = `layers ${cell.layers.length} · revealed ${cell.revealed}`;
+
+  // layers list: show revealed + hidden count
+  elLayersList.innerHTML = "";
+  if (cell.layers.length === 0){
+    const empty = document.createElement("div");
+    empty.className = "layerItem";
+    empty.innerHTML = `<div class="layerTop"><b>Empty address</b><span>no references</span></div>
+      <div class="layerMeta">Try the rim (ocean) or center (cosmos).</div>`;
+    elLayersList.appendChild(empty);
+    return;
+  }
+
+  const revealedN = clamp(cell.revealed, 0, cell.layers.length);
+  const visible = cell.layers.slice(0, revealedN);
+  const hidden = cell.layers.slice(revealedN);
+
+  // If nothing revealed yet, still show “sealed” layers
+  if (revealedN === 0){
+    const sealed = document.createElement("div");
+    sealed.className = "layerItem";
+    sealed.innerHTML = `<div class="layerTop"><b>Sealed layers</b><span>${cell.layers.length} hidden</span></div>
+      <div class="layerMeta">Traverse or press ◎ to reveal.</div>`;
+    elLayersList.appendChild(sealed);
+  }
+
+  visible.forEach((chunkId, k) => {
+    const ch = chunkById.get(chunkId);
+    const item = document.createElement("div");
+    item.className = "layerItem";
+    item.dataset.chunkId = chunkId;
+
+    const tags = (ch.semantic_tags || []).slice(0,4).join(", ");
+    item.innerHTML = `
+      <div class="layerTop">
+        <b>${k+1}. ${escapeHtml(ch.title)}</b>
+        <span>${chunkId}</span>
+      </div>
+      <div class="layerMeta">
+        <span>geom: <b>${ch.GEOMETRIC_INTENT}</b></span>
+        <span>field: <b>${ch.FIELD}</b></span>
+        <span>density: <b>${ch.DENSITY}</b></span>
+        <span>tags: <b>${escapeHtml(tags || "—")}</b></span>
+      </div>
+    `;
+    item.addEventListener("click", ()=> focusChunk(chunkId));
+    elLayersList.appendChild(item);
+  });
+
+  if (hidden.length){
+    const hiddenBox = document.createElement("div");
+    hiddenBox.className = "layerItem";
+    hiddenBox.innerHTML = `<div class="layerTop"><b>Hidden layers</b><span>${hidden.length} unrevealed</span></div>
+      <div class="layerMeta">Traverse or press ◎ to peel the next layer.</div>`;
+    elLayersList.appendChild(hiddenBox);
+  }
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, (m)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+}
+
+/* =========================================================
+   FOCUS: CHUNK
+   ========================================================= */
+
+function focusChunk(chunkId){
+  const ch = chunkById.get(chunkId);
+  if (!ch) return;
+  focusedChunk = chunkId;
+
+  elFocusName.textContent = ch.title;
+  elFocusMeta.textContent = `${ch.GEOMETRIC_INTENT}/${ch.FIELD} · density ${ch.DENSITY}`;
+
+  elChunkHint.style.display = "none";
+  elChunkKV.style.display = "grid";
+  elChunkText.style.display = "block";
+
+  elChunkGeom.textContent = ch.GEOMETRIC_INTENT;
+  elChunkField.textContent = ch.FIELD;
+  elChunkDensity.textContent = String(ch.DENSITY);
+  elChunkTags.textContent = (ch.semantic_tags || []).slice(0,7).join(", ") || "—";
+  elChunkText.textContent = ch.raw_text;
+
+  // focus cycle: all chunks in current cell (revealed) OR if none revealed, all layers.
+  const cell = cells[selected];
+  const revealedN = clamp(cell.revealed, 0, cell.layers.length);
+  const visible = revealedN ? cell.layers.slice(0, revealedN) : cell.layers.slice();
+  focusCycle = visible.length ? visible : [chunkId];
+  focusCycleIndex = Math.max(0, focusCycle.indexOf(chunkId));
+
+  renderAll();
+  showToast("Focused chunk highlighted.");
+}
+
+document.getElementById("clearFocus").addEventListener("click", ()=>{
+  focusedChunk = null;
+  elFocusName.textContent = "—";
+  elFocusMeta.textContent = "tap a layer";
+  elChunkKV.style.display = "none";
+  elChunkText.style.display = "none";
+  elChunkHint.style.display = "block";
+  renderAll();
+});
+
+document.getElementById("prevLayer").addEventListener("click", ()=>{
+  if (!focusCycle.length) return;
+  focusCycleIndex = (focusCycleIndex - 1 + focusCycle.length) % focusCycle.length;
+  focusChunk(focusCycle[focusCycleIndex]);
+});
+document.getElementById("nextLayer").addEventListener("click", ()=>{
+  if (!focusCycle.length) return;
+  focusCycleIndex = (focusCycleIndex + 1) % focusCycle.length;
+  focusChunk(focusCycle[focusCycleIndex]);
+});
+
+/* =========================================================
+   VIEW MODE / ZOOM / SETTINGS
+   ========================================================= */
+
+function applyZoom(){
+  zoom = parseFloat(elZoom.value);
+  elZoomLabel.textContent = zoom.toFixed(2) + "×";
+  elGrid.style.transform = `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`;
+}
+
+elZoom.addEventListener("input", ()=>{ applyZoom(); });
+elViewMode.addEventListener("change", ()=>{
+  viewMode = elViewMode.value;
+  renderAll();
+});
+elAutoReveal.addEventListener("change", ()=>{
+  autoReveal = elAutoReveal.value === "on";
+  showToast(autoReveal ? "Auto-reveal on." : "Auto-reveal off.");
+});
+
+applyZoom();
+
+/* =========================================================
+   PAN (drag)
+   ========================================================= */
+
+let dragging = false;
+let last = null;
+
+function pointFromEvent(e){
+  if (e.touches && e.touches[0]) return {x:e.touches[0].clientX, y:e.touches[0].clientY};
+  return {x:e.clientX, y:e.clientY};
+}
+
+elCanvas.addEventListener("pointerdown", (e)=>{
+  // only start drag if not clicking a cell (cells will still work because delegation is on grid)
+  dragging = true;
+  last = {x:e.clientX, y:e.clientY};
+  elCanvas.setPointerCapture(e.pointerId);
+});
+elCanvas.addEventListener("pointermove", (e)=>{
+  if (!dragging || !last) return;
+  const dx = e.clientX - last.x;
+  const dy = e.clientY - last.y;
+  last = {x:e.clientX, y:e.clientY};
+  pan.x += dx;
+  pan.y += dy;
+  applyZoom();
+});
+elCanvas.addEventListener("pointerup", ()=>{
+  dragging = false;
+  last = null;
+});
+elCanvas.addEventListener("pointercancel", ()=>{
+  dragging = false;
+  last = null;
+});
+
+/* =========================================================
+   SEARCH (highlights matching chunks)
+   ========================================================= */
+
+let searchHits = new Set();
+
+function updateSearch(){
+  const q = elSearch.value.trim().toLowerCase();
+  searchHits = new Set();
+  if (!q){
+    // clear and rerender
+    renderAll();
+    return;
+  }
+  for (const ch of chunks){
+    const hay = (ch.title + "\n" + ch.raw_text).toLowerCase();
+    if (hay.includes(q)) searchHits.add(ch.id);
+  }
+
+  // highlight: dim cells that don't contain any hit chunk
+  for (let i=0;i<CELLS_N;i++){
+    const cell = cells[i];
+    const el = cellEls[i];
+    if (!el) continue;
+    const any = cell.layers.some(id => searchHits.has(id));
+    el.style.opacity = any ? "1" : "0.12";
+  }
+  showToast(`${searchHits.size} chunk(s) match.`);
+}
+
+let searchTimer = null;
+elSearch.addEventListener("input", ()=>{
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(updateSearch, 120);
+});
+
+/* =========================================================
+   RESET
+   ========================================================= */
+document.getElementById("reset").addEventListener("click", ()=>{
+  for (const cell of cells){
+    cell.visited = 0;
+    cell.revealed = 0;
+  }
+  focusedChunk = null;
+  elFocusName.textContent = "—";
+  elFocusMeta.textContent = "tap a layer";
+  elChunkKV.style.display = "none";
+  elChunkText.style.display = "none";
+  elChunkHint.style.display = "block";
+  renderAll();
+  showToast("Traversal reset.");
+});
+
+/* =========================================================
+   EXPORT MANIFEST (CODE-TEXT)
+   ========================================================= */
+function buildManifest(){
+  return {
+    meta: {
+      name: "Shield of Achilles — Calligram Grid Bridge",
+      version: "1.0-local",
+      grid: { rows: GRID, cols: GRID },
+      intent: "Compile linear text into spatial-semantic calligram field: geometry precedes reading; traversal reveals layers.",
+    },
+    poml: POML_TEXT,
+    chunks: chunks.map(ch => ({
+      id: ch.id,
+      title: ch.title,
+      semantic_tags: ch.semantic_tags,
+      emotional_weight: ch.emotional_weight,
+      symbolic_weight: ch.symbolic_weight,
+      GEOMETRIC_INTENT: ch.GEOMETRIC_INTENT,
+      FIELD: ch.FIELD,
+      DENSITY: ch.DENSITY,
+      cell_addrs: ch.cell_addrs.map(a => ({ r:a.r, c:a.c })),
+      // raw_text intentionally included in manifest (code-text); cells still reference ids only
+      raw_text: ch.raw_text,
+    })),
+    cells: cells.map(cell => ({
+      r: cell.r,
+      c: cell.c,
+      layers: cell.layers.slice(), // references only
+    })),
+  };
+}
+
+document.getElementById("copyManifest").addEventListener("click", async ()=>{
+  const manifest = buildManifest();
+  const json = JSON.stringify(manifest, null, 2);
+  try{
+    await navigator.clipboard.writeText(json);
+    showToast("Manifest JSON copied.");
+  }catch(err){
+    showToast("Clipboard blocked (copy manually from console).");
+    console.log(json);
+  }
+});
+
+/* =========================================================
+   INIT: select center-ish for a dramatic start
+   ========================================================= */
+setSelected(idx(Math.floor(GRID/2), Math.floor(GRID/2)), true);
+renderAll();
+</script>
+</body>
+</html>

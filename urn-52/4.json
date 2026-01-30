@@ -1,0 +1,354 @@
+{
+  "meta": {
+    "system_id": "KEATS_URN_INSCRIPTION_V1",
+    "grid": { "width": 24, "height": 24, "wrap_x": true, "wrap_y": false },
+    "cell_display_capacity_chars": 480,
+    "seed": "KEATS|ODE_ON_A_GRECIAN_URN|URN_BANDS|V1",
+    "spine_column_x": 0,
+    "seam_column_x": 23,
+    "resolution_contract": "To materialize any cell(x,y): start with default_cell; apply row_defaults[y]; apply structural_rules (spine/seam); then apply explicit overrides matching (x,y). Final cell MUST contain panel_id,line_ids,payload_text,beacon,redundancy_role."
+  },
+
+  "line_index": [
+    { "line_id": "L01", "stanza": 1, "line_number": 1, "text": "Thou still unravish'd bride of quietness,", "motifs": ["address", "silence"], "entities": ["urn", "bride"], "actions": ["address"] },
+    { "line_id": "L02", "stanza": 1, "line_number": 2, "text": "Thou foster-child of silence and slow time,", "motifs": ["silence", "time"], "entities": ["urn", "foster-child"], "actions": ["address"] },
+    { "line_id": "L03", "stanza": 1, "line_number": 3, "text": "Sylvan historian, who canst thus express", "motifs": ["history", "inscription"], "entities": ["urn", "historian"], "actions": ["express"] },
+    { "line_id": "L04", "stanza": 1, "line_number": 4, "text": "A flowery tale more sweetly than our rhyme:", "motifs": ["comparison", "tale"], "entities": ["tale", "rhyme"], "actions": ["tell", "compare"] },
+    { "line_id": "L05", "stanza": 1, "line_number": 5, "text": "What leaf-fring'd legend haunts about thy shape", "motifs": ["legend", "haunting", "questions"], "entities": ["legend", "shape"], "actions": ["haunt", "ask"] },
+    { "line_id": "L06", "stanza": 1, "line_number": 6, "text": "Of deities or mortals, or of both,", "motifs": ["myth", "mixed beings"], "entities": ["deities", "mortals"], "actions": ["classify"] },
+    { "line_id": "L07", "stanza": 1, "line_number": 7, "text": "In Tempe or the dales of Arcady?", "motifs": ["place", "pastoral"], "entities": ["Tempe", "Arcady"], "actions": ["locate", "ask"] },
+    { "line_id": "L08", "stanza": 1, "line_number": 8, "text": "What men or gods are these? What maidens loth?", "motifs": ["questions", "scene decoding"], "entities": ["men", "gods", "maidens"], "actions": ["ask", "identify"] },
+    { "line_id": "L09", "stanza": 1, "line_number": 9, "text": "What mad pursuit? What struggle to escape?", "motifs": ["chase", "frozen action"], "entities": ["pursuit", "struggle"], "actions": ["pursue", "escape", "ask"] },
+    { "line_id": "L10", "stanza": 1, "line_number": 10, "text": "What pipes and timbrels? What wild ecstasy?", "motifs": ["music", "unheard audio"], "entities": ["pipes", "timbrels", "ecstasy"], "actions": ["play", "ask"] },
+
+    { "line_id": "L11", "stanza": 2, "line_number": 1, "text": "Heard melodies are sweet, but those unheard", "motifs": ["heard/unheard", "audio channel"], "entities": ["melodies"], "actions": ["contrast"] },
+    { "line_id": "L12", "stanza": 2, "line_number": 2, "text": "Are sweeter; therefore, ye soft pipes, play on;", "motifs": ["unheard audio", "loop command"], "entities": ["pipes"], "actions": ["command", "play"] },
+    { "line_id": "L13", "stanza": 2, "line_number": 3, "text": "Not to the sensual ear, but, more endear'd,", "motifs": ["spirit vs sense"], "entities": ["ear"], "actions": ["redirect"] },
+    { "line_id": "L14", "stanza": 2, "line_number": 4, "text": "Pipe to the spirit ditties of no tone:", "motifs": ["unheard audio", "spirit channel"], "entities": ["spirit", "ditties"], "actions": ["pipe"] },
+    { "line_id": "L15", "stanza": 2, "line_number": 5, "text": "Fair youth, beneath the trees, thou canst not leave", "motifs": ["frozen action", "eternity"], "entities": ["youth", "trees"], "actions": ["cannot leave"] },
+    { "line_id": "L16", "stanza": 2, "line_number": 6, "text": "Thy song, nor ever can those trees be bare;", "motifs": ["permanence", "perpetual nature"], "entities": ["song", "trees"], "actions": ["sing", "remain"] },
+    { "line_id": "L17", "stanza": 2, "line_number": 7, "text": "Bold Lover, never, never canst thou kiss,", "motifs": ["desire deferred", "frozen climax"], "entities": ["lover"], "actions": ["cannot kiss"] },
+    { "line_id": "L18", "stanza": 2, "line_number": 8, "text": "Though winning near the goal yet, do not grieve;", "motifs": ["near-goal", "instruction"], "entities": ["goal"], "actions": ["console", "instruct"] },
+    { "line_id": "L19", "stanza": 2, "line_number": 9, "text": "She cannot fade, though thou hast not thy bliss,", "motifs": ["anti-decay", "tradeoff"], "entities": ["she", "bliss"], "actions": ["cannot fade"] },
+    { "line_id": "L20", "stanza": 2, "line_number": 10, "text": "For ever wilt thou love, and she be fair!", "motifs": ["forever", "loop"], "entities": ["thou", "she"], "actions": ["love", "remain fair"] },
+
+    { "line_id": "L21", "stanza": 3, "line_number": 1, "text": "Ah, happy, happy boughs! that cannot shed", "motifs": ["perpetual spring", "cannot"], "entities": ["boughs"], "actions": ["cannot shed"] },
+    { "line_id": "L22", "stanza": 3, "line_number": 2, "text": "Your leaves, nor ever bid the Spring adieu;", "motifs": ["forever", "season suspended"], "entities": ["leaves", "Spring"], "actions": ["cannot bid adieu"] },
+    { "line_id": "L23", "stanza": 3, "line_number": 3, "text": "And, happy melodist, unwearied,", "motifs": ["unwearied loop"], "entities": ["melodist"], "actions": ["persist"] },
+    { "line_id": "L24", "stanza": 3, "line_number": 4, "text": "For ever piping songs for ever new;", "motifs": ["for ever", "recursion"], "entities": ["songs"], "actions": ["pipe"] },
+    { "line_id": "L25", "stanza": 3, "line_number": 5, "text": "More happy love! more happy, happy love!", "motifs": ["affect amplification"], "entities": ["love"], "actions": ["exclaim"] },
+    { "line_id": "L26", "stanza": 3, "line_number": 6, "text": "For ever warm and still to be enjoy'd,", "motifs": ["eternal enjoyment"], "entities": ["love"], "actions": ["be enjoyed"] },
+    { "line_id": "L27", "stanza": 3, "line_number": 7, "text": "For ever panting, and for ever young;", "motifs": ["for ever", "youth loop"], "entities": ["panting", "young"], "actions": ["pant", "remain young"] },
+    { "line_id": "L28", "stanza": 3, "line_number": 8, "text": "All breathing human passion far above,", "motifs": ["human passion", "excess"], "entities": ["passion"], "actions": ["breathe"] },
+    { "line_id": "L29", "stanza": 3, "line_number": 9, "text": "That leaves a heart high-sorrowful and cloy'd,", "motifs": ["physiology", "cloy"], "entities": ["heart"], "actions": ["leave"] },
+    { "line_id": "L30", "stanza": 3, "line_number": 10, "text": "A burning forehead, and a parching tongue.", "motifs": ["physiology", "burning/parching"], "entities": ["forehead", "tongue"], "actions": ["burn", "parch"] },
+
+    { "line_id": "L31", "stanza": 4, "line_number": 1, "text": "Who are these coming to the sacrifice?", "motifs": ["ritual", "questions"], "entities": ["these", "sacrifice"], "actions": ["come", "ask"] },
+    { "line_id": "L32", "stanza": 4, "line_number": 2, "text": "To what green altar, O mysterious priest,", "motifs": ["altar", "address"], "entities": ["altar", "priest"], "actions": ["address", "ask"] },
+    { "line_id": "L33", "stanza": 4, "line_number": 3, "text": "Lead'st thou that heifer lowing at the skies,", "motifs": ["procession", "animal voice"], "entities": ["heifer", "skies"], "actions": ["lead", "low"] },
+    { "line_id": "L34", "stanza": 4, "line_number": 4, "text": "And all her silken flanks with garlands drest?", "motifs": ["ornament", "ritual dressing"], "entities": ["flanks", "garlands"], "actions": ["dress"] },
+    { "line_id": "L35", "stanza": 4, "line_number": 5, "text": "What little town by river or sea shore,", "motifs": ["place", "absence"], "entities": ["town", "river", "sea shore"], "actions": ["ask", "locate"] },
+    { "line_id": "L36", "stanza": 4, "line_number": 6, "text": "Or mountain-built with peaceful citadel,", "motifs": ["citadel", "peace"], "entities": ["mountain", "citadel"], "actions": ["describe"] },
+    { "line_id": "L37", "stanza": 4, "line_number": 7, "text": "Is emptied of this folk, this pious morn?", "motifs": ["emptied", "ritual morning"], "entities": ["folk", "morn"], "actions": ["empty"] },
+    { "line_id": "L38", "stanza": 4, "line_number": 8, "text": "And, little town, thy streets for evermore", "motifs": ["forever", "desolation"], "entities": ["town", "streets"], "actions": ["address", "remain"] },
+    { "line_id": "L39", "stanza": 4, "line_number": 9, "text": "Will silent be; and not a soul to tell", "motifs": ["silence", "no witness"], "entities": ["soul"], "actions": ["be silent"] },
+    { "line_id": "L40", "stanza": 4, "line_number": 10, "text": "Why thou art desolate, can e'er return.", "motifs": ["no return", "closure"], "entities": ["thou", "desolate"], "actions": ["cannot return"] },
+
+    { "line_id": "L41", "stanza": 5, "line_number": 1, "text": "O Attic shape! Fair attitude! with brede", "motifs": ["address", "artifact"], "entities": ["Attic shape", "attitude", "brede"], "actions": ["address"] },
+    { "line_id": "L42", "stanza": 5, "line_number": 2, "text": "Of marble men and maidens overwrought,", "motifs": ["material", "engraving"], "entities": ["marble men", "maidens"], "actions": ["overwrought"] },
+    { "line_id": "L43", "stanza": 5, "line_number": 3, "text": "With forest branches and the trodden weed;", "motifs": ["pastoral", "ground"], "entities": ["branches", "weed"], "actions": ["tread"] },
+    { "line_id": "L44", "stanza": 5, "line_number": 4, "text": "Thou, silent form, dost tease us out of thought", "motifs": ["silence", "cognitive displacement"], "entities": ["silent form", "us"], "actions": ["tease"] },
+    { "line_id": "L45", "stanza": 5, "line_number": 5, "text": "As doth eternity: Cold Pastoral!", "motifs": ["eternity", "cold pastoral"], "entities": ["eternity"], "actions": ["name"] },
+    { "line_id": "L46", "stanza": 5, "line_number": 6, "text": "When old age shall this generation waste,", "motifs": ["time", "decay"], "entities": ["old age", "generation"], "actions": ["waste"] },
+    { "line_id": "L47", "stanza": 5, "line_number": 7, "text": "Thou shalt remain, in midst of other woe", "motifs": ["remains", "archive endurance"], "entities": ["thou", "woe"], "actions": ["remain"] },
+    { "line_id": "L48", "stanza": 5, "line_number": 8, "text": "Than ours, a friend to man, to whom thou say'st,", "motifs": ["address", "speech from object"], "entities": ["friend", "man"], "actions": ["say"] },
+    { "line_id": "L49", "stanza": 5, "line_number": 9, "text": "\"Beauty is truth, truth beauty,—that is all", "motifs": ["epigram", "truth/beauty"], "entities": ["beauty", "truth"], "actions": ["assert"] },
+    { "line_id": "L50", "stanza": 5, "line_number": 10, "text": "Ye know on earth, and all ye need to know.\"", "motifs": ["epigram", "closure"], "entities": ["ye", "earth"], "actions": ["close"] }
+  ],
+
+  "panel_model": {
+    "panels": [
+      {
+        "id": "P0",
+        "title": "INDEX / BEACON SPINE",
+        "rationale": "High-reliability control channel for navigation, locks, and resync.",
+        "member_line_ids": [],
+        "tagset": ["index", "beacon", "error_recovery", "addressing"]
+      },
+      {
+        "id": "P1",
+        "title": "ADDRESS + INTERROGATION (Legend Haunts)",
+        "rationale": "Direct address plus question-burst creates a queryable scene decoder.",
+        "member_line_ids": ["L01","L02","L03","L04","L05","L06","L07","L08","L09","L10"],
+        "tagset": ["address", "questions", "scene_decode", "frozen_action_seed"]
+      },
+      {
+        "id": "P2",
+        "title": "UNHEARD AUDIO + FROZEN SONG (Play On)",
+        "rationale": "Splits sensual channel from spirit channel; enforces ‘unheard’ as storage advantage.",
+        "member_line_ids": ["L11","L12","L13","L14","L15","L16","L17","L18","L19","L20"],
+        "tagset": ["audio", "unheard", "loop_command", "desire_deferred"]
+      },
+      {
+        "id": "P3",
+        "title": "AFFECT LOOP (For ever…)",
+        "rationale": "Recursion (‘for ever’) is treated as a redundancy directive; physiology as overflow signal.",
+        "member_line_ids": ["L21","L22","L23","L24","L25","L26","L27","L28","L29","L30"],
+        "tagset": ["recursion", "perpetual_spring", "affect", "physiology"]
+      },
+      {
+        "id": "P4",
+        "title": "RITUAL LOOP + EMPTY TOWN (No Return)",
+        "rationale": "Procession implies source town; town becomes silent address-space ‘hole’ (cannot return).",
+        "member_line_ids": ["L31","L32","L33","L34","L35","L36","L37","L38","L39","L40"],
+        "tagset": ["ritual", "procession", "absence", "closure", "silence"]
+      },
+      {
+        "id": "P5",
+        "title": "EPIGRAM OUTPUT (Cold Pastoral)",
+        "rationale": "Final quote is treated as a checksum-like payload repeated for stable retrieval.",
+        "member_line_ids": ["L41","L42","L43","L44","L45","L46","L47","L48","L49","L50"],
+        "tagset": ["epigram", "truth_beauty", "archive_endurance", "eternity"]
+      }
+    ]
+  },
+
+  "grid_allocation": {
+    "default_cell": {
+      "panel_id": "P0",
+      "line_ids": [],
+      "payload_text": "",
+      "beacon": false,
+      "redundancy_role": "glue"
+    },
+
+    "row_defaults": [
+      { "y": 0, "panel_id": "P0", "redundancy_role": "core" },
+      { "y": 1, "panel_id": "P0", "redundancy_role": "glue" },
+      { "y": 2, "panel_id": "P0", "redundancy_role": "glue" },
+
+      { "y": 3, "panel_id": "P1", "redundancy_role": "core" },
+      { "y": 4, "panel_id": "P1", "redundancy_role": "echo" },
+      { "y": 5, "panel_id": "P1", "redundancy_role": "glue" },
+      { "y": 6, "panel_id": "P1", "redundancy_role": "glue" },
+
+      { "y": 7, "panel_id": "P2", "redundancy_role": "core" },
+      { "y": 8, "panel_id": "P2", "redundancy_role": "echo" },
+      { "y": 9, "panel_id": "P2", "redundancy_role": "glue" },
+      { "y": 10, "panel_id": "P2", "redundancy_role": "glue" },
+
+      { "y": 11, "panel_id": "P3", "redundancy_role": "core" },
+      { "y": 12, "panel_id": "P3", "redundancy_role": "echo" },
+      { "y": 13, "panel_id": "P3", "redundancy_role": "glue" },
+      { "y": 14, "panel_id": "P3", "redundancy_role": "glue" },
+
+      { "y": 15, "panel_id": "P4", "redundancy_role": "core" },
+      { "y": 16, "panel_id": "P4", "redundancy_role": "echo" },
+      { "y": 17, "panel_id": "P4", "redundancy_role": "glue" },
+      { "y": 18, "panel_id": "P4", "redundancy_role": "glue" },
+
+      { "y": 19, "panel_id": "P5", "redundancy_role": "core" },
+      { "y": 20, "panel_id": "P5", "redundancy_role": "echo" },
+      { "y": 21, "panel_id": "P5", "redundancy_role": "glue" },
+      { "y": 22, "panel_id": "P5", "redundancy_role": "echo" },
+      { "y": 23, "panel_id": "P5", "redundancy_role": "glue" }
+    ],
+
+    "structural_rules": [
+      {
+        "name": "SEAM_COLUMN",
+        "applies_to": { "x": 23, "y_range": [0, 23] },
+        "cell": {
+          "panel_id": "P0",
+          "line_ids": [],
+          "payload_text": "⟂SEAM⟂|ROW_CRC=crc8(seed|y)",
+          "beacon": true,
+          "redundancy_role": "glue"
+        }
+      },
+      {
+        "name": "SPINE_COLUMN_DEFAULT",
+        "applies_to": { "x": 0, "y_range": [0, 23] },
+        "cell": {
+          "panel_id": "P0",
+          "line_ids": [],
+          "payload_text": "§B|P0|SPINE|NAV|crc8(seed|NAV|y)",
+          "beacon": true,
+          "redundancy_role": "core"
+        }
+      }
+    ],
+
+    "overrides": [
+      { "x": 0, "y": 0, "panel_id": "P0", "line_ids": [], "payload_text": "§B|P0|LOCK|INDEX|7A", "beacon": true, "redundancy_role": "core" },
+      { "x": 1, "y": 0, "panel_id": "P0", "line_ids": [], "payload_text": "§B|P1|GOTO|ADDRESS|A1", "beacon": true, "redundancy_role": "core" },
+      { "x": 2, "y": 0, "panel_id": "P0", "line_ids": [], "payload_text": "§B|P2|GOTO|UNHEARD|B2", "beacon": true, "redundancy_role": "core" },
+      { "x": 3, "y": 0, "panel_id": "P0", "line_ids": [], "payload_text": "§B|P3|GOTO|FOREVER|C3", "beacon": true, "redundancy_role": "core" },
+      { "x": 4, "y": 0, "panel_id": "P0", "line_ids": [], "payload_text": "§B|P4|GOTO|RITUAL|D4", "beacon": true, "redundancy_role": "core" },
+      { "x": 5, "y": 0, "panel_id": "P0", "line_ids": [], "payload_text": "§B|P5|GOTO|EPIGRAM|E5", "beacon": true, "redundancy_role": "core" },
+
+      { "x": 1, "y": 1, "panel_id": "P0", "line_ids": [], "payload_text": "MAP: P1=L01..L10 @ y=3", "beacon": false, "redundancy_role": "glue" },
+      { "x": 2, "y": 1, "panel_id": "P0", "line_ids": [], "payload_text": "MAP: P2=L11..L20 @ y=7", "beacon": false, "redundancy_role": "glue" },
+      { "x": 3, "y": 1, "panel_id": "P0", "line_ids": [], "payload_text": "MAP: P3=L21..L30 @ y=11", "beacon": false, "redundancy_role": "glue" },
+      { "x": 4, "y": 1, "panel_id": "P0", "line_ids": [], "payload_text": "MAP: P4=L31..L40 @ y=15", "beacon": false, "redundancy_role": "glue" },
+      { "x": 5, "y": 1, "panel_id": "P0", "line_ids": [], "payload_text": "MAP: P5=L41..L50 @ y=19", "beacon": false, "redundancy_role": "glue" },
+
+      { "x": 1, "y": 3, "panel_id": "P1", "line_ids": ["L01"], "payload_text": "L01 Thou still unravish'd bride of quietness,", "beacon": false, "redundancy_role": "core" },
+      { "x": 2, "y": 3, "panel_id": "P1", "line_ids": ["L02"], "payload_text": "L02 Thou foster-child of silence and slow time,", "beacon": false, "redundancy_role": "core" },
+      { "x": 3, "y": 3, "panel_id": "P1", "line_ids": ["L03"], "payload_text": "L03 Sylvan historian, who canst thus express", "beacon": false, "redundancy_role": "core" },
+      { "x": 4, "y": 3, "panel_id": "P1", "line_ids": ["L04"], "payload_text": "L04 A flowery tale more sweetly than our rhyme:", "beacon": false, "redundancy_role": "core" },
+      { "x": 5, "y": 3, "panel_id": "P1", "line_ids": ["L05"], "payload_text": "L05 What leaf-fring'd legend haunts about thy shape", "beacon": false, "redundancy_role": "core" },
+      { "x": 6, "y": 3, "panel_id": "P1", "line_ids": ["L06"], "payload_text": "L06 Of deities or mortals, or of both,", "beacon": false, "redundancy_role": "core" },
+      { "x": 7, "y": 3, "panel_id": "P1", "line_ids": ["L07"], "payload_text": "L07 In Tempe or the dales of Arcady?", "beacon": false, "redundancy_role": "core" },
+      { "x": 8, "y": 3, "panel_id": "P1", "line_ids": ["L08"], "payload_text": "L08 What men or gods are these? What maidens loth?", "beacon": false, "redundancy_role": "core" },
+      { "x": 9, "y": 3, "panel_id": "P1", "line_ids": ["L09"], "payload_text": "L09 What mad pursuit? What struggle to escape?", "beacon": false, "redundancy_role": "core" },
+      { "x": 10, "y": 3, "panel_id": "P1", "line_ids": ["L10"], "payload_text": "L10 What pipes and timbrels? What wild ecstasy?", "beacon": false, "redundancy_role": "core" },
+
+      { "x": 1, "y": 4, "panel_id": "P1", "line_ids": ["L01","L02"], "payload_text": "L01–L02 (address/silence/time)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 2, "y": 4, "panel_id": "P1", "line_ids": ["L03","L04"], "payload_text": "L03–L04 (historian/tale>rhyme)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 3, "y": 4, "panel_id": "P1", "line_ids": ["L05","L06"], "payload_text": "L05–L06 (legend: gods/mortals)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 4, "y": 4, "panel_id": "P1", "line_ids": ["L07","L08"], "payload_text": "L07–L08 (place + figures)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 5, "y": 4, "panel_id": "P1", "line_ids": ["L09","L10"], "payload_text": "L09–L10 (pursuit + music)", "beacon": false, "redundancy_role": "echo" },
+
+      { "x": 0, "y": 6, "panel_id": "P1", "line_ids": [], "payload_text": "§B|P1|LOCK|ADDRESS_INTERROGATION|11", "beacon": true, "redundancy_role": "core" },
+      { "x": 1, "y": 5, "panel_id": "P1", "line_ids": ["L02"], "payload_text": "XREF: silence↔unheard => P2(L11–L14)", "beacon": false, "redundancy_role": "glue" },
+      { "x": 2, "y": 5, "panel_id": "P1", "line_ids": ["L09"], "payload_text": "XREF: pursuit/frozen_action => P2(L15–L18)", "beacon": false, "redundancy_role": "glue" },
+      { "x": 3, "y": 5, "panel_id": "P1", "line_ids": ["L10"], "payload_text": "XREF: pipes/timbrels => P2(L12,L14,L16)", "beacon": false, "redundancy_role": "glue" },
+
+      { "x": 1, "y": 7, "panel_id": "P2", "line_ids": ["L11"], "payload_text": "L11 Heard melodies are sweet, but those unheard", "beacon": false, "redundancy_role": "core" },
+      { "x": 2, "y": 7, "panel_id": "P2", "line_ids": ["L12"], "payload_text": "L12 Are sweeter; therefore, ye soft pipes, play on;", "beacon": false, "redundancy_role": "core" },
+      { "x": 3, "y": 7, "panel_id": "P2", "line_ids": ["L13"], "payload_text": "L13 Not to the sensual ear, but, more endear'd,", "beacon": false, "redundancy_role": "core" },
+      { "x": 4, "y": 7, "panel_id": "P2", "line_ids": ["L14"], "payload_text": "L14 Pipe to the spirit ditties of no tone:", "beacon": false, "redundancy_role": "core" },
+      { "x": 5, "y": 7, "panel_id": "P2", "line_ids": ["L15"], "payload_text": "L15 Fair youth, beneath the trees, thou canst not leave", "beacon": false, "redundancy_role": "core" },
+      { "x": 6, "y": 7, "panel_id": "P2", "line_ids": ["L16"], "payload_text": "L16 Thy song, nor ever can those trees be bare;", "beacon": false, "redundancy_role": "core" },
+      { "x": 7, "y": 7, "panel_id": "P2", "line_ids": ["L17"], "payload_text": "L17 Bold Lover, never, never canst thou kiss,", "beacon": false, "redundancy_role": "core" },
+      { "x": 8, "y": 7, "panel_id": "P2", "line_ids": ["L18"], "payload_text": "L18 Though winning near the goal yet, do not grieve;", "beacon": false, "redundancy_role": "core" },
+      { "x": 9, "y": 7, "panel_id": "P2", "line_ids": ["L19"], "payload_text": "L19 She cannot fade, though thou hast not thy bliss,", "beacon": false, "redundancy_role": "core" },
+      { "x": 10, "y": 7, "panel_id": "P2", "line_ids": ["L20"], "payload_text": "L20 For ever wilt thou love, and she be fair!", "beacon": false, "redundancy_role": "core" },
+
+      { "x": 1, "y": 8, "panel_id": "P2", "line_ids": ["L11","L12"], "payload_text": "L11–L12 (unheard sweeter; play on)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 2, "y": 8, "panel_id": "P2", "line_ids": ["L13","L14"], "payload_text": "L13–L14 (sense→spirit channel)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 3, "y": 8, "panel_id": "P2", "line_ids": ["L15","L16"], "payload_text": "L15–L16 (youth/trees/song fixed)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 4, "y": 8, "panel_id": "P2", "line_ids": ["L17","L18"], "payload_text": "L17–L18 (kiss deferred; no grieve)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 5, "y": 8, "panel_id": "P2", "line_ids": ["L19","L20"], "payload_text": "L19–L20 (no fade; forever fair)", "beacon": false, "redundancy_role": "echo" },
+
+      { "x": 0, "y": 10, "panel_id": "P2", "line_ids": [], "payload_text": "§B|P2|LOCK|UNHEARD_AUDIO|7C", "beacon": true, "redundancy_role": "core" },
+      { "x": 1, "y": 9, "panel_id": "P2", "line_ids": ["L12"], "payload_text": "XREF: question-music => P1(L10)", "beacon": false, "redundancy_role": "glue" },
+      { "x": 2, "y": 9, "panel_id": "P2", "line_ids": ["L20"], "payload_text": "XREF: 'for ever' recursion => P3(L24–L27)", "beacon": false, "redundancy_role": "glue" },
+
+      { "x": 1, "y": 11, "panel_id": "P3", "line_ids": ["L21"], "payload_text": "L21 Ah, happy, happy boughs! that cannot shed", "beacon": false, "redundancy_role": "core" },
+      { "x": 2, "y": 11, "panel_id": "P3", "line_ids": ["L22"], "payload_text": "L22 Your leaves, nor ever bid the Spring adieu;", "beacon": false, "redundancy_role": "core" },
+      { "x": 3, "y": 11, "panel_id": "P3", "line_ids": ["L23"], "payload_text": "L23 And, happy melodist, unwearied,", "beacon": false, "redundancy_role": "core" },
+      { "x": 4, "y": 11, "panel_id": "P3", "line_ids": ["L24"], "payload_text": "L24 For ever piping songs for ever new;", "beacon": false, "redundancy_role": "core" },
+      { "x": 5, "y": 11, "panel_id": "P3", "line_ids": ["L25"], "payload_text": "L25 More happy love! more happy, happy love!", "beacon": false, "redundancy_role": "core" },
+      { "x": 6, "y": 11, "panel_id": "P3", "line_ids": ["L26"], "payload_text": "L26 For ever warm and still to be enjoy'd,", "beacon": false, "redundancy_role": "core" },
+      { "x": 7, "y": 11, "panel_id": "P3", "line_ids": ["L27"], "payload_text": "L27 For ever panting, and for ever young;", "beacon": false, "redundancy_role": "core" },
+      { "x": 8, "y": 11, "panel_id": "P3", "line_ids": ["L28"], "payload_text": "L28 All breathing human passion far above,", "beacon": false, "redundancy_role": "core" },
+      { "x": 9, "y": 11, "panel_id": "P3", "line_ids": ["L29"], "payload_text": "L29 That leaves a heart high-sorrowful and cloy'd,", "beacon": false, "redundancy_role": "core" },
+      { "x": 10, "y": 11, "panel_id": "P3", "line_ids": ["L30"], "payload_text": "L30 A burning forehead, and a parching tongue.", "beacon": false, "redundancy_role": "core" },
+
+      { "x": 1, "y": 12, "panel_id": "P3", "line_ids": ["L21","L22"], "payload_text": "L21–L22 (cannot shed; Spring suspended)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 2, "y": 12, "panel_id": "P3", "line_ids": ["L23","L24"], "payload_text": "L23–L24 (unwearied; forever new)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 3, "y": 12, "panel_id": "P3", "line_ids": ["L25","L26"], "payload_text": "L25–L26 (happy love; forever warm)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 4, "y": 12, "panel_id": "P3", "line_ids": ["L27","L28"], "payload_text": "L27–L28 (forever young; passion above)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 5, "y": 12, "panel_id": "P3", "line_ids": ["L29","L30"], "payload_text": "L29–L30 (cloy + burning/parching)", "beacon": false, "redundancy_role": "echo" },
+
+      { "x": 0, "y": 14, "panel_id": "P3", "line_ids": [], "payload_text": "§B|P3|LOCK|AFFECT_FOREVER|55", "beacon": true, "redundancy_role": "core" },
+      { "x": 1, "y": 13, "panel_id": "P3", "line_ids": ["L24"], "payload_text": "ANCHOR: token=FOR_EVER (high recall)", "beacon": false, "redundancy_role": "glue" },
+      { "x": 2, "y": 13, "panel_id": "P3", "line_ids": ["L29","L30"], "payload_text": "XREF: passion→cost => P5(COLD_PASTORAL)", "beacon": false, "redundancy_role": "glue" },
+
+      { "x": 1, "y": 15, "panel_id": "P4", "line_ids": ["L31"], "payload_text": "L31 Who are these coming to the sacrifice?", "beacon": false, "redundancy_role": "core" },
+      { "x": 2, "y": 15, "panel_id": "P4", "line_ids": ["L32"], "payload_text": "L32 To what green altar, O mysterious priest,", "beacon": false, "redundancy_role": "core" },
+      { "x": 3, "y": 15, "panel_id": "P4", "line_ids": ["L33"], "payload_text": "L33 Lead'st thou that heifer lowing at the skies,", "beacon": false, "redundancy_role": "core" },
+      { "x": 4, "y": 15, "panel_id": "P4", "line_ids": ["L34"], "payload_text": "L34 And all her silken flanks with garlands drest?", "beacon": false, "redundancy_role": "core" },
+      { "x": 5, "y": 15, "panel_id": "P4", "line_ids": ["L35"], "payload_text": "L35 What little town by river or sea shore,", "beacon": false, "redundancy_role": "core" },
+      { "x": 6, "y": 15, "panel_id": "P4", "line_ids": ["L36"], "payload_text": "L36 Or mountain-built with peaceful citadel,", "beacon": false, "redundancy_role": "core" },
+      { "x": 7, "y": 15, "panel_id": "P4", "line_ids": ["L37"], "payload_text": "L37 Is emptied of this folk, this pious morn?", "beacon": false, "redundancy_role": "core" },
+      { "x": 8, "y": 15, "panel_id": "P4", "line_ids": ["L38"], "payload_text": "L38 And, little town, thy streets for evermore", "beacon": false, "redundancy_role": "core" },
+      { "x": 9, "y": 15, "panel_id": "P4", "line_ids": ["L39"], "payload_text": "L39 Will silent be; and not a soul to tell", "beacon": false, "redundancy_role": "core" },
+      { "x": 10, "y": 15, "panel_id": "P4", "line_ids": ["L40"], "payload_text": "L40 Why thou art desolate, can e'er return.", "beacon": false, "redundancy_role": "core" },
+
+      { "x": 1, "y": 16, "panel_id": "P4", "line_ids": ["L31","L32"], "payload_text": "L31–L32 (who? altar? priest)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 2, "y": 16, "panel_id": "P4", "line_ids": ["L33","L34"], "payload_text": "L33–L34 (heifer + garlands)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 3, "y": 16, "panel_id": "P4", "line_ids": ["L35","L36"], "payload_text": "L35–L36 (town by river/sea; citadel)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 4, "y": 16, "panel_id": "P4", "line_ids": ["L37","L38"], "payload_text": "L37–L38 (emptied; streets forever)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 5, "y": 16, "panel_id": "P4", "line_ids": ["L39","L40"], "payload_text": "L39–L40 (silence; no return)", "beacon": false, "redundancy_role": "echo" },
+
+      { "x": 0, "y": 18, "panel_id": "P4", "line_ids": [], "payload_text": "§B|P4|LOCK|RITUAL_EMPTY_TOWN|2E", "beacon": true, "redundancy_role": "core" },
+      { "x": 1, "y": 17, "panel_id": "P4", "line_ids": ["L39","L40"], "payload_text": "ANCHOR: token=NO_RETURN (closure handle)", "beacon": false, "redundancy_role": "glue" },
+      { "x": 2, "y": 17, "panel_id": "P4", "line_ids": ["L02"], "payload_text": "XREF: silence/time => P1(L02)", "beacon": false, "redundancy_role": "glue" },
+
+      { "x": 1, "y": 19, "panel_id": "P5", "line_ids": ["L41"], "payload_text": "L41 O Attic shape! Fair attitude! with brede", "beacon": false, "redundancy_role": "core" },
+      { "x": 2, "y": 19, "panel_id": "P5", "line_ids": ["L42"], "payload_text": "L42 Of marble men and maidens overwrought,", "beacon": false, "redundancy_role": "core" },
+      { "x": 3, "y": 19, "panel_id": "P5", "line_ids": ["L43"], "payload_text": "L43 With forest branches and the trodden weed;", "beacon": false, "redundancy_role": "core" },
+      { "x": 4, "y": 19, "panel_id": "P5", "line_ids": ["L44"], "payload_text": "L44 Thou, silent form, dost tease us out of thought", "beacon": false, "redundancy_role": "core" },
+      { "x": 5, "y": 19, "panel_id": "P5", "line_ids": ["L45"], "payload_text": "L45 As doth eternity: Cold Pastoral!", "beacon": false, "redundancy_role": "core" },
+      { "x": 6, "y": 19, "panel_id": "P5", "line_ids": ["L46"], "payload_text": "L46 When old age shall this generation waste,", "beacon": false, "redundancy_role": "core" },
+      { "x": 7, "y": 19, "panel_id": "P5", "line_ids": ["L47"], "payload_text": "L47 Thou shalt remain, in midst of other woe", "beacon": false, "redundancy_role": "core" },
+      { "x": 8, "y": 19, "panel_id": "P5", "line_ids": ["L48"], "payload_text": "L48 Than ours, a friend to man, to whom thou say'st,", "beacon": false, "redundancy_role": "core" },
+      { "x": 9, "y": 19, "panel_id": "P5", "line_ids": ["L49"], "payload_text": "L49 \"Beauty is truth, truth beauty,—that is all", "beacon": false, "redundancy_role": "core" },
+      { "x": 10, "y": 19, "panel_id": "P5", "line_ids": ["L50"], "payload_text": "L50 Ye know on earth, and all ye need to know.\"", "beacon": false, "redundancy_role": "core" },
+
+      { "x": 1, "y": 20, "panel_id": "P5", "line_ids": ["L41","L42"], "payload_text": "L41–L42 (Attic shape; marble figures)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 2, "y": 20, "panel_id": "P5", "line_ids": ["L43","L44"], "payload_text": "L43–L44 (branches/weed; silent tease)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 3, "y": 20, "panel_id": "P5", "line_ids": ["L45","L46"], "payload_text": "L45–L46 (eternity; generation waste)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 4, "y": 20, "panel_id": "P5", "line_ids": ["L47","L48"], "payload_text": "L47–L48 (remain; friend to man; says)", "beacon": false, "redundancy_role": "echo" },
+      { "x": 5, "y": 20, "panel_id": "P5", "line_ids": ["L49","L50"], "payload_text": "L49–L50 (EPIGRAM)", "beacon": false, "redundancy_role": "echo" },
+
+      { "x": 0, "y": 23, "panel_id": "P5", "line_ids": [], "payload_text": "§B|P5|LOCK|EPIGRAM_OUTPUT|90", "beacon": true, "redundancy_role": "core" },
+      { "x": 1, "y": 22, "panel_id": "P5", "line_ids": ["L49","L50"], "payload_text": "REPEAT: L49–L50 (checksum payload)", "beacon": true, "redundancy_role": "echo" },
+      { "x": 2, "y": 22, "panel_id": "P5", "line_ids": ["L49","L50"], "payload_text": "REPEAT: L49–L50 (checksum payload)", "beacon": true, "redundancy_role": "echo" },
+      { "x": 3, "y": 22, "panel_id": "P5", "line_ids": ["L49","L50"], "payload_text": "REPEAT: L49–L50 (checksum payload)", "beacon": true, "redundancy_role": "echo" }
+    ],
+
+    "line_id_to_primary_cell": {
+      "L01": [1,3], "L02": [2,3], "L03": [3,3], "L04": [4,3], "L05": [5,3], "L06": [6,3], "L07": [7,3], "L08": [8,3], "L09": [9,3], "L10": [10,3],
+      "L11": [1,7], "L12": [2,7], "L13": [3,7], "L14": [4,7], "L15": [5,7], "L16": [6,7], "L17": [7,7], "L18": [8,7], "L19": [9,7], "L20": [10,7],
+      "L21": [1,11], "L22": [2,11], "L23": [3,11], "L24": [4,11], "L25": [5,11], "L26": [6,11], "L27": [7,11], "L28": [8,11], "L29": [9,11], "L30": [10,11],
+      "L31": [1,15], "L32": [2,15], "L33": [3,15], "L34": [4,15], "L35": [5,15], "L36": [6,15], "L37": [7,15], "L38": [8,15], "L39": [9,15], "L40": [10,15],
+      "L41": [1,19], "L42": [2,19], "L43": [3,19], "L44": [4,19], "L45": [5,19], "L46": [6,19], "L47": [7,19], "L48": [8,19], "L49": [9,19], "L50": [10,19]
+    }
+  },
+
+  "retrieval_ruleset": {
+    "beacon_detection": {
+      "predicate": "payload_text.startsWith('§')",
+      "parse": "split by '|' into [§B, panel_id, beacon_type, label, crc]"
+    },
+    "panel_lock": {
+      "lock_on_beacon_type": "LOCK",
+      "unlock_on_beacon_type": "EXIT",
+      "bias": {
+        "prefer_same_panel": 3,
+        "prefer_core_over_echo_over_glue": { "core": 3, "echo": 2, "glue": 1 },
+        "penalty_for_crossing_panel_while_locked": 10
+      }
+    },
+    "seek_cost_metric": {
+      "formula": "abs(dx) + 2*abs(dy) + 6*panel_switches + 10*lock_breaks",
+      "panel_switch_definition": "best-next-hit panel_id != current_or_active_panel"
+    },
+    "raycast_hit_definition": {
+      "hit_if": "beacon==true OR payload_text.length>0",
+      "max_steps": 48,
+      "wrap_x": true
+    }
+  },
+
+  "compiler_plan": {
+    "goal": "Serialize cell contents into a single stream that preserves panel and line structure for lossless re-expansion.",
+    "tokens": {
+      "panel_seam": "⟂PANEL⟂",
+      "cell_seam": "⟂CELL⟂",
+      "line_break_glyph": "␤"
+    },
+    "beam_order": "for y=0..23: for x=0..23 emit cell record",
+    "cell_record_format": "⟂CELL⟂@(x,y)|panel_id|redundancy_role|beacon|line_ids_csv|payload_text␤",
+    "panel_record_format": "⟂PANEL⟂|panel_id|title|crc␤ ...cells... ⟂PANEL⟂|END|panel_id|crc␤",
+    "structure_preservation": [
+      "Keep line_ids in every cell that stores poem text.",
+      "Keep explicit panel_id per cell to allow rebuild without geometry assumptions.",
+      "Use seam column CRCs (x=23 cells) as resync points if stream is damaged."
+    ]
+  }
+}

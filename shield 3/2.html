@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Shield of Achilles - Verbal Mandala</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --text-color: #e0e0e0;
+            --accent-gold: #ffd700;
+            --accent-silver: #c0c0c0;
+            --accent-war: #ff4444;
+            --accent-peace: #44ff88;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #canvas-container {
+            position: relative;
+            width: 100vmin;
+            height: 100vmin;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.1);
+        }
+
+        #tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--accent-gold);
+            color: white;
+            padding: 15px;
+            max-width: 300px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 14px;
+            line-height: 1.4;
+            border-radius: 4px;
+            z-index: 100;
+            text-align: center;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="canvas-container">
+    <canvas id="mandalaCanvas"></canvas>
+    <div id="tooltip"></div>
+</div>
+
+<div id="controls">
+    <div class="legend-item"><div class="dot" style="background: #44ff88"></div>Peace</div>
+    <div class="legend-item"><div class="dot" style="background: #ff4444"></div>War</div>
+    <div class="legend-item"><div class="dot" style="background: #ffd700"></div>Cosmos</div>
+    <div class="legend-item"><div class="dot" style="background: #c0c0c0"></div>Ocean</div>
+</div>
+
+<script>
+    const canvas = document.getElementById('mandalaCanvas');
+    const ctx = canvas.getContext('2d');
+    const tooltip = document.getElementById('tooltip');
+    
+    // Configuration
+    let centerX, centerY;
+    let scale = 1;
+    let rotation = 0;
+    let isPaused = false;
+    let mousePos = { x: 0, y: 0 };
+    
+    // Shield Data Structure based on the POML and Text
+    const LAYERS = [
+        {
+            id: 'OCEAN',
+            radius: 0.95,
+            width: 0.05,
+            color: '#c0c0c0',
+            text: "IN LIVING SILVER SEEM'D THE WAVES TO ROLL • BOUND THE WHOLE • ",
+            detail: "The Bounding Ocean River: 'And pour'd the ocean round: In living silver seem'd the waves to roll.'",
+            speed: 0.001
+        },
+        {
+            id: 'PASTORAL',
+            radius: 0.82,
+            width: 0.12,
+            color: '#e8c466',
+            type: 'ring',
+            text: "VINEYARDS IN YELLOW GOLD • PLOUGHED FIELDS • LIONS RUSHING • ",
+            detail: "The Pastoral Ring: 'A field deep furrow'd... A vineyard shines in yellow gold... Two lions rushing from the wood.'",
+            speed: -0.0015
+        },
+        {
+            id: 'CITIES',
+            radius: 0.60,
+            width: 0.15,
+            type: 'split',
+            colorLeft: '#44ff88', // Peace
+            colorRight: '#ff4444', // War
+            textLeft: "SACRED POMP • HYMENEAL RITE • TORCHES FLAMING • THE SOFT FLUTE • GENIAL FEAST • ",
+            textRight: "HORRID WAR • AMBUSH PREPARE • MARS MADE BOLD • GRIM WITH GORE • FATE STALK'D • ",
+            detailLeft: "City of Peace: Weddings, festivals, dancing, and the forum of justice.",
+            detailRight: "City of War: Sieges, ambushes, strife, and the river reddening with blood.",
+            speed: 0.002
+        },
+        {
+            id: 'COSMOS',
+            radius: 0.35,
+            width: 0.15,
+            color: '#ffd700',
+            type: 'ring',
+            text: "UNWEARIED SUN • THE PLEIADS • HYADS • ORION • THE BEAR • ",
+            detail: "The Cosmos: 'The unwearied sun, the moon completely round; The starry lights that heaven's high convex crown'd.'",
+            speed: -0.001
+        },
+        {
+            id: 'CENTER',
+            radius: 0.15,
+            width: 0.15,
+            color: '#ff6600',
+            type: 'solid',
+            text: "VULCAN",
+            detail: "The Anvil of Vulcan: The creative center where fire meets metal. The axis of creation.",
+            speed: 0
+        }
+    ];
+
+    function resize() {
+        const size = Math.min(window.innerWidth, window.innerHeight) * 0.9;
+        canvas.width = size * 2; // Retina resolution
+        canvas.height = size * 2;
+        canvas.style.width = `${size}px`;
+        canvas.style.height = `${size}px`;
+        centerX = canvas.width / 2;
+        centerY = canvas.height / 2;
+        scale = size; // Base unit for radii
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+
+    function drawTextAlongArc(str, radius, angleStart, angleEnd, color, fontSize, direction = 1) {
+        ctx.save();
+        ctx.font = `bold ${fontSize}px Courier New`;
+        ctx.fillStyle = color;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        const angleRange = angleEnd - angleStart;
+        const charAngle = angleRange / str.length;
+
+        for (let i = 0; i < str.length; i++) {
+            const char = str[i];
+            // Calculate angle for this character
+            // We add rotation to animate
+            let currentAngle = angleStart + (i * charAngle) + (direction * rotation); 
+            
+            // Normalize angle for text uprightness if needed, 
+            // but for a mandala, radial text is better.
+            
+            ctx.save();
+            ctx.translate(
+                centerX + Math.cos(currentAngle) * radius,
+                centerY + Math.sin(currentAngle) * radius
+            );
+            ctx.rotate(currentAngle + Math.PI / 2);
+            ctx.fillText(char, 0, 0);
+            ctx.restore();
+        }
+        ctx.restore();
+    }
+
+    function drawLayer(layer) {
+        const r = layer.radius * (scale / 2);
+        const w = layer.width * (scale / 2);
+        
+        ctx.beginPath();
+        
+        if (layer.type === 'split') {
+            // Split Ring (Cities)
+            // Left Hemisphere (Peace) - PI/2 to 3PI/2
+            ctx.arc(centerX, centerY, r, Math.PI/2, 3*Math.PI/2);
+            ctx.strokeStyle = layer.colorLeft;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Right Hemisphere (War) - 3PI/2 to PI/2
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, r, 3*Math.PI/2, 5*Math.PI/2);
+            ctx.strokeStyle = layer.colorRight;
+            ctx.stroke();
+
+            // Draw Texts
+            // Peace text on left arc
+            drawTextAlongArc(layer.textLeft, r, Math.PI/2, 3*Math.PI/2, layer.colorLeft, 14 * (scale/800), 1);
+            // War text on right arc
+            drawTextAlongArc(layer.textRight, r, 3*Math.PI/2, 5*Math.PI/2, layer.colorRight, 14 * (scale/800), 1);
+
+            // Draw Axis Mundi (Vertical Line)
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY - r - w/2);
+            ctx.lineTo(centerX, centerY + r + w/2);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+        } else if (layer.id === 'CENTER') {
+            // Vulcan's Anvil
+            const grad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, r);
+            grad.addColorStop(0, '#ffeb3b');
+            grad.addColorStop(0.5, '#ff9800');
+            grad.addColorStop(1, '#ff3d00');
+            
+            ctx.fillStyle = grad;
+            ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#000';
+            ctx.font = `bold ${20 * (scale/800)}px Courier New`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText("VULCAN", centerX, centerY);
+
+        } else {
+            // Standard Ring (Ocean, Pastoral, Cosmos)
+            ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+            ctx.strokeStyle = layer.color;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Decorative inner/outer bounds
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, r - w/2, 0, Math.PI * 2);
+            ctx.strokeStyle = `${layer.color}33`; // low opacity
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, r + w/2, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Text
+            drawTextAlongArc(layer.text.repeat(3), r, 0, Math.PI * 2, layer.color, 16 * (scale/800), layer.id === 'PASTORAL' ? -1 : 1);
+        }
+    }
+
+    function detectHover(x, y) {
+        // Calculate distance from center
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const normalizedDist = (dist / (scale / 2)); // 0 to 1
+
+        // Check angle for split ring
+        let angle = Math.atan2(dy, dx); 
+        if (angle < 0) angle += Math.PI * 2;
+        
+        // Find active layer
+        // We iterate backwards to catch inner circles first conceptually, 
+        // but normalizedDist makes checking intervals easier
+        
+        let activeLayer = null;
+        let isRightSide = (angle > 3*Math.PI/2 || angle < Math.PI/2); // Right side
+
+        // Check specific ranges based on layer config
+        if (normalizedDist < 0.2) activeLayer = LAYERS[4]; // Center
+        else if (normalizedDist > 0.25 && normalizedDist < 0.45) activeLayer = LAYERS[3]; // Cosmos
+        else if (normalizedDist > 0.50 && normalizedDist < 0.70) activeLayer = LAYERS[2]; // Cities
+        else if (normalizedDist > 0.75 && normalizedDist < 0.90) activeLayer = LAYERS[1]; // Pastoral
+        else if (normalizedDist > 0.92 && normalizedDist < 1.0) activeLayer = LAYERS[0]; // Ocean
+
+        if (activeLayer) {
+            isPaused = true;
+            canvas.style.cursor = 'crosshair';
+            
+            // Determine text content
+            let content = activeLayer.detail;
+            if (activeLayer.type === 'split') {
+                content = isRightSide ? activeLayer.detailRight : activeLayer.detailLeft;
+            }
+
+            tooltip.textContent = content;
+            tooltip.style.opacity = 1;
+            tooltip.style.left = (x / 2 + window.innerWidth/4) + 'px'; // Center align somewhat
+            tooltip.style.top = (y + 20) + 'px';
+        } else {
+            isPaused = false;
+            canvas.style.cursor = 'default';
+            tooltip.style.opacity = 0;
+        }
+    }
+
+    // Animation Loop
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Stars background in the canvas
+        if (Math.random() > 0.9) {
+             // Twinkle effect could go here
+        }
+
+        LAYERS.forEach(layer => {
+            // Update local rotation for layer based on speed
+            if (!isPaused) {
+               // We handle rotation inside drawTextAlongArc using global `rotation` * multiplier
+               // But to make them move at different speeds, we need a prop.
+               // Let's just use the global rotation variable incremented differently
+            }
+            drawLayer(layer);
+        });
+
+        if (!isPaused) {
+            rotation += 0.002;
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    // Interaction
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        // Scale mouse coordinates to match canvas internal resolution
+        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+        
+        // Update tooltip position based on client coordinates
+        tooltip.style.left = e.clientX + 'px';
+        tooltip.style.top = (e.clientY + 20) + 'px';
+
+        detectHover(x, y);
+    });
+    
+    // Start
+    animate();
+
+</script>
+</body>
+</html>

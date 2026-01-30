@@ -1,0 +1,1313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>CAREY SHIELD GRID — Ritual Cartography (Single-File)</title>
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --panel:#10131a;
+      --panel2:#0f1116;
+      --ink:#e9eefc;
+      --muted:#a6b0cf;
+      --faint:#6f7895;
+      --line:#232a3d;
+      --accent:#7aa2ff;
+      --accent2:#9cffc9;
+      --warn:#ffb86b;
+      --danger:#ff6b7a;
+      --shadow: 0 10px 30px rgba(0,0,0,.38);
+      --radius:16px;
+      --radius2:22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: radial-gradient(1100px 700px at 20% -10%, rgba(122,162,255,.20), transparent 55%),
+                  radial-gradient(900px 600px at 110% 0%, rgba(156,255,201,.12), transparent 45%),
+                  radial-gradient(900px 600px at 60% 120%, rgba(255,107,122,.10), transparent 45%),
+                  var(--bg);
+      color:var(--ink);
+      font-family:var(--sans);
+      letter-spacing:.2px;
+      overflow-x:hidden;
+    }
+
+    /* Top HUD */
+    .hud{
+      position:sticky;
+      top:0;
+      z-index:50;
+      padding:12px 12px calc(10px + env(safe-area-inset-top));
+      background: linear-gradient(to bottom, rgba(11,12,16,.95), rgba(11,12,16,.72) 60%, rgba(11,12,16,0));
+      backdrop-filter: blur(10px);
+    }
+    .hud-inner{
+      max-width:1100px;
+      margin:0 auto;
+      display:grid;
+      gap:10px;
+    }
+    .title-row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:0;
+    }
+    .brand h1{
+      margin:0;
+      font-size:16px;
+      line-height:1.15;
+      font-weight:800;
+      letter-spacing:.4px;
+    }
+    .brand .sub{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.2;
+      font-family:var(--mono);
+      opacity:.95;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:min(82vw, 740px);
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      background:rgba(16,19,26,.72);
+      border:1px solid rgba(35,42,61,.85);
+      border-radius:999px;
+      box-shadow: var(--shadow);
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .pill small{color:var(--muted); font-size:12px; font-family:var(--mono)}
+    .pill b{font-size:12px; font-family:var(--mono); letter-spacing:.3px}
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .seg{
+      display:flex;
+      gap:8px;
+      background:rgba(16,19,26,.72);
+      border:1px solid rgba(35,42,61,.85);
+      border-radius:999px;
+      padding:6px;
+      box-shadow: var(--shadow);
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+    .seg button{
+      border:0;
+      background:transparent;
+      color:var(--muted);
+      padding:9px 10px;
+      border-radius:999px;
+      font-family:var(--mono);
+      font-size:12px;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .seg button.active{
+      background:rgba(122,162,255,.18);
+      color:var(--ink);
+      outline:1px solid rgba(122,162,255,.35);
+    }
+
+    .search{
+      flex:1;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      min-width:220px;
+      background:rgba(16,19,26,.72);
+      border:1px solid rgba(35,42,61,.85);
+      border-radius:999px;
+      padding:9px 12px;
+      box-shadow: var(--shadow);
+    }
+    .search input{
+      width:100%;
+      border:0;
+      outline:none;
+      background:transparent;
+      color:var(--ink);
+      font-size:14px;
+      font-family:var(--mono);
+    }
+    .search input::placeholder{color:rgba(166,176,207,.55)}
+
+    .tiny-btn{
+      border:1px solid rgba(35,42,61,.85);
+      background:rgba(16,19,26,.72);
+      color:var(--muted);
+      padding:10px 12px;
+      border-radius:999px;
+      font-family:var(--mono);
+      font-size:12px;
+      cursor:pointer;
+      box-shadow: var(--shadow);
+      -webkit-tap-highlight-color:transparent;
+    }
+    .tiny-btn.primary{
+      color:var(--ink);
+      border-color:rgba(122,162,255,.55);
+      background:rgba(122,162,255,.14);
+    }
+    .tiny-btn:active{transform:translateY(1px)}
+
+    /* Main */
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding: 8px 12px 120px;
+    }
+
+    .layout{
+      display:grid;
+      gap:12px;
+    }
+
+    /* Altar chips */
+    .altar-bar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:2px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(35,42,61,.95);
+      background:rgba(16,19,26,.62);
+      color:var(--muted);
+      font-family:var(--mono);
+      font-size:12px;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      user-select:none;
+    }
+    .chip .dot{
+      width:8px;height:8px;border-radius:50%;
+      background:rgba(122,162,255,.55);
+      box-shadow: 0 0 0 3px rgba(122,162,255,.10);
+    }
+    .chip.active{
+      color:var(--ink);
+      border-color:rgba(122,162,255,.55);
+      background:rgba(122,162,255,.14);
+    }
+
+    /* Grid */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:10px;
+    }
+    @media (min-width: 780px){
+      .grid{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+      .controls{ grid-template-columns: 1fr; }
+    }
+    @media (min-width: 1040px){
+      .grid{ grid-template-columns: repeat(4, minmax(0,1fr)); }
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(16,19,26,.78), rgba(16,19,26,.62));
+      border:1px solid rgba(35,42,61,.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      position:relative;
+    }
+    .card:active{transform:translateY(1px)}
+    .card .head{
+      padding:12px 12px 10px;
+      border-bottom:1px solid rgba(35,42,61,.65);
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .badge-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .id{
+      font-family:var(--mono);
+      font-size:12px;
+      color:rgba(166,176,207,.95);
+      letter-spacing:.3px;
+    }
+    .fn{
+      font-family:var(--mono);
+      font-size:12px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(35,42,61,.8);
+      color:var(--muted);
+      background:rgba(15,17,22,.65);
+      white-space:nowrap;
+    }
+    .fn.PRODUCE{ border-color:rgba(156,255,201,.38); color:rgba(156,255,201,.92); }
+    .fn.MAINTAIN{ border-color:rgba(122,162,255,.38); color:rgba(122,162,255,.92); }
+    .fn.REPAIR{ border-color:rgba(255,184,107,.40); color:rgba(255,184,107,.95); }
+    .fn.TRANSFORM{ border-color:rgba(255,107,122,.40); color:rgba(255,107,122,.95); }
+
+    .card h3{
+      margin:0;
+      font-size:14px;
+      line-height:1.22;
+      font-weight:800;
+    }
+    .card .meta{
+      padding:10px 12px 12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .roles{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+    .role{
+      font-family:var(--mono);
+      font-size:11px;
+      color:rgba(166,176,207,.92);
+      padding:4px 7px;
+      border-radius:999px;
+      border:1px solid rgba(35,42,61,.8);
+      background:rgba(15,17,22,.65);
+    }
+    .alts{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+    .alt{
+      font-family:var(--mono);
+      font-size:11px;
+      color:rgba(166,176,207,.92);
+      padding:4px 7px;
+      border-radius:999px;
+      border:1px solid rgba(35,42,61,.8);
+      background:rgba(15,17,22,.65);
+    }
+    .snippet{
+      font-size:12px;
+      line-height:1.35;
+      color:rgba(233,238,252,.86);
+      font-family:var(--mono);
+      opacity:.95;
+      display:-webkit-box;
+      -webkit-line-clamp:4;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+
+    /* Drawer / Modal */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.52);
+      backdrop-filter: blur(6px);
+      z-index:80;
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      padding:12px;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    }
+    .overlay.show{display:flex}
+    .drawer{
+      width:min(980px, 100%);
+      max-height:min(86vh, 760px);
+      background:linear-gradient(180deg, rgba(16,19,26,.96), rgba(16,19,26,.90));
+      border:1px solid rgba(35,42,61,.95);
+      border-radius: var(--radius2);
+      box-shadow: 0 20px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .drawer .top{
+      padding:12px 12px 10px;
+      border-bottom:1px solid rgba(35,42,61,.75);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .drawer .top h2{
+      margin:0;
+      font-size:14px;
+      font-weight:900;
+      line-height:1.2;
+    }
+    .drawer .top .subline{
+      margin-top:4px;
+      color:var(--muted);
+      font-family:var(--mono);
+      font-size:12px;
+    }
+    .close{
+      border:1px solid rgba(35,42,61,.9);
+      background:rgba(15,17,22,.7);
+      color:var(--ink);
+      border-radius:999px;
+      padding:10px 12px;
+      font-family:var(--mono);
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .drawer .body{
+      padding:12px;
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      display:grid;
+      gap:12px;
+    }
+    .box{
+      border:1px solid rgba(35,42,61,.85);
+      border-radius:14px;
+      background:rgba(15,17,22,.55);
+      padding:12px;
+    }
+    .label{
+      font-family:var(--mono);
+      font-size:12px;
+      color:rgba(166,176,207,.92);
+      margin-bottom:8px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .label .bar{
+      height:1px; flex:1;
+      background:rgba(35,42,61,.75);
+    }
+    pre{
+      margin:0;
+      white-space:pre-wrap;
+      word-wrap:break-word;
+      font-family:var(--mono);
+      font-size:12.5px;
+      line-height:1.4;
+      color:rgba(233,238,252,.92);
+    }
+    .two{
+      display:grid;
+      gap:10px;
+    }
+    @media (min-width: 820px){
+      .two{ grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Footer help */
+    .foot{
+      margin-top:12px;
+      color:rgba(166,176,207,.78);
+      font-family:var(--mono);
+      font-size:11px;
+      line-height:1.35;
+      opacity:.9;
+    }
+
+    .sr{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden}
+  </style>
+</head>
+<body>
+
+  <div class="hud">
+    <div class="hud-inner">
+      <div class="title-row">
+        <div class="brand">
+          <h1>CAREY SHIELD GRID</h1>
+          <div class="sub">Ritual cartography of the Shield of Achilles — chapels · altars · rite-units</div>
+        </div>
+        <div class="pill" title="Active dataset stats">
+          <small>UNITS</small> <b id="countUnits">00</b>
+          <small>VISIBLE</small> <b id="countVisible">00</b>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="row">
+          <div class="seg" role="tablist" aria-label="View mode">
+            <button class="active" data-view="grid" role="tab" aria-selected="true">GRID</button>
+            <button data-view="list" role="tab" aria-selected="false">LIST</button>
+            <button data-view="map" role="tab" aria-selected="false">MAP</button>
+          </div>
+
+          <div class="search" title="Search text / rite_action / chapel / altars">
+            <span style="color:rgba(166,176,207,.85);font-family:var(--mono);font-size:12px;">SEARCH</span>
+            <input id="q" type="text" placeholder="e.g. 'court' · 'ocean' · 'FATE' · 'dance' · 'REPAIR'…" autocomplete="off" />
+          </div>
+
+          <button class="tiny-btn" id="clearAll" title="Clear filters">CLEAR</button>
+          <button class="tiny-btn primary" id="randomUnit" title="Open a random visible rite-unit">RANDOM</button>
+        </div>
+
+        <div class="altar-bar" id="altarBar" aria-label="Altar filters"></div>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <section id="viewGrid" class="layout">
+      <div class="grid" id="grid"></div>
+      <div class="foot">
+        Tap any card to open the full rite-unit (verbatim text + action + world-effect + hooks). Filters stack: ALTAR chips + search.
+      </div>
+    </section>
+
+    <section id="viewList" class="layout" style="display:none;">
+      <div id="list"></div>
+      <div class="foot">
+        LIST mode is optimized for reading. Use SEARCH to narrow, then swipe the drawer for details.
+      </div>
+    </section>
+
+    <section id="viewMap" class="layout" style="display:none;">
+      <div class="card" style="cursor:default;">
+        <div class="head">
+          <div class="badge-row">
+            <div class="id">RITUAL GEOMETRY</div>
+            <div class="fn MAINTAIN">CHAPELS</div>
+          </div>
+          <h3>Shield-as-World: chapel topology + altar legend</h3>
+        </div>
+        <div class="meta" id="mapPanel"></div>
+      </div>
+
+      <div class="card" style="cursor:default;">
+        <div class="head">
+          <div class="badge-row">
+            <div class="id">COMPILER SPEC</div>
+            <div class="fn PRODUCE">RENDER</div>
+          </div>
+          <h3>How to compile this into a grid / deck / ring-scan ritual</h3>
+        </div>
+        <div class="meta">
+          <div class="snippet" id="compilerSpec"></div>
+        </div>
+      </div>
+
+      <div class="foot">
+        MAP mode is the “operator manual”: chapels (spaces), altars (motif nodes), and processions (repeatable moves).
+      </div>
+    </section>
+  </main>
+
+  <!-- Drawer -->
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Rite-unit detail">
+    <div class="drawer">
+      <div class="top">
+        <div style="min-width:0;">
+          <h2 id="dTitle">—</h2>
+          <div class="subline" id="dSub">—</div>
+        </div>
+        <button class="close" id="close">CLOSE</button>
+      </div>
+      <div class="body">
+        <div class="two">
+          <div class="box">
+            <div class="label">RITE ACTION<div class="bar"></div></div>
+            <pre id="dAction"></pre>
+          </div>
+          <div class="box">
+            <div class="label">WORLD EFFECT<div class="bar"></div></div>
+            <pre id="dEffect"></pre>
+          </div>
+        </div>
+
+        <div class="box">
+          <div class="label">VERBATIM TEXT<div class="bar"></div></div>
+          <pre id="dText"></pre>
+        </div>
+
+        <div class="two">
+          <div class="box">
+            <div class="label">ALTARS<div class="bar"></div></div>
+            <pre id="dAltars"></pre>
+          </div>
+          <div class="box">
+            <div class="label">CONTINUITY HOOK<div class="bar"></div></div>
+            <pre id="dHook"></pre>
+          </div>
+        </div>
+
+        <div class="box">
+          <div class="label">READER ROLES<div class="bar"></div></div>
+          <pre id="dRoles"></pre>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="tiny-btn" id="prevUnit">◀ PREV</button>
+          <button class="tiny-btn" id="nextUnit">NEXT ▶</button>
+          <button class="tiny-btn primary" id="pinAltar">PIN ALTAR(S) FROM THIS</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* =========================
+   DATA: Carey Shield Rite-Units
+   Single-file, no external deps.
+   ========================= */
+
+const DATA = {
+  meta: {
+    name: "CAREY-SHIELD-RITUAL-MAP-v1",
+    subtitle: "Ritual cartography of the Shield of Achilles (user-pasted passage)",
+  },
+  altars: {
+    A_FATE: "Inevitability, short-lived glory, limit condition",
+    A_FORGE: "Craft-apparatus, heat, metal, transformation",
+    A_WORLD: "Cosmic totality; miniature order; world-as-image",
+    A_CIVIC: "Marriage, law, public judgment, communal continuity",
+    A_WAR: "Siege, ambush, slaughter, dread",
+    A_LABOR: "Seasonal work; repetition; sustenance",
+    A_SONG: "Music as binding; heard/unheard social resonance",
+    A_DANCE: "Choreography; synchronized social time",
+    A_CIRCLE: "Rim/ocean; return; boundary; closure",
+    A_GLORY: "Renown; gaze of ages; martial radiance",
+    // Optional helpful label used in the mapping text:
+    A_PASTORAL: "Flocks, folds, dwelling, care-structures (baseline life-world)"
+  },
+  chapels: [
+    { id:"C0", name:"Proem: crisis + mission" },
+    { id:"C1", name:"Threshold welcome" },
+    { id:"C2", name:"Lament + injury account" },
+    { id:"C3", name:"Vow of craft" },
+    { id:"C4", name:"Forge liturgy" },
+    { id:"C5", name:"Shield consecration" },
+    { id:"C6", name:"Cosmos panel" },
+    { id:"C7", name:"City of Peace: marriage + dance" },
+    { id:"C8", name:"City of Peace: law court" },
+    { id:"C9", name:"City of War: siege + ambush" },
+    { id:"C10", name:"War climax: slaughter + personified forces" },
+    { id:"C11", name:"Ploughing panel" },
+    { id:"C12", name:"Harvest panel" },
+    { id:"C13", name:"Vineyard + Linus song" },
+    { id:"C14", name:"Herd + lions" },
+    { id:"C15", name:"Pastoral folds" },
+    { id:"C16", name:"Daedalean dance" },
+    { id:"C17", name:"Ocean rim + completion" },
+    { id:"C18", name:"Armor set + Thetis flight" }
+  ],
+  compiler_spec: {
+    render_modes: [
+      {
+        id:"M_PANEL_GRID",
+        name:"Shield Panels Grid",
+        layout:"19 chapels as tiles; within each tile, units flow top→bottom. Navigation: vertical=ritual time; lateral=altar resonance (jump by A_* tags)."
+      },
+      {
+        id:"M_CARD_DECK",
+        name:"Ritual Cards",
+        card_front:"unit text",
+        card_back:"rite_action + function + altars + continuity_hook",
+        rule:"Shuffle within chapels, but always read chapels in order when performing PR_SUPPLICATION and PR_RING_SEAL."
+      },
+      {
+        id:"M_RING_SCAN",
+        name:"Ocean-Rim Scanner",
+        mechanic:"Always return to C17 after any chapel; the rim functions as reset/contain to reenclose meaning before moving on."
+      }
+    ]
+  },
+  rite_units: [
+    {
+      unit_id:"SH-U00",
+      chapel:"C0",
+      chapel_name:"Proem: crisis + mission",
+      text:"The Iliad, Book XVIII, [The Shield of Achilles]\n\nHomer\n\nThetis goes to the palace of Vulcan to obtain new arms for her son.",
+      rite_action:"Opens the ceremony as a crisis-response rite: the mother enters the craft-temple to reconstitute a war-world.",
+      reader_role:["Witness","Archivist"],
+      function:"PRODUCE",
+      altars:["A_FATE","A_FORGE","A_GLORY"],
+      world_effect:"Frames the shield not as gear but as a remedial world-object forged against loss.",
+      continuity_hook:"Threshold speech: welcome → petition."
+    },
+    {
+      unit_id:"SH-U01",
+      chapel:"C1",
+      chapel_name:"Threshold welcome",
+      text:"\"Thee, welcome, goddess! what occasion calls\n\n(So long a stranger) to these honour'd walls?\n\n'Tis thine, fair Thetis, the command to lay,\n\nAnd Vulcan's joy and duty to obey.\"",
+      rite_action:"Consecrates hospitality as an enabling channel: the forge becomes a public altar open to divine grievance.",
+      reader_role:["Pilgrim","Witness"],
+      function:"MAINTAIN",
+      altars:["A_FORGE","A_CIVIC"],
+      world_effect:"Establishes craft as civic duty (not private skill).",
+      continuity_hook:"Invites confession/lament as the next act."
+    },
+    {
+      unit_id:"SH-U02",
+      chapel:"C2",
+      chapel_name:"Lament + injury account",
+      text:"To whom the mournful mother thus replies:\n\n(The crystal drops stood trembling in her eyes:)\n\n\"O Vulcan! say, was ever breast divine\n\nSo pierced with sorrows, so o'erwhelm'd as mine?\n\nOf all the goddesses, did Jove prepare\n\nFor Thetis only such a weight of care?",
+      rite_action:"Begins the supplication procession: grief is formalized into a public claim on the forge.",
+      reader_role:["Supplicant"],
+      function:"REPAIR",
+      altars:["A_FATE","A_FORGE"],
+      world_effect:"Makes sorrow speakable inside an institution (the forge-temple).",
+      continuity_hook:"Shifts from personal pain to systemic injustice."
+    },
+    {
+      unit_id:"SH-U03",
+      chapel:"C2",
+      chapel_name:"Lament + injury account",
+      text:"I, only I, of all the watery race\n\nBy force subjected to a man's embrace,\n\nWho, sinking now with age and sorrow, pays\n\nThe mighty fine imposed on length of days.",
+      rite_action:"Names coercion and time as the hidden taxes of existence; turns biography into cosmology (cost-accounting).",
+      reader_role:["Witness","Judge"],
+      function:"PRODUCE",
+      altars:["A_FATE","A_CIVIC"],
+      world_effect:"Defines life as a legal-ritual economy of fines and terms.",
+      continuity_hook:"Introduces Achilles as the produced consequence."
+    },
+    {
+      unit_id:"SH-U04",
+      chapel:"C2",
+      chapel_name:"Lament + injury account",
+      text:"Sprung from my bed, a godlike hero came,\n\nThe bravest sure that ever bore the name;\n\nLike some fair plant beneath my careful hand\n\nHe grew, he flourish'd, and he graced the land:",
+      rite_action:"Performs maternal cultivation as world-production: hero = tended growth, not mere fate-token.",
+      reader_role:["Caretaker","Witness"],
+      function:"PRODUCE",
+      altars:["A_FATE","A_GLORY","A_LABOR"],
+      world_effect:"Makes heroism feel agricultural: nurtured, seasonal, vulnerable.",
+      continuity_hook:"The rupture: Troy as the cut."
+    },
+    {
+      unit_id:"SH-U05",
+      chapel:"C2",
+      chapel_name:"Lament + injury account",
+      text:"To Troy I sent him! but his native shore\n\nNever, ah never, shall receive him more;\n\n(Even while he lives, he wastes with secret woe;)\n\nNor I, a goddess, can retard the blow!",
+      rite_action:"States the limit: even divinity cannot slow the clock of fate; turns mourning into a boundary condition.",
+      reader_role:["Witness"],
+      function:"REPAIR",
+      altars:["A_FATE","A_CIRCLE"],
+      world_effect:"Stabilizes tragedy as law (not accident).",
+      continuity_hook:"Moves from fate to the social trigger: the prize insult."
+    },
+    {
+      unit_id:"SH-U06",
+      chapel:"C2",
+      chapel_name:"Lament + injury account",
+      text:"Robb'd of the prize the Grecian suffrage gave,\n\nThe king of nations forced his royal slave:\n\nFor this he grieved; and, till the Greeks oppress'd\n\nRequired his arm, he sorrow'd unredress'd.",
+      rite_action:"Shows civic disorder (misrule) generating withdrawal; the war-machine breaks at its own legal seam.",
+      reader_role:["Citizen","Judge"],
+      function:"TRANSFORM",
+      altars:["A_CIVIC","A_WAR"],
+      world_effect:"Makes war dependent on legitimacy and public adjudication.",
+      continuity_hook:"Diplomacy fails → proxy combat."
+    },
+    {
+      unit_id:"SH-U07",
+      chapel:"C2",
+      chapel_name:"Lament + injury account",
+      text:"Large gifts they promise, and their elders send;\n\nIn vain--he arms not, but permits his friend\n\nHis arms, his steeds, his forces to employ:\n\nHe marches, combats, almost conquers Troy:",
+      rite_action:"Stages substitution: friendship becomes a sacrificial channel when institutions fail.",
+      reader_role:["Witness","Citizen"],
+      function:"MAINTAIN",
+      altars:["A_CIVIC","A_WAR","A_GLORY"],
+      world_effect:"Shows community improvising continuity through proxy action.",
+      continuity_hook:"Catastrophic payment: Patroclus falls."
+    },
+    {
+      unit_id:"SH-U08",
+      chapel:"C2",
+      chapel_name:"Lament + injury account",
+      text:"Then slain by Phoebus (Hector had the name)\n\nAt once resigns his armour, life, and fame.",
+      rite_action:"Condenses loss into a triple-severance (gear/body/name): the social person is stripped.",
+      reader_role:["Mourner","Archivist"],
+      function:"REPAIR",
+      altars:["A_FATE","A_WAR","A_GLORY"],
+      world_effect:"Makes armor a transferable identity—hence the need for new arms as world-repair.",
+      continuity_hook:"Direct petition: forge the remedy."
+    },
+    {
+      unit_id:"SH-U09",
+      chapel:"C2",
+      chapel_name:"Lament + injury account",
+      text:"But thou, in pity, by my prayer be won:\n\nGrace with immortal arms this short-lived son,\n\nAnd to the field in martial pomp restore,\n\nTo shine with glory, till he shines no more!\"",
+      rite_action:"Completes supplication: transforms grief into a precise request for a bounded blaze of glory.",
+      reader_role:["Supplicant"],
+      function:"PRODUCE",
+      altars:["A_FORGE","A_FATE","A_GLORY"],
+      world_effect:"Defines the aim: not escape from fate, but a final, authorized radiance.",
+      continuity_hook:"Vulcan responds: craft’s promise and limit."
+    },
+    {
+      unit_id:"SH-U10",
+      chapel:"C3",
+      chapel_name:"Vow of craft",
+      text:"To her the artist-god: \"Thy griefs resign,\n\nSecure, what Vulcan can, is ever thine.\n\nO could I hide him from the Fates, as well,\n\nOr with these hands the cruel stroke repel,\n\nAs I shall forge most envied arms, the gaze\n\nOf wondering ages, and the world's amaze!\"",
+      rite_action:"Declares the doctrine of the forge: craft cannot cancel fate, but can alter the world’s witness of it.",
+      reader_role:["Witness","Initiate"],
+      function:"REPAIR",
+      altars:["A_FORGE","A_FATE","A_GLORY"],
+      world_effect:"Replaces salvation with inscription: endurance through made form.",
+      continuity_hook:"Liturgy begins: apparatus awakens."
+    },
+    {
+      unit_id:"SH-U11",
+      chapel:"C4",
+      chapel_name:"Forge liturgy",
+      text:"Thus having said, the father of the fires\n\nTo the black labours of his forge retires.\n\nSoon as he bade them blow, the bellows turn'd\n\nTheir iron mouths; and where the furnace burn'd,\n\nResounding breathed: at once the blast expires,\n\nAnd twenty forges catch at once the fires;\n\nJust as the god directs, now loud, now low,\n\nThey raise a tempest, or they gently blow;",
+      rite_action:"Performs the ignition rite: breath becomes mechanism; rhythm and command animate matter.",
+      reader_role:["Witness","Apprentice"],
+      function:"PRODUCE",
+      altars:["A_FORGE"],
+      world_effect:"Establishes an engineered ecology (breath/heat/rhythm) as the ground of world-making.",
+      continuity_hook:"Metals enter: the raw substances of order."
+    },
+    {
+      unit_id:"SH-U12",
+      chapel:"C4",
+      chapel_name:"Forge liturgy",
+      text:"In hissing flames huge silver bars are roll'd,\n\nAnd stubborn brass, and tin, and solid gold;\n\nBefore, deep fix'd, the eternal anvils stand;\n\nThe ponderous hammer loads his better hand,\n\nHis left with tongs turns the vex'd metal round,\n\nAnd thick, strong strokes, the doubling vaults rebound.",
+      rite_action:"Names the sacramental inventory (metals + tools) and the gesture-sequence that converts chaos into form.",
+      reader_role:["Witness","Archivist"],
+      function:"MAINTAIN",
+      altars:["A_FORGE","A_WORLD"],
+      world_effect:"Makes ‘making’ feel lawful: fixed anvils, repeatable strikes, reliable conversion.",
+      continuity_hook:"First object: the shield—world surface."
+    },
+    {
+      unit_id:"SH-U13",
+      chapel:"C5",
+      chapel_name:"Shield consecration",
+      text:"Then first he form'd the immense and solid shield;\n\nRich various artifice emblazed the field;\n\nIts utmost verge a threefold circle bound;\n\nA silver chain suspends the massy round;\n\nFive ample plates the broad expanse compose,\n\nAnd godlike labours on the surface rose.",
+      rite_action:"Consecrates the shield as a layered world-tablet: boundary + suspension + plates = address space for reality.",
+      reader_role:["Cosmographer","Witness"],
+      function:"PRODUCE",
+      altars:["A_WORLD","A_CIRCLE","A_FORGE"],
+      world_effect:"Installs the shield as a portable cosmos with an engineered edge-condition (the rim).",
+      continuity_hook:"Panel 1 begins: earth/heaven/ocean."
+    },
+    {
+      unit_id:"SH-U14",
+      chapel:"C6",
+      chapel_name:"Cosmos panel",
+      text:"There shone the image of the master-mind:\n\nThere earth, there heaven, there ocean he design'd;\n\nThe unwearied sun, the moon completely round;\n\nThe starry lights that heaven's high convex crown'd;\n\nThe Pleiads, Hyads, with the northern team;\n\nAnd great Orion's more refulgent beam;\n\nTo which, around the axle of the sky,\n\nThe Bear, revolving, points his golden eye,\n\nStill shines exalted on the ethereal plain,\n\nNor bathes his blazing forehead in the main.",
+      rite_action:"Performs the cosmic scan: enumerates stable reference points so war can occur inside a legible universe.",
+      reader_role:["Cosmographer","Navigator"],
+      function:"MAINTAIN",
+      altars:["A_WORLD","A_CIRCLE"],
+      world_effect:"Creates orientation (sun/moon/constellations) as the deep grammar beneath human conflict.",
+      continuity_hook:"Shift from cosmos to polis: two cities appear."
+    },
+    {
+      unit_id:"SH-U15",
+      chapel:"C7",
+      chapel_name:"City of Peace: marriage + dance",
+      text:"Two cities radiant on the shield appear,\n\nThe image one of peace, and one of war.\n\nHere sacred pomp and genial feast delight,\n\nAnd solemn dance, and hymeneal rite;\n\nAlong the street the new-made brides are led,\n\nWith torches flaming, to the nuptial bed:\n\nThe youthful dancers in a circle bound\n\nTo the soft flute, and cithern's silver sound:\n\nThrough the fair streets the matrons in a row\n\nStand in their porches, and enjoy the show.",
+      rite_action:"Stages civic continuity as spectacle: marriage + music + public witness synchronize the city’s time.",
+      reader_role:["Citizen","Witness"],
+      function:"MAINTAIN",
+      altars:["A_CIVIC","A_SONG","A_DANCE","A_CIRCLE"],
+      world_effect:"Defines peace as performed coordination, not mere absence of war.",
+      continuity_hook:"Peace requires adjudication: the court scene begins."
+    },
+    {
+      unit_id:"SH-U16",
+      chapel:"C8",
+      chapel_name:"City of Peace: law court",
+      text:"There in the forum swarm a numerous train;\n\nThe subject of debate, a townsman slain:\n\nOne pleads the fine discharged, which one denied,\n\nAnd bade the public and the laws decide:\n\nThe witness is produced on either hand:\n\nFor this, or that, the partial people stand:\n\nThe appointed heralds still the noisy bands,\n\nAnd form a ring, with sceptres in their hands:\n\nOn seats of stone, within the sacred place,\n\nThe reverend elders nodded o'er the case;\n\nAlternate, each the attesting sceptre took,\n\nAnd rising solemn, each his sentence spoke\n\nTwo golden talents lay amidst, in sight,\n\nThe prize of him who best adjudged the right.",
+      rite_action:"Enacts justice as ritual containment: ring-making, sceptres, elders, prize—law is a choreography that repairs killing.",
+      reader_role:["Judge","Citizen"],
+      function:"REPAIR",
+      altars:["A_CIVIC","A_CIRCLE"],
+      world_effect:"Makes social order feel credible because it has procedures, witnesses, and rewarded discernment.",
+      continuity_hook:"The counter-city: war world emerges."
+    },
+    {
+      unit_id:"SH-U17",
+      chapel:"C9",
+      chapel_name:"City of War: siege + ambush",
+      text:"Another part (a prospect differing far)\n\nGlow'd with refulgent arms, and horrid war.\n\nTwo mighty hosts a leaguer'd town embrace,\n\nAnd one would pillage, one would burn the place.\n\nMeantime the townsmen, arm'd with silent care,\n\nA secret ambush on the foe prepare:\n\nTheir wives, their children, and the watchful band\n\nOf trembling parents, on the turrets stand.\n\nThey march; by Pallas and by Mars made bold:\n\nGold were the gods, their radiant garments gold,\n\nAnd gold their armour: these the squadron led,\n\nAugust, divine, superior by the head!",
+      rite_action:"Turns war into a civic rite of fear and vigilance: families watch; gods authorize; strategy becomes liturgy.",
+      reader_role:["Combatant","Witness"],
+      function:"TRANSFORM",
+      altars:["A_WAR","A_CIVIC","A_GLORY"],
+      world_effect:"Shows war as socially total (not just soldiers): households, walls, gods, command.",
+      continuity_hook:"Ambush finds its place; the trap is set by the river."
+    },
+    {
+      unit_id:"SH-U18",
+      chapel:"C9",
+      chapel_name:"City of War: siege + ambush",
+      text:"A place for ambush fit they found, and stood,\n\nCover'd with shields, beside a silver flood.\n\nTwo spies at distance lurk, and watchful seem\n\nIf sheep or oxen seek the winding stream.\n\nSoon the white flocks proceeded o'er the plains,\n\nAnd steers slow-moving, and two shepherd swains;\n\nBehind them piping on their reeds they go,\n\nNor fear an ambush, nor suspect a foe.",
+      rite_action:"Contrasts innocence and calculation: pastoral movement becomes the bait that triggers slaughter.",
+      reader_role:["Observer","Witness"],
+      function:"PRODUCE",
+      altars:["A_WAR","A_PASTORAL","A_SONG"],
+      world_effect:"Makes vulnerability legible as a pattern (unaware song → exposed life).",
+      continuity_hook:"The strike: sudden violence, heaps of bodies."
+    },
+    {
+      unit_id:"SH-U19",
+      chapel:"C10",
+      chapel_name:"War climax: slaughter + personified forces",
+      text:"In arms the glittering squadron rising round\n\nRush sudden; hills of slaughter heap the ground;\n\nWhole flocks and herds lie bleeding on the plains,\n\nAnd, all amidst them, dead, the shepherd swains!\n\nThe bellowing oxen the besiegers hear;\n\nThey rise, take horse, approach, and meet the war,\n\nThey fight, they fall, beside the silver flood;\n\nThe waving silver seem'd to blush with blood.",
+      rite_action:"Displays war as contamination of the life-source: the river (silver) is stained; abundance flips to ruin.",
+      reader_role:["Witness"],
+      function:"TRANSFORM",
+      altars:["A_WAR","A_CIRCLE"],
+      world_effect:"Recasts nature as participant: water becomes a moral register of violence.",
+      continuity_hook:"Personified forces step onto the stage."
+    },
+    {
+      unit_id:"SH-U20",
+      chapel:"C10",
+      chapel_name:"War climax: slaughter + personified forces",
+      text:"There Tumult, there Contention stood confess'd;\n\nOne rear'd a dagger at a captive's breast;\n\nOne held a living foe, that freshly bled\n\nWith new-made wounds; another dragg'd a dead;\n\nNow here, now there, the carcases they tore:\n\nFate stalk'd amidst them, grim with human gore.\n\nAnd the whole war came out, and met the eye;\n\nAnd each bold figure seem'd to live or die.",
+      rite_action:"Reveals war’s grammar as spirits/roles: Tumult, Contention, Fate—forces that outlive individuals.",
+      reader_role:["Archivist","Witness"],
+      function:"MAINTAIN",
+      altars:["A_WAR","A_FATE"],
+      world_effect:"Makes violence feel systemic and repeatable—an institution with masks.",
+      continuity_hook:"Hard cut to labor: the plough restores time."
+    },
+    {
+      unit_id:"SH-U21",
+      chapel:"C11",
+      chapel_name:"Ploughing panel",
+      text:"A field deep furrow'd next the god design'd,\n\nThe third time labour'd by the sweating hind;\n\nThe shining shares full many ploughmen guide,\n\nAnd turn their crooked yokes on every side.\n\nStill as at either end they wheel around,\n\nThe master meets them with his goblet crown'd;\n\nThe hearty draught rewards, renews their toil,\n\nThen back the turning ploughshares cleave the soil:\n\nBehind, the rising earth in ridges roll'd;\n\nAnd sable look'd, though form'd of molten gold.",
+      rite_action:"Installs repetition as repair: cyclic turning, reward, and renewed effort reassert life after slaughter.",
+      reader_role:["Farmer","Witness"],
+      function:"REPAIR",
+      altars:["A_LABOR","A_CIRCLE"],
+      world_effect:"Makes survival a ritual loop (turn → drink → turn) that stabilizes the world’s continuity.",
+      continuity_hook:"From furrows to harvest: abundance enters."
+    },
+    {
+      unit_id:"SH-U22",
+      chapel:"C12",
+      chapel_name:"Harvest panel",
+      text:"Another field rose high with waving grain;\n\nWith bended sickles stand the reaper train:\n\nHere stretched in ranks the levell'd swarths are found,\n\nSheaves heap'd on sheaves here thicken up the ground.\n\nWith sweeping stroke the mowers strow the lands;\n\nThe gatherers follow, and collect in bands;\n\nAnd last the children, in whose arms are borne\n\n(Too short to gripe them) the brown sheaves of corn.\n\nThe rustic monarch of the field descries,\n\nWith silent glee, the heaps around him rise.\n\nA ready banquet on the turf is laid,\n\nBeneath an ample oak's expanded shade.\n\nThe victim ox the sturdy youth prepare;\n\nThe reaper's due repast, the woman's care.",
+      rite_action:"Performs hierarchy + distribution: ranks, bands, children, monarch, feast—labor becomes social order and shared reward.",
+      reader_role:["Citizen","Witness"],
+      function:"MAINTAIN",
+      altars:["A_LABOR","A_CIVIC"],
+      world_effect:"Shows prosperity as organized cooperation, not mere plenty.",
+      continuity_hook:"Work turns lyrical: the vineyard sings."
+    },
+    {
+      unit_id:"SH-U23",
+      chapel:"C13",
+      chapel_name:"Vineyard + Linus song",
+      text:"Next, ripe in yellow gold, a vineyard shines,\n\nBent with the ponderous harvest of its vines;\n\nA deeper dye the dangling clusters show,\n\nAnd curl'd on silver props, in order glow:\n\nA darker metal mix'd intrench'd the place;\n\nAnd pales of glittering tin the inclosure grace.\n\nTo this, one pathway gently winding leads,\n\nWhere march a train with baskets on their heads,\n\n(Fair maids and blooming youths,) that smiling bear\n\nThe purple product of the autumnal year.\n\nTo these a youth awakes the warbling strings,\n\nWhose tender lay the fate of Linus sings;\n\nIn measured dance behind him move the train,\n\nTune soft the voice, and answer to the strain.",
+      rite_action:"Fuses labor and lament: harvest procession becomes song-ritual; Linus brings grief inside abundance so the world remains honest.",
+      reader_role:["Chorus","Witness"],
+      function:"TRANSFORM",
+      altars:["A_LABOR","A_SONG","A_DANCE","A_FATE"],
+      world_effect:"Creates a culture where joy is stabilized by remembered loss (song as civic memory).",
+      continuity_hook:"Nature’s violence returns: lions take the bull."
+    },
+    {
+      unit_id:"SH-U24",
+      chapel:"C14",
+      chapel_name:"Herd + lions",
+      text:"Here herds of oxen march, erect and bold,\n\nRear high their horns, and seem to low in gold,\n\nAnd speed to meadows on whose sounding shores\n\nA rapid torrent through the rushes roars:\n\nFour golden herdsmen as their guardians stand,\n\nAnd nine sour dogs complete the rustic band.\n\nTwo lions rushing from the wood appear'd;\n\nAnd seized a bull, the master of the herd:\n\nHe roar'd: in vain the dogs, the men withstood;\n\nThey tore his flesh, and drank his sable blood.\n\nThe dogs (oft cheer'd in vain) desert the prey,\n\nDread the grim terrors, and at distance bay.",
+      rite_action:"Marks the limit of guardianship: order can be staffed (men/dogs) yet predation still breaks through.",
+      reader_role:["Guardian","Witness"],
+      function:"MAINTAIN",
+      altars:["A_PASTORAL","A_FATE"],
+      world_effect:"Naturalizes vulnerability as a permanent condition within the world-image.",
+      continuity_hook:"From predation to dwelling: folds and cots appear."
+    },
+    {
+      unit_id:"SH-U25",
+      chapel:"C15",
+      chapel_name:"Pastoral folds",
+      text:"Next this, the eye the art of Vulcan leads\n\nDeep through fair forests, and a length of meads,\n\nAnd stalls, and folds, and scatter'd cots between;\n\nAnd fleecy flocks, that whiten all the scene.",
+      rite_action:"Restores the pastoral baseline: habitation, care-structures, and dispersed life-sites that hold continuity.",
+      reader_role:["Settler","Witness"],
+      function:"MAINTAIN",
+      altars:["A_PASTORAL","A_LABOR"],
+      world_effect:"Makes everyday infrastructure (folds/cots) feel like a sacred stabilizer of society-in-time.",
+      continuity_hook:"Culmination: dance as the highest civic synchronization."
+    },
+    {
+      unit_id:"SH-U26",
+      chapel:"C16",
+      chapel_name:"Daedalean dance",
+      text:"A figured dance succeeds; such once was seen\n\nIn lofty Gnossus for the Cretan queen,\n\nForm'd by Daedalean art; a comely band\n\nOf youths and maidens, bounding hand in hand.\n\nThe maids in soft simars of linen dress'd;\n\nThe youths all graceful in the glossy vest:\n\nOf those the locks with flowery wreath inroll'd;\n\nOf these the sides adorn'd with swords of gold,\n\nThat glittering gay, from silver belts depend.\n\nNow all at once they rise, at once descend,\n\nWith well-taught feet: now shape in oblique ways,\n\nConfusedly regular, the moving maze:\n\nNow forth at once, too swift for sight, they spring,\n\nAnd undistinguish'd blend the flying ring:\n\nSo whirls a wheel, in giddy circle toss'd,\n\nAnd, rapid as it runs, the single spokes are lost.\n\nThe gazing multitudes admire around:\n\nTwo active tumblers in the centre bound;\n\nNow high, now low, their pliant limbs they bend:\n\nAnd general songs the sprightly revel end.",
+      rite_action:"Performs social time as choreography: maze-order, ring-blending, spectators—community becomes a synchronized machine of joy.",
+      reader_role:["Dancer","Citizen","Witness"],
+      function:"PRODUCE",
+      altars:["A_DANCE","A_CIRCLE","A_CIVIC","A_SONG"],
+      world_effect:"Defines ‘order’ as lived rhythm (not decree): society exists in coordinated movement.",
+      continuity_hook:"Seal the world: ocean rim closes the image."
+    },
+    {
+      unit_id:"SH-U27",
+      chapel:"C17",
+      chapel_name:"Ocean rim + completion",
+      text:"Thus the broad shield complete the artist crown'd\n\nWith his last hand, and pour'd the ocean round:\n\nIn living silver seem'd the waves to roll,\n\nAnd beat the buckler's verge, and bound the whole.",
+      rite_action:"Executes the ring-seal: ocean as boundary condition binds all scenes into one contained world.",
+      reader_role:["Cosmographer","Witness"],
+      function:"MAINTAIN",
+      altars:["A_CIRCLE","A_WORLD"],
+      world_effect:"Makes totality feel finished: everything exists inside an edged, rolling limit.",
+      continuity_hook:"The world-object becomes a war-object: armor set follows."
+    },
+    {
+      unit_id:"SH-U28",
+      chapel:"C18",
+      chapel_name:"Armor set + Thetis flight",
+      text:"This done, whate'er a warrior's use requires\n\nHe forged; the cuirass that outshone the fires,\n\nThe greaves of ductile tin, the helm impress'd\n\nWith various sculpture, and the golden crest.\n\nAt Thetis' feet the finished labour lay:\n\nShe, as a falcon cuts the aerial way,\n\nSwift from Olympus' snowy summit flies,\n\nAnd bears the blazing present through the skies.",
+      rite_action:"Completes the supplication cycle: craft is delivered as a luminous gift; the mother becomes courier of the made-world.",
+      reader_role:["Messenger","Witness"],
+      function:"TRANSFORM",
+      altars:["A_FORGE","A_GLORY","A_FATE"],
+      world_effect:"Turns grief into an instrument: the shield is a portable cosmos enabling a final, fated brilliance.",
+      continuity_hook:"Ends on transfer: the world moves toward the field."
+    }
+  ]
+};
+
+/* =========================
+   STATE
+   ========================= */
+const state = {
+  view: "grid",
+  q: "",
+  activeAltars: new Set(),
+  visible: [],
+  openIndex: -1
+};
+
+/* =========================
+   HELPERS
+   ========================= */
+const $ = (sel)=>document.querySelector(sel);
+const $$ = (sel)=>Array.from(document.querySelectorAll(sel));
+
+const chapelName = (id)=> (DATA.chapels.find(c=>c.id===id)||{}).name || id;
+
+function altarLabel(a){
+  return `${a} — ${DATA.altars[a] || ""}`.trim();
+}
+
+function normalize(s){
+  return (s||"").toLowerCase();
+}
+
+function unitHaystack(u){
+  return [
+    u.unit_id, u.chapel, u.chapel_name,
+    u.function,
+    (u.altars||[]).join(" "),
+    (u.reader_role||[]).join(" "),
+    u.rite_action,
+    u.world_effect,
+    u.continuity_hook,
+    u.text
+  ].join("\n");
+}
+
+/* =========================
+   FILTERING
+   ========================= */
+function computeVisible(){
+  const q = normalize(state.q.trim());
+  const hasQ = q.length>0;
+  const needAltars = state.activeAltars.size>0;
+
+  let list = DATA.rite_units.slice();
+
+  if (needAltars){
+    list = list.filter(u => (u.altars||[]).some(a => state.activeAltars.has(a)));
+  }
+  if (hasQ){
+    list = list.filter(u => normalize(unitHaystack(u)).includes(q));
+  }
+  state.visible = list;
+  $("#countUnits").textContent = String(DATA.rite_units.length).padStart(2,"0");
+  $("#countVisible").textContent = String(state.visible.length).padStart(2,"0");
+}
+
+/* =========================
+   RENDER: ALTAR BAR
+   ========================= */
+function renderAltars(){
+  const bar = $("#altarBar");
+  bar.innerHTML = "";
+
+  const altarKeys = Object.keys(DATA.altars);
+  // Order: common core first (nice UX)
+  const preferred = ["A_FATE","A_FORGE","A_WORLD","A_CIVIC","A_WAR","A_LABOR","A_SONG","A_DANCE","A_CIRCLE","A_GLORY","A_PASTORAL"];
+  const ordered = preferred.filter(k=>altarKeys.includes(k)).concat(altarKeys.filter(k=>!preferred.includes(k)));
+
+  for (const a of ordered){
+    const chip = document.createElement("button");
+    chip.className = "chip" + (state.activeAltars.has(a) ? " active":"");
+    chip.type = "button";
+    chip.title = altarLabel(a);
+    chip.innerHTML = `<span class="dot"></span><span>${a}</span>`;
+    chip.addEventListener("click", ()=>{
+      if (state.activeAltars.has(a)) state.activeAltars.delete(a);
+      else state.activeAltars.add(a);
+      renderAltars();
+      refresh();
+    });
+    bar.appendChild(chip);
+  }
+}
+
+/* =========================
+   RENDER: GRID + LIST
+   ========================= */
+function fnClass(fn){
+  return `fn ${fn}`;
+}
+function makeCard(u, idx){
+  const el = document.createElement("div");
+  el.className = "card";
+  el.tabIndex = 0;
+  el.setAttribute("role","button");
+  el.setAttribute("aria-label", `Open ${u.unit_id}`);
+  el.innerHTML = `
+    <div class="head">
+      <div class="badge-row">
+        <div class="id">${u.unit_id} · ${u.chapel}</div>
+        <div class="${fnClass(u.function)}">${u.function}</div>
+      </div>
+      <h3>${escapeHtml(u.chapel_name || chapelName(u.chapel))}</h3>
+    </div>
+    <div class="meta">
+      <div class="roles">${(u.reader_role||[]).map(r=>`<span class="role">${escapeHtml(r)}</span>`).join("")}</div>
+      <div class="alts">${(u.altars||[]).map(a=>`<span class="alt">${escapeHtml(a)}</span>`).join("")}</div>
+      <div class="snippet">${escapeHtml(u.rite_action)}</div>
+    </div>
+  `;
+  const open = ()=> openDrawer(idx);
+  el.addEventListener("click", open);
+  el.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); open(); }});
+  return el;
+}
+
+function renderGrid(){
+  const grid = $("#grid");
+  grid.innerHTML = "";
+  state.visible.forEach((u, idx)=>{
+    grid.appendChild(makeCard(u, idx));
+  });
+}
+
+function renderList(){
+  const list = $("#list");
+  list.innerHTML = "";
+  // list as stacked cards (more readable)
+  state.visible.forEach((u, idx)=>{
+    const row = makeCard(u, idx);
+    row.style.cursor = "pointer";
+    list.appendChild(row);
+  });
+}
+
+/* =========================
+   RENDER: MAP MODE
+   ========================= */
+function renderMap(){
+  const panel = $("#mapPanel");
+  const chunks = [];
+
+  chunks.push(`<div class="snippet"><b style="color:var(--ink);font-family:var(--mono)">CHAPELS</b> (spaces)</div>`);
+  chunks.push(`<div class="alts">${DATA.chapels.map(c=>`<span class="alt">${escapeHtml(c.id)} · ${escapeHtml(c.name)}</span>`).join("")}</div>`);
+
+  chunks.push(`<div class="snippet" style="margin-top:8px;"><b style="color:var(--ink);font-family:var(--mono)">ALTARS</b> (motif nodes)</div>`);
+  chunks.push(`<div class="alts">${Object.keys(DATA.altars).map(a=>`<span class="alt">${escapeHtml(a)}</span>`).join("")}</div>`);
+  chunks.push(`<div class="snippet" style="margin-top:6px;color:rgba(166,176,207,.9);">${escapeHtml(Object.entries(DATA.altars).map(([k,v])=>`${k}: ${v}`).join(" · "))}</div>`);
+
+  panel.innerHTML = chunks.join("\n");
+
+  $("#compilerSpec").textContent =
+    DATA.compiler_spec.render_modes.map(m=>{
+      const lines = [];
+      lines.push(`${m.id} — ${m.name}`);
+      if (m.layout) lines.push(`  layout: ${m.layout}`);
+      if (m.card_front) lines.push(`  front: ${m.card_front}`);
+      if (m.card_back) lines.push(`  back: ${m.card_back}`);
+      if (m.rule) lines.push(`  rule: ${m.rule}`);
+      if (m.mechanic) lines.push(`  mechanic: ${m.mechanic}`);
+      return lines.join("\n");
+    }).join("\n\n");
+}
+
+/* =========================
+   DRAWER
+   ========================= */
+function openDrawer(visibleIdx){
+  const u = state.visible[visibleIdx];
+  if (!u) return;
+  state.openIndex = visibleIdx;
+
+  $("#dTitle").textContent = `${u.unit_id} — ${u.chapel_name || chapelName(u.chapel)}`;
+  $("#dSub").textContent = `${u.chapel} · ${u.function} · altars: ${(u.altars||[]).join(", ")}`;
+  $("#dAction").textContent = u.rite_action || "";
+  $("#dEffect").textContent = u.world_effect || "";
+  $("#dText").textContent = u.text || "";
+  $("#dAltars").textContent = (u.altars||[]).map(a=>`${a}: ${DATA.altars[a] || ""}`.trim()).join("\n");
+  $("#dHook").textContent = u.continuity_hook || "";
+  $("#dRoles").textContent = (u.reader_role||[]).join(" · ");
+
+  $("#overlay").classList.add("show");
+  document.body.style.overflow = "hidden";
+}
+
+function closeDrawer(){
+  $("#overlay").classList.remove("show");
+  document.body.style.overflow = "";
+}
+
+function stepDrawer(dir){
+  if (state.openIndex < 0) return;
+  const next = state.openIndex + dir;
+  if (next < 0 || next >= state.visible.length) return;
+  openDrawer(next);
+}
+
+function pinAltarsFromOpen(){
+  const u = state.visible[state.openIndex];
+  if(!u) return;
+  (u.altars||[]).forEach(a=>state.activeAltars.add(a));
+  renderAltars();
+  refresh();
+}
+
+/* =========================
+   VIEW SWITCHING
+   ========================= */
+function setView(v){
+  state.view = v;
+  $("#viewGrid").style.display = (v==="grid") ? "" : "none";
+  $("#viewList").style.display = (v==="list") ? "" : "none";
+  $("#viewMap").style.display  = (v==="map")  ? "" : "none";
+
+  // tabs UI
+  $$(".seg button").forEach(btn=>{
+    const on = btn.dataset.view === v;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+
+  refresh(false);
+}
+
+/* =========================
+   REFRESH
+   ========================= */
+function refresh(rerenderMap=true){
+  computeVisible();
+
+  if (state.view === "grid") renderGrid();
+  if (state.view === "list") renderList();
+  if (state.view === "map" && rerenderMap) renderMap();
+}
+
+function escapeHtml(str){
+  return (str||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+/* =========================
+   EVENTS
+   ========================= */
+function wire(){
+  // View tabs
+  $$(".seg button").forEach(btn=>{
+    btn.addEventListener("click", ()=> setView(btn.dataset.view));
+  });
+
+  // Search
+  $("#q").addEventListener("input", (e)=>{
+    state.q = e.target.value;
+    refresh();
+  });
+
+  // Clear
+  $("#clearAll").addEventListener("click", ()=>{
+    state.q = "";
+    $("#q").value = "";
+    state.activeAltars.clear();
+    renderAltars();
+    refresh();
+  });
+
+  // Random
+  $("#randomUnit").addEventListener("click", ()=>{
+    if (!state.visible.length) return;
+    const idx = Math.floor(Math.random()*state.visible.length);
+    openDrawer(idx);
+  });
+
+  // Drawer controls
+  $("#close").addEventListener("click", closeDrawer);
+  $("#overlay").addEventListener("click", (e)=>{
+    if (e.target === $("#overlay")) closeDrawer();
+  });
+  $("#prevUnit").addEventListener("click", ()=> stepDrawer(-1));
+  $("#nextUnit").addEventListener("click", ()=> stepDrawer(1));
+  $("#pinAltar").addEventListener("click", pinAltarsFromOpen);
+
+  // Keyboard
+  window.addEventListener("keydown", (e)=>{
+    const open = $("#overlay").classList.contains("show");
+    if (!open) return;
+    if (e.key === "Escape") closeDrawer();
+    if (e.key === "ArrowLeft") stepDrawer(-1);
+    if (e.key === "ArrowRight") stepDrawer(1);
+  });
+}
+
+/* =========================
+   INIT
+   ========================= */
+renderAltars();
+wire();
+computeVisible();
+renderGrid();
+renderMap();
+</script>
+</body>
+</html>

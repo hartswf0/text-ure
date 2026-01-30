@@ -1,0 +1,50 @@
+{
+  "file": "urn_ontology.json",
+  "content": {
+    "model": "urn_unwrap_24",
+    "meta": {
+      "theory": "Bajohr_Operative_Ekphrasis",
+      "dimensions": { "width": 24, "height": 24 },
+      "coordinate_system": "cylindrical_unwrap"
+    },
+    "zones": [
+      {
+        "id": "Z0",
+        "name": "LIP",
+        "y_range": [0, 2],
+        "law": "inscription",
+        "semantics": "Declarative, circular, containing the invocation."
+      },
+      {
+        "id": "Z1",
+        "name": "FRIEZE_A",
+        "y_range": [3, 11],
+        "law": "motion_without_arrival",
+        "semantics": "The pursuit, the pipes, the trees. High noise/signal ratio."
+      },
+      {
+        "id": "Z2",
+        "name": "FRIEZE_B",
+        "y_range": [12, 17],
+        "law": "paradox_of_silence",
+        "semantics": "The sacrifice and the emptied town. Negative space."
+      },
+      {
+        "id": "Z3",
+        "name": "HANDLES",
+        "y_range": [18, 19],
+        "law": "structural_hinge",
+        "semantics": "Apostrophe and meta-commentary. Symmetric placement."
+      },
+      {
+        "id": "Z4",
+        "name": "BASE",
+        "y_range": [20, 23],
+        "law": "axiomatic_closure",
+        "semantics": "Foundational truth. Heavy, static text placement."
+      }
+    ],
+    "wraparound_x": true,
+    "max_chars_per_cell": 220
+  }
+}

@@ -1,0 +1,1231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, interactive-widget=resizes-content" />
+  <title>Carey 24×24 Ritual Grid — Keats: Grecian Urn</title>
+  <style>
+    :root{
+      --bg: #0b0c10;
+      --panel: #11131a;
+      --ink: #e9ecf2;
+      --muted: #aab1c2;
+      --faint: rgba(233,236,242,.08);
+      --fainter: rgba(233,236,242,.05);
+      --accent: #b8c8ff;
+      --warn: #ffd38a;
+
+      --cell: 22px;     /* controlled by zoom */
+      --gap: 1px;
+      --radius: 14px;
+
+      --z-center: rgba(184,200,255,.18);
+      --z-inner:  rgba(184,255,222,.12);
+      --z-middle: rgba(255,217,184,.12);
+      --z-outer:  rgba(255,184,223,.10);
+
+      --a-inv: rgba(184,200,255,.35);
+      --a-chant: rgba(184,255,222,.30);
+      --a-witness: rgba(255,217,184,.30);
+      --a-question: rgba(255,184,223,.28);
+      --a-seal: rgba(255,255,255,.22);
+
+      --shadow: 0 12px 40px rgba(0,0,0,.35);
+    }
+
+    *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body{ height: 100%; background: var(--bg); color: var(--ink); margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+    button, input, select{ font: inherit; color: inherit; }
+
+    .app{
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      min-height: 100vh;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .sidebar{ display:flex; flex-direction: column; min-height: 0; }
+    .sideTop{
+      padding: 14px 14px 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.18);
+    }
+    .title{
+      display:flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    }
+    h1{ font-size: 14px; margin:0; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+    .sig{ font-size: 11px; color: rgba(233,236,242,.55); letter-spacing: .06em; white-space: nowrap; }
+    .sub{
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.35;
+      color: rgba(233,236,242,.88);
+    }
+    .sub em{ color: var(--accent); font-style: normal; }
+
+    .controls{
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .controls .full{ grid-column: 1 / -1; }
+
+    label{
+      display:block;
+      font-size: 11px;
+      color: rgba(233,236,242,.62);
+      margin-bottom: 6px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    select, input[type="text"], input[type="range"]{
+      width: 100%;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 10px;
+      padding: 10px 10px;
+      outline: none;
+    }
+    input[type="range"]{ padding: 10px 8px; }
+
+    .btnRow{
+      display:flex; gap: 8px; flex-wrap: wrap;
+    }
+    .btn{
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .btn:hover{ background: rgba(255,255,255,.08); }
+    .btn:active{ transform: translateY(1px); }
+
+    .tabs{
+      display:flex;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.14);
+    }
+    .tab{
+      flex:1;
+      text-align:center;
+      padding: 10px 8px;
+      cursor:pointer;
+      font-size: 12px;
+      color: rgba(233,236,242,.70);
+      border-right: 1px solid rgba(255,255,255,.06);
+      user-select: none;
+    }
+    .tab:last-child{ border-right:none; }
+    .tab.active{
+      color: var(--ink);
+      background: rgba(255,255,255,.04);
+    }
+
+    .pane{
+      padding: 12px 14px;
+      overflow:auto;
+      min-height: 0;
+      flex: 1;
+    }
+
+    .kv{
+      display:grid;
+      grid-template-columns: 120px 1fr;
+      gap: 8px 10px;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .k{ color: rgba(233,236,242,.58); }
+    .v{ color: rgba(233,236,242,.92); }
+    .pill{
+      display:inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.04);
+      margin-right: 6px;
+      margin-bottom: 6px;
+      font-size: 11px;
+      color: rgba(233,236,242,.86);
+    }
+
+    .divider{ height: 1px; background: rgba(255,255,255,.08); margin: 12px 0; }
+
+    .poem{
+      font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+      font-size: 13px;
+      line-height: 1.45;
+      color: rgba(233,236,242,.90);
+    }
+    .poemLine{
+      display:flex;
+      gap: 10px;
+      padding: 4px 0;
+      border-bottom: 1px dashed rgba(255,255,255,.06);
+    }
+    .ln{
+      width: 34px;
+      color: rgba(233,236,242,.45);
+      text-align: right;
+      flex: 0 0 auto;
+      user-select: none;
+    }
+    .poemText{ flex: 1; }
+    .poemLine.hit{
+      background: rgba(184,200,255,.10);
+      border-bottom-color: rgba(184,200,255,.20);
+      border-radius: 8px;
+      padding-left: 6px;
+      padding-right: 6px;
+    }
+
+    .main{
+      display:flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .mainTop{
+      padding: 10px 12px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.18);
+    }
+    .legend{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+      font-size: 11px;
+      color: rgba(233,236,242,.70);
+    }
+    .sw{ width: 10px; height: 10px; border-radius: 3px; display:inline-block; margin-right: 6px; border: 1px solid rgba(255,255,255,.12); }
+    .legItem{ display:flex; align-items:center; gap: 6px; }
+
+    .gridWrap{
+      padding: 12px;
+      overflow: auto;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(24, var(--cell));
+      grid-auto-rows: var(--cell);
+      gap: var(--gap);
+      background: rgba(255,255,255,.08);
+      padding: var(--gap);
+      border-radius: 16px;
+      width: fit-content;
+      margin: 0 auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,.30);
+    }
+
+    .cell{
+      position: relative;
+      border: none;
+      cursor: pointer;
+      border-radius: 6px;
+      overflow: hidden;
+      padding: 0;
+      background: rgba(255,255,255,.03);
+      outline: none;
+    }
+    .cell:focus-visible{
+      box-shadow: 0 0 0 2px rgba(184,200,255,.9);
+      z-index: 3;
+    }
+
+    .cell .bg{
+      position:absolute; inset:0;
+      background: rgba(255,255,255,.03);
+    }
+
+    .cell .txt{
+      position:absolute; inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 2px;
+      font-size: 9px;
+      line-height: 1.05;
+      text-align:center;
+      color: rgba(233,236,242,.86);
+      text-shadow: 0 1px 0 rgba(0,0,0,.5);
+      user-select: none;
+      letter-spacing: .02em;
+    }
+    .cell.silence .txt{ color: rgba(233,236,242,.55); font-size: 10px; }
+
+    /* zone shading */
+    .z-center .bg{ background: var(--z-center); }
+    .z-inner .bg{ background: var(--z-inner); }
+    .z-middle .bg{ background: var(--z-middle); }
+    .z-outer .bg{ background: var(--z-outer); }
+
+    /* act edging */
+    .a-inv{ box-shadow: inset 0 0 0 2px var(--a-inv); }
+    .a-chant{ box-shadow: inset 0 0 0 2px var(--a-chant); }
+    .a-witness{ box-shadow: inset 0 0 0 2px var(--a-witness); }
+    .a-question{ box-shadow: inset 0 0 0 2px var(--a-question); }
+    .a-seal{ box-shadow: inset 0 0 0 2px var(--a-seal); }
+
+    /* selection + path */
+    .cell.selected{
+      outline: 2px solid rgba(255,255,255,.92);
+      outline-offset: -2px;
+      z-index: 2;
+    }
+    .cell.path{
+      box-shadow:
+        inset 0 0 0 2px rgba(255,255,255,.70),
+        inset 0 0 0 4px rgba(184,200,255,.35);
+      z-index: 1;
+    }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 16px;
+      background: rgba(0,0,0,.70);
+      border: 1px solid rgba(255,255,255,.14);
+      color: rgba(233,236,242,.92);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      max-width: 92vw;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+    .toast.show{ opacity: 1; }
+
+    /* Mobile: sidebar becomes bottom sheet */
+    @media (max-width: 980px){
+      .app{
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr auto;
+      }
+      .sidebar{
+        order: 2;
+        position: sticky;
+        bottom: 0;
+        max-height: 46vh;
+      }
+      .main{ order: 1; }
+    }
+    @media (max-width: 420px){
+      :root{ --cell: 18px; }
+      .controls{ grid-template-columns: 1fr; }
+      .kv{ grid-template-columns: 110px 1fr; }
+      .cell .txt{ font-size: 8px; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="app">
+
+  <!-- SIDEBAR / INSPECTOR -->
+  <aside class="card sidebar">
+    <div class="sideTop">
+      <div class="title">
+        <h1>Carey Ritual Grid</h1>
+        <div class="sig">24×24 · “world, not page”</div>
+      </div>
+      <div class="sub">
+        A ceremonial field: <em>cells stage acts</em>, adjacency performs relation, traversal produces understanding.
+        Tap a cell to enter a site; repeat to stabilize the world.
+      </div>
+    </div>
+
+    <div class="controls">
+      <div>
+        <label for="mode">Traversal</label>
+        <select id="mode">
+          <option value="PILGRIMAGE">PILGRIMAGE (edge → core)</option>
+          <option value="SPIRAL">SPIRAL (edge → core, turning)</option>
+          <option value="CIRCULATION">CIRCULATION (around rings)</option>
+          <option value="PROCESSION">PROCESSION (top → bottom)</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="zoom">Zoom</label>
+        <input id="zoom" type="range" min="14" max="34" value="22" />
+      </div>
+
+      <div class="full">
+        <label for="filter">Filter (motif or word)</label>
+        <input id="filter" type="text" placeholder="e.g., silence · for ever · sacrifice · beauty" />
+      </div>
+
+      <div class="full btnRow">
+        <button class="btn" id="randEdge">Enter from an edge</button>
+        <button class="btn" id="copyManifest">Copy manifest (JSON)</button>
+        <button class="btn" id="integrity">Integrity check</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="site">Site</div>
+      <div class="tab" data-tab="source">Source</div>
+      <div class="tab" data-tab="laws">Laws</div>
+    </div>
+
+    <div class="pane" id="pane-site"></div>
+    <div class="pane" id="pane-source" style="display:none;"></div>
+    <div class="pane" id="pane-laws" style="display:none;"></div>
+  </aside>
+
+  <!-- MAIN GRID -->
+  <main class="card main">
+    <div class="mainTop">
+      <div class="legend">
+        <div class="legItem"><span class="sw" style="background: var(--z-center)"></span>CENTER_CORE · PRODUCE</div>
+        <div class="legItem"><span class="sw" style="background: var(--z-inner)"></span>INNER_RING · MAINTAIN</div>
+        <div class="legItem"><span class="sw" style="background: var(--z-middle)"></span>MIDDLE_RING · REPAIR</div>
+        <div class="legItem"><span class="sw" style="background: var(--z-outer)"></span>OUTER_RING · TRANSFORM</div>
+      </div>
+      <div class="legend" id="counts"></div>
+    </div>
+
+    <div class="gridWrap">
+      <div class="grid" id="grid" aria-label="24 by 24 ritual grid"></div>
+    </div>
+  </main>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   CAREY-24x24-RITUAL-GRID-v1  —  OPERATIVE MANIFEST (CODE-TEXT)
+   ------------------------------------------------------------
+   Two texts:
+     (1) Operative manifest (this generator) produces
+     (2) Surface text (cell inscriptions).
+
+   Determinism:
+     - No external data.
+     - Seeded PRNG.
+     - Zone → operation/act constraints enforced.
+     - Motif rays radiate outward from core.
+     - Silence ≥ 10% and only MAINTAIN/REPAIR zones.
+============================================================ */
+
+/* ---------- Source text: Keats (public domain) ---------- */
+const POEM_TITLE = "Ode on a Grecian Urn";
+const POEM_AUTHOR = "John Keats";
+
+/* 50 lines (5 stanzas × 10 lines) */
+const POEM_LINES = [
+  "Thou still unravish'd bride of quietness,",
+  "Thou foster-child of silence and slow time,",
+  "Sylvan historian, who canst thus express",
+  "A flowery tale more sweetly than our rhyme:",
+  "What leaf-fring'd legend haunts about thy shape",
+  "Of deities or mortals, or of both,",
+  "In Tempe or the dales of Arcady?",
+  "What men or gods are these? What maidens loth?",
+  "What mad pursuit? What struggle to escape?",
+  "What pipes and timbrels? What wild ecstasy?",
+
+  "Heard melodies are sweet, but those unheard",
+  "Are sweeter; therefore, ye soft pipes, play on;",
+  "Not to the sensual ear, but, more endear'd,",
+  "Pipe to the spirit ditties of no tone:",
+  "Fair youth, beneath the trees, thou canst not leave",
+  "Thy song, nor ever can those trees be bare;",
+  "Bold Lover, never, never canst thou kiss,",
+  "Though winning near the goal yet, do not grieve;",
+  "She cannot fade, though thou hast not thy bliss,",
+  "For ever wilt thou love, and she be fair!",
+
+  "Ah, happy, happy boughs! that cannot shed",
+  "Your leaves, nor ever bid the Spring adieu;",
+  "And, happy melodist, unwearied,",
+  "For ever piping songs for ever new;",
+  "More happy love! more happy, happy love!",
+  "For ever warm and still to be enjoy'd,",
+  "For ever panting, and for ever young;",
+  "All breathing human passion far above,",
+  "That leaves a heart high-sorrowful and cloy'd,",
+  "A burning forehead, and a parching tongue.",
+
+  "Who are these coming to the sacrifice?",
+  "To what green altar, O mysterious priest,",
+  "Lead'st thou that heifer lowing at the skies,",
+  "And all her silken flanks with garlands drest?",
+  "What little town by river or sea shore,",
+  "Or mountain-built with peaceful citadel,",
+  "Is emptied of this folk, this pious morn?",
+  "And, little town, thy streets for evermore",
+  "Will silent be; and not a soul to tell",
+  "Why thou art desolate, can e'er return.",
+
+  "O Attic shape! Fair attitude! with brede",
+  "Of marble men and maidens overwrought,",
+  "With forest branches and the trodden weed;",
+  "Thou, silent form, dost tease us out of thought",
+  "As doth eternity: Cold Pastoral!",
+  "When old age shall this generation waste,",
+  "Thou shalt remain, in midst of other woe",
+  "Than ours, a friend to man, to whom thou say'st,",
+  "\"Beauty is truth, truth beauty,—that is all",
+  "Ye know on earth, and all ye need to know.\""
+];
+
+/* ---------- Grid constants (1-based coords) ---------- */
+const ROWS = 24, COLS = 24;
+const CORE_MIN = 10, CORE_MAX = 13;
+const INNER_MIN = 7, INNER_MAX = 16;
+const MID_MIN = 4, MID_MAX = 19;
+const CENTER_TARGET = { x: 12, y: 12 }; // ritual gravity point
+
+const ZONES = {
+  CENTER_CORE: { op: "PRODUCE", acts: ["INVOCATION","SEAL"] },
+  INNER_RING:  { op: "MAINTAIN", acts: ["CHANT","WITNESS"] },
+  MIDDLE_RING: { op: "REPAIR",  acts: ["QUESTION","WITNESS"] },
+  OUTER_RING:  { op: "TRANSFORM", acts: ["QUESTION"] } // "TRANSFORM" realized as operation + text, not a ritual_act
+};
+
+const ROLES_BY_ZONE = {
+  CENTER_CORE: "Judge",
+  INNER_RING: "Congregant",
+  MIDDLE_RING: "Witness",
+  OUTER_RING: "Pilgrim"
+};
+
+const ACT_GLYPHS = {
+  INVOCATION: "∴",
+  CHANT: "⟲",
+  WITNESS: "◉",
+  QUESTION: "?",
+  SEAL: "⟂"
+};
+
+/* ---------- Motifs (must appear in multiple zones, radiate outward) ---------- */
+const MOTIFS = [
+  { id:"SILENCE_TIME", label:"Silence / Slow Time", core:true, keywords:["silence","time","quiet"] },
+  { id:"UNHEARD_MUSIC", label:"Unheard Music", core:true, keywords:["unheard","pipes","melodies"] },
+  { id:"FROZEN_LOVE", label:"Frozen Love / Near-kiss", core:true, keywords:["kiss","lover","fair"] },
+  { id:"FOREVER_CHANT", label:"For ever / Repetition", core:true, keywords:["for ever","happy"] },
+  { id:"SACRIFICE_PROCESSION", label:"Sacrifice / Procession", core:true, keywords:["sacrifice","altar","priest"] },
+  { id:"DESOLATE_TOWN", label:"Desolate Town", core:false, keywords:["town","streets","desolate"] },
+  { id:"PASTORAL_ETERNITY", label:"Cold Pastoral / Eternity", core:true, keywords:["eternity","pastoral","remain"] },
+  { id:"BEAUTY_TRUTH", label:"Seal: Beauty/Truth", core:true, keywords:["beauty","truth"] },
+  { id:"CAREY_RITUAL", label:"Carey: Ritual Communication", core:false, keywords:["ritual","community","renewal"] }
+];
+
+/* ---------- Fragments: “cells stage acts” (poem lines + Carey-ritual operators) ---------- */
+const FRAGMENTS = [
+  // Silence / time
+  {id:"F1", motif:"SILENCE_TIME", acts:["INVOCATION","WITNESS"], short:"bride / quiet", long:POEM_LINES[0], lines:[1]},
+  {id:"F2", motif:"SILENCE_TIME", acts:["INVOCATION","WITNESS"], short:"silence / slow", long:POEM_LINES[1], lines:[2]},
+  {id:"F3", motif:"SILENCE_TIME", acts:["WITNESS"], short:"silent form", long:POEM_LINES[43], lines:[44]},
+  {id:"F4", motif:"SILENCE_TIME", acts:["QUESTION"], short:"tease thought", long:POEM_LINES[43], lines:[44]},
+
+  // Questions / legend
+  {id:"F5", motif:"CAREY_RITUAL", acts:["INVOCATION","QUESTION"], short:"call a world", long:"INVOCATION: gather, and a world appears (Carey: communication as ritual).", lines:[]},
+  {id:"F6", motif:"CAREY_RITUAL", acts:["CHANT"], short:"repeat = real", long:"CHANT: repetition manufactures reality; the public rehearses itself into being.", lines:[]},
+  {id:"F7", motif:"CAREY_RITUAL", acts:["WITNESS"], short:"medium = shrine", long:"WITNESS: the urn is not information; it is a shrine where community recognizes itself.", lines:[]},
+  {id:"F8", motif:"CAREY_RITUAL", acts:["QUESTION"], short:"adjacency binds", long:"QUESTION: what does your next step consecrate? adjacency is symbolic relation.", lines:[]},
+
+  // Unheard music
+  {id:"F9", motif:"UNHEARD_MUSIC", acts:["WITNESS"], short:"unheard sweet", long:POEM_LINES[10], lines:[11]},
+  {id:"F10", motif:"UNHEARD_MUSIC", acts:["CHANT","WITNESS"], short:"pipes, play on", long:POEM_LINES[11], lines:[12]},
+  {id:"F11", motif:"UNHEARD_MUSIC", acts:["WITNESS"], short:"spirit ditties", long:POEM_LINES[13], lines:[14]},
+  {id:"F12", motif:"UNHEARD_MUSIC", acts:["CHANT"], short:"for ever piping", long:POEM_LINES[23], lines:[24]},
+
+  // Frozen love
+  {id:"F13", motif:"FROZEN_LOVE", acts:["WITNESS"], short:"bold lover", long:POEM_LINES[16], lines:[17]},
+  {id:"F14", motif:"FROZEN_LOVE", acts:["CHANT","WITNESS"], short:"never kiss", long:POEM_LINES[16], lines:[17]},
+  {id:"F15", motif:"FROZEN_LOVE", acts:["QUESTION"], short:"near goal", long:POEM_LINES[17], lines:[18]},
+  {id:"F16", motif:"FROZEN_LOVE", acts:["CHANT"], short:"she be fair", long:POEM_LINES[19], lines:[20]},
+
+  // Forever chant
+  {id:"F17", motif:"FOREVER_CHANT", acts:["CHANT"], short:"for ever", long:"CHANT: For ever.", lines:[20,24,26,27,38]},
+  {id:"F18", motif:"FOREVER_CHANT", acts:["CHANT","WITNESS"], short:"happy boughs", long:POEM_LINES[20], lines:[21]},
+  {id:"F19", motif:"FOREVER_CHANT", acts:["CHANT"], short:"songs for ever", long:POEM_LINES[23], lines:[24]},
+  {id:"F20", motif:"FOREVER_CHANT", acts:["WITNESS"], short:"human passion", long:POEM_LINES[27], lines:[28]},
+
+  // Sacrifice / procession
+  {id:"F21", motif:"SACRIFICE_PROCESSION", acts:["QUESTION"], short:"who sacrifice?", long:POEM_LINES[30], lines:[31]},
+  {id:"F22", motif:"SACRIFICE_PROCESSION", acts:["QUESTION","WITNESS"], short:"green altar", long:POEM_LINES[31], lines:[32]},
+  {id:"F23", motif:"SACRIFICE_PROCESSION", acts:["WITNESS"], short:"myst. priest", long:POEM_LINES[31], lines:[32]},
+  {id:"F24", motif:"SACRIFICE_PROCESSION", acts:["WITNESS"], short:"heifer lowing", long:POEM_LINES[32], lines:[33]},
+
+  // Desolate town
+  {id:"F25", motif:"DESOLATE_TOWN", acts:["QUESTION"], short:"what town?", long:POEM_LINES[34], lines:[35]},
+  {id:"F26", motif:"DESOLATE_TOWN", acts:["WITNESS"], short:"emptied folk", long:POEM_LINES[36], lines:[37]},
+  {id:"F27", motif:"DESOLATE_TOWN", acts:["CHANT","WITNESS"], short:"streets forever", long:POEM_LINES[37], lines:[38]},
+  {id:"F28", motif:"DESOLATE_TOWN", acts:["WITNESS"], short:"silent be", long:POEM_LINES[38], lines:[39]},
+
+  // Pastoral / eternity
+  {id:"F29", motif:"PASTORAL_ETERNITY", acts:["WITNESS"], short:"attic shape", long:POEM_LINES[40], lines:[41]},
+  {id:"F30", motif:"PASTORAL_ETERNITY", acts:["WITNESS"], short:"marble overwrought", long:POEM_LINES[41], lines:[42]},
+  {id:"F31", motif:"PASTORAL_ETERNITY", acts:["QUESTION"], short:"eternity", long:POEM_LINES[44], lines:[45]},
+  {id:"F32", motif:"PASTORAL_ETERNITY", acts:["WITNESS"], short:"remain", long:POEM_LINES[46], lines:[47]},
+
+  // Seal: beauty / truth
+  {id:"F33", motif:"BEAUTY_TRUTH", acts:["SEAL"], short:"beauty/truth", long:POEM_LINES[48], lines:[49]},
+  {id:"F34", motif:"BEAUTY_TRUTH", acts:["SEAL"], short:"need to know", long:POEM_LINES[49], lines:[50]},
+  {id:"F35", motif:"BEAUTY_TRUTH", acts:["SEAL"], short:"friend to man", long:POEM_LINES[47], lines:[48]},
+
+  // Legend / pursuit / wild ecstasy (feeds QUESTIONS in middle/outer)
+  {id:"F36", motif:"CAREY_RITUAL", acts:["QUESTION"], short:"what legend?", long:POEM_LINES[4], lines:[5]},
+  {id:"F37", motif:"CAREY_RITUAL", acts:["QUESTION"], short:"men or gods?", long:POEM_LINES[7], lines:[8]},
+  {id:"F38", motif:"CAREY_RITUAL", acts:["QUESTION"], short:"mad pursuit", long:POEM_LINES[8], lines:[9]},
+  {id:"F39", motif:"CAREY_RITUAL", acts:["WITNESS"], short:"pipes & timbrels", long:POEM_LINES[9], lines:[10]}
+];
+
+/* ---------- Utilities ---------- */
+const clamp = (n,a,b)=>Math.max(a,Math.min(b,n));
+const sign = (n)=> n===0?0:(n>0?1:-1);
+function inRange(v,a,b){ return v>=a && v<=b; }
+
+function zoneOf(x,y){
+  const inCore = inRange(x,CORE_MIN,CORE_MAX) && inRange(y,CORE_MIN,CORE_MAX);
+  if(inCore) return "CENTER_CORE";
+  const inInner = inRange(x,INNER_MIN,INNER_MAX) && inRange(y,INNER_MIN,INNER_MAX);
+  if(inInner) return "INNER_RING";
+  const inMid = inRange(x,MID_MIN,MID_MAX) && inRange(y,MID_MIN,MID_MAX);
+  if(inMid) return "MIDDLE_RING";
+  return "OUTER_RING";
+}
+
+function mulberry32(seed){
+  let a = seed >>> 0;
+  return function(){
+    a += 0x6D2B79F5;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function pick(arr, r){ return arr[Math.floor(r()*arr.length)]; }
+
+/* ---------- Motif rays (radiate outward) ----------
+   Rays are deterministic “spines” that cross zones.
+*/
+function motifRayAt(x,y){
+  // Core cross (beauty/truth) across y=12, silence/time across x=12
+  if (x === 12) return "SILENCE_TIME";
+  if (y === 12) return "BEAUTY_TRUTH";
+
+  // Diagonals (music and love)
+  if (x - y === 0) return "UNHEARD_MUSIC";
+  if (x + y === 25) return "FROZEN_LOVE";
+
+  // Procession band (sacrifice)
+  if (y === 18 || y === 7) return "SACRIFICE_PROCESSION";
+
+  // Town seam (desolation)
+  if (x === 6 || x === 19) return "DESOLATE_TOWN";
+
+  // Corner pastoral pull
+  if ((x<=2 && y<=2) || (x>=23 && y<=2) || (x<=2 && y>=23) || (x>=23 && y>=23)) return "PASTORAL_ETERNITY";
+
+  return null;
+}
+
+/* ---------- Silence law: ≥10% in INNER/MIDDLE only ---------- */
+const SILENCE_TARGET = Math.ceil(ROWS*COLS*0.12); // 12% for slack
+function buildSilenceSet(){
+  const r = mulberry32(0xCA7E7); // stable seed (CAREY)
+  const eligible = [];
+  for(let y=1;y<=ROWS;y++){
+    for(let x=1;x<=COLS;x++){
+      const z = zoneOf(x,y);
+      if(z==="INNER_RING" || z==="MIDDLE_RING"){
+        // avoid overloading rays: keep some silence off-ray
+        if(!motifRayAt(x,y) || r() < 0.35) eligible.push(`${x},${y}`);
+      }
+    }
+  }
+  // deterministic shuffle-lite
+  for(let i=eligible.length-1;i>0;i--){
+    const j = Math.floor(r()*(i+1));
+    [eligible[i],eligible[j]] = [eligible[j],eligible[i]];
+  }
+  return new Set(eligible.slice(0, SILENCE_TARGET));
+}
+const SILENCE_SET = buildSilenceSet();
+
+/* ---------- Fragment selection ---------- */
+function fragmentsFor(motif, act){
+  return FRAGMENTS.filter(f => f.motif===motif && f.acts.includes(act));
+}
+function fallbackFragmentsFor(act){
+  return FRAGMENTS.filter(f => f.acts.includes(act));
+}
+
+/* ---------- Act selection by zone (enforceable laws) ---------- */
+function actForCell(zone, motif, x, y, r){
+  const allowed = ZONES[zone].acts.slice();
+
+  // Center core: bias INVOCATION on upper-left, SEAL on lower-right
+  if(zone==="CENTER_CORE"){
+    const bias = (x + y) <= 24 ? "INVOCATION" : "SEAL";
+    return (allowed.includes(bias) ? bias : pick(allowed, r));
+  }
+
+  if(zone==="INNER_RING"){
+    // chant favored on rays + repetition motif
+    if(motif==="FOREVER_CHANT" || r()<0.55) return "CHANT";
+    return "WITNESS";
+  }
+
+  if(zone==="MIDDLE_RING"){
+    // questions favored on edges of mid ring
+    const edge = (x===MID_MIN || x===MID_MAX || y===MID_MIN || y===MID_MAX);
+    if(edge || r()<0.55) return "QUESTION";
+    return "WITNESS";
+  }
+
+  // outer: mostly QUESTION (transform is operation + wording)
+  return "QUESTION";
+}
+
+/* ---------- Motif selection when not on ray ---------- */
+function motifForCell(zone, x, y, r){
+  const ray = motifRayAt(x,y);
+  if(ray) return ray;
+
+  // zone-weighted motifs, with cross-zone repetition
+  const pool = [];
+  if(zone==="CENTER_CORE"){
+    pool.push("SILENCE_TIME","UNHEARD_MUSIC","BEAUTY_TRUTH","PASTORAL_ETERNITY","FOREVER_CHANT");
+  } else if(zone==="INNER_RING"){
+    pool.push("FOREVER_CHANT","UNHEARD_MUSIC","FROZEN_LOVE","SILENCE_TIME","CAREY_RITUAL","BEAUTY_TRUTH");
+  } else if(zone==="MIDDLE_RING"){
+    pool.push("SACRIFICE_PROCESSION","DESOLATE_TOWN","CAREY_RITUAL","SILENCE_TIME","UNHEARD_MUSIC","FOREVER_CHANT");
+  } else {
+    pool.push("CAREY_RITUAL","DESOLATE_TOWN","SACRIFICE_PROCESSION","PASTORAL_ETERNITY","SILENCE_TIME","BEAUTY_TRUTH");
+  }
+  return pick(pool, r);
+}
+
+/* ---------- Continuity hooks (per traversal mode) ---------- */
+function nextPilgrimage(x,y){
+  const dx = CENTER_TARGET.x - x;
+  const dy = CENTER_TARGET.y - y;
+  if(dx===0 && dy===0) return {x,y};
+  // move one step: prioritize larger distance
+  if(Math.abs(dx) >= Math.abs(dy)) return { x: x + sign(dx), y };
+  return { x, y: y + sign(dy) };
+}
+
+function ringIndex(x,y){
+  // Chebyshev distance from center target
+  return Math.max(Math.abs(x - CENTER_TARGET.x), Math.abs(y - CENTER_TARGET.y));
+}
+
+function nextCirculation(x,y){
+  const r = ringIndex(x,y);
+  if(r===0) return {x,y};
+
+  const cx = CENTER_TARGET.x, cy = CENTER_TARGET.y;
+  const minX = clamp(cx - r, 1, COLS), maxX = clamp(cx + r, 1, COLS);
+  const minY = clamp(cy - r, 1, ROWS), maxY = clamp(cy + r, 1, ROWS);
+
+  // clamp current to ring boundary if inside (rare)
+  x = clamp(x, minX, maxX);
+  y = clamp(y, minY, maxY);
+  const onTop = (y === minY);
+  const onRight = (x === maxX);
+  const onBottom = (y === maxY);
+  const onLeft = (x === minX);
+
+  // clockwise walk on the square boundary
+  if(onTop && !onRight) return {x: x+1, y};
+  if(onRight && !onBottom) return {x, y: y+1};
+  if(onBottom && !onLeft) return {x: x-1, y};
+  if(onLeft && !onTop) return {x, y: y-1};
+
+  // if stuck, nudge to top edge
+  return {x: clamp(x, minX, maxX), y: minY};
+}
+
+function nextProcession(x,y){
+  if(y>=ROWS) return {x,y};
+  return {x, y: y+1};
+}
+
+function nextSpiral(x,y){
+  // spiral: alternate between circulation and pilgrimage using parity
+  if((x+y) % 2 === 0){
+    return nextCirculation(x,y);
+  }
+  return nextPilgrimage(x,y);
+}
+
+function hooksFor(x,y){
+  const p = nextPilgrimage(x,y);
+  const c = nextCirculation(x,y);
+  const pr = nextProcession(x,y);
+  const s = nextSpiral(x,y);
+  return {
+    PILGRIMAGE: `(${p.x},${p.y})`,
+    CIRCULATION: `(${c.x},${c.y})`,
+    PROCESSION: `(${pr.x},${pr.y})`,
+    SPIRAL: `(${s.x},${s.y})`
+  };
+}
+
+function computePath(startX,startY, mode, maxSteps=80){
+  const path = [];
+  let x = startX, y = startY;
+  for(let i=0;i<maxSteps;i++){
+    path.push(`${x},${y}`);
+    if(x===CENTER_TARGET.x && y===CENTER_TARGET.y) break;
+    let nxt;
+    if(mode==="PILGRIMAGE") nxt = nextPilgrimage(x,y);
+    else if(mode==="CIRCULATION") nxt = nextCirculation(x,y);
+    else if(mode==="PROCESSION") nxt = nextProcession(x,y);
+    else nxt = nextSpiral(x,y);
+    if(nxt.x===x && nxt.y===y) break;
+    x = nxt.x; y = nxt.y;
+  }
+  return path;
+}
+
+/* ---------- Build full grid state ---------- */
+function buildGrid(){
+  const r = mulberry32(0x0DE0F0); // stable seed (ODE OF URN)
+  const cells = [];
+  const motifCounts = Object.fromEntries(MOTIFS.map(m=>[m.id,0]));
+  let silenceCount = 0;
+
+  for(let y=1;y<=ROWS;y++){
+    for(let x=1;x<=COLS;x++){
+      const zone = zoneOf(x,y);
+      const op = ZONES[zone].op;
+
+      const silence = SILENCE_SET.has(`${x},${y}`);
+      let motif = motifForCell(zone, x, y, r);
+      if(silence) motif = (zone==="INNER_RING" ? "SILENCE_TIME" : "CAREY_RITUAL"); // silence participates in maintain/repair
+
+      const act = silence
+        ? (zone==="INNER_RING" ? "CHANT" : "QUESTION")
+        : actForCell(zone, motif, x, y, r);
+
+      // choose fragment
+      let fragPool = fragmentsFor(motif, act);
+      if(fragPool.length===0) fragPool = fallbackFragmentsFor(act);
+      const frag = pick(fragPool, r);
+
+      const reader_role = ROLES_BY_ZONE[zone];
+      const cell = {
+        coord: `(${x},${y})`,
+        x,y,
+        zone,
+        ritual_act: act,
+        text_fragment: silence ? "… (SILENCE)" : `${ACT_GLYPHS[act]} ${frag.short}`,
+        world_operation: op,
+        motif_id: motif,
+        reader_role,
+        continuity_hook: hooksFor(x,y),
+        source_lines: frag.lines || [],
+        long: silence
+          ? (zone==="INNER_RING"
+              ? "SILENCE (MAINTAIN): the chant continues by withholding speech."
+              : "SILENCE (REPAIR): uncertainty is honored by leaving a blank.")
+          : `${act}: ${frag.long}`
+      };
+
+      cells.push(cell);
+      motifCounts[motif] = (motifCounts[motif]||0) + 1;
+      if(silence) silenceCount++;
+    }
+  }
+
+  return { cells, motifCounts, silenceCount };
+}
+
+const GRID_STATE = buildGrid();
+
+/* ---------- UI wiring ---------- */
+const elGrid = document.getElementById("grid");
+const elCounts = document.getElementById("counts");
+const elPaneSite = document.getElementById("pane-site");
+const elPaneSource = document.getElementById("pane-source");
+const elPaneLaws = document.getElementById("pane-laws");
+const elMode = document.getElementById("mode");
+const elZoom = document.getElementById("zoom");
+const elFilter = document.getElementById("filter");
+const elToast = document.getElementById("toast");
+
+let selectedKey = null;
+let currentPath = [];
+let currentFilter = "";
+
+function zoneClass(z){
+  if(z==="CENTER_CORE") return "z-center";
+  if(z==="INNER_RING") return "z-inner";
+  if(z==="MIDDLE_RING") return "z-middle";
+  return "z-outer";
+}
+function actClass(a){
+  if(a==="INVOCATION") return "a-inv";
+  if(a==="CHANT") return "a-chant";
+  if(a==="WITNESS") return "a-witness";
+  if(a==="QUESTION") return "a-question";
+  return "a-seal";
+}
+
+function motifLabel(id){
+  const m = MOTIFS.find(m=>m.id===id);
+  return m ? m.label : id;
+}
+
+function renderCounts(){
+  const silencePct = Math.round((GRID_STATE.silenceCount / (ROWS*COLS))*100);
+  elCounts.innerHTML = `
+    <span class="pill">silence: ${GRID_STATE.silenceCount} (${silencePct}%)</span>
+    <span class="pill">selected: ${selectedKey ? `(${selectedKey})` : "—"}</span>
+  `;
+}
+
+function toast(msg){
+  elToast.textContent = msg;
+  elToast.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>elToast.classList.remove("show"), 1200);
+}
+
+function applyZoom(){
+  document.documentElement.style.setProperty("--cell", `${elZoom.value}px`);
+}
+
+function matchesFilter(cell){
+  const q = (currentFilter||"").trim().toLowerCase();
+  if(!q) return true;
+  const motif = motifLabel(cell.motif_id).toLowerCase();
+  const frag = (cell.text_fragment||"").toLowerCase();
+  const long = (cell.long||"").toLowerCase();
+  return motif.includes(q) || frag.includes(q) || long.includes(q);
+}
+
+function renderGrid(){
+  elGrid.innerHTML = "";
+  const mode = elMode.value;
+
+  // recompute path if selection exists
+  currentPath = [];
+  if(selectedKey){
+    const [sx,sy] = selectedKey.split(",").map(Number);
+    currentPath = computePath(sx,sy,mode, 90);
+  }
+  const pathSet = new Set(currentPath);
+
+  for(const cell of GRID_STATE.cells){
+    const key = `${cell.x},${cell.y}`;
+    const btn = document.createElement("button");
+    btn.className = `cell ${zoneClass(cell.zone)} ${actClass(cell.ritual_act)} ${cell.text_fragment.includes("SILENCE") ? "silence":""}`;
+    btn.setAttribute("aria-label", `Cell ${cell.coord}, ${cell.ritual_act}, motif ${cell.motif_id}`);
+    btn.dataset.key = key;
+
+    const bg = document.createElement("div");
+    bg.className = "bg";
+    const txt = document.createElement("div");
+    txt.className = "txt";
+
+    const visible = matchesFilter(cell);
+    const showText = visible ? cell.text_fragment : "";
+    txt.textContent = showText;
+
+    // selection + path
+    if(key === selectedKey) btn.classList.add("selected");
+    if(pathSet.has(key)) btn.classList.add("path");
+
+    // click
+    btn.addEventListener("click", ()=>selectCell(key));
+
+    btn.appendChild(bg);
+    btn.appendChild(txt);
+    elGrid.appendChild(btn);
+  }
+  renderCounts();
+}
+
+function renderSite(cell){
+  const motif = motifLabel(cell.motif_id);
+  const hooks = cell.continuity_hook;
+  const lines = (cell.source_lines||[]);
+  const linePills = lines.length
+    ? lines.map(n=>`<span class="pill">line ${n}</span>`).join("")
+    : `<span class="pill">nonlinear operator</span>`;
+
+  elPaneSite.innerHTML = `
+    <div class="kv">
+      <div class="k">coord</div><div class="v">${cell.coord}</div>
+      <div class="k">zone</div><div class="v">${cell.zone}</div>
+      <div class="k">operation</div><div class="v">${cell.world_operation}</div>
+      <div class="k">ritual act</div><div class="v">${cell.ritual_act} <span class="pill">${ACT_GLYPHS[cell.ritual_act]}</span></div>
+      <div class="k">motif</div><div class="v">${motif}</div>
+      <div class="k">reader role</div><div class="v">${cell.reader_role}</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="font-size:12px; color: rgba(233,236,242,.68); letter-spacing:.06em; text-transform:uppercase;">inscription</div>
+    <div style="margin-top:8px; font-size:13px; line-height:1.4; color: rgba(233,236,242,.94);">${escapeHtml(cell.long)}</div>
+
+    <div class="divider"></div>
+
+    <div style="font-size:12px; color: rgba(233,236,242,.68); letter-spacing:.06em; text-transform:uppercase;">anchors</div>
+    <div style="margin-top:8px;">${linePills}</div>
+
+    <div class="divider"></div>
+
+    <div style="font-size:12px; color: rgba(233,236,242,.68); letter-spacing:.06em; text-transform:uppercase;">continuity hooks</div>
+    <div style="margin-top:8px; font-size:12px; line-height:1.4;">
+      <span class="pill">PILGRIMAGE → ${hooks.PILGRIMAGE}</span>
+      <span class="pill">SPIRAL → ${hooks.SPIRAL}</span>
+      <span class="pill">CIRCULATION → ${hooks.CIRCULATION}</span>
+      <span class="pill">PROCESSION → ${hooks.PROCESSION}</span>
+    </div>
+  `;
+}
+
+function renderSource(hitLines){
+  const hits = new Set(hitLines || []);
+  const parts = [];
+  parts.push(`<div class="pill">${POEM_TITLE} · ${POEM_AUTHOR}</div>`);
+  parts.push(`<div class="divider"></div>`);
+  parts.push(`<div class="poem">`);
+  for(let i=0;i<POEM_LINES.length;i++){
+    const ln = i+1;
+    const cls = hits.has(ln) ? "poemLine hit" : "poemLine";
+    parts.push(`
+      <div class="${cls}">
+        <div class="ln">${ln}</div>
+        <div class="poemText">${escapeHtml(POEM_LINES[i])}</div>
+      </div>
+    `);
+  }
+  parts.push(`</div>`);
+  elPaneSource.innerHTML = parts.join("");
+}
+
+function renderLaws(){
+  const laws = [
+    {t:"G1", d:"The grid is a world, not a page."},
+    {t:"G2", d:"Spatial position performs meaning."},
+    {t:"G3", d:"Cells do not store content; cells stage acts."},
+    {t:"G4", d:"Traversal produces understanding."},
+    {t:"G5", d:"Repetition manufactures reality."},
+    {t:"Motif law", d:"No motif appears only once; motifs must occur in multiple zones; core motifs radiate outward (implemented via rays + zone pools)."},
+    {t:"Adjacency semantics", d:"Horizontal = association; vertical = development; diagonal = tension (experienced as neighbor-contrast while scanning)."},
+    {t:"Silence law", d:`≥ 10% cells are silence markers; only in MAINTAIN/REPAIR zones (current: ${GRID_STATE.silenceCount}).`}
+  ];
+  const items = laws.map(x=>`
+    <div style="padding:10px 0; border-bottom:1px dashed rgba(255,255,255,.07);">
+      <div style="font-size:12px; color: rgba(233,236,242,.66); letter-spacing:.06em; text-transform:uppercase;">${x.t}</div>
+      <div style="margin-top:6px; font-size:13px; line-height:1.4; color: rgba(233,236,242,.92);">${escapeHtml(x.d)}</div>
+    </div>
+  `).join("");
+  elPaneLaws.innerHTML = `
+    <div class="pill">Terminal thesis: this grid does not organize information; this grid performs culture.</div>
+    <div class="divider"></div>
+    ${items}
+    <div class="divider"></div>
+    <div style="font-size:12px; color: rgba(233,236,242,.66); letter-spacing:.06em; text-transform:uppercase;">Motif coverage</div>
+    <div style="margin-top:8px; font-size:12px; line-height:1.5;">
+      ${Object.entries(GRID_STATE.motifCounts).map(([k,v])=>`<span class="pill">${motifLabel(k)}: ${v}</span>`).join(" ")}
+    </div>
+  `;
+}
+
+function escapeHtml(s){
+  return (s||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function selectCell(key){
+  selectedKey = key;
+  const cell = GRID_STATE.cells.find(c => `${c.x},${c.y}` === key);
+  if(!cell) return;
+
+  renderSite(cell);
+  renderSource(cell.source_lines || []);
+  renderGrid();
+}
+
+function pickRandomEdge(){
+  const r = mulberry32(Date.now() >>> 0);
+  // choose an edge coordinate
+  const edge = Math.floor(r()*4);
+  let x,y;
+  if(edge===0){ y=1; x=Math.floor(r()*COLS)+1; }
+  else if(edge===1){ y=ROWS; x=Math.floor(r()*COLS)+1; }
+  else if(edge===2){ x=1; y=Math.floor(r()*ROWS)+1; }
+  else { x=COLS; y=Math.floor(r()*ROWS)+1; }
+  selectCell(`${x},${y}`);
+  toast(`Entered at (${x},${y})`);
+}
+
+/* ---------- Copy manifest ---------- */
+function buildManifest(){
+  // This is the “world-layout manifest” (cell schema) plus the rules needed to regenerate it.
+  return {
+    meta:{
+      name:"CAREY-24x24-RITUAL-GRID-v1 / Keats: Grecian Urn",
+      version:"1.0",
+      deterministic:true,
+      seed:"0x0D3_0F_URN",
+      dimensions:{rows:ROWS, cols:COLS},
+      center_core:{coords:`(${CORE_MIN}-${CORE_MAX},${CORE_MIN}-${CORE_MAX})`, function:"PRODUCE"},
+      inner_ring:{coords:`(${INNER_MIN}-${INNER_MAX},${INNER_MIN}-${INNER_MAX}) excluding core`, function:"MAINTAIN"},
+      middle_ring:{coords:`(${MID_MIN}-${MID_MAX},${MID_MIN}-${MID_MAX}) excluding inner`, function:"REPAIR"},
+      outer_ring:{coords:`(1-${COLS},1-${ROWS}) excluding middle`, function:"TRANSFORM"}
+    },
+    axioms:[
+      "G1: grid is a world, not a page",
+      "G2: spatial position performs meaning",
+      "G3: cells stage acts, not content",
+      "G4: traversal produces understanding",
+      "G5: repetition manufactures reality"
+    ],
+    ritual_acts:["INVOCATION","CHANT","WITNESS","QUESTION","SEAL"],
+    zone_act_mapping:{
+      CENTER_CORE:["INVOCATION","SEAL"],
+      INNER_RING:["CHANT","WITNESS"],
+      MIDDLE_RING:["QUESTION","WITNESS"],
+      OUTER_RING:["QUESTION"] // transform is world_operation + wording
+    },
+    adjacency_semantics:{
+      horizontal:"association",
+      vertical:"development",
+      diagonal:"tension"
+    },
+    motifs:MOTIFS,
+    silence:{
+      rule:"≥10% of cells are silence markers; only MAINTAIN or REPAIR zones",
+      count: GRID_STATE.silenceCount
+    },
+    cell_schema:{
+      coord:"(x,y)",
+      ritual_act:"INVOCATION|CHANT|WITNESS|QUESTION|SEAL",
+      text_fragment:"verbatim or condensed",
+      world_operation:"PRODUCE|MAINTAIN|REPAIR|TRANSFORM",
+      motif_id:"string",
+      reader_role:"Pilgrim|Witness|Congregant|Archivist|Judge",
+      continuity_hook:"where reader tends next"
+    },
+    cells: GRID_STATE.cells.map(c=>({
+      coord:c.coord,
+      ritual_act:c.ritual_act,
+      text_fragment:c.text_fragment,
+      world_operation:c.world_operation,
+      motif_id:c.motif_id,
+      reader_role:c.reader_role,
+      continuity_hook:c.continuity_hook
+    }))
+  };
+}
+
+async function copyManifest(){
+  const manifest = buildManifest();
+  const text = JSON.stringify(manifest, null, 2);
+  try{
+    await navigator.clipboard.writeText(text);
+    toast("Manifest copied.");
+  }catch(e){
+    // fallback
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+    toast("Manifest copied (fallback).");
+  }
+}
+
+/* ---------- Integrity check ---------- */
+function integrityCheck(){
+  const total = ROWS*COLS;
+  const silenceOk = GRID_STATE.silenceCount >= Math.ceil(total*0.10);
+
+  // motif multi-cell + multi-zone
+  const motifZones = Object.fromEntries(MOTIFS.map(m=>[m.id, new Set()]));
+  for(const c of GRID_STATE.cells){
+    motifZones[c.motif_id]?.add(c.zone);
+  }
+  const motifProblems = [];
+  for(const m of MOTIFS){
+    const count = GRID_STATE.motifCounts[m.id] || 0;
+    const zones = motifZones[m.id] ? [...motifZones[m.id]] : [];
+    if(count <= 1) motifProblems.push(`${m.id} appears ${count}×`);
+    if(zones.length < 2) motifProblems.push(`${m.id} only in ${zones.length?zones.join(", "):"no zones"}`);
+  }
+
+  const msg = [
+    silenceOk ? `Silence OK (${GRID_STATE.silenceCount})` : `Silence FAIL (${GRID_STATE.silenceCount})`,
+    motifProblems.length ? `Motif issues: ${motifProblems.slice(0,4).join(" · ")}${motifProblems.length>4?" …":""}` : "Motifs OK (multi-cell, multi-zone)."
+  ].join(" — ");
+
+  toast(msg);
+}
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    const tab = t.dataset.tab;
+    document.getElementById("pane-site").style.display = tab==="site" ? "block" : "none";
+    document.getElementById("pane-source").style.display = tab==="source" ? "block" : "none";
+    document.getElementById("pane-laws").style.display = tab==="laws" ? "block" : "none";
+  });
+});
+
+/* ---------- Events ---------- */
+elMode.addEventListener("change", ()=>renderGrid());
+elZoom.addEventListener("input", ()=>{ applyZoom(); renderGrid(); });
+elFilter.addEventListener("input", ()=>{
+  currentFilter = elFilter.value;
+  renderGrid();
+});
+document.getElementById("randEdge").addEventListener("click", pickRandomEdge);
+document.getElementById("copyManifest").addEventListener("click", copyManifest);
+document.getElementById("integrity").addEventListener("click", integrityCheck);
+
+/* ---------- Initial render ---------- */
+applyZoom();
+renderLaws();
+renderSource([]);
+renderGrid();
+
+// Default entry: near an outer corner (ceremonial threshold)
+selectCell("1,1");
+</script>
+</body>
+</html>

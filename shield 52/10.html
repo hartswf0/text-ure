@@ -1,0 +1,1951 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Shield of Achilles · 24×24 Operative Ekphrasis Grid</title>
+  <style>
+    :root{
+      --paper:#f6f5f1;
+      --ink:#141414;
+      --muted:#6b6b6b;
+      --line:#d8d6cf;
+      --chip:#eceae3;
+      --accent:#111;
+      --good:#0a7;
+      --warn:#b50;
+      --bad:#b11;
+      --cell:22px;
+      --radius:14px;
+      --shadow: 0 10px 30px rgba(0,0,0,.08);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box;}
+    html,body{height:100%;}
+    body{
+      margin:0;
+      background:var(--paper);
+      color:var(--ink);
+      font-family:var(--sans);
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+
+    .app{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      padding: clamp(10px, 2vw, 18px);
+      gap: 12px;
+    }
+
+    header{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+
+    .title h1{
+      margin:0;
+      font-size:16px;
+      letter-spacing:.2px;
+      font-weight:700;
+    }
+
+    .title .sub{
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .controls{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    button, .seg button{
+      font: 600 12px/1 var(--sans);
+      border:1px solid var(--line);
+      background:white;
+      color:var(--ink);
+      padding:10px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      box-shadow: 0 1px 0 rgba(0,0,0,.03);
+      transition: transform .06s ease, background .12s ease;
+      touch-action: manipulation;
+    }
+    button:active{ transform: translateY(1px); }
+    button:hover{ background:#ffffffcc; }
+    button.primary{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+    button.primary:hover{ background:#0f0f0f; }
+    button.ghost{ background:transparent; }
+
+    .seg{
+      display:flex;
+      border:1px solid var(--line);
+      border-radius:12px;
+      overflow:hidden;
+      background:white;
+    }
+    .seg button{
+      border:0;
+      border-right:1px solid var(--line);
+      border-radius:0;
+      padding:10px 10px;
+      background:transparent;
+    }
+    .seg button:last-child{ border-right:0; }
+    .seg button.active{ background:var(--chip); }
+
+    .search{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:white;
+    }
+    .search input{
+      font: 12px/1.2 var(--mono);
+      border:0;
+      outline:none;
+      background:transparent;
+      width:min(340px, 55vw);
+      color:var(--ink);
+    }
+
+    main{
+      flex:1;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+
+    .card{
+      border:1px solid var(--line);
+      background:white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .workspace{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+
+    @media (min-width: 980px){
+      main{ grid-template-columns: 1fr; }
+      .workspace{ grid-template-columns: 1fr 380px; align-items:start; }
+    }
+
+    .gridWrap{
+      padding:12px;
+    }
+
+    .gridMeta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:10px;
+    }
+
+    .gridMeta .stats{
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:var(--chip);
+      border:1px solid var(--line);
+      color:var(--ink);
+      font: 600 11px/1 var(--mono);
+    }
+
+    .grid{
+      width:100%;
+      aspect-ratio: 1 / 1;
+      max-width: min(92vmin, 820px);
+      margin: 0 auto;
+      display:grid;
+      grid-template-columns: repeat(24, var(--cell));
+      grid-template-rows: repeat(24, var(--cell));
+      justify-content:center;
+      align-content:center;
+      gap:1px;
+      background:var(--line);
+      border-radius: 12px;
+      padding:1px;
+      overflow:hidden;
+      touch-action: manipulation;
+      user-select:none;
+    }
+
+    .cell{
+      border:0;
+      background:var(--paper);
+      padding:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family:var(--mono);
+      font-size:10px;
+      line-height:1;
+      color:#222;
+      cursor:pointer;
+      position:relative;
+    }
+
+    .cell[data-ring="11"]{ background:#f0efea; }
+    .cell.active{ outline:2px solid var(--ink); outline-offset:-2px; z-index:2; }
+    .cell.match{ box-shadow: inset 0 0 0 2px rgba(20,20,20,.55); }
+    .cell.dim{ opacity:.35; }
+
+    .cell .tiny{
+      position:absolute;
+      bottom:2px;
+      right:3px;
+      font-size:9px;
+      color:#555;
+      opacity:.85;
+    }
+
+    .cell .mark{
+      position:absolute;
+      top:2px;
+      left:3px;
+      font-size:9px;
+      color:#555;
+      opacity:.85;
+    }
+
+    .cell .txt{
+      padding: 0 2px;
+      max-width:100%;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      font-size:9px;
+      opacity:.95;
+    }
+
+    /* Inspector */
+    .inspector{
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .sectionTitle{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+      margin:0;
+    }
+
+    .sectionTitle h2{
+      margin:0;
+      font-size:13px;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+
+    .sectionTitle .hint{
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--muted);
+    }
+
+    .kv{
+      display:grid;
+      grid-template-columns: 110px 1fr;
+      gap:6px 10px;
+      font-family:var(--mono);
+      font-size:11px;
+      border:1px solid var(--line);
+      background:var(--paper);
+      border-radius:12px;
+      padding:10px;
+    }
+
+    .kv .k{ color:var(--muted); }
+    .kv .v{ color:var(--ink); word-break:break-word; }
+
+    .list{
+      border:1px solid var(--line);
+      background:var(--paper);
+      border-radius:12px;
+      overflow:hidden;
+    }
+
+    .list .row{
+      padding:9px 10px;
+      border-top:1px solid var(--line);
+      display:flex;
+      gap:8px;
+      align-items:flex-start;
+      justify-content:space-between;
+    }
+
+    .list .row:first-child{ border-top:0; }
+
+    .badge{
+      font-family:var(--mono);
+      font-size:11px;
+      padding:3px 6px;
+      border-radius:999px;
+      background:white;
+      border:1px solid var(--line);
+      color:#333;
+      flex:0 0 auto;
+    }
+
+    .row .text{
+      font-family:var(--mono);
+      font-size:11px;
+      color:#1a1a1a;
+      line-height:1.25;
+      flex:1 1 auto;
+    }
+
+    .tabs{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .tabs button{ padding:8px 9px; border-radius:11px; }
+
+    .muted{ color:var(--muted); }
+
+    /* Modal */
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:14px;
+      background: rgba(0,0,0,.42);
+      z-index:50;
+    }
+
+    .modal.open{ display:flex; }
+
+    .modal .panel{
+      width:min(980px, 96vw);
+      max-height: 92vh;
+      background:white;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.2);
+      overflow:hidden;
+      box-shadow: 0 30px 90px rgba(0,0,0,.25);
+      display:flex;
+      flex-direction:column;
+    }
+
+    .modal .panel header{
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+    }
+
+    .modal textarea{
+      font-family:var(--mono);
+      font-size:11px;
+      line-height:1.35;
+      width:100%;
+      border:0;
+      outline:none;
+      padding:12px;
+      resize:none;
+      height: 62vh;
+    }
+
+    .footerBar{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-end;
+      padding:10px 12px;
+      border-top:1px solid var(--line);
+      background:var(--paper);
+    }
+
+    .note{
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <h1>Shield of Achilles · 24×24 Operative Ekphrasis Grid</h1>
+        <div class="sub">RINGS topology · deterministic manifest · traversal = reading</div>
+      </div>
+
+      <div class="controls">
+        <div class="search" title="Search lines (filters grid highlights)">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">/</span>
+          <input id="q" placeholder="search: gold · ocean · war · Thetis …" autocomplete="off" />
+        </div>
+
+        <div class="seg" aria-label="cell view">
+          <button id="view_text" class="active" type="button">Text</button>
+          <button id="view_id" type="button">IDs</button>
+          <button id="view_zone" type="button">Zone</button>
+        </div>
+
+        <button id="zoom_out" type="button" class="ghost">−</button>
+        <button id="zoom_in" type="button" class="ghost">+</button>
+
+        <button id="btn_edit" type="button">Edit text</button>
+        <button id="btn_export" type="button">Export manifest</button>
+        <button id="btn_compile" type="button" class="primary">Compile</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="workspace">
+        <section class="card">
+          <div class="gridWrap">
+            <div class="gridMeta">
+              <div class="stats">
+                <span class="pill" id="pill_seed">seed: —</span>
+                <span class="pill" id="pill_lines">lines: —</span>
+                <span class="pill" id="pill_panels">panels: —</span>
+                <span class="pill" id="pill_coverage">coverage: —</span>
+              </div>
+              <div class="stats">
+                <span class="pill" id="pill_active">active: —</span>
+              </div>
+            </div>
+            <div class="grid" id="grid" aria-label="24 by 24 grid"></div>
+            <div class="note" style="margin-top:10px">Tip: tap a cell → inspector explains <span class="muted">why</span> it contains those lines. Use <span class="muted">Zone</span> view to see the concentric rings.</div>
+          </div>
+        </section>
+
+        <aside class="card">
+          <div class="inspector">
+            <div class="sectionTitle">
+              <h2>Inspector</h2>
+              <span class="hint" id="ins_hint">select a cell</span>
+            </div>
+
+            <div class="tabs" role="tablist" aria-label="inspector tabs">
+              <button id="tab_cell" class="active" type="button">Cell</button>
+              <button id="tab_panels" type="button">Panels</button>
+              <button id="tab_lines" type="button">Lines</button>
+              <button id="tab_audit" type="button">Audit</button>
+            </div>
+
+            <div id="pane_cell">
+              <div class="kv" id="cell_kv"></div>
+              <div class="sectionTitle" style="margin-top:10px"><h2>Lines in cell</h2><span class="hint" id="cell_count">—</span></div>
+              <div class="list" id="cell_lines"></div>
+            </div>
+
+            <div id="pane_panels" style="display:none">
+              <div class="sectionTitle"><h2>Panels</h2><span class="hint">tap to focus</span></div>
+              <div class="list" id="panel_list"></div>
+            </div>
+
+            <div id="pane_lines" style="display:none">
+              <div class="sectionTitle"><h2>Lines</h2><span class="hint">tap to jump</span></div>
+              <div class="list" id="line_list"></div>
+            </div>
+
+            <div id="pane_audit" style="display:none">
+              <div class="sectionTitle"><h2>Audit log</h2><span class="hint">deterministic rules</span></div>
+              <div class="list" id="audit_list"></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <!-- Edit modal -->
+  <div class="modal" id="modal">
+    <div class="panel">
+      <header>
+        <div class="title">
+          <h1 style="font-size:14px">Source text</h1>
+          <div class="sub">Preserve line breaks. Compiler will re-tag + re-panelize + re-project.</div>
+        </div>
+      </header>
+      <textarea id="src"></textarea>
+      <div class="footerBar">
+        <div class="note" id="src_stats">—</div>
+        <span style="flex:1"></span>
+        <button id="btn_close" type="button">Close</button>
+        <button id="btn_recompile" type="button" class="primary">Compile</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export modal -->
+  <div class="modal" id="modal_export">
+    <div class="panel">
+      <header>
+        <div class="title">
+          <h1 style="font-size:14px">Manifest JSON</h1>
+          <div class="sub">Includes grid[w×h], line_index, panels, allocation_report, audit_log</div>
+        </div>
+      </header>
+      <textarea id="export_box" readonly></textarea>
+      <div class="footerBar">
+        <div class="note" id="export_note">—</div>
+        <span style="flex:1"></span>
+        <button id="btn_download" type="button">Download .json</button>
+        <button id="btn_copy" type="button">Copy</button>
+        <button id="btn_export_close" type="button" class="primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+'use strict';
+
+// ==========================================================
+// DEFAULT TEXT (user-provided excerpt)
+// ==========================================================
+const DEFAULT_TEXT = String.raw`The Iliad, Book XVIII, [The Shield of Achilles]
+
+Homer
+
+Thetis goes to the palace of Vulcan to obtain new arms for her son.
+
+
+
+"Thee, welcome, goddess! what occasion calls
+
+(So long a stranger) to these honour'd walls?
+
+'Tis thine, fair Thetis, the command to lay,
+
+And Vulcan's joy and duty to obey."
+
+
+
+To whom the mournful mother thus replies:
+
+(The crystal drops stood trembling in her eyes:)
+
+"O Vulcan! say, was ever breast divine
+
+So pierced with sorrows, so o'erwhelm'd as mine?
+
+Of all the goddesses, did Jove prepare
+
+For Thetis only such a weight of care?
+
+I, only I, of all the watery race
+
+By force subjected to a man's embrace,
+
+Who, sinking now with age and sorrow, pays
+
+The mighty fine imposed on length of days.
+
+Sprung from my bed, a godlike hero came,
+
+The bravest sure that ever bore the name;
+
+Like some fair plant beneath my careful hand
+
+He grew, he flourish'd, and he graced the land:
+
+To Troy I sent him! but his native shore
+
+Never, ah never, shall receive him more;
+
+(Even while he lives, he wastes with secret woe;)
+
+Nor I, a goddess, can retard the blow!
+
+Robb'd of the prize the Grecian suffrage gave,
+
+The king of nations forced his royal slave:
+
+For this he grieved; and, till the Greeks oppress'd
+
+Required his arm, he sorrow'd unredress'd.
+
+Large gifts they promise, and their elders send;
+
+In vain--he arms not, but permits his friend
+
+His arms, his steeds, his forces to employ:
+
+He marches, combats, almost conquers Troy:
+
+Then slain by Phoebus (Hector had the name)
+
+At once resigns his armour, life, and fame.
+
+But thou, in pity, by my prayer be won:
+
+Grace with immortal arms this short-lived son,
+
+And to the field in martial pomp restore,
+
+To shine with glory, till he shines no more!"
+
+
+
+To her the artist-god: "Thy griefs resign,
+
+Secure, what Vulcan can, is ever thine.
+
+O could I hide him from the Fates, as well,
+
+Or with these hands the cruel stroke repel,
+
+As I shall forge most envied arms, the gaze
+
+Of wondering ages, and the world's amaze!"
+
+
+
+Thus having said, the father of the fires
+
+To the black labours of his forge retires.
+
+Soon as he bade them blow, the bellows turn'd
+
+Their iron mouths; and where the furnace burn'd,
+
+Resounding breathed: at once the blast expires,
+
+And twenty forges catch at once the fires;
+
+Just as the god directs, now loud, now low,
+
+They raise a tempest, or they gently blow;
+
+In hissing flames huge silver bars are roll'd,
+
+And stubborn brass, and tin, and solid gold;
+
+Before, deep fix'd, the eternal anvils stand;
+
+The ponderous hammer loads his better hand,
+
+His left with tongs turns the vex'd metal round,
+
+And thick, strong strokes, the doubling vaults rebound.
+
+
+
+Then first he form'd the immense and solid shield;
+
+Rich various artifice emblazed the field;
+
+Its utmost verge a threefold circle bound;
+
+A silver chain suspends the massy round;
+
+Five ample plates the broad expanse compose,
+
+And godlike labours on the surface rose.
+
+There shone the image of the master-mind:
+
+There earth, there heaven, there ocean he design'd;
+
+The unwearied sun, the moon completely round;
+
+The starry lights that heaven's high convex crown'd;
+
+The Pleiads, Hyads, with the northern team;
+
+And great Orion's more refulgent beam;
+
+To which, around the axle of the sky,
+
+The Bear, revolving, points his golden eye,
+
+Still shines exalted on the ethereal plain,
+
+Nor bathes his blazing forehead in the main.
+
+
+
+Two cities radiant on the shield appear,
+
+The image one of peace, and one of war.
+
+Here sacred pomp and genial feast delight,
+
+And solemn dance, and hymeneal rite;
+
+Along the street the new-made brides are led,
+
+With torches flaming, to the nuptial bed:
+
+The youthful dancers in a circle bound
+
+To the soft flute, and cithern's silver sound:
+
+Through the fair streets the matrons in a row
+
+Stand in their porches, and enjoy the show.
+
+
+
+There in the forum swarm a numerous train;
+
+The subject of debate, a townsman slain:
+
+One pleads the fine discharged, which one denied,
+
+And bade the public and the laws decide:
+
+The witness is produced on either hand:
+
+For this, or that, the partial people stand:
+
+The appointed heralds still the noisy bands,
+
+And form a ring, with sceptres in their hands:
+
+On seats of stone, within the sacred place,
+
+The reverend elders nodded o'er the case;
+
+Alternate, each the attesting sceptre took,
+
+And rising solemn, each his sentence spoke
+
+Two golden talents lay amidst, in sight,
+
+The prize of him who best adjudged the right.
+
+
+
+Another part (a prospect differing far)
+
+Glow'd with refulgent arms, and horrid war.
+
+Two mighty hosts a leaguer'd town embrace,
+
+And one would pillage, one would burn the place.
+
+Meantime the townsmen, arm'd with silent care,
+
+A secret ambush on the foe prepare:
+
+Their wives, their children, and the watchful band
+
+Of trembling parents, on the turrets stand.
+
+They march; by Pallas and by Mars made bold:
+
+Gold were the gods, their radiant garments gold,
+
+And gold their armour: these the squadron led,
+
+August, divine, superior by the head!
+
+A place for ambush fit they found, and stood,
+
+Cover'd with shields, beside a silver flood.
+
+Two spies at distance lurk, and watchful seem
+
+If sheep or oxen seek the winding stream.
+
+Soon the white flocks proceeded o'er the plains,
+
+And steers slow-moving, and two shepherd swains;
+
+Behind them piping on their reeds they go,
+
+Nor fear an ambush, nor suspect a foe.
+
+In arms the glittering squadron rising round
+
+Rush sudden; hills of slaughter heap the ground;
+
+Whole flocks and herds lie bleeding on the plains,
+
+And, all amidst them, dead, the shepherd swains!
+
+The bellowing oxen the besiegers hear;
+
+They rise, take horse, approach, and meet the war,
+
+They fight, they fall, beside the silver flood;
+
+The waving silver seem'd to blush with blood.
+
+There Tumult, there Contention stood confess'd;
+
+One rear'd a dagger at a captive's breast;
+
+One held a living foe, that freshly bled
+
+With new-made wounds; another dragg'd a dead;
+
+Now here, now there, the carcases they tore:
+
+Fate stalk'd amidst them, grim with human gore.
+
+And the whole war came out, and met the eye;
+
+And each bold figure seem'd to live or die.
+
+
+
+A field deep furrow'd next the god design'd,
+
+The third time labour'd by the sweating hind;
+
+The shining shares full many ploughmen guide,
+
+And turn their crooked yokes on every side.
+
+Still as at either end they wheel around,
+
+The master meets them with his goblet crown'd;
+
+The hearty draught rewards, renews their toil,
+
+Then back the turning ploughshares cleave the soil:
+
+Behind, the rising earth in ridges roll'd;
+
+And sable look'd, though form'd of molten gold.
+
+
+
+Another field rose high with waving grain;
+
+With bended sickles stand the reaper train:
+
+Here stretched in ranks the levell'd swarths are found,
+
+Sheaves heap'd on sheaves here thicken up the ground.
+
+With sweeping stroke the mowers strow the lands;
+
+The gatherers follow, and collect in bands;
+
+And last the children, in whose arms are borne
+
+(Too short to gripe them) the brown sheaves of corn.
+
+The rustic monarch of the field descries,
+
+With silent glee, the heaps around him rise.
+
+A ready banquet on the turf is laid,
+
+Beneath an ample oak's expanded shade.
+
+The victim ox the sturdy youth prepare;
+
+The reaper's due repast, the woman's care.
+
+
+
+Next, ripe in yellow gold, a vineyard shines,
+
+Bent with the ponderous harvest of its vines;
+
+A deeper dye the dangling clusters show,
+
+And curl'd on silver props, in order glow:
+
+A darker metal mix'd intrench'd the place;
+
+And pales of glittering tin the inclosure grace.
+
+To this, one pathway gently winding leads,
+
+Where march a train with baskets on their heads,
+
+(Fair maids and blooming youths,) that smiling bear
+
+The purple product of the autumnal year.
+
+To these a youth awakes the warbling strings,
+
+Whose tender lay the fate of Linus sings;
+
+In measured dance behind him move the train,
+
+Tune soft the voice, and answer to the strain.
+
+
+
+Here herds of oxen march, erect and bold,
+
+Rear high their horns, and seem to low in gold,
+
+And speed to meadows on whose sounding shores
+
+A rapid torrent through the rushes roars:
+
+Four golden herdsmen as their guardians stand,
+
+And nine sour dogs complete the rustic band.
+
+Two lions rushing from the wood appear'd;
+
+And seized a bull, the master of the herd:
+
+He roar'd: in vain the dogs, the men withstood;
+
+They tore his flesh, and drank his sable blood.
+
+The dogs (oft cheer'd in vain) desert the prey,
+
+Dread the grim terrors, and at distance bay.
+
+
+
+Next this, the eye the art of Vulcan leads
+
+Deep through fair forests, and a length of meads,
+
+And stalls, and folds, and scatter'd cots between;
+
+And fleecy flocks, that whiten all the scene.
+
+
+
+A figured dance succeeds; such once was seen
+
+In lofty Gnossus for the Cretan queen,
+
+Form'd by Daedalean art; a comely band
+
+Of youths and maidens, bounding hand in hand.
+
+The maids in soft simars of linen dress'd;
+
+The youths all graceful in the glossy vest:
+
+Of those the locks with flowery wreath inroll'd;
+
+Of these the sides adorn'd with swords of gold,
+
+That glittering gay, from silver belts depend.
+
+Now all at once they rise, at once descend,
+
+With well-taught feet: now shape in oblique ways,
+
+Confusedly regular, the moving maze:
+
+Now forth at once, too swift for sight, they spring,
+
+And undistinguish'd blend the flying ring:
+
+So whirls a wheel, in giddy circle toss'd,
+
+And, rapid as it runs, the single spokes are lost.
+
+The gazing multitudes admire around:
+
+Two active tumblers in the centre bound;
+
+Now high, now low, their pliant limbs they bend:
+
+And general songs the sprightly revel end.
+
+
+
+Thus the broad shield complete the artist crown'd
+
+With his last hand, and pour'd the ocean round:
+
+In living silver seem'd the waves to roll,
+
+And beat the buckler's verge, and bound the whole.
+
+
+
+This done, whate'er a warrior's use requires
+
+He forged; the cuirass that outshone the fires,
+
+The greaves of ductile tin, the helm impress'd
+
+With various sculpture, and the golden crest.
+
+At Thetis' feet the finished labour lay:
+
+She, as a falcon cuts the aerial way,
+
+Swift from Olympus' snowy summit flies,
+
+And bears the blazing present through the skies.`;
+
+// ==========================================================
+// COMPILER: Apollinaire → Bajohr, RINGS topology
+// ==========================================================
+
+const GRID_W = 24, GRID_H = 24;
+const DEFAULT_SEED = 'APOLLINAIRE→BAJOHR::SHIELD_RINGS::24x24::v1';
+const MAX_LINES_PER_CELL = 5;
+
+// ---------- deterministic RNG ----------
+function fnv1a(str){
+  let h = 0x811c9dc5;
+  for (let i=0;i<str.length;i++){
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+function makeRng(seedStr){
+  let s = fnv1a(seedStr) || 1;
+  return function(){
+    s ^= (s << 13); s >>>= 0;
+    s ^= (s >>> 17); s >>>= 0;
+    s ^= (s << 5); s >>>= 0;
+    return (s >>> 0) / 4294967296;
+  };
+}
+function shuffle(arr, rng){
+  for (let i=arr.length-1;i>0;i--){
+    const j = Math.floor(rng()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+// ---------- tagging heuristics ----------
+const KEY_TAGS = [
+  ['forge', /\b(forge|furnace|anvil|hammer|bellows|tongs|metal)\b/i],
+  ['thetis', /\bThetis\b/],
+  ['vulcan', /\bVulcan\b/],
+  ['cosmos', /\b(earth|heaven|ocean|sun|moon|stars|Pleiads|Hyads|Orion|Bear)\b/i],
+  ['city', /\b(cities|forum|elders|laws|witness|talents|brides|nuptial|dance)\b/i],
+  ['war', /\b(war|hosts|pillage|burn|ambush|slaughter|blood|gore|dagger)\b/i],
+  ['field', /\b(field|furrow|plough|reaper|grain|sheaves|harvest|oak)\b/i],
+  ['vineyard', /\b(vineyard|vines|clusters|Linus)\b/i],
+  ['cattle', /\b(oxen|bull|herd|lions|dogs|torrent)\b/i],
+  ['pastoral', /\b(forests|meads|stalls|folds|cots|flocks)\b/i],
+  ['dance', /\b(dance|maze|Daedalean|Gnossus|tumblers|ring)\b/i],
+  ['ocean', /\b(ocean|waves|silver)\b/i],
+];
+
+const VERBISH = /\b(comes?|grew|flourish'd|sent|receive|wastes|retard|forced|grieved|promise|arms?|marches|combats|conquers|slain|resigns|forge|form'd|design'd|bade|turn'd|burn'd|breathed|roll'd|raise|blow|catch|shine|appear|delight|led|stand|decide|spoke|embrace|prepare|found|lurk|watch|proceeded|rush|heap|hear|rise|fight|fall|blush|tore|stalk'd|cleave|roll'd|laid|prepare|bear|awakes|sings|answer|seized|roar'd|drank|desert|bay|leads|whiten|spring|admire|bend|end|pour'd|beat|bound|impress'd|flies)\b/i;
+
+function inferSpeaker(line, prev){
+  const l=line;
+  if (/^"Thee, welcome/i.test(l)) return 'Vulcan';
+  if (/To whom the mournful mother/i.test(l)) return 'Narrator';
+  if (/^"O Vulcan!/i.test(l)) return 'Thetis';
+  if (/^To her the artist-god/i.test(l)) return 'Narrator';
+  if (/^"Thy griefs resign/i.test(l)) return 'Vulcan';
+  if (/^Thus having said/i.test(l)) return 'Narrator';
+  if (/^Then first he form/i.test(l)) return 'Narrator';
+  if (/^Two cities radiant/i.test(l)) return 'Narrator';
+  if (/^This done/i.test(l)) return 'Narrator';
+  if (/^She, as a falcon/i.test(l)) return 'Narrator';
+  // Inside quotes, keep last explicit speaker if any.
+  if (l.trim().startsWith('"') && prev && prev!=='Narrator') return prev;
+  return prev || 'Narrator';
+}
+
+function extractTags(line){
+  const tags=[];
+  for (const [t,re] of KEY_TAGS){ if (re.test(line)) tags.push(t); }
+  if (/[!?]/.test(line)) tags.push('exclaim');
+  if (/\bO\b/.test(line) || /^"O\b/i.test(line)) tags.push('apostrophe');
+  if (VERBISH.test(line)) tags.push('action');
+  return Array.from(new Set(tags));
+}
+
+function semanticWeight(line){
+  let w=1;
+  const caps=(line.match(/[A-Z][a-z]+/g)||[]).length;
+  w += Math.min(1.2, caps*0.12);
+  if (/[!?]/.test(line)) w += 0.8;
+  if (/^"O\b/i.test(line) || /\bO\b/.test(line)) w += 0.6;
+  if (/\b(shield|earth|heaven|ocean|sun|moon|stars|cities|war|peace)\b/i.test(line)) w += 0.7;
+  if (/\b(blood|gore|slaughter|dagger)\b/i.test(line)) w += 0.6;
+  if (/\b(gold|silver)\b/i.test(line)) w += 0.3;
+  if (VERBISH.test(line)) w += 0.25;
+  w = Math.max(1, Math.min(5, w));
+  return Math.round(w*100)/100;
+}
+
+// ---------- panelization ----------
+const PANEL_STARTS = [
+  {id:'P1', title:'Thetis Lament', re:/^To whom the mournful mother/i, zone:'FORGE_LEGEND', motif:['THEMIS OF SORROW','mother/plea','short-lived son']},
+  {id:'P2', title:'Vulcan Vows', re:/^To her the artist-god/i, zone:'FORGE_LEGEND', motif:['FORGE OATH','arms/envy','wondering ages']},
+  {id:'P3', title:'Black Labours of the Forge', re:/^Thus having said/i, zone:'FORGE_LEGEND', motif:['FORGE LABOUR','bellows/anvils','molten metals']},
+  {id:'P4', title:'Cosmos on the Shield', re:/^Then first he form/i, zone:'COSMOS', motif:['COSMOS','earth/heaven/ocean','sun/moon/stars']},
+  {id:'P5', title:'City of Peace', re:/^Two cities radiant/i, zone:'CITY_OF_PEACE', motif:['PEACE CITY','weddings/dance','public delight']},
+  {id:'P6', title:'Forum Judgment', re:/^There in the forum/i, zone:'CITY_OF_PEACE', motif:['LAW RING','elders/sceptres','two talents']},
+  {id:'P7', title:'City of War + Ambush', re:/^Another part/i, zone:'CITY_OF_WAR', motif:['WAR CITY','ambush/flood','blood/gore']},
+  {id:'P8', title:'Ploughed Field', re:/^A field deep furrow/i, zone:'PLOUGH_FIELD', motif:['PLOUGH','furrow/turn','molten earth']},
+  {id:'P9', title:'Harvest Field', re:/^Another field rose high/i, zone:'HARVEST_FIELD', motif:['HARVEST','sheaves/banquet','oak shade']},
+  {id:'P10', title:'Vineyard + Linus', re:/^Next, ripe in yellow gold/i, zone:'VINEYARD', motif:['VINEYARD','purple product','Linus song']},
+  {id:'P11', title:'Herds + Lions', re:/^Here herds of oxen/i, zone:'CATTLE_AND_LIONS', motif:['HERD','lions/bull','torrent']},
+  {id:'P12', title:'Pastoral Folds', re:/^Next this, the eye/i, zone:'PASTORAL_FOLDS', motif:['FOLDS','forests/meads','white flocks']},
+  {id:'P13', title:'Daedalean Dance Maze', re:/^A figured dance succeeds/i, zone:'DANCE_MAZE', motif:['DANCE MAZE','Daedalus/Gnossus','whirling wheel']},
+  {id:'P14', title:'Ocean Rim', re:/^Thus the broad shield complete/i, zone:'OCEAN_RIM', motif:['OCEAN','silver waves','verge/bound']},
+  {id:'P15', title:'Arms + Thetis Departs', re:/^This done, whate'er/i, zone:'FORGE_LEGEND', motif:['ARMS','cuirass/helm','falcon flight']},
+];
+
+function panelize(lines){
+  const panels=[];
+  // default first panel P0
+  let cur={id:'P0', title:'Arrival at Vulcan', zone:'FORGE_LEGEND', motif:['FORGE GATE','welcome/command','duty/obey'], line_ids:[]};
+  const starts = PANEL_STARTS;
+  for (const ln of lines){
+    const starter = starts.find(s => s.re.test(ln.text));
+    if (starter){
+      // close current if it has content
+      if (cur.line_ids.length) panels.push(cur);
+      cur = {id:starter.id, title:starter.title, zone:starter.zone, motif:starter.motif, line_ids:[]};
+    }
+    cur.line_ids.push(ln.id);
+  }
+  if (cur.line_ids.length) panels.push(cur);
+  return panels;
+}
+
+// ---------- rings topology utilities ----------
+function ringIndex(x,y){
+  const cx=(GRID_W-1)/2, cy=(GRID_H-1)/2;
+  const dx=Math.abs(x-cx), dy=Math.abs(y-cy);
+  return Math.floor(Math.max(dx,dy)+1e-9);
+}
+function angle01(x,y){
+  const cx=(GRID_W-1)/2, cy=(GRID_H-1)/2;
+  const a=Math.atan2(y-cy, x-cx);
+  return (a + Math.PI) / (2*Math.PI);
+}
+function allCells(){
+  const cells=[];
+  for (let y=0;y<GRID_H;y++) for (let x=0;x<GRID_W;x){
+    cells.push({x,y, ring:ringIndex(x,y), ang:angle01(x,y)});
+  }
+  return cells;
+}
+
+function buildBandCells(){
+  const cells = allCells();
+  const byRing = Array.from({length:12}, ()=>[]);
+  for (const c of cells) byRing[c.ring].push(c);
+  for (const r of byRing) r.sort((a,b)=> a.ang-b.ang || a.x-b.x || a.y-b.y);
+  const band = {
+    cosmos: [...byRing[0],...byRing[1],...byRing[2]].sort((a,b)=> a.ring-b.ring || a.ang-b.ang),
+    ring3: byRing[3],
+    ring4: byRing[4],
+    ring5: byRing[5],
+    ring6: byRing[6],
+    ring7: byRing[7],
+    ring8: byRing[8],
+    ring9: byRing[9],
+    ring10: byRing[10],
+    ring11: byRing[11],
+  };
+  return band;
+}
+
+// ---------- allocation + filling ----------
+function splitCounts(total, shares){
+  const raw = shares.map(s=>s*total);
+  const base = raw.map(v=>Math.floor(v));
+  let used = base.reduce((a,b)=>a+b,0);
+  let remaining = total-used;
+  const frac = raw.map((v,i)=>({i, f:v-base[i]})).sort((a,b)=>b.f-a.f);
+  for (let k=0;k<remaining;k++) base[frac[k%frac.length].i]++;
+  return base;
+}
+
+function fillPanel(panel, manifest, cells, rng){
+  const lineObjs = panel.line_ids.map(id=>manifest.line_index[id]);
+  const weights = lineObjs.map(lo=>lo.weight);
+  const totalW = weights.reduce((a,b)=>a+b,0) || 1;
+
+  // desired mentions per line (R2 + R4): at least 1, weighted extra.
+  const targets = weights.map(w => 1 + Math.round((w-1)*1.4));
+  const capacity = cells.length * MAX_LINES_PER_CELL;
+  const targetSum = targets.reduce((a,b)=>a+b,0);
+  let scaled = targets.slice();
+  if (targetSum > capacity){
+    const k = capacity / targetSum;
+    scaled = scaled.map(t => Math.max(1, Math.floor(t*k)));
+  }
+
+  // Build mention bucket
+  const bucket=[];
+  for (let i=0;i<lineObjs.length;i++){
+    for (let j=0;j<scaled[i];j++) bucket.push(lineObjs[i].id);
+  }
+
+  // Prioritize higher weight lines early
+  bucket.sort((a,b)=>manifest.line_index[b].weight - manifest.line_index[a].weight);
+
+  // Deterministic shuffle within equal-weight bands to avoid hard stripes
+  shuffle(bucket, rng);
+
+  // Prepare occupancy list (prefer emptiest)
+  const cellState = cells.map(c => ({...c, picks:[]}));
+
+  function pickCellForLine(lineId){
+    // choose among cells that still have capacity and don't already contain this line
+    const options = cellState.filter(cs => cs.picks.length < MAX_LINES_PER_CELL && !cs.picks.includes(lineId));
+    if (!options.length) return null;
+    // sort by occupancy then by ring angle
+    options.sort((a,b)=> a.picks.length-b.picks.length || a.ang-b.ang);
+    // pick among top few for a tiny bit of deterministic variety
+    const top = Math.min(6, options.length);
+    const idx = Math.floor(rng()*top);
+    return options[idx];
+  }
+
+  // Assign mentions
+  for (const lineId of bucket){
+    const cs = pickCellForLine(lineId);
+    if (!cs) break;
+    cs.picks.push(lineId);
+  }
+
+  // Ensure coverage: every line appears at least once.
+  const present = new Set(cellState.flatMap(cs=>cs.picks));
+  const missing = lineObjs.map(o=>o.id).filter(id => !present.has(id));
+  if (missing.length){
+    // place missing into emptiest cells
+    missing.forEach(lineId => {
+      cellState.sort((a,b)=>a.picks.length-b.picks.length);
+      for (const cs of cellState){
+        if (cs.picks.length < MAX_LINES_PER_CELL && !cs.picks.includes(lineId)){
+          cs.picks.push(lineId);
+          present.add(lineId);
+          break;
+        }
+      }
+    });
+  }
+
+  // Fill empty cells with repetition (R4): repeat panel's top-weight line.
+  const topLine = lineObjs.slice().sort((a,b)=>b.weight-a.weight)[0]?.id ?? panel.line_ids[0];
+  for (const cs of cellState){
+    if (!cs.picks.length) cs.picks.push(topLine);
+  }
+
+  // Commit to manifest grid
+  for (const cs of cellState){
+    const cell = manifest.grid[cs.y][cs.x];
+    const ids = cs.picks;
+    cell.line_ids = ids;
+    const unionTags = new Set(panel.zone ? [panel.zone.toLowerCase()] : []);
+    let avgW=0;
+    for (const id of ids){
+      const li = manifest.line_index[id];
+      avgW += li.weight;
+      li.cells.push({x:cs.x,y:cs.y});
+      for (const t of li.tags) unionTags.add(t);
+    }
+    avgW /= ids.length || 1;
+    cell.weight = Math.round(avgW*100)/100;
+    cell.tags = Array.from(unionTags);
+    cell.panel = panel.id;
+    cell.zone = panel.zone;
+    cell.why = {
+      ring: cs.ring,
+      angle01: Math.round(cs.ang*1000)/1000,
+      band_rule: panel._band_rule,
+      panel_rule: panel._panel_rule,
+      allocation_rule: 'weighted_mentions + bounded overprint + deterministic shuffle',
+      max_lines_per_cell: MAX_LINES_PER_CELL,
+    };
+
+    // Preview: motif + snippet of top line
+    const strongest = ids.slice().sort((a,b)=>manifest.line_index[b].weight - manifest.line_index[a].weight)[0];
+    const txt = (manifest.line_index[strongest]?.text || '').trim();
+    const head = (panel.motif && panel.motif[0]) ? panel.motif[0] : panel.title;
+    cell.preview = `${head} · ${txt}`;
+  }
+}
+
+function compile(sourceText, seed){
+  const rng = makeRng(seed + '::' + fnv1a(sourceText));
+  const audit=[];
+
+  // S0 LineationLock
+  const rawLines = sourceText.replace(/\r/g,'').split('\n');
+  const lines=[];
+  let speaker='Narrator';
+  for (const raw of rawLines){
+    const text = raw.trimEnd();
+    if (!text.trim()) continue;
+    speaker = inferSpeaker(text, speaker);
+    const tags = extractTags(text);
+    const weight = semanticWeight(text);
+    lines.push({id: lines.length, text, speaker, tags, weight});
+  }
+  audit.push({step:'S0 LineationLock', details:{lines:lines.length, rule:'non-empty lines only; original breakpoints preserved by skipping blanks', speaker_model:'simple state machine', weight_model:'keyword + apostrophe + action density'}});
+
+  // S1 Panelization
+  const panels = panelize(lines);
+  audit.push({step:'S1 Panelization', details:{panels:panels.map(p=>({id:p.id,title:p.title,zone:p.zone,lines:p.line_ids.length}))}});
+
+  // Build line_index skeleton (with reversible mapping slots)
+  const line_index = lines.map(l => ({
+    id:l.id,
+    text:l.text,
+    tags:l.tags,
+    speaker:l.speaker,
+    scene:l.tags.includes('cosmos') ? 'SHIELD' : (l.tags.includes('forge')||l.tags.includes('thetis')||l.tags.includes('vulcan') ? 'FORGE' : 'SHIELD'),
+    canonical_zone: null,
+    panel_id: null,
+    weight: l.weight,
+    cells: [],
+  }));
+
+  // Attach canonical_zone + panel_id
+  const panelById = Object.fromEntries(panels.map(p=>[p.id,p]));
+  for (const p of panels){
+    for (const id of p.line_ids){
+      line_index[id].canonical_zone = p.zone;
+      line_index[id].panel_id = p.id;
+    }
+  }
+
+  // Initialize empty grid
+  const grid = Array.from({length:GRID_H}, (_,y)=>Array.from({length:GRID_W}, (_,x)=>({
+    zone:'', panel:'', line_ids:[], weight:0, tags:[], why:null, preview:''
+  })));
+
+  const manifest = {
+    meta:{
+      name:'Apollinaire→Bajohr Shield Grid Compiler',
+      version:'1.0',
+      topology:'RINGS',
+      grid_size:{w:GRID_W,h:GRID_H},
+      seed,
+      deterministic_note:'All placement and any shuffle are bounded by named rules and seeded PRNG (R3).',
+      theory_anchors:{
+        A1:'Performative ekphrasis: layout is an operation, not decoration.',
+        A2:'Two texts: operative mapping logic (this manifest) vs surface distribution (the grid).',
+        A3:'Sequential pipeline + connectionist clustering via tags/weights.',
+        A4:'Apollinaire bridge: page becomes signal-device; here: grid becomes archive/address space.'
+      },
+      created_at: new Date().toISOString(),
+    },
+    grid,
+    line_index,
+    panels: panels.map(p=>({id:p.id, title:p.title, zone:p.zone, line_ids:p.line_ids.slice(), motif_headers:p.motif.slice()})),
+    allocation_report:{},
+    audit_log:audit,
+  };
+
+  // S2 TopologyProjection (rings + sectors)
+  const bandCells = buildBandCells();
+
+  // Build per-band plans
+  const bandPlans = [
+    {name:'COSMOS_BAND', cells:bandCells.cosmos, panels:['P4'], shares:[1]},
+    {name:'RING_3_PEACE', cells:bandCells.ring3, panels:['P5','P6'], shares:[0.62,0.38]},
+    {name:'RING_4_WAR', cells:bandCells.ring4, panels:['P7'], shares:[1]},
+    {name:'RING_5_PLOUGH', cells:bandCells.ring5, panels:['P8'], shares:[1]},
+    {name:'RING_6_HARVEST', cells:bandCells.ring6, panels:['P9'], shares:[1]},
+    {name:'RING_7_VINEYARD', cells:bandCells.ring7, panels:['P10'], shares:[1]},
+    {name:'RING_8_CATTLE', cells:bandCells.ring8, panels:['P11'], shares:[1]},
+    {name:'RING_9_PASTORAL', cells:bandCells.ring9, panels:['P12'], shares:[1]},
+    // ring10 shares: Dance major, Forge legend minority distributed by weights
+    {name:'RING_10_DANCE+LEGEND', cells:bandCells.ring10, panels:null, shares:null},
+    {name:'RING_11_OCEAN', cells:bandCells.ring11, panels:['P14'], shares:[1]},
+  ];
+
+  // Compute ring10 panel shares
+  const ring10Dance = 'P13';
+  const legendPanels = panels.filter(p=>p.zone==='FORGE_LEGEND' && p.id!=='P14');
+  const legendIds = legendPanels.map(p=>p.id);
+  const weightsByPanel = {};
+  for (const pid of [ring10Dance, ...legendIds]) weightsByPanel[pid]=0;
+  // Dance weight is sum of line weights
+  const dance = panelById[ring10Dance];
+  for (const id of (dance?.line_ids||[])) weightsByPanel[ring10Dance]+= line_index[id].weight;
+  for (const p of legendPanels){
+    for (const id of p.line_ids) weightsByPanel[p.id]+= line_index[id].weight;
+  }
+  const totalLegend = legendIds.reduce((a,pid)=>a+weightsByPanel[pid],0) || 1;
+  const legendShares = legendIds.map(pid => (weightsByPanel[pid]/totalLegend) * 0.35);
+  const ring10Panels = [ring10Dance, ...legendIds];
+  const ring10Shares = [0.65, ...legendShares];
+  // normalize to 1
+  const ssum = ring10Shares.reduce((a,b)=>a+b,0);
+  for (let i=0;i<ring10Shares.length;i++) ring10Shares[i]/=ssum;
+
+  const ring10Plan = bandPlans.find(b=>b.name==='RING_10_DANCE+LEGEND');
+  ring10Plan.panels = ring10Panels;
+  ring10Plan.shares = ring10Shares;
+
+  // Assign contiguous sectors per band
+  const panelCells = {}; // panelId -> list of cells
+  for (const plan of bandPlans){
+    const counts = splitCounts(plan.cells.length, plan.shares);
+    let idx=0;
+    for (let i=0;i<plan.panels.length;i++){
+      const pid = plan.panels[i];
+      const slice = plan.cells.slice(idx, idx+counts[i]);
+      idx += counts[i];
+      panelCells[pid] = (panelCells[pid]||[]).concat(slice);
+      // annotate rule for audit
+      const p = panelById[pid];
+      if (p){
+        p._band_rule = plan.name;
+        p._panel_rule = `${plan.name}:sector_${i+1}/${plan.panels.length}`;
+      }
+    }
+  }
+
+  audit.push({step:'S2 TopologyProjection', details:{
+    bandPlans: bandPlans.map(p=>({name:p.name, cells:p.cells.length, panels:p.panels.map((id,j)=>({id, share:Math.round(p.shares[j]*1000)/1000}))})),
+    note:'Cells sorted by angular order per ring; assigned to panels as contiguous sectors.'
+  }});
+
+  // S3 + S4: CellBudgeting + OverprintOrchestration happen inside fillPanel
+  for (const p of panels){
+    const cells = panelCells[p.id] || [];
+    if (!cells.length) continue;
+    fillPanel(p, manifest, cells, rng);
+  }
+
+  // Fill any leftover empty cells (should not happen, but enforce)
+  let empties=0;
+  for (let y=0;y<GRID_H;y++) for (let x=0;x<GRID_W;x++){
+    const c = manifest.grid[y][x];
+    if (!c.line_ids || !c.line_ids.length){
+      empties++;
+      // assign nearest ring's emblem line
+      const r = ringIndex(x,y);
+      const fallbackPanel = (r===11?'P14': r>=10?'P13': r===9?'P12': r===8?'P11': r===7?'P10': r===6?'P9': r===5?'P8': r===4?'P7': r===3?'P5': 'P4');
+      const p = panelById[fallbackPanel];
+      const lid = p?.line_ids?.[0] ?? 0;
+      c.panel = fallbackPanel;
+      c.zone = p?.zone || 'UNASSIGNED';
+      c.line_ids = [lid];
+      c.tags = Array.from(new Set([c.zone.toLowerCase(), ...(manifest.line_index[lid]?.tags||[])]));
+      c.weight = manifest.line_index[lid]?.weight || 1;
+      c.preview = `${p?.motif?.[0]||fallbackPanel} · ${(manifest.line_index[lid]?.text||'').trim()}`;
+      c.why = {ring:r, angle01: Math.round(angle01(x,y)*1000)/1000, band_rule:'FILL_EMPTY', panel_rule:'fallback', allocation_rule:'R4 repetition (empty cell backfill)'};
+      manifest.line_index[lid].cells.push({x,y});
+    }
+  }
+
+  // Coverage check (R5)
+  const seen = new Set();
+  for (const row of manifest.grid) for (const cell of row) for (const id of cell.line_ids) seen.add(id);
+  const missing = manifest.line_index.map(l=>l.id).filter(id=>!seen.has(id));
+
+  // S5 Audit + Allocation report
+  const perPanel = {};
+  for (const p of panels){
+    perPanel[p.id] = {title:p.title, zone:p.zone, cells:(panelCells[p.id]||[]).length, lines:p.line_ids.length};
+  }
+  const perZone = {};
+  for (const p of panels){
+    perZone[p.zone] = perZone[p.zone] || {cells:0, panels:0, lines:0};
+    perZone[p.zone].panels += 1;
+    perZone[p.zone].lines += p.line_ids.length;
+    perZone[p.zone].cells += (panelCells[p.id]||[]).length;
+  }
+
+  const perLine = {};
+  for (const li of manifest.line_index){
+    perLine[li.id] = {mentions: li.cells.length, zone: li.canonical_zone, panel: li.panel_id, weight: li.weight};
+  }
+
+  manifest.allocation_report = {
+    total_cells: GRID_W*GRID_H,
+    empties_backfilled: empties,
+    coverage_missing_lines: missing.length,
+    per_panel: perPanel,
+    per_zone: perZone,
+    per_line: perLine,
+    overprint_policy: {max_lines_per_cell: MAX_LINES_PER_CELL, note:'Many lines may share a cell (R2); repetition used to keep panels legible under beam-sampling (R4).'}
+  };
+
+  audit.push({step:'S5 Audit', details:{
+    total_cells: GRID_W*GRID_H,
+    backfilled_empty_cells: empties,
+    missing_lines: missing.length,
+    reversible_mapping: 'line_index[id].cells gives all cells; grid[y][x].why explains causality.'
+  }});
+
+  return manifest;
+}
+
+// ==========================================================
+// UI
+// ==========================================================
+const els = {
+  grid: document.getElementById('grid'),
+  q: document.getElementById('q'),
+  src: document.getElementById('src'),
+  modal: document.getElementById('modal'),
+  modalExport: document.getElementById('modal_export'),
+  exportBox: document.getElementById('export_box'),
+  cellKv: document.getElementById('cell_kv'),
+  cellLines: document.getElementById('cell_lines'),
+  panelList: document.getElementById('panel_list'),
+  lineList: document.getElementById('line_list'),
+  auditList: document.getElementById('audit_list'),
+  pillSeed: document.getElementById('pill_seed'),
+  pillLines: document.getElementById('pill_lines'),
+  pillPanels: document.getElementById('pill_panels'),
+  pillCoverage: document.getElementById('pill_coverage'),
+  pillActive: document.getElementById('pill_active'),
+  insHint: document.getElementById('ins_hint'),
+  cellCount: document.getElementById('cell_count'),
+  srcStats: document.getElementById('src_stats'),
+  exportNote: document.getElementById('export_note'),
+};
+
+let STATE = {
+  seed: DEFAULT_SEED,
+  view: 'text', // text | id | zone
+  manifest: null,
+  selected: {x:11,y:11},
+  activePanel: null,
+  search: '',
+  cellSize: 22,
+  tab: 'cell',
+};
+
+function setTab(tab){
+  STATE.tab = tab;
+  document.getElementById('tab_cell').classList.toggle('active', tab==='cell');
+  document.getElementById('tab_panels').classList.toggle('active', tab==='panels');
+  document.getElementById('tab_lines').classList.toggle('active', tab==='lines');
+  document.getElementById('tab_audit').classList.toggle('active', tab==='audit');
+
+  document.getElementById('pane_cell').style.display = tab==='cell' ? '' : 'none';
+  document.getElementById('pane_panels').style.display = tab==='panels' ? '' : 'none';
+  document.getElementById('pane_lines').style.display = tab==='lines' ? '' : 'none';
+  document.getElementById('pane_audit').style.display = tab==='audit' ? '' : 'none';
+}
+
+function escapeHtml(s){
+  return String(s)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#039;');
+}
+
+function clip(s,n){
+  const t=String(s||'').trim();
+  if (t.length<=n) return t;
+  return t.slice(0,n-1)+'…';
+}
+
+function render(){
+  const m = STATE.manifest;
+  if (!m) return;
+
+  // Pills
+  els.pillSeed.textContent = `seed: ${m.meta.seed}`;
+  els.pillLines.textContent = `lines: ${m.line_index.length}`;
+  els.pillPanels.textContent = `panels: ${m.panels.length}`;
+  const miss = m.allocation_report.coverage_missing_lines;
+  els.pillCoverage.textContent = `coverage: ${miss===0 ? 'OK' : ('missing '+miss)}`;
+
+  // Grid sizing
+  document.documentElement.style.setProperty('--cell', STATE.cellSize+'px');
+
+  // Precompute search matches
+  const q = STATE.search.trim().toLowerCase();
+  const matchedCells = new Set();
+  const matchedLines = new Set();
+  if (q){
+    for (const li of m.line_index){
+      if (li.text.toLowerCase().includes(q) || li.tags.some(t=>t.includes(q)) || (li.speaker||'').toLowerCase().includes(q)){
+        matchedLines.add(li.id);
+        for (const c of li.cells) matchedCells.add(c.y*GRID_W + c.x);
+      }
+    }
+  }
+
+  // Active panel focus
+  const activePanel = STATE.activePanel;
+  const activeCellSet = new Set();
+  if (activePanel){
+    for (let y=0;y<GRID_H;y++) for (let x=0;x<GRID_W;x++){
+      const cell = m.grid[y][x];
+      if (cell.panel===activePanel) activeCellSet.add(y*GRID_W+x);
+    }
+  }
+
+  // Render grid
+  els.grid.innerHTML='';
+  for (let y=0;y<GRID_H;y++){
+    for (let x=0;x<GRID_W;x++){
+      const cell = m.grid[y][x];
+      const idx = y*GRID_W+x;
+      const b = document.createElement('button');
+      b.className='cell';
+      b.type='button';
+      b.dataset.x=x; b.dataset.y=y; b.dataset.ring=cell.why?.ring ?? ringIndex(x,y);
+
+      // view text
+      let label='';
+      if (STATE.view==='id'){
+        const first = cell.line_ids[0];
+        label = (first!==undefined) ? String(first) : '·';
+        b.innerHTML = `<span class="txt">${escapeHtml(label)}</span><span class="tiny">${escapeHtml(String(cell.line_ids.length))}</span>`;
+      } else if (STATE.view==='zone'){
+        label = cell.zone || '—';
+        b.innerHTML = `<span class="txt">${escapeHtml(clip(label.replaceAll('_',' '), 10))}</span>`;
+      } else {
+        label = cell.preview || '';
+        const top = (cell.panel||'').replace('P','');
+        b.innerHTML = `<span class="txt">${escapeHtml(clip(label, 24))}</span><span class="mark">${escapeHtml(top)}</span>`;
+      }
+
+      if (STATE.selected && STATE.selected.x===x && STATE.selected.y===y) b.classList.add('active');
+      if (q){
+        if (matchedCells.has(idx)) b.classList.add('match');
+        else b.classList.add('dim');
+      }
+      if (activePanel){
+        if (!activeCellSet.has(idx)) b.classList.add('dim');
+      }
+
+      b.addEventListener('click', ()=>{
+        STATE.selected={x,y};
+        STATE.activePanel = cell.panel || null;
+        els.pillActive.textContent = `active: ${cell.panel || '—'}`;
+        setTab('cell');
+        renderInspector();
+        render();
+      });
+      els.grid.appendChild(b);
+    }
+  }
+
+  els.pillActive.textContent = `active: ${STATE.activePanel || '—'}`;
+
+  // Lists
+  renderPanelList();
+  renderLineList(q);
+  renderAudit();
+  renderInspector();
+}
+
+function renderInspector(){
+  const m = STATE.manifest;
+  if (!m) return;
+  const {x,y} = STATE.selected || {x:11,y:11};
+  const cell = m.grid[y][x];
+
+  els.insHint.textContent = `(${x},${y}) · ${cell.zone || '—'} · ${cell.panel || '—'}`;
+
+  const ring = cell.why?.ring ?? ringIndex(x,y);
+  const p = m.panels.find(pp=>pp.id===cell.panel);
+  const pTitle = p ? p.title : '—';
+  const motif = p?.motif_headers?.[0] || '—';
+
+  const kv = [
+    ['Cell', `(${x},${y})`],
+    ['Ring', String(ring)],
+    ['Zone', cell.zone || '—'],
+    ['Panel', `${cell.panel || '—'} · ${pTitle}`],
+    ['Motif', motif],
+    ['Mentions', String(cell.line_ids.length)],
+    ['Avg weight', String(cell.weight || 0)],
+    ['Tags', (cell.tags || []).slice(0,12).join(', ') + ((cell.tags||[]).length>12?'…':'')],
+    ['Why', cell.why ? `${cell.why.band_rule} / ${cell.why.panel_rule}` : '—'],
+  ];
+
+  els.cellKv.innerHTML = kv.map(([k,v])=>`<div class="k">${escapeHtml(k)}</div><div class="v">${escapeHtml(v)}</div>`).join('');
+
+  els.cellCount.textContent = `${cell.line_ids.length} lines`;
+
+  // lines in cell
+  els.cellLines.innerHTML = '';
+  if (!cell.line_ids.length){
+    els.cellLines.innerHTML = `<div class="row"><div class="text muted">(empty)</div></div>`;
+  } else {
+    const rows = cell.line_ids.map(id=>m.line_index[id]).sort((a,b)=>b.weight-a.weight);
+    els.cellLines.innerHTML = rows.map(li=>{
+      const badge = `${li.id}`;
+      const meta = `${li.speaker || '—'} · w=${li.weight} · ${li.panel_id}`;
+      return `<div class="row">
+        <div class="badge">${escapeHtml(badge)}</div>
+        <div class="text">
+          <div>${escapeHtml(li.text)}</div>
+          <div class="muted" style="margin-top:4px">${escapeHtml(meta)} · ${escapeHtml((li.tags||[]).slice(0,8).join(', '))}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // click to jump
+    els.cellLines.querySelectorAll('.row').forEach((rowEl, idx)=>{
+      rowEl.style.cursor='pointer';
+      rowEl.addEventListener('click', ()=>{
+        const li = rows[idx];
+        // Jump to the first cell of that line
+        const c = li.cells[0];
+        if (c){
+          STATE.selected = {x:c.x,y:c.y};
+          STATE.activePanel = li.panel_id;
+          setTab('cell');
+          render();
+        }
+      });
+    });
+  }
+}
+
+function renderPanelList(){
+  const m = STATE.manifest;
+  const active = STATE.activePanel;
+  els.panelList.innerHTML = m.panels.map(p=>{
+    const cells = m.allocation_report.per_panel[p.id]?.cells ?? 0;
+    const lines = p.line_ids.length;
+    const on = (active===p.id);
+    return `<div class="row" data-pid="${escapeHtml(p.id)}" style="cursor:pointer">
+      <div class="badge">${escapeHtml(p.id)}</div>
+      <div class="text">
+        <div>${escapeHtml(p.title)} <span class="muted">· ${escapeHtml(p.zone)}</span></div>
+        <div class="muted" style="margin-top:4px">cells=${cells} · lines=${lines} · motif=${escapeHtml(p.motif_headers[0]||'—')}</div>
+      </div>
+      <div class="badge" style="background:${on?'#fff':'transparent'}">${on?'ON':' '}</div>
+    </div>`;
+  }).join('');
+
+  els.panelList.querySelectorAll('.row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const pid = row.dataset.pid;
+      STATE.activePanel = (STATE.activePanel===pid) ? null : pid;
+      els.pillActive.textContent = `active: ${STATE.activePanel || '—'}`;
+      render();
+    });
+  });
+}
+
+function renderLineList(q){
+  const m = STATE.manifest;
+  // If searching, show only matches; otherwise show a curated subset (top weights)
+  let list = m.line_index;
+  if (q){
+    list = list.filter(li => li.text.toLowerCase().includes(q) || li.tags.some(t=>t.includes(q)) || (li.speaker||'').toLowerCase().includes(q));
+  } else {
+    list = [...list].sort((a,b)=>b.weight-a.weight).slice(0,120);
+  }
+
+  els.lineList.innerHTML = list.map(li=>{
+    const meta = `${li.panel_id} · ${li.canonical_zone} · ${li.speaker} · w=${li.weight} · mentions=${li.cells.length}`;
+    return `<div class="row" data-lid="${li.id}" style="cursor:pointer">
+      <div class="badge">${li.id}</div>
+      <div class="text">
+        <div>${escapeHtml(li.text)}</div>
+        <div class="muted" style="margin-top:4px">${escapeHtml(meta)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  els.lineList.querySelectorAll('.row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const id = Number(row.dataset.lid);
+      const li = m.line_index[id];
+      const c = li.cells[0];
+      if (c){
+        STATE.selected = {x:c.x,y:c.y};
+        STATE.activePanel = li.panel_id;
+        setTab('cell');
+        render();
+      }
+    });
+  });
+}
+
+function renderAudit(){
+  const m = STATE.manifest;
+  els.auditList.innerHTML = m.audit_log.map((a,i)=>{
+    const text = JSON.stringify(a.details, null, 2);
+    return `<div class="row" style="align-items:flex-start">
+      <div class="badge">${escapeHtml(String(i))}</div>
+      <div class="text">
+        <div style="font-weight:800">${escapeHtml(a.step)}</div>
+        <pre style="margin:6px 0 0; white-space:pre-wrap; font-family:var(--mono); font-size:11px; color:#1d1d1d">${escapeHtml(text)}</pre>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function doCompile(){
+  const txt = els.src.value || DEFAULT_TEXT;
+  const m = compile(txt, STATE.seed);
+  STATE.manifest = m;
+  // choose a good initial selection: center cell
+  STATE.selected = {x:11,y:11};
+  STATE.activePanel = null;
+  render();
+}
+
+// ==========================================================
+// EVENTS
+// ==========================================================
+
+document.getElementById('btn_compile').addEventListener('click', doCompile);
+document.getElementById('btn_recompile').addEventListener('click', ()=>{ doCompile(); closeModal(); });
+
+document.getElementById('btn_edit').addEventListener('click', ()=>{
+  openModal();
+});
+
+document.getElementById('btn_close').addEventListener('click', closeModal);
+
+document.getElementById('btn_export').addEventListener('click', ()=>{
+  const m = STATE.manifest;
+  if (!m) return;
+  const pretty = JSON.stringify(m, null, 2);
+  els.exportBox.value = pretty;
+  els.exportNote.textContent = `${pretty.length.toLocaleString()} chars · ${m.line_index.length} lines · ${GRID_W*GRID_H} cells`;
+  openExport();
+});
+
+document.getElementById('btn_export_close').addEventListener('click', closeExport);
+
+document.getElementById('btn_copy').addEventListener('click', async ()=>{
+  try{
+    await navigator.clipboard.writeText(els.exportBox.value);
+    els.exportNote.textContent = 'Copied to clipboard.';
+  }catch(e){
+    els.exportNote.textContent = 'Copy failed (clipboard blocked). Select-all + copy manually.';
+  }
+});
+
+document.getElementById('btn_download').addEventListener('click', ()=>{
+  const m = STATE.manifest;
+  if (!m) return;
+  const blob = new Blob([JSON.stringify(m, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'shield_24x24_manifest.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 500);
+});
+
+function setView(v){
+  STATE.view = v;
+  document.getElementById('view_text').classList.toggle('active', v==='text');
+  document.getElementById('view_id').classList.toggle('active', v==='id');
+  document.getElementById('view_zone').classList.toggle('active', v==='zone');
+  render();
+}
+
+document.getElementById('view_text').addEventListener('click', ()=>setView('text'));
+document.getElementById('view_id').addEventListener('click', ()=>setView('id'));
+document.getElementById('view_zone').addEventListener('click', ()=>setView('zone'));
+
+document.getElementById('zoom_in').addEventListener('click', ()=>{
+  STATE.cellSize = Math.min(36, STATE.cellSize + 2);
+  render();
+});
+document.getElementById('zoom_out').addEventListener('click', ()=>{
+  STATE.cellSize = Math.max(14, STATE.cellSize - 2);
+  render();
+});
+
+els.q.addEventListener('input', ()=>{
+  STATE.search = els.q.value;
+  render();
+});
+
+// Tabs
+
+document.getElementById('tab_cell').addEventListener('click', ()=>setTab('cell'));
+document.getElementById('tab_panels').addEventListener('click', ()=>setTab('panels'));
+document.getElementById('tab_lines').addEventListener('click', ()=>setTab('lines'));
+document.getElementById('tab_audit').addEventListener('click', ()=>setTab('audit'));
+
+// Modals
+function openModal(){
+  els.modal.classList.add('open');
+  els.src.focus();
+}
+function closeModal(){
+  els.modal.classList.remove('open');
+}
+function openExport(){
+  els.modalExport.classList.add('open');
+}
+function closeExport(){
+  els.modalExport.classList.remove('open');
+}
+
+// Keep stats for editor
+function updateSrcStats(){
+  const t = els.src.value || '';
+  const nonEmpty = t.split(/\n/).filter(l=>l.trim()).length;
+  els.srcStats.textContent = `${nonEmpty} non-empty lines · grid budget: ${GRID_W*GRID_H} cells`;
+}
+els.src.addEventListener('input', updateSrcStats);
+
+// Close modals on backdrop click
+els.modal.addEventListener('click', (e)=>{ if (e.target===els.modal) closeModal(); });
+els.modalExport.addEventListener('click', (e)=>{ if (e.target===els.modalExport) closeExport(); });
+
+// Keyboard: / focuses search, Esc closes modals
+window.addEventListener('keydown', (e)=>{
+  if (e.key==='/' && document.activeElement!==els.q && !els.modal.classList.contains('open') && !els.modalExport.classList.contains('open')){
+    e.preventDefault();
+    els.q.focus();
+  }
+  if (e.key==='Escape'){
+    closeModal();
+    closeExport();
+  }
+});
+
+// Init
+els.src.value = DEFAULT_TEXT;
+updateSrcStats();
+doCompile();
+
+</script>
+</body>
+</html>

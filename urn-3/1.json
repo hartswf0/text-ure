@@ -1,0 +1,61 @@
+This is a sophisticated request. You’ve provided a rigorous **POML** (Poetic Object Markup Language) schema to deconstruct Keats' "Ode on a Grecian Urn"—a poem that is itself an exploration of the relationship between static plastic art (the urn) and temporal art (the poem).
+
+By applying the **CALLIGRAM_MAP** procedure, we shift the "Ode" from a temporal sequence of stanzas into a spatial topology.
+
+---
+
+## 1. Morphism Analysis
+
+Before rasterization, we must declare the geometric intent and density of each `TEXT_CHUNK` based on the semantic tags.
+
+| Chunk | Semantic Tags | Geometric Intent | Density | Field |
+| --- | --- | --- | --- | --- |
+| **Stanza 1** | Silence, History, Foliage | **SPIRAL** | 6 | `EDGE_IN` |
+| **Stanza 2** | Music, Spirit, Unmet Desire | **RADIO_WAVE** | 4 | `CENTER_OUT` |
+| **Stanza 3** | Vitality, Warmth, Excess | **CLUSTER** | 9 | `FLOAT` |
+| **Stanza 4** | Sacrifice, Procession, Void | **COLUMN** | 5 | `LEFT_RIGHT` |
+| **Stanza 5** | Eternity, Form, Absolute | **GRID** | 10 | `SINK` |
+
+---
+
+## 2. The Spatial Semantic Grid
+
+Following **Axiom A5**, the shape is declared. The grid below represents a 10x10 addressable viewport where the geometry of the Urn emerges from the placement of stanza references `[S1]...[S5]`.
+
+```text
+[0,0] . . . . . . . . . . [0,9]
+  .  [S1] [S1] [S1] [S1] [S1] [S1]  .  .   <-- The Rim (Spiral)
+  .  [S1]  .    .    .    .   [S1]  .  .
+  .   .   [S2] [S2] [S2] [S2]  .   .  .   <-- The Pulse (Radio Wave)
+  .  [S3] [S3] [S2] [S2] [S3] [S3]  .  .   <-- The Vitality (Clusters)
+  .  [S3] [S3] [S2] [S2] [S3] [S3]  .  .
+  .   .   .   [S4][S4][S4][S4] .   .  .   <-- The Procession (Column)
+  .   .   .    .   .   .   .   .  .  .
+  .  [S5] [S5] [S5] [S5] [S5] [S5]  .  .   <-- The Truth (Foundation Grid)
+[9,0] . . . . . . . . . . [9,9]
+
+```
+
+---
+
+## 3. Traversal Interpretation
+
+In this POML-rendered state, the "reading" of the poem is no longer a descent from top to bottom, but a **traversal of layers** within the `CELLS`:
+
+* **The Outer Shell [S1]:** The reader enters through the `EDGE_IN` field. You encounter "quietness" and "slow time" as a boundary layer, the physical ceramic edge of the poem.
+* **The Core [S2]:** The `RADIO_WAVE` geometry creates a centrifugal force. The "unheard melodies" emanate from the center of the grid, pushing the reader’s focus outward toward the "spirit ditties."
+* **The Overwrought Texture [S3, S4]:** The high `DENSITY` (9) of Stanza 3 creates a visual "weight" in the center-left. It represents the "burning forehead" and "parching tongue"—a sensory overload that contrasts with the `LEFT_RIGHT` procession of the "little town" in Stanza 4.
+* **The Geometric Absolute [S5]:** The final stanza acts as the `SINK`. All semantic weight drops into the `GRID` geometry. This is where the symbolic weight is highest:
+
+> **Beauty = Truth**
+> **Truth = Beauty**
+
+---
+
+### Navigation Log
+
+> **Status:** Rasterization complete.
+> **Constraint Check:** All densities mapped. Overlap detected in central cells (S2/S3) as per "Multiple TEXT_CHUNKS may overlap" rule.
+> **Output:** The poem is now a stable, "Attic shape" navigable by coordinate rather than chronology.
+
+Would you like me to **zoom into a specific CELL (e.g., [4,4])** to reveal the layered interaction between the "unheard melodies" and the "forever warm" passion?

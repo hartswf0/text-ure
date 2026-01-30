@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protocol: The Keats Projection</title>
+    <style>
+        :root {
+            --bg-color: #f4f1ea; /* Marble-ish */
+            --ink-color: #1a1a1a;
+            --grid-line: #dcd6ce;
+            --highlight: #b94e48; /* Ritual Red */
+            --zone-center: #e8e4da;
+            --zone-mid: #efebe4;
+            --zone-outer: #f9f7f2;
+            
+            /* Function Colors */
+            --func-produce: #2e5d5a; /* Forest Green */
+            --func-repair: #b94e48; /* Alarm/Wound */
+            --func-maintain: #c59d3e; /* Gold/Stasis */
+            --func-transform: #5d4a66; /* Twilight/Exile */
+            --func-seal: #000000; /* Finality */
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--ink-color);
+            font-family: "Georgia", "Times New Roman", serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Header: The Axioms --- */
+        header {
+            padding: 1rem 2rem;
+            border-bottom: 2px solid var(--ink-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            z-index: 100;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 0;
+        }
+
+        .axiom {
+            font-size: 0.8rem;
+            font-style: italic;
+            opacity: 0.7;
+            display: none;
+        }
+        
+        @media (min-width: 768px) {
+            .axiom { display: block; }
+        }
+
+        /* --- Main Layout --- */
+        main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        @media (min-width: 768px) {
+            main { flex-direction: row; }
+        }
+
+        /* --- The Spatial Grid --- */
+        #grid-container {
+            flex: 2;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: repeat(12, 1fr);
+            padding: 1rem;
+            gap: 2px;
+            position: relative;
+            background: var(--bg-color);
+        }
+
+        @media (min-width: 768px) {
+            #grid-container { padding: 2rem; gap: 4px; }
+        }
+
+        .cell {
+            border: 1px solid var(--grid-line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            text-align: center;
+            cursor: crosshair;
+            transition: all 0.3s ease;
+            position: relative;
+            background: rgba(255,255,255,0.4);
+            color: rgba(0,0,0,0.3);
+            user-select: none;
+        }
+
+        .cell:hover, .cell.active {
+            background: var(--ink-color);
+            color: var(--bg-color);
+            transform: scale(1.1);
+            z-index: 10;
+            border-color: var(--ink-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        /* Visual coding for the concentric zones */
+        .cell[data-zone="outer"] { background-color: var(--zone-outer); }
+        .cell[data-zone="middle"] { background-color: var(--zone-mid); }
+        .cell[data-zone="center"] { background-color: var(--zone-center); }
+        
+        .cell.void {
+            border: none;
+            background: transparent;
+        }
+
+        /* --- The Ritual Inspector (Sidebar) --- */
+        #inspector {
+            flex: 1;
+            border-top: 2px solid var(--ink-color);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #fff;
+            min-height: 250px;
+            overflow-y: auto;
+        }
+
+        @media (min-width: 768px) {
+            #inspector {
+                border-top: none;
+                border-left: 2px solid var(--ink-color);
+                min-height: auto;
+            }
+        }
+
+        #inspector-content {
+            opacity: 0; /* Hidden until hover */
+            transition: opacity 0.2s;
+        }
+        
+        #inspector-content.visible {
+            opacity: 1;
+        }
+
+        .meta-label {
+            font-family: monospace;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+            margin-top: 1rem;
+            display: block;
+        }
+
+        .data-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .text-fragment {
+            font-family: "Georgia", serif;
+            font-size: 1.2rem;
+            font-style: italic;
+            line-height: 1.4;
+            margin: 1rem 0;
+            padding-left: 1rem;
+            border-left: 4px solid var(--ink-color);
+        }
+        
+        @media (min-width: 768px) {
+            .text-fragment { font-size: 1.4rem; margin: 1.5rem 0; }
+        }
+
+        .act-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            color: white;
+            font-family: monospace;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        /* --- Footer: Controls --- */
+        footer {
+            border-top: 2px solid var(--ink-color);
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            background: #fff;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: transparent;
+            border: 1px solid var(--ink-color);
+            padding: 0.5rem 1rem;
+            font-family: monospace;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: var(--ink-color);
+            color: white;
+        }
+
+        /* --- Utility Classes for Function Colors --- */
+        .func-PRODUCE { color: var(--func-produce); }
+        .func-REPAIR { color: var(--func-repair); }
+        .func-MAINTAIN { color: var(--func-maintain); }
+        .func-TRANSFORM { color: var(--func-transform); }
+        .func-SEAL { color: var(--func-seal); }
+
+        .bg-PRODUCE { background-color: var(--func-produce); }
+        .bg-REPAIR { background-color: var(--func-repair); }
+        .bg-MAINTAIN { background-color: var(--func-maintain); }
+        .bg-TRANSFORM { background-color: var(--func-transform); }
+        .bg-SEAL { background-color: var(--func-seal); }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1>Spatial-Semantic Grid</h1>
+        <div style="font-size: 0.7rem; font-family: monospace;">PROTOCOL: CAREY-V2 // SUBJECT: GRECIAN URN</div>
+    </div>
+    <div class="axiom">"Maps do not represent space; maps constitute space."</div>
+</header>
+
+<main>
+    <div id="grid-container">
+        <!-- Grid cells injected via JS -->
+    </div>
+
+    <div id="inspector">
+        <div id="inspector-content">
+            <span id="act-badge" class="act-badge">INVOCATION</span>
+            
+            <span class="meta-label">Grid Coordinates</span>
+            <span id="coord-display" class="data-value">(00,00)</span>
+
+            <span class="meta-label">Communicative Act</span>
+            <div id="text-display" class="text-fragment">
+                "Thou still unravish'd bride of quietness..."
+            </div>
+
+            <span class="meta-label">World Function</span>
+            <span id="func-display" class="data-value func-PRODUCE">PRODUCE</span>
+
+            <span class="meta-label">Role Offered to Reader</span>
+            <span id="role-display" class="data-value">Witness</span>
+            
+            <hr style="margin: 2rem 0; opacity: 0.2;">
+            
+            <div style="font-family: monospace; font-size: 0.7rem;">
+                > CONTINUITY HOOK: <span id="hook-display">Seek adjacency.</span>
+            </div>
+        </div>
+        <div id="inspector-placeholder" style="text-align: center; opacity: 0.3; padding-top: 2rem;">
+            <p style="font-family: monospace;">[ HOVER TO INHABIT CELL ]</p>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <button onclick="runTraversal('pilgrimage')">Path: Pilgrimage</button>
+    <button onclick="runTraversal('loop')">Path: The Loop</button>
+    <button onclick="runTraversal('exile')">Path: The Exile</button>
+    <button onclick="resetGrid()">Reset</button>
+</footer>
+
+<script>
+    // --- DATA: The Poem Mapped to Ritual Acts ---
+    // Architecture: 12x12 Grid.
+    // Outer Rings (0, 1, 10, 11): Questions/Invocations.
+    // Middle Rings (2-9): The Narrative/Chant.
+    // Center (5,6): The Seal.
+
+    const gridData = [
+        // OUTER RIM: INVOCATION (Produce)
+        { x: 1, y: 1, text: "Thou still unravish'd bride of quietness", act: "INVOCATION", func: "PRODUCE", role: "Pilgrim", hook: "Enter the silence" },
+        { x: 1, y: 6, text: "Thou foster-child of silence and slow time", act: "INVOCATION", func: "PRODUCE", role: "Pilgrim", hook: "Slow internal clock" },
+        { x: 1, y: 10, text: "Sylvan historian", act: "WITNESS", func: "PRODUCE", role: "Student", hook: "Observe the record" },
+        
+        // OUTER RIM: QUESTIONS (Repair/Destabilize)
+        { x: 2, y: 2, text: "What leaf-fring'd legend haunts about thy shape?", act: "QUESTION", func: "REPAIR", role: "Investigator", hook: "Seek the image" },
+        { x: 10, y: 2, text: "What men or gods are these?", act: "QUESTION", func: "REPAIR", role: "Investigator", hook: "Question reality" },
+        { x: 2, y: 10, text: "What mad pursuit? What struggle to escape?", act: "QUESTION", func: "REPAIR", role: "Witness", hook: "Feel the panic" },
+        { x: 10, y: 10, text: "What pipes and timbrels? What wild ecstasy?", act: "QUESTION", func: "REPAIR", role: "Witness", hook: "Hear the noise" },
+
+        // MIDDLE RING: CHANT (Maintain/Stasis) - The "Happy" Band
+        { x: 4, y: 4, text: "Ah, happy, happy boughs!", act: "CHANT", func: "MAINTAIN", role: "Congregant", hook: "Repeat forever" },
+        { x: 4, y: 8, text: "Adieu / adieu", act: "CHANT", func: "MAINTAIN", role: "Congregant", hook: "Never leave" },
+        { x: 8, y: 4, text: "More happy love! more happy, happy love!", act: "CHANT", func: "MAINTAIN", role: "Lover", hook: "Enhance intensity" },
+        { x: 8, y: 8, text: "For ever warm and still to be enjoy'd", act: "CHANT", func: "MAINTAIN", role: "Lover", hook: "Freeze sensation" },
+        
+        // MIDDLE RING: WITNESS (Describe)
+        { x: 3, y: 6, text: "Fair youth, beneath the trees", act: "WITNESS", func: "MAINTAIN", role: "Voyeur", hook: "Watch the song" },
+        { x: 9, y: 6, text: "Bold Lover, never, never canst thou kiss", act: "COMMAND", func: "MAINTAIN", role: "Judge", hook: "Accept failure" },
+        { x: 6, y: 2, text: "Heard melodies are sweet", act: "INVOCATION", func: "TRANSFORM", role: "Listener", hook: "Listen to silence" },
+        { x: 6, y: 9, text: "Pipe to the spirit ditties of no tone", act: "COMMAND", func: "TRANSFORM", role: "Mystic", hook: "Transcend sense" },
+
+        // THE EXILE (Negative Space / Transform)
+        { x: 11, y: 5, text: "Who are these coming to the sacrifice?", act: "QUESTION", func: "TRANSFORM", role: "Stranger", hook: "Leave the Urn" },
+        { x: 11, y: 7, text: "And, little town, thy streets for evermore / Will silent be", act: "WITNESS", func: "TRANSFORM", role: "Exile", hook: "Mourn the living" },
+        { x: 5, y: 11, text: "Desolate", act: "SEAL", func: "TRANSFORM", role: "Exile", hook: "Empty the world" },
+
+        // THE CENTER: THE SEAL (Truth)
+        { x: 6, y: 6, text: "Beauty is truth, truth beauty", act: "SEAL", func: "SEAL", role: "Believer", hook: "Terminate ritual" },
+        { x: 5, y: 6, text: "Thou shalt remain", act: "INVOCATION", func: "SEAL", role: "Believer", hook: "Establish eternity" },
+        { x: 6, y: 5, text: "Cold Pastoral!", act: "INVOCATION", func: "SEAL", role: "Believer", hook: "Touch the marble" },
+        { x: 5, y: 5, text: "That is all ye know on earth", act: "COMMAND", func: "SEAL", role: "Believer", hook: "Accept limit" }
+    ];
+
+    const gridSize = 12;
+    const container = document.getElementById('grid-container');
+    const inspectorContent = document.getElementById('inspector-content');
+    const inspectorPlaceholder = document.getElementById('inspector-placeholder');
+
+    // --- RENDER GRID ---
+    function initGrid() {
+        container.innerHTML = '';
+        for (let y = 0; y < gridSize; y++) {
+            for (let x = 0; x < gridSize; x++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                
+                // Determine Zone
+                const distToCenter = Math.sqrt(Math.pow(x - 5.5, 2) + Math.pow(y - 5.5, 2));
+                let zone = 'outer';
+                if (distToCenter < 2) zone = 'center';
+                else if (distToCenter < 4.5) zone = 'middle';
+                cell.setAttribute('data-zone', zone);
+
+                // Find data
+                const data = gridData.find(d => d.x === x && d.y === y);
+                
+                if (data) {
+                    // Symbol based on Act
+                    let symbol = "•";
+                    if (data.act === "QUESTION") symbol = "?";
+                    if (data.act === "CHANT") symbol = "∞";
+                    if (data.act === "SEAL") symbol = "Ω";
+                    if (data.act === "COMMAND") symbol = "!";
+                    if (data.act === "WITNESS") symbol = "👁";
+                    
+                    cell.innerText = symbol;
+                    cell.dataset.act = data.act;
+                    
+                    // Interaction
+                    cell.addEventListener('mouseenter', () => populateInspector(data, cell));
+                    cell.addEventListener('touchstart', (e) => {
+                        e.preventDefault(); // Prevent scrolling on touch
+                        populateInspector(data, cell);
+                    });
+                    
+                    cell.addEventListener('mouseleave', () => {
+                        cell.classList.remove('active');
+                    });
+                } else {
+                    cell.classList.add('void');
+                    cell.innerText = '';
+                }
+
+                // ID for programmatic access
+                cell.id = `cell-${x}-${y}`;
+                container.appendChild(cell);
+            }
+        }
+    }
+
+    function populateInspector(data, element) {
+        // Highlight logic
+        document.querySelectorAll('.cell').forEach(c => c.classList.remove('active'));
+        element.classList.add('active');
+
+        // Show Content
+        inspectorPlaceholder.style.display = 'none';
+        inspectorContent.classList.add('visible');
+
+        document.getElementById('coord-display').innerText = `(${data.x}, ${data.y})`;
+        document.getElementById('text-display').innerText = `"${data.text}"`;
+        document.getElementById('role-display').innerText = data.role;
+        document.getElementById('hook-display').innerText = data.hook;
+
+        const funcDisplay = document.getElementById('func-display');
+        funcDisplay.innerText = data.func;
+        funcDisplay.className = `data-value func-${data.func}`;
+
+        const actBadge = document.getElementById('act-badge');
+        actBadge.innerText = data.act;
+        actBadge.className = `act-badge bg-${data.func}`;
+    }
+
+    // --- TRAVERSAL PROTOCOLS ---
+
+    async function runTraversal(type) {
+        // Clear state
+        document.querySelectorAll('.cell').forEach(c => {
+            c.style.opacity = '0.2';
+            c.classList.remove('active');
+        });
+
+        let path = [];
+
+        if (type === 'pilgrimage') {
+            // Inward spiral: Outer -> Middle -> Center
+            path = gridData.sort((a,b) => {
+                const distA = Math.sqrt(Math.pow(a.x - 5.5, 2) + Math.pow(a.y - 5.5, 2));
+                const distB = Math.sqrt(Math.pow(b.x - 5.5, 2) + Math.pow(b.y - 5.5, 2));
+                return distB - distA; // Furthest first
+            });
+        } else if (type === 'loop') {
+            // Only CHANT and MAINTAIN
+            path = gridData.filter(d => d.func === 'MAINTAIN' || d.act === 'CHANT');
+        } else if (type === 'exile') {
+            // Only TRANSFORM and Question
+            path = gridData.filter(d => d.func === 'TRANSFORM' || d.act === 'QUESTION');
+        }
+
+        // Animate path
+        for (let i = 0; i < path.length; i++) {
+            const d = path[i];
+            const el = document.getElementById(`cell-${d.x}-${d.y}`);
+            if (el) {
+                el.style.opacity = '1';
+                el.classList.add('active');
+                populateInspector(d, el);
+                await new Promise(r => setTimeout(r, 1200)); // Ritual pace
+                el.classList.remove('active');
+            }
+        }
+        
+        resetGrid();
+    }
+
+    function resetGrid() {
+        document.querySelectorAll('.cell').forEach(c => {
+            c.style.opacity = '1';
+            c.classList.remove('active');
+        });
+        inspectorContent.classList.remove('visible');
+        inspectorPlaceholder.style.display = 'block';
+    }
+
+    // Initialize
+    initGrid();
+
+</script>
+</body>
+</html>

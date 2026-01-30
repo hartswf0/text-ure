@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPS-SCHEMA: RITUAL GRID [URN]</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0c;
+            --panel-color: #141418;
+            --border-color: #333;
+            --text-main: #c0c0c0;
+            --text-dim: #666;
+            --accent-produce: #4caf50;   /* Green */
+            --accent-maintain: #2196f3;  /* Blue */
+            --accent-repair: #ff9800;    /* Orange */
+            --accent-transform: #9c27b0; /* Purple */
+            --accent-silence: #1a1a1a;
+            --highlight: #f0f0f0;
+            --font-mono: 'SF Mono', 'Courier New', monospace;
+            --font-serif: 'Georgia', serif;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* HEADER */
+        header {
+            height: 60px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+            background: var(--panel-color);
+            z-index: 10;
+        }
+
+        .title-block h1 {
+            font-size: 14px;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--highlight);
+        }
+        .title-block .subtitle {
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: transparent;
+            border: 1px solid var(--text-dim);
+            color: var(--text-main);
+            padding: 6px 12px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            border-color: var(--highlight);
+            background: rgba(255,255,255,0.05);
+        }
+
+        button.active {
+            background: var(--text-main);
+            color: var(--bg-color);
+            border-color: var(--text-main);
+        }
+
+        /* MAIN LAYOUT */
+        .workspace {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* LEFT: THE GRID */
+        .grid-container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+            position: relative;
+        }
+
+        #ritual-grid {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            grid-template-rows: repeat(24, 1fr);
+            gap: 1px;
+            width: min(85vh, 85vw);
+            height: min(85vh, 85vw);
+            background-color: #000;
+            border: 1px solid var(--border-color);
+        }
+
+        .cell {
+            background-color: var(--accent-silence);
+            font-size: 8px; /* Tiny text for debug visuals if needed */
+            color: transparent;
+            position: relative;
+            cursor: crosshair;
+            transition: background-color 0.1s;
+        }
+
+        .cell:hover {
+            border: 1px solid var(--highlight);
+            z-index: 2;
+        }
+
+        /* Color Coding Classes */
+        .op-produce { background-color: rgba(76, 175, 80, 0.2); }
+        .op-maintain { background-color: rgba(33, 150, 243, 0.2); }
+        .op-repair { background-color: rgba(255, 152, 0, 0.2); }
+        .op-transform { background-color: rgba(156, 39, 176, 0.2); }
+        .cell.silence { background-color: #050505; }
+        .cell.active-traversal { 
+            background-color: var(--highlight) !important; 
+            box-shadow: 0 0 10px var(--highlight);
+            z-index: 5;
+        }
+        .cell.visited {
+            opacity: 0.8; 
+            border: 0.5px solid rgba(255,255,255,0.1);
+        }
+        
+        /* Zone Borders (Visualized via JS logic usually, but here implied by color) */
+
+        /* RIGHT: INSPECTOR PANEL */
+        .inspector {
+            width: 400px;
+            border-left: 1px solid var(--border-color);
+            background: var(--panel-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .inspector-section {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .inspector-header {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* LOG BOX */
+        #console-log {
+            flex: 1;
+            overflow-y: auto;
+            font-size: 11px;
+            padding: 10px;
+            background: #000;
+            border-top: 1px solid var(--border-color);
+            font-family: var(--font-mono);
+            line-height: 1.4;
+        }
+
+        .log-entry { margin-bottom: 4px; border-left: 2px solid transparent; padding-left: 5px; }
+        .log-entry.info { border-color: var(--text-dim); color: var(--text-dim); }
+        .log-entry.op { border-color: var(--accent-produce); color: var(--text-main); }
+        .log-entry.warn { border-color: var(--accent-repair); color: var(--accent-repair); }
+        .log-entry.event { border-color: var(--accent-transform); color: #fff; }
+
+        /* JSON VIEWER */
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-size: 10px;
+            color: #a8a8a8;
+        }
+        
+        .key { color: #88c0d0; }
+        .string { color: #a3be8c; }
+        .number { color: #b48ead; }
+        .boolean { color: #d08770; }
+
+        /* Current Content Display */
+        #current-content {
+            font-family: var(--font-serif);
+            font-size: 18px;
+            line-height: 1.4;
+            color: #fff;
+            min-height: 60px;
+            font-style: italic;
+        }
+        #current-coord {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--accent-maintain);
+            margin-bottom: 5px;
+        }
+        #current-op-badge {
+            display: inline-block;
+            padding: 2px 4px;
+            font-size: 9px;
+            border-radius: 2px;
+            background: #333;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="title-block">
+        <h1>Ritual Grid [Urn]</h1>
+        <div class="subtitle">Operational Schema v1.0 // 24x24 // Keats Protocol</div>
+    </div>
+    <div class="controls">
+        <button id="btn-layer-zone" class="active">Layer: Zones</button>
+        <button id="btn-layer-ops">Layer: Ops</button>
+        <button id="btn-traverse" style="border-color: var(--accent-produce); color: var(--accent-produce);">► Run Traversal</button>
+        <button id="btn-reset">Reset</button>
+    </div>
+</header>
+
+<div class="workspace">
+    <!-- GRID -->
+    <div class="grid-container">
+        <div id="ritual-grid"></div>
+    </div>
+
+    <!-- INSPECTOR -->
+    <div class="inspector">
+        <!-- Content View -->
+        <div class="inspector-section" style="background: #1a1a20;">
+            <div class="inspector-header">Active Cell Payload</div>
+            <div id="current-coord">COORD: N/A</div>
+            <div id="current-content">Hover over the grid to inspect ritual cells.</div>
+            <div id="current-op-badge">IDLE</div>
+        </div>
+
+        <!-- Schema View -->
+        <div class="inspector-section" style="flex: 1; overflow: auto;">
+            <div class="inspector-header">
+                <span>Cell Schema (JSON)</span>
+                <span id="schema-status">READ_ONLY</span>
+            </div>
+            <pre id="schema-viewer">{}</pre>
+        </div>
+
+        <!-- System Log -->
+        <div class="inspector-header" style="padding: 10px 15px 0;">Operational Log</div>
+        <div id="console-log">
+            <div class="log-entry info">System initialized.</div>
+            <div class="log-entry info">Grid dimensions: 24x24 (576 cells).</div>
+            <div class="log-entry info">Poem fragment loaded: "Ode on a Grecian Urn".</div>
+            <div class="log-entry info">Waiting for Traversal input...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * RITUAL GRID DATA & LOGIC
+ */
+
+// 1. DATA: The Poem (Fragmented for cells)
+const KEATS_ODE = [
+    // Stanza 1
+    "Thou still", "unravish'd", "bride of", "quietness", "Thou foster-child", "of silence", "and slow", "time",
+    "Sylvan", "historian", "who canst", "thus express", "A flowery", "tale more", "sweetly", "than our rhyme",
+    "What leaf-fring'd", "legend", "haunts", "about thy", "shape", "Of deities", "or mortals", "or of both",
+    "In Tempe", "or the dales", "of Arcady", "What men", "or gods", "are these", "What maidens", "loth",
+    "What mad", "pursuit", "What struggle", "to escape", "What pipes", "and timbrels", "What wild", "ecstasy",
+    // Stanza 2
+    "Heard melodies", "are sweet", "but those", "unheard", "Are sweeter", "therefore", "ye soft", "pipes play on",
+    "Not to", "the sensual", "ear", "but more", "endear'd", "Pipe to", "the spirit", "ditties", "of no tone",
+    "Fair youth", "beneath", "the trees", "thou canst", "not leave", "Thy song", "nor ever", "can those", "trees be bare",
+    "Bold Lover", "never", "never canst", "thou kiss", "Though winning", "near the", "goal yet", "do not grieve",
+    "She cannot", "fade", "though thou", "hast not", "thy bliss", "For ever", "wilt thou", "love", "and she be fair",
+    // Stanza 3 (Condensed)
+    "Ah happy", "happy boughs", "that cannot", "shed", "Your leaves", "nor ever", "bid the", "Spring adieu",
+    "And happy", "melodist", "unwearied", "For ever", "piping songs", "for ever new", "More happy", "love!",
+    "For ever", "warm and", "still to be", "enjoy'd", "For ever", "panting", "and for", "ever young",
+    // Stanza 4 (Condensed)
+    "Who are", "these coming", "to the", "sacrifice", "To what", "green altar", "O mysterious", "priest",
+    "Lead'st thou", "that heifer", "lowing at", "the skies", "And all", "her silken", "flanks with", "garlands drest",
+    "What little", "town", "by river", "or sea shore", "Or mountain-built", "with peaceful", "citadel",
+    "Is emptied", "of this folk", "this pious", "morn", "And little", "town", "thy streets", "for evermore",
+    "Will silent", "be", "and not", "a soul", "to tell", "Why thou", "art desolate", "can e'er return",
+    // Stanza 5 (The Core)
+    "O Attic", "shape!", "Fair attitude!", "with brede", "Of marble", "men and", "maidens", "overwrought",
+    "With forest", "branches", "and the", "trodden weed", "Thou", "silent form", "dost tease", "us out",
+    "of thought", "As doth", "eternity", "Cold Pastoral!", "When old", "age shall", "this generation", "waste",
+    "Thou shalt", "remain", "in midst", "of other", "woe", "Than ours", "a friend", "to man", "to whom",
+    "thou say'st", 
+    // THE AXIOM (Target)
+    "Beauty is", "truth", "truth", "beauty", "that is all", "Ye know", "on earth", "and all", "ye need", "to know"
+];
+
+// 2. SCHEMA DEFINITIONS
+const ZONES = {
+    OUTER: { id: "ZONE_OUTER_VOID", op: "TRANSFORM", acts: ["QUESTION"], color: "op-transform" },
+    MIDDLE: { id: "ZONE_MIDDLE_RING", op: "REPAIR", acts: ["WITNESS", "CHANT"], color: "op-repair" },
+    INNER: { id: "ZONE_INNER_FRIEZE", op: "MAINTAIN", acts: ["INVOCATION"], color: "op-maintain" },
+    CORE: { id: "ZONE_CORE_AXIOM", op: "PRODUCE", acts: ["SEAL"], color: "op-produce" }
+};
+
+const ACTS = {
+    INVOCATION: "INVOCATION", CHANT: "CHANT", WITNESS: "WITNESS", QUESTION: "QUESTION", SEAL: "SEAL"
+};
+
+const MOTIFS = ["SILENCE", "TIME", "MUSIC", "SACRIFICE", "ETERNITY", "LOVE", "YOUTH"];
+
+// 3. GRID GENERATION
+const ROWS = 24;
+const COLS = 24;
+const gridData = []; // Linear array of 576 cells
+
+const gridElement = document.getElementById('ritual-grid');
+const schemaViewer = document.getElementById('schema-viewer');
+const currentContent = document.getElementById('current-content');
+const currentCoord = document.getElementById('current-coord');
+const currentBadge = document.getElementById('current-op-badge');
+const consoleLog = document.getElementById('console-log');
+
+function log(msg, type='info') {
+    const el = document.createElement('div');
+    el.className = `log-entry ${type}`;
+    el.innerText = `[${new Date().toLocaleTimeString().split(' ')[0]}] ${msg}`;
+    consoleLog.prepend(el); // Newest at top
+}
+
+function getZoneForCoord(x, y) {
+    // Determine Zone based on Manhattan distance from center (12,12)
+    // or concentric rings.
+    const cx = 11.5;
+    const cy = 11.5;
+    const dist = Math.sqrt((x - cx)**2 + (y - cy)**2);
+    
+    if (dist < 3) return ZONES.CORE;
+    if (dist < 8) return ZONES.INNER;
+    if (dist < 11) return ZONES.MIDDLE;
+    return ZONES.OUTER;
+}
+
+function initGrid() {
+    gridElement.innerHTML = '';
+    
+    // Spiral logic for poem placement
+    // We map the poem array indices to a spiral path starting from outer edge in? 
+    // Or center out? Prompt says "Grid is a ritual world". Let's do Outer -> In (Pilgrimage).
+    
+    // Simple Ring Logic for Mapping Poem chunks:
+    // Stanza 1 (Outer/Middle) -> Stanza 5 (Core)
+    // This requires distributing the 100+ fragments into 576 cells. 
+    // Many cells will be "SILENCE" (Breaths).
+    
+    let poemIndex = 0;
+    
+    for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+            const zoneDef = getZoneForCoord(x, y);
+            const isSilence = Math.random() > 0.35; // 35% density of text, rest is silence/structure
+            
+            // Forced text in Core
+            const isCore = zoneDef.id === ZONES.CORE.id;
+            
+            let cellData = {
+                coord: {x, y},
+                zone_id: zoneDef.id,
+                world_operation: zoneDef.op,
+                ritual_act: zoneDef.acts[0],
+                cell_state: "DORMANT",
+                motif_ids: [],
+                payload: {
+                    text_fragment: null,
+                    evidence_level: "NONE"
+                },
+                silence: {
+                    is_silence_cell: true,
+                    kind: "VOID"
+                }
+            };
+
+            // Distribute poem text
+            // We fill text if not silence, OR if we are in core (high density)
+            if ((!isSilence || isCore) && poemIndex < KEATS_ODE.length) {
+                cellData.payload.text_fragment = KEATS_ODE[poemIndex];
+                cellData.payload.evidence_level = isCore ? "SOURCELOCK" : "TRACE";
+                cellData.silence.is_silence_cell = false;
+                cellData.silence.kind = null;
+                cellData.cell_state = "ACTIVE";
+                
+                // Assign motif randomly based on text keywords (simple simulation)
+                const txt = cellData.payload.text_fragment.toLowerCase();
+                if (txt.includes("silence") || txt.includes("quiet")) cellData.motif_ids.push("SILENCE");
+                if (txt.includes("pipe") || txt.includes("song")) cellData.motif_ids.push("MUSIC");
+                if (txt.includes("love") || txt.includes("kiss")) cellData.motif_ids.push("LOVE");
+                if (txt.includes("truth") || txt.includes("beauty")) cellData.motif_ids.push("ETERNITY");
+                
+                poemIndex++;
+            }
+            
+            // Create DOM
+            const div = document.createElement('div');
+            div.className = `cell ${zoneDef.color}`;
+            if (cellData.silence.is_silence_cell) div.classList.add('silence');
+            div.dataset.x = x;
+            div.dataset.y = y;
+            div.dataset.index = gridData.length;
+            
+            // Event Listeners
+            div.addEventListener('mouseenter', () => inspectCell(cellData));
+            div.addEventListener('click', () => {
+                log(`User focused on cell (${x},${y})`, 'info');
+                inspectCell(cellData);
+                highlightNeighbors(x, y);
+            });
+
+            gridData.push(cellData);
+            gridElement.appendChild(div);
+        }
+    }
+    log("Grid Generation Complete. 576 Ritual Cells instantiated.");
+}
+
+function inspectCell(data) {
+    // Update Text
+    currentCoord.innerText = `COORD: (${data.coord.x}, ${data.coord.y}) // ${data.zone_id}`;
+    currentContent.innerText = data.payload.text_fragment 
+        ? `"${data.payload.text_fragment}"` 
+        : "[SILENCE: The Unheard Melody]";
+    
+    currentContent.style.color = data.payload.text_fragment ? "#fff" : "#444";
+    currentContent.style.fontStyle = data.payload.text_fragment ? "italic" : "normal";
+
+    // Update Badge
+    currentBadge.innerText = `${data.world_operation} :: ${data.ritual_act}`;
+    currentBadge.style.backgroundColor = `var(--accent-${data.world_operation.toLowerCase()})`;
+    currentBadge.style.color = '#fff';
+
+    // Pretty Print JSON
+    const displayJson = {
+        ...data, 
+        _meta: { note: "Operational Schema v1" }
+    };
+    schemaViewer.innerHTML = syntaxHighlight(displayJson);
+}
+
+function syntaxHighlight(json) {
+    if (typeof json != 'string') {
+         json = JSON.stringify(json, undefined, 2);
+    }
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        var cls = 'number';
+        if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+                cls = 'key';
+            } else {
+                cls = 'string';
+            }
+        } else if (/true|false/.test(match)) {
+            cls = 'boolean';
+        } else if (/null/.test(match)) {
+            cls = 'null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+    });
+}
+
+function highlightNeighbors(x, y) {
+    // Clear previous highlights
+    document.querySelectorAll('.visited').forEach(el => el.classList.remove('visited'));
+    
+    // Identify neighbors
+    const directions = [[0,1], [0,-1], [1,0], [-1,0], [1,1], [1,-1], [-1,1], [-1,-1]];
+    directions.forEach(([dx, dy]) => {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS) {
+            const index = ny * COLS + nx;
+            gridElement.children[index].classList.add('visited');
+        }
+    });
+}
+
+
+/**
+ * TRAVERSAL LOGIC
+ */
+let traversalInterval = null;
+
+function startTraversal() {
+    if (traversalInterval) clearInterval(traversalInterval);
+    
+    log("INITIATING TRAVERSAL: PILGRIMAGE_V1", "event");
+    log("Objective: Reach ZONE_CORE_AXIOM", "info");
+
+    // Start at random edge
+    let currentX = Math.floor(Math.random() * 24);
+    let currentY = 0; // Top edge
+    let steps = 0;
+    const maxSteps = 144;
+    
+    // Target: Center (11,11)
+    const targetX = 11;
+    const targetY = 11;
+
+    traversalInterval = setInterval(() => {
+        // Clear previous cursor
+        const prevIndex = currentY * COLS + currentX;
+        if(gridElement.children[prevIndex]) {
+            gridElement.children[prevIndex].classList.remove('active-traversal');
+            gridElement.children[prevIndex].classList.add('visited'); // Trail
+        }
+
+        // Move Logic: Simple gradient descent towards center with noise
+        const dx = targetX - currentX;
+        const dy = targetY - currentY;
+        
+        let moveX = 0;
+        let moveY = 0;
+        
+        // Probabilistic movement
+        if (Math.abs(dx) > Math.abs(dy)) {
+            moveX = dx > 0 ? 1 : -1;
+        } else {
+            moveY = dy > 0 ? 1 : -1;
+        }
+        
+        // Random perturbation (wander)
+        if (Math.random() > 0.7) {
+            moveX = (Math.random() > 0.5 ? 1 : -1);
+            moveY = 0;
+        }
+
+        currentX += moveX;
+        currentY += moveY;
+        
+        // Bounds check
+        currentX = Math.max(0, Math.min(COLS-1, currentX));
+        currentY = Math.max(0, Math.min(ROWS-1, currentY));
+        
+        const index = currentY * COLS + currentX;
+        const el = gridElement.children[index];
+        const data = gridData[index];
+
+        el.classList.add('active-traversal');
+        
+        // Log events based on content
+        if (data.payload.text_fragment) {
+            log(`Encountered: "${data.payload.text_fragment}"`, 'info');
+            inspectCell(data);
+        } else if (data.silence.is_silence_cell) {
+             // Occasionally log silence interactions
+             if (Math.random() > 0.8) log("Traversal: Traversing Void/Silence...", "warn");
+        }
+
+        // Check Zone Entry
+        if (data.zone_id === ZONES.CORE.id && Math.random() > 0.8) {
+             log("ALERT: Entered SACRED CORE. Preparing to Seal.", "event");
+        }
+
+        steps++;
+        if (steps >= maxSteps || (currentX === targetX && currentY === targetY)) {
+            clearInterval(traversalInterval);
+            log("TRAVERSAL COMPLETE. Awaiting Benediction.", "event");
+            inspectCell(data);
+            if (currentX === targetX && currentY === targetY) {
+                log("Final State: TRUTH/BEAUTY AXIOM REACHED.", "op");
+            }
+        }
+
+    }, 200); // Speed of traversal
+}
+
+// 4. UI BINDINGS
+document.getElementById('btn-reset').addEventListener('click', () => {
+    if (traversalInterval) clearInterval(traversalInterval);
+    document.querySelectorAll('.active-traversal').forEach(e => e.classList.remove('active-traversal'));
+    document.querySelectorAll('.visited').forEach(e => e.classList.remove('visited'));
+    log("Grid Reset.", "warn");
+});
+
+document.getElementById('btn-traverse').addEventListener('click', startTraversal);
+
+document.getElementById('btn-layer-zone').addEventListener('click', (e) => {
+    // Reset colors to Zones
+    document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    // Re-render handled by CSS classes already present, just might need to toggle specific class logic if we added other modes.
+    // Currently the base classes are zone/op based.
+    log("Visual Layer: ZONES active.");
+});
+
+document.getElementById('btn-layer-ops').addEventListener('click', (e) => {
+    document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    log("Visual Layer: OPERATIONS active (Same color mapping in V1).");
+});
+
+// INIT
+initGrid();
+
+</script>
+</body>
+</html>

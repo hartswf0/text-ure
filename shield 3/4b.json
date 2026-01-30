@@ -1,0 +1,60 @@
+{
+  "model": "urn_unwrap_24",
+  "meta": {
+    "author": "John Keats",
+    "work": "Ode on a Grecian Urn",
+    "intent": "operative_ekphrasis",
+    "theory": "Bajohr_Artificial_Semantics"
+  },
+  "grid_specs": {
+    "width": 24,
+    "height": 24,
+    "total_cells": 576,
+    "origin": "top-left",
+    "coordinates": "cartesian"
+  },
+  "zones": [
+    {
+      "id": "Z0",
+      "name": "LIP (The Inscription)",
+      "y_range": [0, 2],
+      "law": "inscription/refrain",
+      "semantics": "Declarative loop. High repetition. The surface speaks first.",
+      "lines_mapped": ["L01", "L02", "L03", "L04"]
+    },
+    {
+      "id": "Z1",
+      "name": "FRIEZE_A (The Chase)",
+      "y_range": [3, 11],
+      "law": "pursuit/music/trees",
+      "semantics": "Motion without arrival. Asymptotic approach. Infinite Spring.",
+      "lines_mapped": ["L05", "L06", "L07", "L08", "L09", "L10", "L11", "L12", "L13", "L14", "L15", "L16", "L17", "L18", "L19", "L20", "L21", "L22", "L23", "L24", "L25", "L26", "L27", "L28", "L29", "L30"]
+    },
+    {
+      "id": "Z2",
+      "name": "FRIEZE_B (The Sacrifice)",
+      "y_range": [12, 17],
+      "law": "sacrifice/town/silence",
+      "semantics": "Spatial paradox. The procession is visible; the town is implied by absence (void cells).",
+      "lines_mapped": ["L31", "L32", "L33", "L34", "L35", "L36", "L37", "L38", "L39", "L40"]
+    },
+    {
+      "id": "Z3",
+      "name": "HANDLES (The Hinge)",
+      "y_range": [18, 19],
+      "law": "apostrophe/hinge/symmetry",
+      "semantics": "Direct address to the object. Structural support points.",
+      "lines_mapped": ["L41", "L42", "L43", "L44", "L45", "L46", "L47", "L48"]
+    },
+    {
+      "id": "Z4",
+      "name": "BASE (The Axiom)",
+      "y_range": [20, 23],
+      "law": "axiom/tablet/closure",
+      "semantics": "Foundational truth. Heavy, static placement. The Urn's signature.",
+      "lines_mapped": ["L49", "L50"]
+    }
+  ],
+  "wraparound_x": true,
+  "max_chars_per_cell": 220
+}

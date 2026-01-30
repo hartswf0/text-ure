@@ -1,0 +1,112 @@
+SPEC (inscription system for spatial reading, 24×24 urn-banded address space)
+1) Data model: atomic lines as addressable records
+
+Atomic unit = one poem line (including punctuation).
+
+Each line gets a stable line_id (L01…L50) and semantic tags for retrieval and redundancy planning:
+
+motifs[] = recurring interface handles (silence, time, frozen action, unheard audio, ritual loop, epigram).
+
+entities[] = concrete nouns/actors (urn, youth, lover, priest, town, etc.).
+
+actions[] = verbs/acts (haunts, pipes, pursues, cannot kiss, leads, remains, says, etc.).
+
+2) Panel model: assemblage layer (ekphrasis mechanisms)
+
+Panels are not “themes”; they are retrieval regimes that determine redundancy, beaconing, and lock behavior.
+
+P1 — ADDRESS / INTERROGATION (stanza 1): direct address + question burst (indexable by “What…?”).
+
+P2 — UNHEARD AUDIO / FROZEN SONG (stanza 2): audible vs inaudible channel split; the “play on” loop.
+
+P3 — AFFECT LOOP / PERPETUAL SPRING (stanza 3): eternal “for ever” recursion; physiological overflow.
+
+P4 — RITUAL LOOP / EMPTY TOWN (stanza 4): procession to sacrifice; “cannot return” closure.
+
+P5 — EPIGRAM OUTPUT / COLD PASTORAL (stanza 5): archive-level statement + final quote.
+
+3) Grid geometry: urn-banded memory layout (no randomness)
+
+Grid coordinates: x ∈ [0..23] (circumference), y ∈ [0..23] (vertical bands).
+
+Wrap: x wraps (urn frieze loop), y does not.
+
+Spine column: x=0 reserved for beacons/index/control (high reliability channel).
+
+Seam column: x=23 reserved for row seam markers + row checksum (error localization).
+
+Panel bands (row ranges):
+
+P0 (Index/Help): y=0..2
+
+P1: y=3..6
+
+P2: y=7..10
+
+P3: y=11..14
+
+P4: y=15..18
+
+P5: y=19..23
+
+4) Redundancy roles (channel strategy, not aesthetics)
+
+core: canonical storage of a line at a stable primary address.
+
+echo: paired-line compression duplicates (improves recall under partial traversal).
+
+glue: motif crosslinks + panel-to-panel handshakes (reduces seek cost).
+
+5) Beacon grammar + raycaster behavior (retrieval ruleset)
+
+Beacon cell payload grammar (ASCII-safe, deterministic):
+
+payload_text begins with §
+
+Format: §B|<panel_id>|<beacon_type>|<label>|<crc>
+
+Example: §B|P2|LOCK|UNHEARD_AUDIO|7C
+
+CRC is deterministic: crc8(seed + "|" + panel_id + "|" + beacon_type + "|" + label).
+
+Panel lock
+
+On hit of §B|*|LOCK|*, set active_panel = panel_id.
+
+While locked:
+
+sampling bias favors cells whose panel_id == active_panel
+
+crossing into another panel band requires an §B|active_panel|EXIT|... or incurs a steep penalty (seek cost).
+
+Seek cost metric
+
+cost = |dx| + 2*|dy| + 6*(panel_switches) + 10*(lock_breaks)
+
+Panel switches are detected when the best next “hit” cell is outside the current/locked panel.
+
+6) Compiler plan: beam-friendly single string without destroying structure
+
+Goal: serialize panels into a single stream that can be re-expanded into panels/lines/cells.
+
+Panel seam marker: ⟂PANEL⟂
+
+Line-break glyph: ␤ (literal U+2424 “SYMBOL FOR NEWLINE”)
+
+Cell seam marker: ⟂CELL⟂
+
+Encoding order (“beam order”): band-major then around-urn
+
+for y=0..23, for x=0..23 (with x wrap semantics at read time)
+
+emit ⟂CELL⟂@(x,y)|panel|role|beacon|line_ids|payload␤
+
+Preserve structure by including:
+
+explicit panel_id
+
+explicit line_ids
+
+explicit seam tokens
+
+row seam checksums (from seam column) for resync.

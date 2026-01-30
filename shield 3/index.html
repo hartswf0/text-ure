@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Shield 3 — Index</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{font-family:system-ui,-apple-system,sans-serif;background:#fafafa;color:#111}
+    body{padding:24px;max-width:1800px;margin:0 auto}
+    
+    h1{font-size:20px;font-weight:700;margin-bottom:6px;letter-spacing:-.02em}
+    .sub{color:#666;font-size:13px;margin-bottom:24px;max-width:80ch;line-height:1.5}
+    
+    .nav-bar{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:24px;
+      padding-bottom:16px;
+      border-bottom:1px solid #e5e5e5;
+    }
+    .nav-link{
+      font-size:12px;
+      font-weight:600;
+      padding:8px 14px;
+      border-radius:6px;
+      text-decoration:none;
+      border:1px solid #ddd;
+      background:#fff;
+      color:#333;
+      transition:background .15s;
+    }
+    .nav-link:hover{background:#f0f0f0}
+    .nav-link.home{background:#111;color:#fff;border-color:#111}
+    .nav-link.home:hover{background:#333}
+    
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(380px,1fr));
+      gap:16px;
+    }
+    
+    .card{
+      background:#fff;
+      border:1px solid #e5e5e5;
+      border-radius:10px;
+      overflow:hidden;
+    }
+    
+    .card-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 14px;
+      border-bottom:1px solid #eee;
+      background:#fafafa;
+    }
+    
+    .card-title{
+      font-size:14px;
+      font-weight:700;
+    }
+    .card-title small{
+      font-weight:400;
+      color:#888;
+      margin-left:6px;
+    }
+    
+    .card-links{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+    
+    .btn{
+      font-size:11px;
+      font-weight:600;
+      padding:5px 10px;
+      border-radius:6px;
+      text-decoration:none;
+      border:1px solid #ddd;
+      background:#fff;
+      color:#333;
+      cursor:pointer;
+      transition:background .15s;
+    }
+    .btn:hover{background:#f0f0f0}
+    .btn.primary{background:#111;color:#fff;border-color:#111}
+    .btn.primary:hover{background:#333}
+    .btn.json{background:#e8f5e9;border-color:#c8e6c9;color:#2e7d32}
+    .btn.json:hover{background:#c8e6c9}
+    
+    .iframe-wrap{
+      position:relative;
+      height:320px;
+      background:#f5f5f5;
+    }
+    
+    .iframe-wrap iframe{
+      width:100%;
+      height:100%;
+      border:0;
+      transform-origin:0 0;
+    }
+    
+    .iframe-wrap.placeholder{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#999;
+      font-size:13px;
+      flex-direction:column;
+      gap:8px;
+    }
+    .iframe-wrap.placeholder .icon{
+      font-size:32px;
+      opacity:.4;
+    }
+    
+    .card-foot{
+      padding:10px 14px;
+      border-top:1px solid #eee;
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+    
+    .tag{
+      font-size:10px;
+      padding:3px 8px;
+      border-radius:4px;
+      background:#f0f0f0;
+      color:#555;
+    }
+    .tag.topic{background:#e3f2fd;color:#1565c0}
+    .tag.tech{background:#fff3e0;color:#e65100}
+    
+    .section-title{
+      font-size:14px;
+      font-weight:700;
+      color:#666;
+      margin:32px 0 12px;
+      padding-bottom:8px;
+      border-bottom:1px solid #eee;
+    }
+    
+    .md-list{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+      gap:8px;
+    }
+    
+    .md-link{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:12px 14px;
+      background:#fff;
+      border:1px solid #e5e5e5;
+      border-radius:8px;
+      text-decoration:none;
+      color:#111;
+      font-size:13px;
+      font-weight:500;
+      transition:background .15s;
+    }
+    .md-link:hover{background:#f5f5f5}
+    .md-link .num{
+      font-size:11px;
+      font-weight:700;
+      color:#999;
+      min-width:24px;
+    }
+    .md-link .size{
+      margin-left:auto;
+      font-size:10px;
+      color:#999;
+    }
+    .md-link .type{
+      font-size:9px;
+      padding:2px 6px;
+      border-radius:4px;
+      background:#f0f0f0;
+      color:#666;
+      margin-left:auto;
+    }
+    .md-link .type.json{background:#e8f5e9;color:#2e7d32}
+    .md-link .type.md{background:#e3f2fd;color:#1565c0}
+    .md-link .type.html{background:#fff3e0;color:#e65100}
+
+    .theory-box{
+      background:#fff;
+      border:1px solid #e5e5e5;
+      border-radius:10px;
+      padding:16px;
+      margin-bottom:24px;
+    }
+    .theory-box h3{
+      font-size:13px;
+      font-weight:700;
+      margin-bottom:8px;
+      color:#333;
+    }
+    .theory-box p{
+      font-size:12px;
+      color:#666;
+      line-height:1.6;
+      margin-bottom:8px;
+    }
+    .theory-box ul{
+      font-size:12px;
+      color:#666;
+      line-height:1.6;
+      margin-left:16px;
+    }
+
+    @media(max-width:600px){
+      body{padding:12px}
+      .grid{grid-template-columns:1fr}
+      .iframe-wrap{height:240px}
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav-bar">
+    <a class="nav-link home" href="../text-ure-nexus.html">← TEXT-URE NEXUS</a>
+    <a class="nav-link" href="../shield 52/index.html">Shield 52</a>
+    <a class="nav-link" href="../urn-52/index.html">Urn 52</a>
+    <a class="nav-link" href="../urn-3/index.html">Urn 3</a>
+  </nav>
+
+  <h1>Shield 3</h1>
+  <p class="sub">
+    Homer's "Shield of Achilles" (Iliad XVIII) · Operative Ekphrasis experiments · 
+    Apollinaire→Bajohr calligram grids · Kittler media-archaeology protocols · 
+    Concentric ring topologies mapping text as spatial substrate
+  </p>
+
+  <div class="theory-box">
+    <h3>Theoretical Framework</h3>
+    <p>
+      This collection treats Homer's ekphrasis not as description but as <strong>inscription system specification</strong>. 
+      The Shield is a concentric storage disk; the 24×24 grid is its raster display. Key concepts:
+    </p>
+    <ul>
+      <li><strong>Apollinaire Bridge:</strong> Calligrams as spatial semantic compilers — typography becomes architecture</li>
+      <li><strong>Bajohr Operative Ekphrasis:</strong> Text computationally produces image-like constellations (performance over mimesis)</li>
+      <li><strong>Kittler Media Archaeology:</strong> Storage formats determine what text can become — address space, scanning, retrieval</li>
+    </ul>
+  </div>
+
+  <div class="grid" id="cards"></div>
+
+  <h2 class="section-title">All Source Files</h2>
+  <div class="md-list" id="fileList"></div>
+
+<script>
+const files = [
+  {
+    n: 1,
+    html: "1.html",
+    md: "1.md",
+    json: null,
+    title: "Foundation",
+    desc: "Initial shield grid experiment",
+    tags: ["base", "grid"]
+  },
+  {
+    n: 2,
+    html: "2.html",
+    md: "2.md",
+    json: ["2.json"],
+    title: "JSON Integration",
+    desc: "Shield data structure with JSON manifest",
+    tags: ["json", "manifest"]
+  },
+  {
+    n: 3,
+    html: "3.html",
+    md: "3.md",
+    json: ["3a.json", "3b.json"],
+    title: "Apollinaire→Bajohr Grid",
+    desc: "RINGS topology · Polar→Cartesian mapping · Zone-based text sampling",
+    tags: ["apollinaire", "bajohr", "rings"]
+  },
+  {
+    n: 4,
+    html: "4.html",
+    md: "4.md",
+    json: ["4a.json", "4b.json"],
+    title: "Keats Urn Mapper",
+    desc: "Operative ekphrasis · 5-zone cylindrical unwrap · CRT terminal aesthetic",
+    tags: ["keats", "urn", "zones"]
+  },
+  {
+    n: 5,
+    html: null,
+    md: "5.md",
+    json: ["5.json"],
+    title: "Vulcan Memory Archive",
+    desc: "Concentric memory bands · Panel model · Retrieval ruleset spec",
+    tags: ["memory", "archive", "spec"]
+  },
+  {
+    n: 6,
+    html: null,
+    md: "6.md",
+    json: ["6.json"],
+    title: "Kittler Protocol",
+    desc: "Media-archaeology inscription system · Track mapping · Noise handling",
+    tags: ["kittler", "protocol", "inscription"]
+  }
+];
+
+const cardsEl = document.getElementById("cards");
+const fileListEl = document.getElementById("fileList");
+
+files.forEach(f => {
+  // Card with iframe or placeholder
+  const card = document.createElement("div");
+  card.className = "card";
+  
+  let jsonBtns = "";
+  if (f.json && f.json.length) {
+    jsonBtns = f.json.map(j => `<a class="btn json" href="${j}" target="_blank">${j}</a>`).join("");
+  }
+  
+  card.innerHTML = `
+    <div class="card-head">
+      <span class="card-title">Shield ${f.n}<small>— ${f.title}</small></span>
+      <div class="card-links">
+        ${f.md ? `<a class="btn" href="${f.md}" target="_blank">.md</a>` : ''}
+        ${jsonBtns}
+        ${f.html ? `<a class="btn primary" href="${f.html}" target="_blank">Open ↗</a>` : ''}
+      </div>
+    </div>
+    ${f.html ? `
+    <div class="iframe-wrap">
+      <iframe src="${f.html}" loading="lazy" sandbox="allow-scripts allow-same-origin"></iframe>
+    </div>
+    ` : `
+    <div class="iframe-wrap placeholder">
+      <div class="icon">📋</div>
+      <div>Spec/Protocol only (no HTML viewer)</div>
+      <div style="font-size:11px;color:#aaa">View .md and .json files</div>
+    </div>
+    `}
+    <div class="card-foot">
+      <span class="tag">${f.desc}</span>
+      ${f.tags.map(t => `<span class="tag topic">${t}</span>`).join('')}
+    </div>
+  `;
+  cardsEl.appendChild(card);
+});
+
+// Build file list
+const allFiles = [
+  {name: "1.html", type: "html", size: "14KB"},
+  {name: "1.md", type: "md", size: "14KB"},
+  {name: "2.html", type: "html", size: "13KB"},
+  {name: "2.json", type: "json", size: "4KB"},
+  {name: "2.md", type: "md", size: "17KB"},
+  {name: "3.html", type: "html", size: "15KB"},
+  {name: "3.md", type: "md", size: "16KB"},
+  {name: "3a.json", type: "json", size: "4KB"},
+  {name: "3b.json", type: "json", size: "5KB"},
+  {name: "4.html", type: "html", size: "23KB"},
+  {name: "4.md", type: "md", size: "22KB"},
+  {name: "4a.json", type: "json", size: "7KB"},
+  {name: "4b.json", type: "json", size: "2KB"},
+  {name: "5.json", type: "json", size: "8KB"},
+  {name: "5.md", type: "md", size: "13KB"},
+  {name: "6.json", type: "json", size: "5KB"},
+  {name: "6.md", type: "md", size: "21KB"},
+];
+
+allFiles.forEach(f => {
+  const link = document.createElement("a");
+  link.className = "md-link";
+  link.href = f.name;
+  link.target = "_blank";
+  link.innerHTML = `
+    <span>${f.name}</span>
+    <span class="type ${f.type}">${f.type.toUpperCase()}</span>
+    <span class="size">${f.size}</span>
+  `;
+  fileListEl.appendChild(link);
+});
+</script>
+</body>
+</html>

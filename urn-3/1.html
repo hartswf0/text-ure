@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apollinaire Calligram Grid: Keats' Ode</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --cell-border: #1e293b;
+            --accent-primary: #38bdf8;
+            --accent-secondary: #f472b6;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #f8fafc;
+            font-family: 'Georgia', serif;
+            overflow-x: hidden;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 2px;
+            aspect-ratio: 1/1;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            border: 2px solid var(--cell-border);
+            position: relative;
+        }
+
+        .cell {
+            background: #1e293b44;
+            border: 1px solid #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+
+        .cell:hover {
+            background: #334155;
+            border-color: var(--accent-primary);
+            z-index: 10;
+        }
+
+        .cell.active {
+            background: var(--accent-primary);
+            box-shadow: 0 0 15px var(--accent-primary);
+            color: white;
+        }
+
+        .cell-label {
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        /* Stanza Specific Visuals */
+        .stanza-1 { background: rgba(56, 189, 248, 0.2); } /* Blue */
+        .stanza-2 { background: rgba(168, 85, 247, 0.2); } /* Purple */
+        .stanza-3 { background: rgba(244, 114, 182, 0.2); } /* Pink */
+        .stanza-4 { background: rgba(34, 197, 94, 0.2); }  /* Green */
+        .stanza-5 { background: rgba(234, 179, 8, 0.2); }   /* Gold */
+
+        .poem-overlay {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            border-top: 1px solid var(--accent-primary);
+            padding: 20px;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 50vh;
+            overflow-y: auto;
+            z-index: 50;
+        }
+
+        .poem-overlay.open {
+            transform: translateY(0);
+        }
+
+        .urn-shape-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .urn-svg {
+            width: 80%;
+            height: 80%;
+            fill: none;
+            stroke: var(--accent-primary);
+            stroke-width: 1;
+        }
+
+        .tab-btn {
+            border-bottom: 2px solid transparent;
+        }
+        .tab-btn.active {
+            border-bottom: 2px solid var(--accent-primary);
+            color: var(--accent-primary);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="mb-8 text-center">
+        <h1 class="text-3xl font-bold tracking-tight text-sky-400">Apollinaire Calligram Bridge</h1>
+        <p class="text-slate-400 italic">"Ode on a Grecian Urn" — Spatial Semantic Grid</p>
+    </header>
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Metadata / Legend -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6 text-xs text-slate-300 font-mono">
+            <div class="flex items-center gap-2"><span class="w-3 h-3 bg-sky-500 rounded-full"></span> S1: Spiral/Rim</div>
+            <div class="flex items-center gap-2"><span class="w-3 h-3 bg-purple-500 rounded-full"></span> S2: Radio/Melody</div>
+            <div class="flex items-center gap-2"><span class="w-3 h-3 bg-pink-500 rounded-full"></span> S3: Cluster/Passion</div>
+            <div class="flex items-center gap-2"><span class="w-3 h-3 bg-green-500 rounded-full"></span> S4: Column/Procession</div>
+            <div class="flex items-center gap-2"><span class="w-3 h-3 bg-yellow-500 rounded-full"></span> S5: Grid/Truth</div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="relative">
+            <div id="grid" class="grid-container">
+                <!-- Cells generated via JS -->
+            </div>
+            
+            <!-- Abstract Urn Shape Overlay -->
+            <div class="urn-shape-container">
+                <svg viewBox="0 0 100 100" class="urn-svg">
+                    <path d="M20,10 Q50,5 80,10 L85,20 Q95,50 85,80 L75,90 Q50,95 25,90 L15,80 Q5,50 15,20 Z" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="mt-8 bg-slate-800/50 p-6 rounded-lg border border-slate-700">
+            <h2 class="text-lg font-bold mb-2">Traversal Protocol</h2>
+            <p class="text-sm text-slate-300 mb-4">
+                According to POML Axioms, reading is an act of traversal. 
+                Hover or tap a cell to reveal the semantic layer. Geometry precedes language.
+            </p>
+            <div id="info-panel" class="text-sky-400 font-mono text-sm min-h-[1.5em]">
+                System Ready. Awaiting Coordinate Traversal...
+            </div>
+        </div>
+    </div>
+
+    <!-- Text Overlay Drawer -->
+    <div id="drawer" class="poem-overlay">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="drawer-title" class="text-xl font-bold text-sky-400">Layer Info</h3>
+            <button onclick="closeDrawer()" class="text-slate-400 hover:text-white">✕ Close</button>
+        </div>
+        <div id="drawer-content" class="text-slate-200 leading-relaxed whitespace-pre-wrap italic">
+        </div>
+    </div>
+
+    <script>
+        const stanzas = [
+            {
+                id: 1,
+                name: "The Rim",
+                intent: "SPIRAL",
+                text: "Thou still unravish'd bride of quietness,\nThou foster-child of silence and slow time,\nSylvan historian, who canst thus express\nA flowery tale more sweetly than our rhyme..."
+            },
+            {
+                id: 2,
+                name: "The Pulse",
+                intent: "RADIO_WAVE",
+                text: "Heard melodies are sweet, but those unheard\nAre sweeter; therefore, ye soft pipes, play on;\nNot to the sensual ear, but, more endear'd,\nPipe to the spirit ditties of no tone..."
+            },
+            {
+                id: 3,
+                name: "The Vitality",
+                intent: "CLUSTER",
+                text: "Ah, happy, happy boughs! that cannot shed\nYour leaves, nor ever bid the Spring adieu;\nAnd, happy melodist, unwearied,\nFor ever piping songs for ever new..."
+            },
+            {
+                id: 4,
+                name: "The Procession",
+                intent: "COLUMN",
+                text: "Who are these coming to the sacrifice?\nTo what green altar, O mysterious priest,\nLead'st thou that heifer lowing at the skies,\nAnd all her silken flanks with garlands drest?"
+            },
+            {
+                id: 5,
+                name: "The Absolute",
+                intent: "GRID",
+                text: "\"Beauty is truth, truth beauty,—that is all\nYe know on earth, and all ye need to know.\""
+            }
+        ];
+
+        // Grid Mapping Logic
+        const gridMapping = {
+            // S1: Rim (Spiral)
+            '0-2':1, '0-3':1, '0-4':1, '0-5':1, '0-6':1, '0-7':1,
+            '1-1':1, '1-8':1, '2-1':1, '2-8':1,
+            // S2: Radio Wave (Center Concentric)
+            '3-3':2, '3-4':2, '3-5':2, '3-6':2,
+            '4-3':2, '4-4':2, '4-5':2, '4-6':2,
+            // S3: Cluster (The Bulge)
+            '4-1':3, '4-2':3, '4-7':3, '4-8':3,
+            '5-1':3, '5-2':3, '5-7':3, '5-8':3,
+            // S4: Column (The Neck/Base)
+            '6-3':4, '6-4':4, '6-5':4, '6-6':4,
+            '7-4':4, '7-5':4,
+            // S5: Grid (Foundation)
+            '8-2':5, '8-3':5, '8-4':5, '8-5':5, '8-6':5, '8-7':5,
+            '9-2':5, '9-3':5, '9-4':5, '9-5':5, '9-6':5, '9-7':5
+        };
+
+        const gridEl = document.getElementById('grid');
+        const infoPanel = document.getElementById('info-panel');
+        const drawer = document.getElementById('drawer');
+        const drawerContent = document.getElementById('drawer-content');
+        const drawerTitle = document.getElementById('drawer-title');
+
+        // Initialize Grid
+        for (let r = 0; r < 10; r++) {
+            for (let c = 0; c < 10; c++) {
+                const cell = document.createElement('div');
+                const key = `${r}-${c}`;
+                const stanzaId = gridMapping[key];
+                
+                cell.className = 'cell';
+                if (stanzaId) {
+                    cell.classList.add(`stanza-${stanzaId}`);
+                    cell.dataset.stanza = stanzaId;
+                }
+                
+                cell.innerHTML = `<span class="cell-label">${r},${c}</span>`;
+                
+                cell.addEventListener('mouseenter', () => handleHover(r, c, stanzaId));
+                cell.addEventListener('click', () => handleClick(stanzaId));
+                
+                gridEl.appendChild(cell);
+            }
+        }
+
+        function handleHover(r, c, sid) {
+            if (sid) {
+                const s = stanzas.find(x => x.id === sid);
+                infoPanel.innerText = `[${r},${c}] Detected: ${s.name} (${s.intent})`;
+            } else {
+                infoPanel.innerText = `[${r},${c}] Void. Traversal continues...`;
+            }
+        }
+
+        function handleClick(sid) {
+            if (!sid) return;
+            const s = stanzas.find(x => x.id === sid);
+            drawerTitle.innerText = `Stanza ${sid}: ${s.name}`;
+            drawerContent.innerText = s.text;
+            drawer.classList.add('open');
+        }
+
+        function closeDrawer() {
+            drawer.classList.remove('open');
+        }
+    </script>
+</body>
+</html>

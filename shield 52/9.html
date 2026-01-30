@@ -1,0 +1,1174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <title>Keats Urn — 24×24 Ritual Grid (Mobile)</title>
+  <style>
+    :root{
+      --bg:#0b0c0f;
+      --panel:#11131a;
+      --panel2:#0e1016;
+      --ink:#e9e9ee;
+      --muted:#a9abb6;
+      --hair:#232636;
+      --hair2:#1a1c29;
+      --accent:#8cf2ff;
+      --ok:#64ff8f;
+      --bad:#ff5a6b;
+      --warn:#ffd166;
+
+      --z0:#1b2236; /* LIP */
+      --z1:#162a20; /* FRIEZE_A */
+      --z2:#2a1a22; /* FRIEZE_B */
+      --z3:#2a2416; /* HANDLES */
+      --z4:#1c1630; /* BASE */
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font: 14px/1.25 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: radial-gradient(1200px 800px at 20% -10%, #1a2140 0%, transparent 55%),
+                  radial-gradient(900px 700px at 90% 10%, #2b1738 0%, transparent 55%),
+                  var(--bg);
+      color:var(--ink);
+      -webkit-tap-highlight-color:transparent;
+      overflow:hidden;
+    }
+
+    /* App shell */
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    .topbar{
+      display:flex;
+      gap:10px;
+      padding:10px 10px 8px;
+      align-items:center;
+    }
+
+    .brand{
+      display:flex;
+      gap:10px;
+      align-items:baseline;
+      min-width:0;
+      flex:1;
+    }
+
+    .brand h1{
+      margin:0;
+      font-size:14px;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+      color:var(--ink);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .brand .sub{
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .chip{
+      padding:6px 8px;
+      border:1px solid var(--hair);
+      border-radius:999px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      color:var(--muted);
+      font-size:12px;
+      display:flex;
+      gap:6px;
+      align-items:center;
+      user-select:none;
+    }
+
+    .dot{width:8px;height:8px;border-radius:99px;background:var(--accent);box-shadow:0 0 0 2px rgba(140,242,255,.18)}
+    .dot.z0{background:color-mix(in srgb, var(--z0) 70%, white 30%);}
+    .dot.z1{background:color-mix(in srgb, var(--z1) 70%, white 30%);}
+    .dot.z2{background:color-mix(in srgb, var(--z2) 70%, white 30%);}
+    .dot.z3{background:color-mix(in srgb, var(--z3) 70%, white 30%);}
+    .dot.z4{background:color-mix(in srgb, var(--z4) 70%, white 30%);}
+
+    .controls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    .btn{
+      border:1px solid var(--hair);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      color:var(--ink);
+      border-radius:10px;
+      padding:10px 10px;
+      font-size:13px;
+      cursor:pointer;
+      user-select:none;
+      touch-action:manipulation;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      white-space:nowrap;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.secondary{color:var(--muted)}
+    .btn.small{padding:8px 9px;font-size:12px;border-radius:9px}
+    .btn.pill{border-radius:999px}
+
+    .searchRow{
+      padding:0 10px 10px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    .input{
+      flex:1;
+      min-width:0;
+      background: rgba(0,0,0,.25);
+      border:1px solid var(--hair);
+      border-radius:12px;
+      padding:10px 12px;
+      color:var(--ink);
+      outline:none;
+      font-size:14px;
+    }
+    .input::placeholder{color:color-mix(in srgb, var(--muted) 85%, transparent)}
+    .toggle{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid var(--hair);
+      background: rgba(0,0,0,.18);
+      color:var(--muted);
+      font-size:12px;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .toggle input{accent-color: var(--accent);}
+
+    /* Main split */
+    .main{
+      flex:1;
+      min-height:0;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      padding:0 10px 10px;
+    }
+
+    @media (min-width: 900px){
+      .main{
+        grid-template-columns: minmax(520px, 1.05fr) minmax(320px, .95fr);
+      }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--hair);
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      min-height:0;
+    }
+
+    .cardHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      background: linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.05));
+      border-bottom:1px solid var(--hair2);
+    }
+    .cardHeader .title{
+      font-size:12px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:var(--muted);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+    .cardHeader .title b{color:var(--ink); font-weight:700}
+    .cardBody{min-height:0}
+
+    /* Grid */
+    .gridWrap{
+      padding:10px;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .legend{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .legend .chip{cursor:pointer}
+    .legend .chip:hover{border-color:color-mix(in srgb, var(--accent) 35%, var(--hair))}
+    .legend .chip.active{
+      border-color: color-mix(in srgb, var(--accent) 55%, var(--hair));
+      color:var(--ink);
+      box-shadow:0 0 0 3px rgba(140,242,255,.09) inset;
+    }
+
+    .grid{
+      --cell: 16px;
+      width:100%;
+      max-width: 760px;
+      aspect-ratio: 1/1;
+      margin: 0 auto;
+      display:grid;
+      grid-template-columns: repeat(24, 1fr);
+      grid-template-rows: repeat(24, 1fr);
+      border:1px solid var(--hair);
+      border-radius:14px;
+      overflow:hidden;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      touch-action: manipulation;
+    }
+
+    .cell{
+      position:relative;
+      border-right:1px solid rgba(255,255,255,.035);
+      border-bottom:1px solid rgba(255,255,255,.035);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:10px;
+      color:rgba(255,255,255,.35);
+      user-select:none;
+      cursor:pointer;
+      overflow:hidden;
+    }
+    .cell:nth-child(24n){border-right:none}
+    .cell:nth-last-child(-n + 24){border-bottom:none}
+
+    .cell[data-zone="Z0"]{background: color-mix(in srgb, var(--z0) 70%, transparent)}
+    .cell[data-zone="Z1"]{background: color-mix(in srgb, var(--z1) 70%, transparent)}
+    .cell[data-zone="Z2"]{background: color-mix(in srgb, var(--z2) 70%, transparent)}
+    .cell[data-zone="Z3"]{background: color-mix(in srgb, var(--z3) 70%, transparent)}
+    .cell[data-zone="Z4"]{background: color-mix(in srgb, var(--z4) 70%, transparent)}
+
+    .cell .badge{
+      position:absolute;
+      top:2px; left:3px;
+      padding:1px 4px;
+      border-radius:7px;
+      font-size:9px;
+      letter-spacing:.04em;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.18);
+      color:rgba(255,255,255,.65);
+      transform: translateZ(0);
+    }
+    .cell .mini{
+      position:absolute;
+      bottom:2px; right:3px;
+      font-size:9px;
+      opacity:.65;
+    }
+
+    .cell.selected{
+      outline:2px solid rgba(140,242,255,.8);
+      outline-offset:-2px;
+      z-index:2;
+    }
+    .cell.hit{
+      box-shadow: inset 0 0 0 2px rgba(255,209,102,.7);
+    }
+    .cell.dim{
+      filter:saturate(.35) brightness(.7);
+      opacity:.55;
+    }
+
+    /* Side panel */
+    .panel{
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+
+    .panelBody{
+      padding:10px 12px;
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      min-height:0;
+    }
+
+    .section{
+      margin-bottom:14px;
+      padding-bottom:12px;
+      border-bottom:1px solid var(--hair2);
+    }
+    .section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+
+    .k{
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      margin-bottom:6px;
+    }
+    .v{
+      font-size:14px;
+      line-height:1.35;
+      color:var(--ink);
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+
+    .pillRow{display:flex; flex-wrap:wrap; gap:6px}
+    .pill{
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid var(--hair);
+      background: rgba(0,0,0,.22);
+      border-radius:999px;
+      padding:6px 8px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .pill:hover{border-color: color-mix(in srgb, var(--accent) 40%, var(--hair))}
+    .pill.active{color:var(--ink); border-color: rgba(140,242,255,.55); box-shadow:0 0 0 3px rgba(140,242,255,.10) inset}
+
+    .status{
+      display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+    }
+    .tag{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 8px;
+      border:1px solid var(--hair);
+      border-radius:999px;
+      background: rgba(0,0,0,.18);
+      color:var(--muted);
+      font-size:12px;
+      user-select:none;
+    }
+    .tag.ok{border-color: rgba(100,255,143,.35); color: color-mix(in srgb, var(--ok) 85%, white)}
+    .tag.bad{border-color: rgba(255,90,107,.35); color: color-mix(in srgb, var(--bad) 85%, white)}
+    .tag.warn{border-color: rgba(255,209,102,.35); color: color-mix(in srgb, var(--warn) 85%, white)}
+    .tag .led{width:8px;height:8px;border-radius:99px;background:currentColor;opacity:.8}
+
+    /* Bottom sheet (mobile details) */
+    .sheet{
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      transform: translateY(110%);
+      transition: transform .18s ease;
+      background: rgba(10,12,16,.92);
+      border-top: 1px solid var(--hair);
+      border-radius: 18px 18px 0 0;
+      box-shadow: 0 -20px 50px rgba(0,0,0,.55);
+      max-height: 65vh;
+      display:flex;
+      flex-direction:column;
+      z-index: 20;
+      backdrop-filter: blur(10px);
+    }
+    .sheet.open{transform: translateY(0)}
+    .sheetHandle{
+      height: 22px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .sheetHandle::before{
+      content:"";
+      width: 44px;
+      height: 5px;
+      border-radius: 99px;
+      background: rgba(255,255,255,.18);
+    }
+    .sheetHeader{
+      padding: 0 12px 8px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      border-bottom:1px solid var(--hair2);
+    }
+    .sheetHeader .sheetTitle{
+      font-size:12px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:var(--muted);
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .sheetBody{
+      padding: 10px 12px 16px;
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      min-height:0;
+    }
+
+    .hint{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    /* Footer mini */
+    .footer{
+      padding: 0 10px 10px;
+      color:rgba(255,255,255,.35);
+      font-size:11px;
+      text-align:center;
+      user-select:none;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <h1>Keats Urn Grid</h1>
+      <div class="sub">24×24 address space • zones • reverse index • tests</div>
+    </div>
+    <div class="controls">
+      <button class="btn small pill secondary" id="btnReset" title="Clear selection & filters">Reset</button>
+      <button class="btn small pill" id="btnOpenSheet" title="Open details (mobile)">Details</button>
+    </div>
+  </div>
+
+  <div class="searchRow">
+    <input class="input" id="search" placeholder="Search words or paste L## (e.g., L39) …" />
+    <label class="toggle" title="Show only matching cells when searching">
+      <input type="checkbox" id="onlyHits" />
+      only hits
+    </label>
+  </div>
+
+  <div class="main">
+    <!-- GRID CARD -->
+    <div class="card">
+      <div class="cardHeader">
+        <div class="title"><b>Grid</b> <span class="hint">tap cells; long-press shows line text</span></div>
+        <div class="title"><span id="selMeta" class="mono">—</span></div>
+      </div>
+      <div class="cardBody">
+        <div class="gridWrap">
+          <div class="legend" id="legend"></div>
+          <div class="grid" id="grid" aria-label="24 by 24 grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL CARD -->
+    <div class="card panel" id="panelCard">
+      <div class="cardHeader">
+        <div class="title"><b>Inspect</b> <span class="hint">selection + reverse index</span></div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="btn small secondary" id="btnPrev" title="Previous line in poem order">Prev</button>
+          <button class="btn small secondary" id="btnNext" title="Next line in poem order">Next</button>
+        </div>
+      </div>
+      <div class="panelBody" id="panelBody">
+        <div class="section">
+          <div class="k">Selected Cell</div>
+          <div class="v mono" id="cellInfo">Tap a cell.</div>
+        </div>
+
+        <div class="section">
+          <div class="k">Line</div>
+          <div class="v" id="lineText">—</div>
+          <div class="pillRow" id="linePills" style="margin-top:10px;"></div>
+        </div>
+
+        <div class="section">
+          <div class="k">Reverse Index</div>
+          <div class="v hint">All spans for the currently selected line.</div>
+          <div class="v mono" id="spans">—</div>
+        </div>
+
+        <div class="section">
+          <div class="k">Tests Report</div>
+          <div class="status" id="tests"></div>
+          <div class="v hint" id="testNotes" style="margin-top:8px;">—</div>
+        </div>
+
+        <div class="section">
+          <div class="k">How to use</div>
+          <div class="v hint">
+            Search highlights matches inside line text (not per-cell content). Use “only hits” to dim everything else.
+            Tap a zone chip to focus. Tap a line pill to jump to its primary span.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Single-file artifact • no external dependencies • wraparound-x aware (diagnostics)
+  </div>
+</div>
+
+<!-- Mobile sheet -->
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Details sheet">
+  <div class="sheetHandle"></div>
+  <div class="sheetHeader">
+    <div class="sheetTitle" id="sheetTitle">Details</div>
+    <button class="btn small pill secondary" id="btnCloseSheet">Close</button>
+  </div>
+  <div class="sheetBody" id="sheetBody"></div>
+</div>
+
+<script>
+/**
+ * NOTE
+ * - This artifact embeds the mapping JSON (ontology + grid).
+ * - It renders:
+ *    1) 24×24 grid (zone colors)
+ *    2) tap -> show cell coordinates + line text
+ *    3) search over line_text -> highlight cells containing matched line_ids
+ *    4) zone focus toggles
+ *    5) reverse index spans list
+ *    6) tests report badges
+ *
+ * The actual line texts are included in line_catalog.
+ */
+
+/* -------------------------
+   Embedded JSON: ontology
+-------------------------- */
+const URN_ONTOLOGY = {
+  "model":"urn_unwrap_24",
+  "zones":[
+    {"id":"Z0","name":"LIP","y_range":[0,2],"law":"inscription/refrain"},
+    {"id":"Z1","name":"FRIEZE_A","y_range":[3,11],"law":"pursuit/music/trees"},
+    {"id":"Z2","name":"FRIEZE_B","y_range":[12,17],"law":"sacrifice/town/silence"},
+    {"id":"Z3","name":"HANDLES","y_range":[18,19],"law":"apostrophe/hinge/symmetry"},
+    {"id":"Z4","name":"BASE","y_range":[20,23],"law":"axiom/tablet/closure"}
+  ],
+  "wraparound_x":true,
+  "max_chars_per_cell":220,
+  "grid":{"size":24,"coordinate_system":"x,y","origin":"0,0 top-left","center":[12,12]},
+  "placement_conventions":{
+    "primary_zone_by_line":{
+      "L01":"Z0","L02":"Z0","L03":"Z0","L04":"Z0","L05":"Z0","L06":"Z0","L07":"Z0","L08":"Z0","L09":"Z0","L10":"Z0",
+      "L11":"Z1","L12":"Z1","L13":"Z1","L14":"Z1","L15":"Z1","L16":"Z1","L17":"Z1","L18":"Z1","L19":"Z1","L20":"Z1",
+      "L21":"Z1","L22":"Z1","L23":"Z1","L24":"Z1","L25":"Z1","L26":"Z1","L27":"Z1","L28":"Z1","L29":"Z1","L30":"Z1",
+      "L31":"Z2","L32":"Z2","L33":"Z2","L34":"Z2","L35":"Z2","L36":"Z2","L37":"Z2","L38":"Z2","L39":"Z2","L40":"Z2",
+      "L41":"Z3","L42":"Z3","L43":"Z3","L44":"Z3","L45":"Z3","L46":"Z3","L47":"Z3","L48":"Z3",
+      "L49":"Z4","L50":"Z4"
+    },
+    "adjacency":{
+      "metric":"wrap_manhattan",
+      "wrap_x":true,
+      "threshold":14.0,
+      "notes":"computed on primary placements only; pairs involving spillover lines may be exempted"
+    },
+    "spillover_lines":["L23","L25","L28"]
+  },
+  "_file":"urn_ontology.json"
+};
+
+/* -------------------------
+   Embedded JSON: grid
+-------------------------- */
+const GRID_DATA = {
+  "grid_size":24,
+  "cells": [
+    /* This is intentionally generated at runtime from the reverse_index spans + primary spans to keep file size sane.
+       BUT: you asked for "final html css js artifact here" — so this HTML rebuilds cells deterministically
+       from line_catalog primary_spans & reverse_index (same result as your JSON list).
+    */
+  ],
+  "payload_types":{
+    "text":{"line_id":"Lxx"},
+    "pointer":{"cluster_id":"C##","line_ids":[],"hint":"","tags":[]}
+  },
+  "line_catalog":{
+    "L01":{"stanza":"S1","full_text":"Thou still unravish'd bride of quietness,","primary_zone":"Z0","role":"chant","primary_spans":[{"span":{"x0":0,"y0":0,"x1":5,"y1":0},"zone":"Z0","kind":"primary"}]},
+    "L02":{"stanza":"S1","full_text":"Thou foster-child of silence and slow time,","primary_zone":"Z0","role":"detail","primary_spans":[{"span":{"x0":6,"y0":0,"x1":11,"y1":0},"zone":"Z0","kind":"primary"}]},
+    "L03":{"stanza":"S1","full_text":"Sylvan historian, who canst thus express","primary_zone":"Z0","role":"detail","primary_spans":[{"span":{"x0":12,"y0":0,"x1":17,"y1":0},"zone":"Z0","kind":"primary"}]},
+    "L04":{"stanza":"S1","full_text":"A flowery tale more sweetly than our rhyme:","primary_zone":"Z0","role":"detail","primary_spans":[{"span":{"x0":18,"y0":0,"x1":23,"y1":0},"zone":"Z0","kind":"primary"}]},
+    "L05":{"stanza":"S1","full_text":"What leaf-fring'd legend haunts about thy shape","primary_zone":"Z0","role":"detail","primary_spans":[{"span":{"x0":0,"y0":1,"x1":5,"y1":1},"zone":"Z0","kind":"primary"}]},
+    "L06":{"stanza":"S1","full_text":"Of deities or mortals, or of both,","primary_zone":"Z0","role":"detail","primary_spans":[{"span":{"x0":6,"y0":1,"x1":11,"y1":1},"zone":"Z0","kind":"primary"}]},
+    "L07":{"stanza":"S1","full_text":"In Tempe or the dales of Arcady?","primary_zone":"Z0","role":"detail","primary_spans":[{"span":{"x0":12,"y0":1,"x1":17,"y1":1},"zone":"Z0","kind":"primary"}]},
+    "L08":{"stanza":"S1","full_text":"What men or gods are these? What maidens loth?","primary_zone":"Z0","role":"detail","primary_spans":[{"span":{"x0":18,"y0":1,"x1":23,"y1":1},"zone":"Z0","kind":"primary"}]},
+    "L09":{"stanza":"S1","full_text":"What mad pursuit? What struggle to escape?","primary_zone":"Z0","role":"detail","primary_spans":[{"span":{"x0":0,"y0":2,"x1":5,"y1":2},"zone":"Z0","kind":"primary"}]},
+    "L10":{"stanza":"S1","full_text":"What pipes and timbrels? What wild ecstasy?","primary_zone":"Z0","role":"detail","primary_spans":[{"span":{"x0":6,"y0":2,"x1":11,"y1":2},"zone":"Z0","kind":"primary"}]},
+    "L11":{"stanza":"S2","full_text":"Heard melodies are sweet, but those unheard","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":0,"y0":3,"x1":11,"y1":3},"zone":"Z1","kind":"primary"}]},
+    "L12":{"stanza":"S2","full_text":"Are sweeter; therefore, ye soft pipes, play on;","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":12,"y0":3,"x1":23,"y1":3},"zone":"Z1","kind":"primary"}]},
+    "L13":{"stanza":"S2","full_text":"Not to the sensual ear, but, more endear'd,","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":0,"y0":4,"x1":11,"y1":4},"zone":"Z1","kind":"primary"}]},
+    "L14":{"stanza":"S2","full_text":"Pipe to the spirit ditties of no tone:","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":12,"y0":4,"x1":23,"y1":4},"zone":"Z1","kind":"primary"}]},
+    "L15":{"stanza":"S2","full_text":"Fair youth, beneath the trees, thou canst not leave","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":0,"y0":5,"x1":11,"y1":5},"zone":"Z1","kind":"primary"}]},
+    "L16":{"stanza":"S2","full_text":"Thy song, nor ever can those trees be bare;","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":12,"y0":5,"x1":23,"y1":5},"zone":"Z1","kind":"primary"}]},
+    "L17":{"stanza":"S2","full_text":"Bold Lover, never, never canst thou kiss,","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":0,"y0":6,"x1":11,"y1":6},"zone":"Z1","kind":"primary"}]},
+    "L18":{"stanza":"S2","full_text":"Though winning near the goal yet, do not grieve;","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":12,"y0":6,"x1":23,"y1":6},"zone":"Z1","kind":"primary"}]},
+    "L19":{"stanza":"S2","full_text":"She cannot fade, though thou hast not thy bliss,","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":0,"y0":7,"x1":11,"y1":7},"zone":"Z1","kind":"primary"}]},
+    "L20":{"stanza":"S2","full_text":"For ever wilt thou love, and she be fair!","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":12,"y0":7,"x1":23,"y1":7},"zone":"Z1","kind":"primary"}]},
+    "L21":{"stanza":"S3","full_text":"Ah, happy, happy boughs! that cannot shed","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":0,"y0":8,"x1":9,"y1":8},"zone":"Z1","kind":"primary"}]},
+    "L22":{"stanza":"S3","full_text":"Your leaves, nor ever bid the Spring adieu;","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":10,"y0":8,"x1":19,"y1":8},"zone":"Z1","kind":"primary"}]},
+    "L23":{"stanza":"S3","full_text":"And, happy melodist, unwearied,","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":20,"y0":8,"x1":23,"y1":8},"zone":"Z1","kind":"primary"},{"span":{"x0":0,"y0":9,"x1":5,"y1":9},"zone":"Z1","kind":"primary"}],"split_reason":"spillover"},
+    "L24":{"stanza":"S3","full_text":"For ever piping songs for ever new;","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":6,"y0":9,"x1":15,"y1":9},"zone":"Z1","kind":"primary"}]},
+    "L25":{"stanza":"S3","full_text":"More happy love! more happy, happy love!","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":16,"y0":9,"x1":23,"y1":9},"zone":"Z1","kind":"primary"},{"span":{"x0":0,"y0":10,"x1":1,"y1":10},"zone":"Z1","kind":"primary"}],"split_reason":"spillover"},
+    "L26":{"stanza":"S3","full_text":"For ever warm and still to be enjoy'd,","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":2,"y0":10,"x1":11,"y1":10},"zone":"Z1","kind":"primary"}]},
+    "L27":{"stanza":"S3","full_text":"For ever panting, and for ever young;","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":12,"y0":10,"x1":20,"y1":10},"zone":"Z1","kind":"primary"}]},
+    "L28":{"stanza":"S3","full_text":"All breathing human passion far above,","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":21,"y0":10,"x1":23,"y1":10},"zone":"Z1","kind":"primary"},{"span":{"x0":0,"y0":11,"x1":5,"y1":11},"zone":"Z1","kind":"primary"}],"split_reason":"spillover"},
+    "L29":{"stanza":"S3","full_text":"That leaves a heart high-sorrowful and cloy'd,","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":6,"y0":11,"x1":14,"y1":11},"zone":"Z1","kind":"primary"}]},
+    "L30":{"stanza":"S3","full_text":"A burning forehead, and a parching tongue.","primary_zone":"Z1","role":"detail","primary_spans":[{"span":{"x0":15,"y0":11,"x1":23,"y1":11},"zone":"Z1","kind":"primary"}]},
+    "L31":{"stanza":"S4","full_text":"Who are these coming to the sacrifice?","primary_zone":"Z2","role":"detail","primary_spans":[{"span":{"x0":0,"y0":12,"x1":11,"y1":12},"zone":"Z2","kind":"primary"}]},
+    "L32":{"stanza":"S4","full_text":"To what green altar, O mysterious priest,","primary_zone":"Z2","role":"detail","primary_spans":[{"span":{"x0":12,"y0":12,"x1":23,"y1":12},"zone":"Z2","kind":"primary"}]},
+    "L33":{"stanza":"S4","full_text":"Lead'st thou that heifer lowing at the skies,","primary_zone":"Z2","role":"detail","primary_spans":[{"span":{"x0":0,"y0":13,"x1":11,"y1":13},"zone":"Z2","kind":"primary"}]},
+    "L34":{"stanza":"S4","full_text":"And all her silken flanks with garlands drest?","primary_zone":"Z2","role":"detail","primary_spans":[{"span":{"x0":12,"y0":13,"x1":23,"y1":13},"zone":"Z2","kind":"primary"}]},
+    "L35":{"stanza":"S4","full_text":"What little town by river or sea shore,","primary_zone":"Z2","role":"detail","primary_spans":[{"span":{"x0":0,"y0":14,"x1":11,"y1":14},"zone":"Z2","kind":"primary"}]},
+    "L36":{"stanza":"S4","full_text":"Or mountain-built with peaceful citadel,","primary_zone":"Z2","role":"detail","primary_spans":[{"span":{"x0":12,"y0":14,"x1":23,"y1":14},"zone":"Z2","kind":"primary"}]},
+    "L37":{"stanza":"S4","full_text":"Is emptied of this folk, this pious morn?","primary_zone":"Z2","role":"detail","primary_spans":[{"span":{"x0":0,"y0":15,"x1":11,"y1":15},"zone":"Z2","kind":"primary"}]},
+    "L38":{"stanza":"S4","full_text":"And, little town, thy streets for evermore","primary_zone":"Z2","role":"detail","primary_spans":[{"span":{"x0":12,"y0":15,"x1":23,"y1":15},"zone":"Z2","kind":"primary"}]},
+    "L39":{"stanza":"S4","full_text":"Will silent be; and not a soul to tell","primary_zone":"Z2","role":"detail","primary_spans":[{"span":{"x0":0,"y0":16,"x1":23,"y1":16},"zone":"Z2","kind":"primary"}]},
+    "L40":{"stanza":"S4","full_text":"Why thou art desolate, can e'er return.","primary_zone":"Z2","role":"detail","primary_spans":[{"span":{"x0":0,"y0":17,"x1":23,"y1":17},"zone":"Z2","kind":"primary"}]},
+    "L41":{"stanza":"S5","full_text":"O Attic shape! Fair attitude! with brede","primary_zone":"Z3","role":"hinge","primary_spans":[{"span":{"x0":0,"y0":18,"x1":2,"y1":18},"zone":"Z3","kind":"primary"},{"span":{"x0":12,"y0":18,"x1":14,"y1":18},"zone":"Z3","kind":"primary"}]},
+    "L42":{"stanza":"S5","full_text":"Of marble men and maidens overwrought,","primary_zone":"Z3","role":"hinge","primary_spans":[{"span":{"x0":3,"y0":18,"x1":5,"y1":18},"zone":"Z3","kind":"primary"},{"span":{"x0":15,"y0":18,"x1":17,"y1":18},"zone":"Z3","kind":"primary"}]},
+    "L43":{"stanza":"S5","full_text":"With forest branches and the trodden weed;","primary_zone":"Z3","role":"hinge","primary_spans":[{"span":{"x0":6,"y0":18,"x1":8,"y1":18},"zone":"Z3","kind":"primary"},{"span":{"x0":18,"y0":18,"x1":20,"y1":18},"zone":"Z3","kind":"primary"}]},
+    "L44":{"stanza":"S5","full_text":"Thou, silent form, dost tease us out of thought","primary_zone":"Z3","role":"hinge","primary_spans":[{"span":{"x0":9,"y0":18,"x1":11,"y1":18},"zone":"Z3","kind":"primary"},{"span":{"x0":21,"y0":18,"x1":23,"y1":18},"zone":"Z3","kind":"primary"}]},
+    "L45":{"stanza":"S5","full_text":"As doth eternity: Cold Pastoral!","primary_zone":"Z3","role":"hinge","primary_spans":[{"span":{"x0":0,"y0":19,"x1":2,"y1":19},"zone":"Z3","kind":"primary"},{"span":{"x0":12,"y0":19,"x1":14,"y1":19},"zone":"Z3","kind":"primary"}]},
+    "L46":{"stanza":"S5","full_text":"When old age shall this generation waste,","primary_zone":"Z3","role":"hinge","primary_spans":[{"span":{"x0":3,"y0":19,"x1":5,"y1":19},"zone":"Z3","kind":"primary"},{"span":{"x0":15,"y0":19,"x1":17,"y1":19},"zone":"Z3","kind":"primary"}]},
+    "L47":{"stanza":"S5","full_text":"Thou shalt remain, in midst of other woe","primary_zone":"Z3","role":"hinge","primary_spans":[{"span":{"x0":6,"y0":19,"x1":8,"y1":19},"zone":"Z3","kind":"primary"},{"span":{"x0":18,"y0":19,"x1":20,"y1":19},"zone":"Z3","kind":"primary"}]},
+    "L48":{"stanza":"S5","full_text":"Than ours, a friend to man, to whom thou say'st,","primary_zone":"Z3","role":"hinge","primary_spans":[{"span":{"x0":9,"y0":19,"x1":11,"y1":19},"zone":"Z3","kind":"primary"},{"span":{"x0":21,"y0":19,"x1":23,"y1":19},"zone":"Z3","kind":"primary"}]},
+    "L49":{"stanza":"S5","full_text":"\"Beauty is truth, truth beauty,—that is all","primary_zone":"Z4","role":"axiom","primary_spans":[{"span":{"x0":0,"y0":20,"x1":23,"y1":20},"zone":"Z4","kind":"primary"},{"span":{"x0":0,"y0":21,"x1":23,"y1":21},"zone":"Z4","kind":"primary"}]},
+    "L50":{"stanza":"S5","full_text":"Ye know on earth, and all ye need to know.\"","primary_zone":"Z4","role":"axiom","primary_spans":[{"span":{"x0":0,"y0":22,"x1":23,"y1":22},"zone":"Z4","kind":"primary"},{"span":{"x0":0,"y0":23,"x1":23,"y1":23},"zone":"Z4","kind":"primary"}]}
+  },
+  "reverse_index":{
+    "L01":[{"span":{"x0":0,"y0":0,"x1":5,"y1":0},"zone":"Z0","kind":"primary"}],
+    "L02":[{"span":{"x0":6,"y0":0,"x1":11,"y1":0},"zone":"Z0","kind":"primary"}],
+    "L03":[{"span":{"x0":12,"y0":0,"x1":17,"y1":0},"zone":"Z0","kind":"primary"}],
+    "L04":[{"span":{"x0":18,"y0":0,"x1":23,"y1":0},"zone":"Z0","kind":"primary"}],
+    "L05":[{"span":{"x0":0,"y0":1,"x1":5,"y1":1},"zone":"Z0","kind":"primary"}],
+    "L06":[{"span":{"x0":6,"y0":1,"x1":11,"y1":1},"zone":"Z0","kind":"primary"}],
+    "L07":[{"span":{"x0":12,"y0":1,"x1":17,"y1":1},"zone":"Z0","kind":"primary"}],
+    "L08":[{"span":{"x0":18,"y0":1,"x1":23,"y1":1},"zone":"Z0","kind":"primary"}],
+    "L09":[{"span":{"x0":0,"y0":2,"x1":5,"y1":2},"zone":"Z0","kind":"primary"}],
+    "L10":[{"span":{"x0":6,"y0":2,"x1":11,"y1":2},"zone":"Z0","kind":"primary"}],
+
+    "L11":[{"span":{"x0":0,"y0":3,"x1":11,"y1":3},"zone":"Z1","kind":"primary"}],
+    "L12":[{"span":{"x0":12,"y0":3,"x1":23,"y1":3},"zone":"Z1","kind":"primary"}],
+    "L13":[{"span":{"x0":0,"y0":4,"x1":11,"y1":4},"zone":"Z1","kind":"primary"}],
+    "L14":[{"span":{"x0":12,"y0":4,"x1":23,"y1":4},"zone":"Z1","kind":"primary"}],
+    "L15":[{"span":{"x0":0,"y0":5,"x1":11,"y1":5},"zone":"Z1","kind":"primary"}],
+    "L16":[{"span":{"x0":12,"y0":5,"x1":23,"y1":5},"zone":"Z1","kind":"primary"}],
+    "L17":[{"span":{"x0":0,"y0":6,"x1":11,"y1":6},"zone":"Z1","kind":"primary"}],
+    "L18":[{"span":{"x0":12,"y0":6,"x1":23,"y1":6},"zone":"Z1","kind":"primary"}],
+    "L19":[{"span":{"x0":0,"y0":7,"x1":11,"y1":7},"zone":"Z1","kind":"primary"}],
+    "L20":[{"span":{"x0":12,"y0":7,"x1":23,"y1":7},"zone":"Z1","kind":"primary"}],
+
+    "L21":[{"span":{"x0":0,"y0":8,"x1":9,"y1":8},"zone":"Z1","kind":"primary"}],
+    "L22":[{"span":{"x0":10,"y0":8,"x1":19,"y1":8},"zone":"Z1","kind":"primary"}],
+    "L23":[{"span":{"x0":20,"y0":8,"x1":23,"y1":8},"zone":"Z1","kind":"primary"},{"span":{"x0":0,"y0":9,"x1":5,"y1":9},"zone":"Z1","kind":"primary"}],
+    "L24":[{"span":{"x0":6,"y0":9,"x1":15,"y1":9},"zone":"Z1","kind":"primary"}],
+    "L25":[{"span":{"x0":16,"y0":9,"x1":23,"y1":9},"zone":"Z1","kind":"primary"},{"span":{"x0":0,"y0":10,"x1":1,"y1":10},"zone":"Z1","kind":"primary"}],
+    "L26":[{"span":{"x0":2,"y0":10,"x1":11,"y1":10},"zone":"Z1","kind":"primary"}],
+    "L27":[{"span":{"x0":12,"y0":10,"x1":20,"y1":10},"zone":"Z1","kind":"primary"}],
+    "L28":[{"span":{"x0":21,"y0":10,"x1":23,"y1":10},"zone":"Z1","kind":"primary"},{"span":{"x0":0,"y0":11,"x1":5,"y1":11},"zone":"Z1","kind":"primary"}],
+    "L29":[{"span":{"x0":6,"y0":11,"x1":14,"y1":11},"zone":"Z1","kind":"primary"}],
+    "L30":[{"span":{"x0":15,"y0":11,"x1":23,"y1":11},"zone":"Z1","kind":"primary"}],
+
+    "L31":[{"span":{"x0":0,"y0":12,"x1":11,"y1":12},"zone":"Z2","kind":"primary"}],
+    "L32":[{"span":{"x0":12,"y0":12,"x1":23,"y1":12},"zone":"Z2","kind":"primary"}],
+    "L33":[{"span":{"x0":0,"y0":13,"x1":11,"y1":13},"zone":"Z2","kind":"primary"}],
+    "L34":[{"span":{"x0":12,"y0":13,"x1":23,"y1":13},"zone":"Z2","kind":"primary"}],
+    "L35":[{"span":{"x0":0,"y0":14,"x1":11,"y1":14},"zone":"Z2","kind":"primary"}],
+    "L36":[{"span":{"x0":12,"y0":14,"x1":23,"y1":14},"zone":"Z2","kind":"primary"}],
+    "L37":[{"span":{"x0":0,"y0":15,"x1":11,"y1":15},"zone":"Z2","kind":"primary"}],
+    "L38":[{"span":{"x0":12,"y0":15,"x1":23,"y1":15},"zone":"Z2","kind":"primary"}],
+    "L39":[{"span":{"x0":0,"y0":16,"x1":23,"y1":16},"zone":"Z2","kind":"primary"}],
+    "L40":[{"span":{"x0":0,"y0":17,"x1":23,"y1":17},"zone":"Z2","kind":"primary"}],
+
+    "L41":[{"span":{"x0":0,"y0":18,"x1":2,"y1":18},"zone":"Z3","kind":"primary"},{"span":{"x0":12,"y0":18,"x1":14,"y1":18},"zone":"Z3","kind":"primary"}],
+    "L42":[{"span":{"x0":3,"y0":18,"x1":5,"y1":18},"zone":"Z3","kind":"primary"},{"span":{"x0":15,"y0":18,"x1":17,"y1":18},"zone":"Z3","kind":"primary"}],
+    "L43":[{"span":{"x0":6,"y0":18,"x1":8,"y1":18},"zone":"Z3","kind":"primary"},{"span":{"x0":18,"y0":18,"x1":20,"y1":18},"zone":"Z3","kind":"primary"}],
+    "L44":[{"span":{"x0":9,"y0":18,"x1":11,"y1":18},"zone":"Z3","kind":"primary"},{"span":{"x0":21,"y0":18,"x1":23,"y1":18},"zone":"Z3","kind":"primary"}],
+    "L45":[{"span":{"x0":0,"y0":19,"x1":2,"y1":19},"zone":"Z3","kind":"primary"},{"span":{"x0":12,"y0":19,"x1":14,"y1":19},"zone":"Z3","kind":"primary"}],
+    "L46":[{"span":{"x0":3,"y0":19,"x1":5,"y1":19},"zone":"Z3","kind":"primary"},{"span":{"x0":15,"y0":19,"x1":17,"y1":19},"zone":"Z3","kind":"primary"}],
+    "L47":[{"span":{"x0":6,"y0":19,"x1":8,"y1":19},"zone":"Z3","kind":"primary"},{"span":{"x0":18,"y0":19,"x1":20,"y1":19},"zone":"Z3","kind":"primary"}],
+    "L48":[{"span":{"x0":9,"y0":19,"x1":11,"y1":19},"zone":"Z3","kind":"primary"},{"span":{"x0":21,"y0":19,"x1":23,"y1":19},"zone":"Z3","kind":"primary"}],
+
+    "L49":[{"span":{"x0":0,"y0":20,"x1":23,"y1":20},"zone":"Z4","kind":"primary"},{"span":{"x0":0,"y0":21,"x1":23,"y1":21},"zone":"Z4","kind":"primary"}],
+    "L50":[{"span":{"x0":0,"y0":22,"x1":23,"y1":22},"zone":"Z4","kind":"primary"},{"span":{"x0":0,"y0":23,"x1":23,"y1":23},"zone":"Z4","kind":"primary"}]
+  },
+  "tests_report":{
+    "coverage_ok":true,
+    "adjacency_ok":true,
+    "density_ok":true,
+    "continuity_ok":true,
+    "notes":[]
+  },
+  "_file":"grid_24x24.json"
+};
+
+/* -------------------------
+   Build deterministic cell map
+-------------------------- */
+const SIZE = 24;
+const cellKey = (x,y)=>`${x},${y}`;
+
+function buildCellMap(){
+  const map = new Map(); // key -> {x,y, zone, line_id}
+  for(const [lineId, spans] of Object.entries(GRID_DATA.reverse_index)){
+    for(const s of spans){
+      const {x0,y0,x1,y1} = s.span;
+      for(let y=y0; y<=y1; y++){
+        for(let x=x0; x<=x1; x++){
+          const key = cellKey(x,y);
+          // If multiple assignments collide, keep the first; collisions are design choices (rare in this mapping).
+          if(!map.has(key)){
+            map.set(key, {x,y, zone:s.zone, line_id: lineId});
+          }
+        }
+      }
+    }
+  }
+  // Fill any empty cells with zone determined from y bands so the whole grid is zoned.
+  for(let y=0;y<SIZE;y++){
+    const zone = zoneByY(y);
+    for(let x=0;x<SIZE;x++){
+      const key = cellKey(x,y);
+      if(!map.has(key)){
+        map.set(key, {x,y, zone, line_id: null});
+      }
+    }
+  }
+  return map;
+}
+
+function zoneByY(y){
+  const z = URN_ONTOLOGY.zones.find(z=>y>=z.y_range[0] && y<=z.y_range[1]);
+  return z ? z.id : "Z1";
+}
+
+const CELL_MAP = buildCellMap();
+
+/* -------------------------
+   State
+-------------------------- */
+let selected = {x:0,y:0};
+let selectedLine = null;
+let zoneFocus = null; // Z0..Z4
+let searchTerm = "";
+let hitLines = new Set();
+let hitCells = new Set();
+
+const orderedLines = Object.keys(GRID_DATA.line_catalog).sort((a,b)=>{
+  const na = parseInt(a.slice(1),10), nb=parseInt(b.slice(1),10);
+  return na-nb;
+});
+
+/* -------------------------
+   DOM
+-------------------------- */
+const elGrid = document.getElementById('grid');
+const elLegend = document.getElementById('legend');
+const elSelMeta = document.getElementById('selMeta');
+const elCellInfo = document.getElementById('cellInfo');
+const elLineText = document.getElementById('lineText');
+const elSpans = document.getElementById('spans');
+const elLinePills = document.getElementById('linePills');
+const elTests = document.getElementById('tests');
+const elTestNotes = document.getElementById('testNotes');
+const elSearch = document.getElementById('search');
+const elOnlyHits = document.getElementById('onlyHits');
+const btnReset = document.getElementById('btnReset');
+const btnPrev = document.getElementById('btnPrev');
+const btnNext = document.getElementById('btnNext');
+const sheet = document.getElementById('sheet');
+const btnOpenSheet = document.getElementById('btnOpenSheet');
+const btnCloseSheet = document.getElementById('btnCloseSheet');
+const sheetBody = document.getElementById('sheetBody');
+const sheetTitle = document.getElementById('sheetTitle');
+
+/* -------------------------
+   Render: legend
+-------------------------- */
+function renderLegend(){
+  elLegend.innerHTML = "";
+  for(const z of URN_ONTOLOGY.zones){
+    const chip = document.createElement('div');
+    chip.className = "chip";
+    chip.dataset.zone = z.id;
+    chip.innerHTML = `<span class="dot ${z.id.toLowerCase()}"></span><span class="mono">${z.id}</span> <span>${z.name}</span>`;
+    chip.title = `${z.name} (rows ${z.y_range[0]}–${z.y_range[1]}): ${z.law}`;
+    chip.addEventListener('click', ()=>{
+      zoneFocus = (zoneFocus === z.id) ? null : z.id;
+      renderLegend();
+      applyFilters();
+    });
+    if(zoneFocus === z.id) chip.classList.add('active');
+    elLegend.appendChild(chip);
+  }
+}
+
+/* -------------------------
+   Render: grid
+-------------------------- */
+let cellEls = new Map(); // key -> element
+
+function renderGrid(){
+  elGrid.innerHTML = "";
+  cellEls.clear();
+
+  for(let y=0;y<SIZE;y++){
+    for(let x=0;x<SIZE;x++){
+      const key = cellKey(x,y);
+      const data = CELL_MAP.get(key);
+      const cell = document.createElement('div');
+      cell.className = "cell";
+      cell.dataset.x = x;
+      cell.dataset.y = y;
+      cell.dataset.zone = data.zone;
+      cell.dataset.line = data.line_id || "";
+      // Minimal labels for navigation (tiny)
+      const lineShort = data.line_id ? data.line_id : "";
+      if(lineShort){
+        const badge = document.createElement('div');
+        badge.className = "badge mono";
+        badge.textContent = lineShort;
+        cell.appendChild(badge);
+      }
+      const mini = document.createElement('div');
+      mini.className = "mini mono";
+      mini.textContent = `${x},${y}`;
+      cell.appendChild(mini);
+
+      cell.addEventListener('click', ()=>selectCell(x,y,true));
+      cell.addEventListener('contextmenu', (e)=>e.preventDefault());
+
+      // long press opens sheet with details
+      let pressTimer = null;
+      cell.addEventListener('pointerdown', ()=>{
+        pressTimer = setTimeout(()=>{
+          selectCell(x,y,true);
+          openSheet();
+        }, 520);
+      });
+      cell.addEventListener('pointerup', ()=>{ if(pressTimer) clearTimeout(pressTimer); });
+      cell.addEventListener('pointercancel', ()=>{ if(pressTimer) clearTimeout(pressTimer); });
+
+      elGrid.appendChild(cell);
+      cellEls.set(key, cell);
+    }
+  }
+}
+
+/* -------------------------
+   Selection & panel
+-------------------------- */
+function selectCell(x,y,scrollIntoView=false){
+  const key = cellKey(x,y);
+  const data = CELL_MAP.get(key);
+  selected = {x,y};
+  selectedLine = data.line_id || null;
+
+  // highlight selection
+  for(const [k, el] of cellEls){
+    el.classList.toggle('selected', k===key);
+  }
+
+  // header meta
+  const zone = data.zone;
+  const zMeta = URN_ONTOLOGY.zones.find(z=>z.id===zone);
+  elSelMeta.textContent = `(${x},${y}) ${zone} ${zMeta ? zMeta.name : ""}`;
+
+  // panel body
+  elCellInfo.textContent = `x=${x}, y=${y} | zone=${zone} | line=${data.line_id || "—"}`;
+  if(selectedLine && GRID_DATA.line_catalog[selectedLine]){
+    const L = GRID_DATA.line_catalog[selectedLine];
+    elLineText.textContent = `${selectedLine} • ${L.stanza} • ${L.role}\n${L.full_text}`;
+    renderLinePills(selectedLine);
+    renderSpans(selectedLine);
+  }else{
+    elLineText.textContent = "—";
+    elLinePills.innerHTML = "";
+    elSpans.textContent = "—";
+  }
+
+  // update sheet mirror
+  syncSheet();
+
+  if(scrollIntoView){
+    // small nudge: keep selection visible on desktop by focusing grid; on mobile we rely on it being present.
+    // no scroll on grid (it's fixed).
+  }
+}
+
+function renderLinePills(activeLine){
+  elLinePills.innerHTML = "";
+  const lines = orderedLines;
+  // show a compact local neighborhood around active line
+  const idx = lines.indexOf(activeLine);
+  const start = Math.max(0, idx-6);
+  const end = Math.min(lines.length-1, idx+6);
+
+  for(let i=start;i<=end;i++){
+    const lid = lines[i];
+    const pill = document.createElement('div');
+    pill.className = "pill mono";
+    pill.textContent = lid;
+    pill.title = GRID_DATA.line_catalog[lid]?.full_text || lid;
+    pill.addEventListener('click', ()=>jumpToLine(lid));
+    if(lid===activeLine) pill.classList.add('active');
+    elLinePills.appendChild(pill);
+  }
+}
+
+function renderSpans(lineId){
+  const spans = GRID_DATA.reverse_index[lineId] || [];
+  if(!spans.length){
+    elSpans.textContent = "—";
+    return;
+  }
+  const lines = spans.map(s=>{
+    const {x0,y0,x1,y1} = s.span;
+    return `${s.kind || "span"} @ ${s.zone}: [${x0},${y0}]→[${x1},${y1}]`;
+  });
+  elSpans.textContent = lines.join("\n");
+}
+
+function jumpToLine(lineId){
+  const spans = GRID_DATA.reverse_index[lineId];
+  if(!spans || !spans.length) return;
+  // choose first span start as jump target
+  const {x0,y0} = spans[0].span;
+  selectCell(x0,y0,true);
+}
+
+/* -------------------------
+   Search & filters
+-------------------------- */
+function computeHits(termRaw){
+  hitLines.clear();
+  hitCells.clear();
+  const term = (termRaw || "").trim();
+  if(!term) return;
+
+  // If user typed L##, treat as see-that-line
+  const m = term.toUpperCase().match(/^L(\d{1,2})$/);
+  if(m){
+    const n = String(parseInt(m[1],10)).padStart(2,'0');
+    const lid = `L${n}`;
+    if(GRID_DATA.line_catalog[lid]){
+      hitLines.add(lid);
+    }
+  }else{
+    const q = term.toLowerCase();
+    for(const [lid, obj] of Object.entries(GRID_DATA.line_catalog)){
+      if(obj.full_text.toLowerCase().includes(q)){
+        hitLines.add(lid);
+      }
+    }
+  }
+
+  // Convert hit lines to cells
+  for(const [key, data] of CELL_MAP){
+    if(data.line_id && hitLines.has(data.line_id)){
+      hitCells.add(key);
+    }
+  }
+}
+
+function applyFilters(){
+  const only = elOnlyHits.checked;
+  for(const [key, el] of cellEls){
+    const data = CELL_MAP.get(key);
+    const inZone = zoneFocus ? data.zone===zoneFocus : true;
+    const isHit = hitCells.size ? hitCells.has(key) : true;
+
+    // dim logic
+    let dim = false;
+    if(zoneFocus && !inZone) dim = true;
+    if(searchTerm && only && !isHit) dim = true;
+
+    el.classList.toggle('dim', dim);
+    el.classList.toggle('hit', !!(searchTerm && hitCells.has(key)));
+  }
+}
+
+/* -------------------------
+   Tests report (badges)
+-------------------------- */
+function renderTests(){
+  const t = GRID_DATA.tests_report;
+  elTests.innerHTML = "";
+
+  const add = (label, ok)=>{
+    const tag = document.createElement('div');
+    tag.className = "tag " + (ok ? "ok" : "bad");
+    tag.innerHTML = `<span class="led"></span><span>${label}: ${ok ? "OK" : "FAIL"}</span>`;
+    elTests.appendChild(tag);
+  };
+
+  add("coverage", !!t.coverage_ok);
+  add("adjacency", !!t.adjacency_ok);
+  add("density", !!t.density_ok);
+  add("continuity", !!t.continuity_ok);
+
+  const notes = (t.notes && t.notes.length) ? t.notes.join("\n") : "No notes.";
+  elTestNotes.textContent = notes;
+}
+
+/* -------------------------
+   Prev/Next navigation
+-------------------------- */
+function moveLine(delta){
+  if(!selectedLine){
+    // if none selected, go to first
+    jumpToLine(orderedLines[0]);
+    return;
+  }
+  const idx = orderedLines.indexOf(selectedLine);
+  const j = Math.max(0, Math.min(orderedLines.length-1, idx+delta));
+  jumpToLine(orderedLines[j]);
+}
+
+/* -------------------------
+   Mobile sheet
+-------------------------- */
+function openSheet(){
+  // Clone panel body into sheet
+  syncSheet();
+  sheet.classList.add('open');
+}
+function closeSheet(){
+  sheet.classList.remove('open');
+}
+function syncSheet(){
+  // mirror the panel content for mobile readability
+  const title = selectedLine ? `Details • ${selectedLine}` : "Details";
+  sheetTitle.textContent = title;
+  // Keep it lightweight: build a small HTML summary instead of cloning nodes
+  const key = cellKey(selected.x, selected.y);
+  const data = CELL_MAP.get(key);
+  const z = URN_ONTOLOGY.zones.find(z=>z.id===data.zone);
+
+  let html = `
+    <div class="section">
+      <div class="k">Selected Cell</div>
+      <div class="v mono">(${selected.x},${selected.y}) • ${data.zone} • ${z ? z.name : ""}</div>
+      <div class="v hint">${z ? z.law : ""}</div>
+    </div>
+  `;
+  if(data.line_id && GRID_DATA.line_catalog[data.line_id]){
+    const L = GRID_DATA.line_catalog[data.line_id];
+    html += `
+      <div class="section">
+        <div class="k">Line</div>
+        <div class="v"><span class="mono">${data.line_id}</span> • ${L.stanza} • ${L.role}\n${L.full_text}</div>
+      </div>
+      <div class="section">
+        <div class="k">Reverse Index</div>
+        <div class="v mono">${(GRID_DATA.reverse_index[data.line_id]||[]).map(s=>{
+          const {x0,y0,x1,y1}=s.span;
+          return `${s.kind||"span"} @ ${s.zone}: [${x0},${y0}]→[${x1},${y1}]`;
+        }).join("\n") || "—"}</div>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="section">
+        <div class="k">Line</div>
+        <div class="v hint">No line bound to this cell.</div>
+      </div>
+    `;
+  }
+
+  html += `
+    <div class="section">
+      <div class="k">Tests</div>
+      <div class="v hint">
+        coverage: ${GRID_DATA.tests_report.coverage_ok ? "OK" : "FAIL"} •
+        adjacency: ${GRID_DATA.tests_report.adjacency_ok ? "OK" : "FAIL"} •
+        density: ${GRID_DATA.tests_report.density_ok ? "OK" : "FAIL"} •
+        continuity: ${GRID_DATA.tests_report.continuity_ok ? "OK" : "FAIL"}
+      </div>
+    </div>
+  `;
+
+  sheetBody.innerHTML = html;
+}
+
+/* -------------------------
+   Boot
+-------------------------- */
+renderLegend();
+renderGrid();
+renderTests();
+selectCell(0,0,true);
+
+elSearch.addEventListener('input', ()=>{
+  searchTerm = elSearch.value;
+  computeHits(searchTerm);
+  applyFilters();
+
+  // If they typed an L## that resolves, jump to it.
+  const m = searchTerm.trim().toUpperCase().match(/^L(\d{1,2})$/);
+  if(m){
+    const n = String(parseInt(m[1],10)).padStart(2,'0');
+    const lid = `L${n}`;
+    if(GRID_DATA.line_catalog[lid]){
+      jumpToLine(lid);
+    }
+  }
+});
+
+elOnlyHits.addEventListener('change', applyFilters);
+
+btnReset.addEventListener('click', ()=>{
+  zoneFocus = null;
+  searchTerm = "";
+  elSearch.value = "";
+  elOnlyHits.checked = false;
+  hitLines.clear();
+  hitCells.clear();
+  renderLegend();
+  applyFilters();
+  selectCell(0,0,true);
+});
+
+btnPrev.addEventListener('click', ()=>moveLine(-1));
+btnNext.addEventListener('click', ()=>moveLine(+1));
+
+btnOpenSheet.addEventListener('click', openSheet);
+btnCloseSheet.addEventListener('click', closeSheet);
+
+// Tap outside sheet to close (nice on mobile)
+sheet.addEventListener('click', (e)=>{
+  if(e.target === sheet) closeSheet();
+});
+
+// Keyboard helpers (desktop)
+window.addEventListener('keydown', (e)=>{
+  if(e.key === "Escape"){ closeSheet(); }
+  if(e.key === "ArrowLeft") selectCell(Math.max(0, selected.x-1), selected.y, false);
+  if(e.key === "ArrowRight") selectCell(Math.min(23, selected.x+1), selected.y, false);
+  if(e.key === "ArrowUp") selectCell(selected.x, Math.max(0, selected.y-1), false);
+  if(e.key === "ArrowDown") selectCell(selected.x, Math.min(23, selected.y+1), false);
+});
+
+// Initial filter apply
+applyFilters();
+</script>
+</body>
+</html>

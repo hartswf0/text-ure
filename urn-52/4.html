@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,interactive-widget=resizes-content" />
+  <title>Keats Urn Inscription System — 24×24 Address Grid</title>
+  <style>
+    :root{
+      --bg:#0b0d10;
+      --panel:#11151b;
+      --panel2:#0f1318;
+      --ink:#e7edf5;
+      --muted:#9aa6b2;
+      --faint:#55606b;
+      --line:#1d2430;
+      --accent:#59d4ff;
+      --accent2:#ffcc66;
+      --danger:#ff5c7a;
+      --ok:#50fa7b;
+      --chip:#141b24;
+      --shadow: 0 10px 30px rgba(0,0,0,.45);
+      --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --cell: 18px; /* will be auto-scaled */
+      --gap: 2px;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; margin:0; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+    body { display:flex; flex-direction:column; }
+
+    /* Top bar */
+    .topbar{
+      position:sticky; top:0; z-index:50;
+      background: linear-gradient(180deg, rgba(11,13,16,.98), rgba(11,13,16,.88));
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .topbar-inner{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      padding: 10px 12px;
+      max-width: 1200px; margin:0 auto;
+    }
+    .brand{
+      display:flex; flex-direction:column; gap:2px; min-width: 220px;
+    }
+    .brand .title{
+      font-size: 13px; letter-spacing:.5px; font-weight: 700; text-transform: uppercase;
+      color: var(--ink);
+    }
+    .brand .subtitle{
+      font-size: 12px; color: var(--muted);
+      font-family: var(--mono);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 46vw;
+    }
+    .actions{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .btn{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: var(--ink);
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 650;
+      cursor: pointer;
+      box-shadow: none;
+      display:inline-flex; gap:8px; align-items:center;
+      user-select:none;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{ border-color: rgba(89,212,255,.35); background: rgba(89,212,255,.10); }
+    .btn.warn{ border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10); }
+    .btn.good{ border-color: rgba(80,250,123,.35); background: rgba(80,250,123,.10); }
+    .btn.small{ padding: 6px 8px; font-size: 11px; border-radius: 10px; }
+    .pill{
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      white-space: nowrap;
+    }
+
+    /* Main layout */
+    .wrap{
+      flex:1;
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap: 10px;
+      padding: 10px 12px 14px;
+      max-width: 1200px;
+      margin:0 auto;
+      width:100%;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns: 1fr; }
+    }
+
+    /* Grid panel */
+    .gridPanel{
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .gridHeader{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: linear-gradient(180deg, rgba(17,21,27,.92), rgba(17,21,27,.70));
+    }
+    .gridHeader .left{
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .gridHeader .h1{
+      font-size: 13px; font-weight: 750; letter-spacing: .3px;
+    }
+    .gridHeader .h2{
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .gridHeader .right{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .toggle{
+      display:inline-flex; gap:8px; align-items:center;
+      padding: 6px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      font-size: 11px;
+      color: var(--muted);
+      user-select:none;
+      cursor:pointer;
+    }
+    .toggle input{ accent-color: var(--accent); }
+    .gridViewport{
+      padding: 10px;
+      overflow:auto;
+      max-height: calc(100vh - 170px);
+      background:
+        radial-gradient(1200px 600px at 20% 0%, rgba(89,212,255,.08), transparent 60%),
+        radial-gradient(900px 500px at 90% 40%, rgba(255,204,102,.07), transparent 60%),
+        linear-gradient(180deg, rgba(15,19,24,.75), rgba(15,19,24,.35));
+    }
+    @media (max-width: 980px){
+      .gridViewport{ max-height: none; }
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(24, var(--cell));
+      grid-template-rows: repeat(24, var(--cell));
+      gap: var(--gap);
+      width: max-content;
+      padding: 8px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.07);
+      background: rgba(0,0,0,.25);
+    }
+    .cell{
+      width: var(--cell);
+      height: var(--cell);
+      border-radius: 5px;
+      border: 1px solid rgba(255,255,255,.06);
+      background: rgba(255,255,255,.03);
+      cursor:pointer;
+      position:relative;
+      overflow:hidden;
+    }
+    .cell:hover{ border-color: rgba(255,255,255,.18); }
+    .cell.active{
+      outline: 2px solid rgba(89,212,255,.7);
+      outline-offset: 1px;
+      border-color: rgba(89,212,255,.35);
+      background: rgba(89,212,255,.12);
+    }
+    .cell.lockedPanel{
+      box-shadow: inset 0 0 0 999px rgba(89,212,255,.04);
+      border-color: rgba(89,212,255,.14);
+    }
+    .cell.otherWhileLocked{
+      filter: saturate(.7) brightness(.85);
+      opacity: .65;
+    }
+
+    /* semantic colors */
+    .role-core { background: rgba(80,250,123,.10); }
+    .role-echo { background: rgba(255,204,102,.10); }
+    .role-glue { background: rgba(89,212,255,.07); }
+
+    .beaconDot{
+      position:absolute; top:2px; right:2px;
+      width:6px; height:6px; border-radius: 999px;
+      background: var(--accent2);
+      box-shadow: 0 0 10px rgba(255,204,102,.35);
+    }
+    .seamStripe{
+      position:absolute; left:0; top:0; bottom:0;
+      width:2px;
+      background: rgba(255,92,122,.65);
+    }
+    .spineStripe{
+      position:absolute; left:0; top:0; bottom:0;
+      width:2px;
+      background: rgba(89,212,255,.75);
+    }
+
+    /* Side panel */
+    .side{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .card{
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .cardHeader{
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: linear-gradient(180deg, rgba(17,21,27,.92), rgba(17,21,27,.70));
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .cardHeader .t{
+      font-size: 12px; font-weight: 750; letter-spacing:.3px;
+    }
+    .cardHeader .mini{
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .cardBody{
+      padding: 10px 12px;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 120px 1fr;
+      gap: 6px 10px;
+      font-size: 12px;
+      align-items:start;
+    }
+    .k{ color: var(--muted); font-family: var(--mono); font-size: 11px; padding-top:2px; }
+    .v{ color: var(--ink); }
+    .chipRow{ display:flex; flex-wrap:wrap; gap:6px; }
+    .chip{
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.08);
+      padding: 6px 8px;
+      border-radius: 999px;
+    }
+    .payload{
+      margin-top: 10px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 14px;
+      padding: 10px;
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.35;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #d9e6f2;
+    }
+
+    /* Controls */
+    .controls{
+      display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+      margin-top: 10px;
+    }
+    .input, select{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: var(--ink);
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-family: var(--mono);
+      outline: none;
+    }
+    .input{
+      width: 100%;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+      margin-top: 8px;
+    }
+    @media (max-width: 980px){
+      .row{ grid-template-columns: 1fr; }
+    }
+
+    /* Modal */
+    .modal{
+      position: fixed; inset:0; z-index:100;
+      background: rgba(0,0,0,.65);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 14px;
+    }
+    .modal.show{ display:flex; }
+    .modalInner{
+      width: min(980px, 96vw);
+      max-height: 88vh;
+      overflow:hidden;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(17,21,27,.96);
+      box-shadow: var(--shadow);
+      display:flex;
+      flex-direction:column;
+    }
+    .modalTop{
+      padding: 10px 12px;
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .modalTop .mt{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .modalBody{
+      padding: 10px 12px;
+      overflow:auto;
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.35;
+      white-space: pre;
+      color: #d9e6f2;
+    }
+    .hint{
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 8px;
+      line-height: 1.3;
+    }
+    .kbd{
+      font-family: var(--mono);
+      font-size: 11px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      border-bottom-color: rgba(255,255,255,.08);
+      padding: 2px 6px;
+      border-radius: 8px;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    /* Tiny screen tightening */
+    @media (max-width: 420px){
+      .brand{ min-width: 0; }
+      .brand .subtitle{ max-width: 60vw; }
+      .btn{ padding: 7px 8px; }
+      .gridHeader .right{ gap:6px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="title">URN INSCRIPTION SYSTEM</div>
+        <div class="subtitle" id="statusLine">seed=KEATS|ODE_ON_A_GRECIAN_URN|URN_BANDS|V1 · active_panel=NONE · cursor=(1,3)</div>
+      </div>
+      <div class="actions">
+        <span class="pill" id="pillLock">LOCK: OFF</span>
+        <button class="btn primary" id="btnLockToggle">Toggle Lock</button>
+        <button class="btn" id="btnRaycast">Raycast (beam)</button>
+        <button class="btn" id="btnExport">Export Stream</button>
+        <button class="btn warn" id="btnReset">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="gridPanel">
+      <div class="gridHeader">
+        <div class="left">
+          <div class="h1">24×24 Address Space (wrap X) — urn-banded storage</div>
+          <div class="h2">tap cells · drag to pan · <span class="kbd">↑↓←→</span> move · <span class="kbd">Enter</span> open · <span class="kbd">B</span> jump beacon</div>
+        </div>
+        <div class="right">
+          <label class="toggle"><input type="checkbox" id="togRoleColors" checked /> role color</label>
+          <label class="toggle"><input type="checkbox" id="togShowBeacons" checked /> beacons</label>
+          <label class="toggle"><input type="checkbox" id="togPanelShade" checked /> shade locked</label>
+          <label class="toggle"><input type="checkbox" id="togWrapHint" checked /> wrap hint</label>
+        </div>
+      </div>
+      <div class="gridViewport" id="gridViewport">
+        <div class="grid" id="grid"></div>
+        <div class="hint">
+          Spine column (<span class="kbd">x=0</span>) = beacons/index channel. Seam column (<span class="kbd">x=23</span>) = resync markers. Panel bands: P1 y=3–6, P2 y=7–10, P3 y=11–14, P4 y=15–18, P5 y=19–23.
+        </div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="card">
+        <div class="cardHeader">
+          <div class="t">Cursor / Cell Inspector</div>
+          <div class="mini" id="miniPanel">P1</div>
+        </div>
+        <div class="cardBody">
+          <div class="kv">
+            <div class="k">cursor</div><div class="v" id="kvCursor">(1,3)</div>
+            <div class="k">panel</div><div class="v" id="kvPanel">P1</div>
+            <div class="k">role</div><div class="v" id="kvRole">core</div>
+            <div class="k">beacon</div><div class="v" id="kvBeacon">false</div>
+            <div class="k">line_ids</div><div class="v" id="kvLines">L01</div>
+          </div>
+          <div class="payload" id="payloadBox"></div>
+
+          <div class="controls">
+            <button class="btn small" id="btnPrev">◀</button>
+            <button class="btn small" id="btnUp">▲</button>
+            <button class="btn small" id="btnDown">▼</button>
+            <button class="btn small" id="btnNext">▶</button>
+            <button class="btn small" id="btnJumpPrimary">Jump Primary</button>
+            <button class="btn small" id="btnJumpSpine">Jump Spine</button>
+          </div>
+
+          <div class="row">
+            <div>
+              <div class="k" style="margin: 8px 0 6px;">Goto panel</div>
+              <select id="selPanel" style="width:100%;">
+                <option value="P1">P1 Address/Interrogation</option>
+                <option value="P2">P2 Unheard Audio</option>
+                <option value="P3">P3 Affect Forever</option>
+                <option value="P4">P4 Ritual Empty Town</option>
+                <option value="P5">P5 Epigram Output</option>
+              </select>
+            </div>
+            <div>
+              <div class="k" style="margin: 8px 0 6px;">Search (line id / text)</div>
+              <input class="input" id="inpSearch" placeholder='e.g., L49 or "for ever" or "silence"' />
+            </div>
+          </div>
+
+          <div class="controls" style="margin-top:8px;">
+            <button class="btn small good" id="btnFind">Find</button>
+            <button class="btn small" id="btnBeacons">List Beacons</button>
+            <button class="btn small" id="btnExplain">Show Rules</button>
+          </div>
+
+          <div class="hint">
+            Lock makes the raycaster and "next hit" prefer the active panel band. Use <span class="kbd">Toggle Lock</span> or click a LOCK beacon in the spine to set it.
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cardHeader">
+          <div class="t">Panel Model</div>
+          <div class="mini">ekphrasis mechanisms</div>
+        </div>
+        <div class="cardBody" id="panelList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="modalInner">
+      <div class="modalTop">
+        <div class="mt" id="modalTitle">Export Stream</div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="btn small" id="btnCopy">Copy</button>
+          <button class="btn small warn" id="btnClose">Close</button>
+        </div>
+      </div>
+      <div class="modalBody" id="modalBody"></div>
+    </div>
+  </div>
+
+<script>
+/* ============================================================
+   INSCRIPTION SYSTEM — SINGLE FILE
+   Deterministic grid built from defaults + banding + overrides.
+   Wrap X; seam+spine channels; panel-lock; beacon grammar;
+   export compiler stream.
+   ============================================================ */
+
+(function(){
+  const SPEC = {
+    meta: {
+      system_id: "KEATS_URN_INSCRIPTION_V1",
+      seed: "KEATS|ODE_ON_A_GRECIAN_URN|URN_BANDS|V1",
+      grid: { width: 24, height: 24, wrap_x: true, wrap_y: false },
+      spine_column_x: 0,
+      seam_column_x: 23,
+      cell_display_capacity_chars: 480
+    },
+    panelBands: [
+      { id:"P0", y0:0, y1:2, title:"INDEX / BEACON SPINE" },
+      { id:"P1", y0:3, y1:6, title:"ADDRESS + INTERROGATION" },
+      { id:"P2", y0:7, y1:10, title:"UNHEARD AUDIO + FROZEN SONG" },
+      { id:"P3", y0:11, y1:14, title:"AFFECT LOOP (for ever…)" },
+      { id:"P4", y0:15, y1:18, title:"RITUAL LOOP + EMPTY TOWN" },
+      { id:"P5", y0:19, y1:23, title:"EPIGRAM OUTPUT" }
+    ],
+    rowDefaults: new Map([
+      [0,{panel_id:"P0", role:"core"}],
+      [1,{panel_id:"P0", role:"glue"}],
+      [2,{panel_id:"P0", role:"glue"}],
+      [3,{panel_id:"P1", role:"core"}],
+      [4,{panel_id:"P1", role:"echo"}],
+      [5,{panel_id:"P1", role:"glue"}],
+      [6,{panel_id:"P1", role:"glue"}],
+      [7,{panel_id:"P2", role:"core"}],
+      [8,{panel_id:"P2", role:"echo"}],
+      [9,{panel_id:"P2", role:"glue"}],
+      [10,{panel_id:"P2", role:"glue"}],
+      [11,{panel_id:"P3", role:"core"}],
+      [12,{panel_id:"P3", role:"echo"}],
+      [13,{panel_id:"P3", role:"glue"}],
+      [14,{panel_id:"P3", role:"glue"}],
+      [15,{panel_id:"P4", role:"core"}],
+      [16,{panel_id:"P4", role:"echo"}],
+      [17,{panel_id:"P4", role:"glue"}],
+      [18,{panel_id:"P4", role:"glue"}],
+      [19,{panel_id:"P5", role:"core"}],
+      [20,{panel_id:"P5", role:"echo"}],
+      [21,{panel_id:"P5", role:"glue"}],
+      [22,{panel_id:"P5", role:"echo"}],
+      [23,{panel_id:"P5", role:"glue"}]
+    ]),
+    panelModel: [
+      { id:"P0", title:"INDEX / BEACON SPINE", rationale:"High-reliability control channel for navigation, locks, and resync.", tagset:["index","beacon","error_recovery","addressing"], lines:[] },
+      { id:"P1", title:"ADDRESS + INTERROGATION (Legend Haunts)", rationale:"Direct address plus question-burst creates a queryable scene decoder.", tagset:["address","questions","scene_decode","frozen_action_seed"], lines:["L01","L02","L03","L04","L05","L06","L07","L08","L09","L10"] },
+      { id:"P2", title:"UNHEARD AUDIO + FROZEN SONG (Play On)", rationale:"Splits sensual channel from spirit channel; enforces ‘unheard’ as storage advantage.", tagset:["audio","unheard","loop_command","desire_deferred"], lines:["L11","L12","L13","L14","L15","L16","L17","L18","L19","L20"] },
+      { id:"P3", title:"AFFECT LOOP (For ever…)", rationale:"Recursion (‘for ever’) is treated as a redundancy directive; physiology as overflow signal.", tagset:["recursion","perpetual_spring","affect","physiology"], lines:["L21","L22","L23","L24","L25","L26","L27","L28","L29","L30"] },
+      { id:"P4", title:"RITUAL LOOP + EMPTY TOWN (No Return)", rationale:"Procession implies source town; town becomes silent address-space ‘hole’ (cannot return).", tagset:["ritual","procession","absence","closure","silence"], lines:["L31","L32","L33","L34","L35","L36","L37","L38","L39","L40"] },
+      { id:"P5", title:"EPIGRAM OUTPUT (Cold Pastoral)", rationale:"Final quote is treated as a checksum-like payload repeated for stable retrieval.", tagset:["epigram","truth_beauty","archive_endurance","eternity"], lines:["L41","L42","L43","L44","L45","L46","L47","L48","L49","L50"] }
+    ],
+    lineIndex: buildLineIndex(),
+    primaryMap: buildPrimaryMap(),
+    overrides: buildOverrides()
+  };
+
+  /* ---------- Utilities ---------- */
+
+  // Tiny deterministic "crc8-ish" (not real CRC8) used only for stable beacon suffix display.
+  // This respects the constraint: any stochasticity seeded & explainable; this is deterministic hashing.
+  function crc8(str){
+    let h = 0xA5;
+    for (let i=0;i<str.length;i++){
+      h ^= str.charCodeAt(i);
+      h = (h + ((h<<1) & 0xFF) + 0x3D) & 0xFF;
+      h = ((h<<1) | (h>>7)) & 0xFF;
+    }
+    return h.toString(16).toUpperCase().padStart(2,"0");
+  }
+
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+  function wrapX(x){
+    const w = SPEC.meta.grid.width;
+    x = x % w;
+    return x < 0 ? x + w : x;
+  }
+
+  function inBand(panelId, y){
+    const band = SPEC.panelBands.find(b=>b.id===panelId);
+    if(!band) return false;
+    return y >= band.y0 && y <= band.y1;
+  }
+
+  function getBandByY(y){
+    for(const b of SPEC.panelBands){
+      if(y>=b.y0 && y<=b.y1) return b.id;
+    }
+    return "P0";
+  }
+
+  function roleClass(role){
+    if(role==="core") return "role-core";
+    if(role==="echo") return "role-echo";
+    return "role-glue";
+  }
+
+  function isBeaconPayload(payload){ return typeof payload === "string" && payload.startsWith("§"); }
+
+  function parseBeacon(payload){
+    if(!isBeaconPayload(payload)) return null;
+    const parts = payload.split("|");
+    if(parts.length < 5) return null;
+    return { panel_id: parts[1], type: parts[2], label: parts[3], crc: parts[4] };
+  }
+
+  function cellKey(x,y){ return `${x},${y}`; }
+
+  /* ---------- Build base grid via rules ---------- */
+
+  function buildEmptyCell(){
+    return { panel_id: "P0", line_ids: [], payload_text: "", beacon: false, redundancy_role: "glue" };
+  }
+
+  // default + row band + spine/seam + overrides
+  function materializeCell(x,y){
+    const base = buildEmptyCell();
+    const rd = SPEC.rowDefaults.get(y);
+    if(rd){
+      base.panel_id = rd.panel_id;
+      base.redundancy_role = rd.role;
+    } else {
+      base.panel_id = getBandByY(y);
+      base.redundancy_role = "glue";
+    }
+
+    // spine column default beacon
+    if(x === SPEC.meta.spine_column_x){
+      base.panel_id = "P0";
+      base.line_ids = [];
+      const crc = crc8(`${SPEC.meta.seed}|NAV|${y}`);
+      base.payload_text = `§B|P0|SPINE|NAV|${crc}`;
+      base.beacon = true;
+      base.redundancy_role = "core";
+    }
+
+    // seam column default
+    if(x === SPEC.meta.seam_column_x){
+      base.panel_id = "P0";
+      base.line_ids = [];
+      const crc = crc8(`${SPEC.meta.seed}|ROW|${y}`);
+      base.payload_text = `⟂SEAM⟂|ROW_CRC=${crc}`;
+      base.beacon = true;
+      base.redundancy_role = "glue";
+    }
+
+    // explicit overrides
+    const ov = SPEC.overrides.get(cellKey(x,y));
+    if(ov){
+      return { ...base, ...ov };
+    }
+    return base;
+  }
+
+  /* ---------- Source data builders (from the spec you asked to compile) ---------- */
+
+  function buildLineIndex(){
+    // Minimal but complete line index (L01..L50).
+    // (We keep motifs/entities/actions because you explicitly required them in the spec.)
+    const L = [
+      ["L01",1,1,"Thou still unravish'd bride of quietness,", ["address","silence"], ["urn","bride"], ["address"]],
+      ["L02",1,2,"Thou foster-child of silence and slow time,", ["silence","time"], ["urn","foster-child"], ["address"]],
+      ["L03",1,3,"Sylvan historian, who canst thus express", ["history","inscription"], ["urn","historian"], ["express"]],
+      ["L04",1,4,"A flowery tale more sweetly than our rhyme:", ["comparison","tale"], ["tale","rhyme"], ["tell","compare"]],
+      ["L05",1,5,"What leaf-fring'd legend haunts about thy shape", ["legend","haunting","questions"], ["legend","shape"], ["haunt","ask"]],
+      ["L06",1,6,"Of deities or mortals, or of both,", ["myth","mixed beings"], ["deities","mortals"], ["classify"]],
+      ["L07",1,7,"In Tempe or the dales of Arcady?", ["place","pastoral"], ["Tempe","Arcady"], ["locate","ask"]],
+      ["L08",1,8,"What men or gods are these? What maidens loth?", ["questions","scene decoding"], ["men","gods","maidens"], ["ask","identify"]],
+      ["L09",1,9,"What mad pursuit? What struggle to escape?", ["chase","frozen action"], ["pursuit","struggle"], ["pursue","escape","ask"]],
+      ["L10",1,10,"What pipes and timbrels? What wild ecstasy?", ["music","unheard audio"], ["pipes","timbrels","ecstasy"], ["play","ask"]],
+
+      ["L11",2,1,"Heard melodies are sweet, but those unheard", ["heard/unheard","audio channel"], ["melodies"], ["contrast"]],
+      ["L12",2,2,"Are sweeter; therefore, ye soft pipes, play on;", ["unheard audio","loop command"], ["pipes"], ["command","play"]],
+      ["L13",2,3,"Not to the sensual ear, but, more endear'd,", ["spirit vs sense"], ["ear"], ["redirect"]],
+      ["L14",2,4,"Pipe to the spirit ditties of no tone:", ["unheard audio","spirit channel"], ["spirit","ditties"], ["pipe"]],
+      ["L15",2,5,"Fair youth, beneath the trees, thou canst not leave", ["frozen action","eternity"], ["youth","trees"], ["cannot leave"]],
+      ["L16",2,6,"Thy song, nor ever can those trees be bare;", ["permanence","perpetual nature"], ["song","trees"], ["sing","remain"]],
+      ["L17",2,7,"Bold Lover, never, never canst thou kiss,", ["desire deferred","frozen climax"], ["lover"], ["cannot kiss"]],
+      ["L18",2,8,"Though winning near the goal yet, do not grieve;", ["near-goal","instruction"], ["goal"], ["console","instruct"]],
+      ["L19",2,9,"She cannot fade, though thou hast not thy bliss,", ["anti-decay","tradeoff"], ["she","bliss"], ["cannot fade"]],
+      ["L20",2,10,"For ever wilt thou love, and she be fair!", ["forever","loop"], ["thou","she"], ["love","remain fair"]],
+
+      ["L21",3,1,"Ah, happy, happy boughs! that cannot shed", ["perpetual spring","cannot"], ["boughs"], ["cannot shed"]],
+      ["L22",3,2,"Your leaves, nor ever bid the Spring adieu;", ["forever","season suspended"], ["leaves","Spring"], ["cannot bid adieu"]],
+      ["L23",3,3,"And, happy melodist, unwearied,", ["unwearied loop"], ["melodist"], ["persist"]],
+      ["L24",3,4,"For ever piping songs for ever new;", ["for ever","recursion"], ["songs"], ["pipe"]],
+      ["L25",3,5,"More happy love! more happy, happy love!", ["affect amplification"], ["love"], ["exclaim"]],
+      ["L26",3,6,"For ever warm and still to be enjoy'd,", ["eternal enjoyment"], ["love"], ["be enjoyed"]],
+      ["L27",3,7,"For ever panting, and for ever young;", ["for ever","youth loop"], ["panting","young"], ["pant","remain young"]],
+      ["L28",3,8,"All breathing human passion far above,", ["human passion","excess"], ["passion"], ["breathe"]],
+      ["L29",3,9,"That leaves a heart high-sorrowful and cloy'd,", ["physiology","cloy"], ["heart"], ["leave"]],
+      ["L30",3,10,"A burning forehead, and a parching tongue.", ["physiology","burning/parching"], ["forehead","tongue"], ["burn","parch"]],
+
+      ["L31",4,1,"Who are these coming to the sacrifice?", ["ritual","questions"], ["these","sacrifice"], ["come","ask"]],
+      ["L32",4,2,"To what green altar, O mysterious priest,", ["altar","address"], ["altar","priest"], ["address","ask"]],
+      ["L33",4,3,"Lead'st thou that heifer lowing at the skies,", ["procession","animal voice"], ["heifer","skies"], ["lead","low"]],
+      ["L34",4,4,"And all her silken flanks with garlands drest?", ["ornament","ritual dressing"], ["flanks","garlands"], ["dress"]],
+      ["L35",4,5,"What little town by river or sea shore,", ["place","absence"], ["town","river","sea shore"], ["ask","locate"]],
+      ["L36",4,6,"Or mountain-built with peaceful citadel,", ["citadel","peace"], ["mountain","citadel"], ["describe"]],
+      ["L37",4,7,"Is emptied of this folk, this pious morn?", ["emptied","ritual morning"], ["folk","morn"], ["empty"]],
+      ["L38",4,8,"And, little town, thy streets for evermore", ["forever","desolation"], ["town","streets"], ["address","remain"]],
+      ["L39",4,9,"Will silent be; and not a soul to tell", ["silence","no witness"], ["soul"], ["be silent"]],
+      ["L40",4,10,"Why thou art desolate, can e'er return.", ["no return","closure"], ["thou","desolate"], ["cannot return"]],
+
+      ["L41",5,1,"O Attic shape! Fair attitude! with brede", ["address","artifact"], ["Attic shape","attitude","brede"], ["address"]],
+      ["L42",5,2,"Of marble men and maidens overwrought,", ["material","engraving"], ["marble men","maidens"], ["overwrought"]],
+      ["L43",5,3,"With forest branches and the trodden weed;", ["pastoral","ground"], ["branches","weed"], ["tread"]],
+      ["L44",5,4,"Thou, silent form, dost tease us out of thought", ["silence","cognitive displacement"], ["silent form","us"], ["tease"]],
+      ["L45",5,5,"As doth eternity: Cold Pastoral!", ["eternity","cold pastoral"], ["eternity"], ["name"]],
+      ["L46",5,6,"When old age shall this generation waste,", ["time","decay"], ["old age","generation"], ["waste"]],
+      ["L47",5,7,"Thou shalt remain, in midst of other woe", ["remains","archive endurance"], ["thou","woe"], ["remain"]],
+      ["L48",5,8,"Than ours, a friend to man, to whom thou say'st,", ["address","speech from object"], ["friend","man"], ["say"]],
+      ["L49",5,9,"\"Beauty is truth, truth beauty,—that is all", ["epigram","truth/beauty"], ["beauty","truth"], ["assert"]],
+      ["L50",5,10,"Ye know on earth, and all ye need to know.\"", ["epigram","closure"], ["ye","earth"], ["close"]]
+    ];
+    const out = new Map();
+    for(const row of L){
+      const [line_id, stanza, line_number, text, motifs, entities, actions] = row;
+      out.set(line_id, { line_id, stanza, line_number, text, motifs, entities, actions });
+    }
+    return out;
+  }
+
+  function buildPrimaryMap(){
+    // From your earlier spec: primary line locations are fixed in core rows.
+    const m = new Map();
+    const put = (id, x, y)=>m.set(id, {x, y});
+    // P1 core y=3 x=1..10
+    for(let i=1;i<=10;i++) put(`L${String(i).padStart(2,"0")}`, i, 3);
+    // P2 core y=7 x=1..10
+    for(let i=11;i<=20;i++) put(`L${String(i).padStart(2,"0")}`, (i-10), 7);
+    // P3 core y=11 x=1..10
+    for(let i=21;i<=30;i++) put(`L${String(i).padStart(2,"0")}`, (i-20), 11);
+    // P4 core y=15 x=1..10
+    for(let i=31;i<=40;i++) put(`L${String(i).padStart(2,"0")}`, (i-30), 15);
+    // P5 core y=19 x=1..10
+    for(let i=41;i<=50;i++) put(`L${String(i).padStart(2,"0")}`, (i-40), 19);
+    return m;
+  }
+
+  function buildOverrides(){
+    const o = new Map();
+    const set = (x,y,cell)=>o.set(cellKey(x,y), cell);
+
+    // Index row y=0 beacons
+    set(0,0,{ panel_id:"P0", payload_text:`§B|P0|LOCK|INDEX|${crc8(SPEC.meta.seed+"|P0|LOCK|INDEX")}`, beacon:true, redundancy_role:"core", line_ids:[] });
+    set(1,0,{ panel_id:"P0", payload_text:`§B|P1|GOTO|ADDRESS|${crc8(SPEC.meta.seed+"|P1|GOTO|ADDRESS")}`, beacon:true, redundancy_role:"core", line_ids:[] });
+    set(2,0,{ panel_id:"P0", payload_text:`§B|P2|GOTO|UNHEARD|${crc8(SPEC.meta.seed+"|P2|GOTO|UNHEARD")}`, beacon:true, redundancy_role:"core", line_ids:[] });
+    set(3,0,{ panel_id:"P0", payload_text:`§B|P3|GOTO|FOREVER|${crc8(SPEC.meta.seed+"|P3|GOTO|FOREVER")}`, beacon:true, redundancy_role:"core", line_ids:[] });
+    set(4,0,{ panel_id:"P0", payload_text:`§B|P4|GOTO|RITUAL|${crc8(SPEC.meta.seed+"|P4|GOTO|RITUAL")}`, beacon:true, redundancy_role:"core", line_ids:[] });
+    set(5,0,{ panel_id:"P0", payload_text:`§B|P5|GOTO|EPIGRAM|${crc8(SPEC.meta.seed+"|P5|GOTO|EPIGRAM")}`, beacon:true, redundancy_role:"core", line_ids:[] });
+
+    // Index map y=1
+    set(1,1,{ panel_id:"P0", payload_text:"MAP: P1=L01..L10 @ y=3", beacon:false, redundancy_role:"glue", line_ids:[] });
+    set(2,1,{ panel_id:"P0", payload_text:"MAP: P2=L11..L20 @ y=7", beacon:false, redundancy_role:"glue", line_ids:[] });
+    set(3,1,{ panel_id:"P0", payload_text:"MAP: P3=L21..L30 @ y=11", beacon:false, redundancy_role:"glue", line_ids:[] });
+    set(4,1,{ panel_id:"P0", payload_text:"MAP: P4=L31..L40 @ y=15", beacon:false, redundancy_role:"glue", line_ids:[] });
+    set(5,1,{ panel_id:"P0", payload_text:"MAP: P5=L41..L50 @ y=19", beacon:false, redundancy_role:"glue", line_ids:[] });
+
+    // Panel LOCK beacons in spine at band bottoms (y=6,10,14,18,23)
+    set(0,6,{ panel_id:"P1", payload_text:`§B|P1|LOCK|ADDRESS_INTERROGATION|${crc8(SPEC.meta.seed+"|P1|LOCK|ADDRESS_INTERROGATION")}`, beacon:true, redundancy_role:"core", line_ids:[] });
+    set(0,10,{ panel_id:"P2", payload_text:`§B|P2|LOCK|UNHEARD_AUDIO|${crc8(SPEC.meta.seed+"|P2|LOCK|UNHEARD_AUDIO")}`, beacon:true, redundancy_role:"core", line_ids:[] });
+    set(0,14,{ panel_id:"P3", payload_text:`§B|P3|LOCK|AFFECT_FOREVER|${crc8(SPEC.meta.seed+"|P3|LOCK|AFFECT_FOREVER")}`, beacon:true, redundancy_role:"core", line_ids:[] });
+    set(0,18,{ panel_id:"P4", payload_text:`§B|P4|LOCK|RITUAL_EMPTY_TOWN|${crc8(SPEC.meta.seed+"|P4|LOCK|RITUAL_EMPTY_TOWN")}`, beacon:true, redundancy_role:"core", line_ids:[] });
+    set(0,23,{ panel_id:"P5", payload_text:`§B|P5|LOCK|EPIGRAM_OUTPUT|${crc8(SPEC.meta.seed+"|P5|LOCK|EPIGRAM_OUTPUT")}`, beacon:true, redundancy_role:"core", line_ids:[] });
+
+    // Primary lines: populate payloads at core rows y=3,7,11,15,19
+    for(const [line_id, pos] of SPEC.primaryMap.entries()){
+      const li = SPEC.lineIndex.get(line_id);
+      if(!li) continue;
+      set(pos.x, pos.y, {
+        panel_id: getBandByY(pos.y),
+        line_ids: [line_id],
+        payload_text: `${line_id} ${li.text}`,
+        beacon: false,
+        redundancy_role: "core"
+      });
+    }
+
+    // Echo rows: y=4,8,12,16,20 — pair summaries
+    const echoPairs = [
+      {y:4, panel:"P1", pairs:[
+        [["L01","L02"],"L01–L02 (address/silence/time)"],
+        [["L03","L04"],"L03–L04 (historian/tale>rhyme)"],
+        [["L05","L06"],"L05–L06 (legend: gods/mortals)"],
+        [["L07","L08"],"L07–L08 (place + figures)"],
+        [["L09","L10"],"L09–L10 (pursuit + music)"]
+      ]},
+      {y:8, panel:"P2", pairs:[
+        [["L11","L12"],"L11–L12 (unheard sweeter; play on)"],
+        [["L13","L14"],"L13–L14 (sense→spirit channel)"],
+        [["L15","L16"],"L15–L16 (youth/trees/song fixed)"],
+        [["L17","L18"],"L17–L18 (kiss deferred; no grieve)"],
+        [["L19","L20"],"L19–L20 (no fade; forever fair)"]
+      ]},
+      {y:12, panel:"P3", pairs:[
+        [["L21","L22"],"L21–L22 (cannot shed; Spring suspended)"],
+        [["L23","L24"],"L23–L24 (unwearied; forever new)"],
+        [["L25","L26"],"L25–L26 (happy love; forever warm)"],
+        [["L27","L28"],"L27–L28 (forever young; passion above)"],
+        [["L29","L30"],"L29–L30 (cloy + burning/parching)"]
+      ]},
+      {y:16, panel:"P4", pairs:[
+        [["L31","L32"],"L31–L32 (who? altar? priest)"],
+        [["L33","L34"],"L33–L34 (heifer + garlands)"],
+        [["L35","L36"],"L35–L36 (town by river/sea; citadel)"],
+        [["L37","L38"],"L37–L38 (emptied; streets forever)"],
+        [["L39","L40"],"L39–L40 (silence; no return)"]
+      ]},
+      {y:20, panel:"P5", pairs:[
+        [["L41","L42"],"L41–L42 (Attic shape; marble figures)"],
+        [["L43","L44"],"L43–L44 (branches/weed; silent tease)"],
+        [["L45","L46"],"L45–L46 (eternity; generation waste)"],
+        [["L47","L48"],"L47–L48 (remain; friend to man; says)"],
+        [["L49","L50"],"L49–L50 (EPIGRAM)"]
+      ]}
+    ];
+    for(const block of echoPairs){
+      let x=1;
+      for(const [line_ids,label] of block.pairs){
+        set(x, block.y, { panel_id:block.panel, line_ids, payload_text: label, beacon:false, redundancy_role:"echo" });
+        x++;
+      }
+    }
+
+    // Glue crosslinks (a few high value ones)
+    set(1,5,{ panel_id:"P1", line_ids:["L02"], payload_text:"XREF: silence↔unheard => P2(L11–L14)", beacon:false, redundancy_role:"glue" });
+    set(2,5,{ panel_id:"P1", line_ids:["L09"], payload_text:"XREF: pursuit/frozen_action => P2(L15–L18)", beacon:false, redundancy_role:"glue" });
+    set(3,5,{ panel_id:"P1", line_ids:["L10"], payload_text:"XREF: pipes/timbrels => P2(L12,L14,L16)", beacon:false, redundancy_role:"glue" });
+
+    set(1,9,{ panel_id:"P2", line_ids:["L12"], payload_text:"XREF: question-music => P1(L10)", beacon:false, redundancy_role:"glue" });
+    set(2,9,{ panel_id:"P2", line_ids:["L20"], payload_text:"XREF: 'for ever' recursion => P3(L24–L27)", beacon:false, redundancy_role:"glue" });
+
+    set(1,13,{ panel_id:"P3", line_ids:["L24"], payload_text:"ANCHOR: token=FOR_EVER (high recall)", beacon:false, redundancy_role:"glue" });
+    set(2,13,{ panel_id:"P3", line_ids:["L29","L30"], payload_text:"XREF: passion→cost => P5(COLD_PASTORAL)", beacon:false, redundancy_role:"glue" });
+
+    set(1,17,{ panel_id:"P4", line_ids:["L39","L40"], payload_text:"ANCHOR: token=NO_RETURN (closure handle)", beacon:false, redundancy_role:"glue" });
+    set(2,17,{ panel_id:"P4", line_ids:["L02"], payload_text:"XREF: silence/time => P1(L02)", beacon:false, redundancy_role:"glue" });
+
+    // Epigram repeats y=22
+    for(const x of [1,2,3]){
+      set(x,22,{ panel_id:"P5", line_ids:["L49","L50"], payload_text:"REPEAT: L49–L50 (checksum payload)", beacon:true, redundancy_role:"echo" });
+    }
+
+    return o;
+  }
+
+  /* ---------- Runtime state ---------- */
+
+  const state = {
+    cursor: {x:1, y:3},
+    activePanel: null,   // panel id when locked
+    lockEnabled: false,  // whether lock is enabled globally
+    showRoleColors: true,
+    showBeacons: true,
+    shadeLocked: true,
+    wrapHint: true,
+    lastRaycast: null
+  };
+
+  /* ---------- DOM ---------- */
+
+  const elGrid = document.getElementById("grid");
+  const elStatusLine = document.getElementById("statusLine");
+  const elPillLock = document.getElementById("pillLock");
+  const elMiniPanel = document.getElementById("miniPanel");
+
+  const kvCursor = document.getElementById("kvCursor");
+  const kvPanel = document.getElementById("kvPanel");
+  const kvRole = document.getElementById("kvRole");
+  const kvBeacon = document.getElementById("kvBeacon");
+  const kvLines = document.getElementById("kvLines");
+  const payloadBox = document.getElementById("payloadBox");
+
+  const togRoleColors = document.getElementById("togRoleColors");
+  const togShowBeacons = document.getElementById("togShowBeacons");
+  const togPanelShade = document.getElementById("togPanelShade");
+  const togWrapHint = document.getElementById("togWrapHint");
+
+  const btnLockToggle = document.getElementById("btnLockToggle");
+  const btnRaycast = document.getElementById("btnRaycast");
+  const btnExport = document.getElementById("btnExport");
+  const btnReset = document.getElementById("btnReset");
+
+  const btnPrev = document.getElementById("btnPrev");
+  const btnNext = document.getElementById("btnNext");
+  const btnUp = document.getElementById("btnUp");
+  const btnDown = document.getElementById("btnDown");
+  const btnJumpPrimary = document.getElementById("btnJumpPrimary");
+  const btnJumpSpine = document.getElementById("btnJumpSpine");
+
+  const selPanel = document.getElementById("selPanel");
+  const inpSearch = document.getElementById("inpSearch");
+  const btnFind = document.getElementById("btnFind");
+  const btnBeacons = document.getElementById("btnBeacons");
+  const btnExplain = document.getElementById("btnExplain");
+
+  const panelList = document.getElementById("panelList");
+
+  const modal = document.getElementById("modal");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalBody = document.getElementById("modalBody");
+  const btnClose = document.getElementById("btnClose");
+  const btnCopy = document.getElementById("btnCopy");
+
+  /* ---------- Grid build & render ---------- */
+
+  const cellEls = new Map(); // key -> element
+  function buildGridDOM(){
+    elGrid.innerHTML = "";
+    cellEls.clear();
+    const w = SPEC.meta.grid.width;
+    const h = SPEC.meta.grid.height;
+    for(let y=0;y<h;y++){
+      for(let x=0;x<w;x++){
+        const c = document.createElement("div");
+        c.className = "cell";
+        c.dataset.x = String(x);
+        c.dataset.y = String(y);
+        c.addEventListener("click", ()=>{
+          setCursor(x,y,true);
+          onCellActivate();
+        });
+        cellEls.set(cellKey(x,y), c);
+        elGrid.appendChild(c);
+      }
+    }
+  }
+
+  function renderGrid(){
+    const w = SPEC.meta.grid.width;
+    const h = SPEC.meta.grid.height;
+    for(let y=0;y<h;y++){
+      for(let x=0;x<w;x++){
+        const k = cellKey(x,y);
+        const cEl = cellEls.get(k);
+        if(!cEl) continue;
+
+        const cell = materializeCell(x,y);
+        const isActive = (state.cursor.x===x && state.cursor.y===y);
+
+        // base classes
+        let cls = "cell";
+        if(state.showRoleColors) cls += " " + roleClass(cell.redundancy_role);
+        if(isActive) cls += " active";
+
+        // locked shading
+        if(state.lockEnabled && state.activePanel && state.shadeLocked){
+          if(cell.panel_id === state.activePanel) cls += " lockedPanel";
+          else cls += " otherWhileLocked";
+        }
+
+        cEl.className = cls;
+        cEl.innerHTML = "";
+
+        // stripes for spine / seam
+        if(x===SPEC.meta.spine_column_x){
+          const stripe = document.createElement("div");
+          stripe.className = "spineStripe";
+          cEl.appendChild(stripe);
+        }
+        if(x===SPEC.meta.seam_column_x){
+          const stripe = document.createElement("div");
+          stripe.className = "seamStripe";
+          cEl.appendChild(stripe);
+        }
+
+        // beacon dot
+        if(state.showBeacons && cell.beacon){
+          const dot = document.createElement("div");
+          dot.className = "beaconDot";
+          cEl.appendChild(dot);
+        }
+
+        // wrap hint marks at x=0 and x=23
+        if(state.wrapHint){
+          if(x===0 || x===23){
+            cEl.style.borderTopColor = "rgba(255,255,255,.10)";
+          } else {
+            cEl.style.borderTopColor = "";
+          }
+        }
+      }
+    }
+    updateInspector();
+    updateStatus();
+  }
+
+  function updateInspector(){
+    const {x,y} = state.cursor;
+    const cell = materializeCell(x,y);
+    kvCursor.textContent = `(${x},${y})`;
+    kvPanel.textContent = cell.panel_id;
+    kvRole.textContent = cell.redundancy_role;
+    kvBeacon.textContent = String(cell.beacon);
+    kvLines.textContent = cell.line_ids.length ? cell.line_ids.join(",") : "—";
+    elMiniPanel.textContent = cell.panel_id;
+
+    let payload = cell.payload_text || "(empty)";
+    // If it's a primary line, show expanded details
+    if(cell.line_ids && cell.line_ids.length === 1 && SPEC.lineIndex.has(cell.line_ids[0])){
+      const li = SPEC.lineIndex.get(cell.line_ids[0]);
+      payload += "\n\n— LINE INDEX —\n";
+      payload += `stanza=${li.stanza} line=${li.line_number}\n`;
+      payload += `motifs=${li.motifs.join(", ")}\n`;
+      payload += `entities=${li.entities.join(", ")}\n`;
+      payload += `actions=${li.actions.join(", ")}\n`;
+    }
+    // If beacon, show parsed beacon
+    const b = parseBeacon(cell.payload_text);
+    if(b){
+      payload += "\n\n— BEACON PARSE —\n";
+      payload += `panel_id=${b.panel_id}\n`;
+      payload += `type=${b.type}\n`;
+      payload += `label=${b.label}\n`;
+      payload += `crc=${b.crc}\n`;
+    }
+    payloadBox.textContent = payload;
+  }
+
+  function updateStatus(){
+    const {x,y} = state.cursor;
+    const ap = state.activePanel ? state.activePanel : "NONE";
+    elStatusLine.textContent = `seed=${SPEC.meta.seed} · active_panel=${ap} · cursor=(${x},${y})`;
+    elPillLock.textContent = `LOCK: ${state.lockEnabled ? (ap==="NONE" ? "ON" : `ON→${ap}`) : "OFF"}`;
+    elPillLock.style.borderColor = state.lockEnabled ? "rgba(89,212,255,.35)" : "rgba(255,255,255,.10)";
+    elPillLock.style.color = state.lockEnabled ? "var(--ink)" : "var(--muted)";
+  }
+
+  /* ---------- Panel list render ---------- */
+
+  function renderPanelList(){
+    const html = [];
+    for(const p of SPEC.panelModel){
+      const chips = p.tagset.map(t=>`<span class="chip">${escapeHtml(t)}</span>`).join("");
+      const count = p.lines.length;
+      html.push(`
+        <div style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,.06);">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <div style="font-weight:800; font-size:12px;">${escapeHtml(p.id)} — ${escapeHtml(p.title)}</div>
+            <button class="btn small" data-goto="${escapeHtml(p.id)}">Goto</button>
+          </div>
+          <div style="color:var(--muted); font-size:12px; margin-top:6px; line-height:1.3;">
+            ${escapeHtml(p.rationale)}
+          </div>
+          <div class="chipRow" style="margin-top:8px;">${chips}</div>
+          <div style="margin-top:8px; font-family:var(--mono); font-size:11px; color:var(--muted);">
+            lines=${count ? p.lines[0]+"…"+p.lines[p.lines.length-1] : "—"}
+          </div>
+        </div>
+      `);
+    }
+    panelList.innerHTML = html.join("");
+    panelList.querySelectorAll("button[data-goto]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const pid = btn.getAttribute("data-goto");
+        gotoPanel(pid);
+      });
+    });
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+
+  /* ---------- Navigation & actions ---------- */
+
+  function setCursor(x,y,center=false){
+    state.cursor.x = clamp(wrapX(x),0,23);
+    state.cursor.y = clamp(y,0,23);
+    renderGrid();
+    if(center) centerCursor();
+  }
+
+  function centerCursor(){
+    const vp = document.getElementById("gridViewport");
+    const cell = cellEls.get(cellKey(state.cursor.x, state.cursor.y));
+    if(!cell) return;
+    const cellRect = cell.getBoundingClientRect();
+    const vpRect = vp.getBoundingClientRect();
+
+    const dx = (cellRect.left + cellRect.width/2) - (vpRect.left + vpRect.width/2);
+    const dy = (cellRect.top + cellRect.height/2) - (vpRect.top + vpRect.height/2);
+
+    vp.scrollLeft += dx;
+    vp.scrollTop += dy;
+  }
+
+  function move(dx,dy){
+    const nx = wrapX(state.cursor.x + dx);
+    const ny = clamp(state.cursor.y + dy, 0, 23);
+    setCursor(nx,ny,true);
+  }
+
+  function gotoPanel(panelId){
+    // deterministic anchor per panel: first core row cell at (1,y0) except P0 uses (0,0).
+    if(panelId==="P0"){ setCursor(0,0,true); return; }
+    const band = SPEC.panelBands.find(b=>b.id===panelId);
+    if(!band){ return; }
+    setCursor(1, band.y0, true);
+  }
+
+  function jumpSpine(){
+    setCursor(0, state.cursor.y, true);
+  }
+
+  function jumpPrimary(){
+    // If cell has a single line_id, jump to its primary cell. Else if multiple line_ids, use first.
+    const cell = materializeCell(state.cursor.x, state.cursor.y);
+    const id = cell.line_ids && cell.line_ids.length ? cell.line_ids[0] : null;
+    if(!id || !SPEC.primaryMap.has(id)){
+      // fallback: if on a panel band, jump to band anchor
+      gotoPanel(getBandByY(state.cursor.y));
+      return;
+    }
+    const p = SPEC.primaryMap.get(id);
+    setCursor(p.x, p.y, true);
+  }
+
+  function onCellActivate(){
+    const cell = materializeCell(state.cursor.x, state.cursor.y);
+    if(cell.beacon){
+      const b = parseBeacon(cell.payload_text);
+      if(b){
+        if(b.type === "LOCK"){
+          state.lockEnabled = true;
+          state.activePanel = b.panel_id;
+          renderGrid();
+          return;
+        }
+        if(b.type === "GOTO"){
+          gotoPanel(b.panel_id);
+          return;
+        }
+        if(b.type === "SPINE"){
+          // no-op
+          return;
+        }
+      }
+    }
+  }
+
+  function toggleLock(){
+    state.lockEnabled = !state.lockEnabled;
+    if(!state.lockEnabled) state.activePanel = null;
+    renderGrid();
+  }
+
+  /* ---------- Raycaster (beam traversal) ---------- */
+
+  function beamHitsFrom(startX,startY,dirX,dirY,maxSteps=48){
+    const hits = [];
+    let x = startX, y = startY;
+    for(let step=0; step<maxSteps; step++){
+      x = wrapX(x + dirX);
+      y = y + dirY;
+      if(y < 0 || y > 23) break;
+      const cell = materializeCell(x,y);
+      const hit = cell.beacon || (cell.payload_text && cell.payload_text.length>0);
+      if(hit){
+        hits.push({ x, y, cell });
+      }
+    }
+    return hits;
+  }
+
+  function scoreHit(hit, from){
+    // cost = abs(dx) + 2*abs(dy) + 6*panel_switch + 10*lock_break
+    const dx = shortestWrapDx(from.x, hit.x);
+    const dy = hit.y - from.y;
+    const base = Math.abs(dx) + 2*Math.abs(dy);
+
+    const currentPanel = state.lockEnabled && state.activePanel ? state.activePanel : materializeCell(from.x, from.y).panel_id;
+    const targetPanel = hit.cell.panel_id;
+
+    let panelSwitch = (targetPanel !== currentPanel) ? 6 : 0;
+    let lockBreak = 0;
+
+    if(state.lockEnabled && state.activePanel){
+      if(targetPanel !== state.activePanel) lockBreak = 10;
+    }
+
+    const roleWeight = hit.cell.redundancy_role === "core" ? -3 : (hit.cell.redundancy_role === "echo" ? -2 : -1);
+    const beaconBonus = hit.cell.beacon ? -2 : 0;
+
+    return base + panelSwitch + lockBreak + roleWeight + beaconBonus;
+  }
+
+  function shortestWrapDx(x1,x2){
+    // minimal dx in wrap space
+    const w=24;
+    const direct = x2-x1;
+    const alt1 = direct + w;
+    const alt2 = direct - w;
+    const best = [direct,alt1,alt2].reduce((a,b)=>Math.abs(b)<Math.abs(a)?b:a, direct);
+    return best;
+  }
+
+  function raycast(){
+    const from = {x: state.cursor.x, y: state.cursor.y};
+    // 8 directions (beam choices)
+    const dirs = [
+      {dx:1,dy:0,name:"E"}, {dx:-1,dy:0,name:"W"},
+      {dx:0,dy:1,name:"S"}, {dx:0,dy:-1,name:"N"},
+      {dx:1,dy:1,name:"SE"}, {dx:-1,dy:1,name:"SW"},
+      {dx:1,dy:-1,name:"NE"}, {dx:-1,dy:-1,name:"NW"}
+    ];
+    const candidates = [];
+    for(const d of dirs){
+      const hits = beamHitsFrom(from.x, from.y, d.dx, d.dy, 48);
+      for(const h of hits){
+        candidates.push({ ...h, dir: d.name, score: scoreHit(h, from) });
+      }
+    }
+    candidates.sort((a,b)=>a.score-b.score);
+    state.lastRaycast = { from, candidates: candidates.slice(0, 24) };
+
+    if(candidates.length){
+      const best = candidates[0];
+      setCursor(best.x, best.y, true);
+      // If we landed on a LOCK beacon, apply
+      onCellActivate();
+      showModal("Raycast Results (top candidates)", formatRaycast(state.lastRaycast));
+    } else {
+      showModal("Raycast Results", "No hits found within max steps.");
+    }
+  }
+
+  function formatRaycast(rc){
+    const lines = [];
+    lines.push(`FROM (${rc.from.x},${rc.from.y})`);
+    lines.push(`lockEnabled=${state.lockEnabled} activePanel=${state.activePanel||"NONE"}`);
+    lines.push("");
+    for(const c of rc.candidates){
+      const brief = (c.cell.payload_text||"").split("\n")[0].slice(0,80);
+      lines.push(`[${c.dir}] -> (${c.x},${c.y}) panel=${c.cell.panel_id} role=${c.cell.redundancy_role} beacon=${c.cell.beacon} score=${c.score}`);
+      lines.push(`  payload="${brief}"`);
+      if(c.cell.line_ids && c.cell.line_ids.length){
+        lines.push(`  line_ids=${c.cell.line_ids.join(",")}`);
+      }
+    }
+    return lines.join("\n");
+  }
+
+  /* ---------- Find/search ---------- */
+
+  function find(query){
+    query = (query||"").trim();
+    if(!query){
+      showModal("Find", "Enter a line id (L49) or text fragment (for ever).");
+      return;
+    }
+    // If looks like Lxx
+    const m = query.toUpperCase().match(/^L(\d{1,2})$/);
+    if(m){
+      const lid = "L"+m[1].padStart(2,"0");
+      if(SPEC.primaryMap.has(lid)){
+        const p = SPEC.primaryMap.get(lid);
+        setCursor(p.x, p.y, true);
+        showModal("Find", `Jumped to primary location of ${lid} at (${p.x},${p.y}).`);
+        return;
+      }
+    }
+
+    // Search the entire materialized grid for payload contains query OR line text contains query
+    const q = query.toLowerCase();
+    const hits = [];
+    for(let y=0;y<24;y++){
+      for(let x=0;x<24;x++){
+        const cell = materializeCell(x,y);
+        let hay = (cell.payload_text||"").toLowerCase();
+        let ok = hay.includes(q);
+        if(!ok && cell.line_ids && cell.line_ids.length){
+          for(const lid of cell.line_ids){
+            const li = SPEC.lineIndex.get(lid);
+            if(li && li.text.toLowerCase().includes(q)){ ok = true; break; }
+          }
+        }
+        if(ok){
+          hits.push({x,y,cell});
+        }
+      }
+    }
+    if(!hits.length){
+      showModal("Find", `No matches for "${query}".`);
+      return;
+    }
+
+    // score hits: prefer core, beacons, same/locked panel
+    const from = {x: state.cursor.x, y: state.cursor.y};
+    const scored = hits.map(h=>{
+      const score = scoreHit({x:h.x,y:h.y,cell:h.cell}, from);
+      return {...h, score};
+    }).sort((a,b)=>a.score-b.score);
+
+    const best = scored[0];
+    setCursor(best.x, best.y, true);
+    showModal("Find Results", formatFind(scored.slice(0,40), query));
+  }
+
+  function formatFind(scored, query){
+    const lines=[];
+    lines.push(`QUERY "${query}"`);
+    lines.push(`top_matches=${scored.length}`);
+    lines.push("");
+    for(const s of scored){
+      const brief = (s.cell.payload_text||"").split("\n")[0].slice(0,80);
+      lines.push(`(${s.x},${s.y}) panel=${s.cell.panel_id} role=${s.cell.redundancy_role} beacon=${s.cell.beacon} score=${s.score}`);
+      if(s.cell.line_ids && s.cell.line_ids.length) lines.push(`  line_ids=${s.cell.line_ids.join(",")}`);
+      lines.push(`  payload="${brief}"`);
+    }
+    return lines.join("\n");
+  }
+
+  /* ---------- Export compiler stream ---------- */
+
+  function exportStream(){
+    // tokens
+    const PANEL_SEAM = "⟂PANEL⟂";
+    const CELL_SEAM = "⟂CELL⟂";
+    const NL = "␤";
+
+    // We export in band-major order y then x, but we also group by panel for readability.
+    const byPanel = new Map();
+    for(const p of SPEC.panelModel) byPanel.set(p.id, []);
+    byPanel.set("P0", byPanel.get("P0") || []);
+
+    for(let y=0;y<24;y++){
+      for(let x=0;x<24;x++){
+        const cell = materializeCell(x,y);
+        const pid = cell.panel_id || getBandByY(y);
+        const lineCsv = (cell.line_ids||[]).join(",");
+        const payload = (cell.payload_text||"").replaceAll("\n", " / ");
+        const rec = `${CELL_SEAM}@(${x},${y})|${pid}|${cell.redundancy_role}|${cell.beacon}|${lineCsv}|${payload}${NL}`;
+        if(!byPanel.has(pid)) byPanel.set(pid, []);
+        byPanel.get(pid).push(rec);
+      }
+    }
+
+    const out = [];
+    for(const p of SPEC.panelModel){
+      const crc = crc8(`${SPEC.meta.seed}|${p.id}|PANEL`);
+      out.push(`${PANEL_SEAM}|${p.id}|${p.title}|${crc}${NL}`);
+      out.push(...(byPanel.get(p.id)||[]));
+      out.push(`${PANEL_SEAM}|END|${p.id}|${crc}${NL}`);
+      out.push(NL);
+    }
+    return out.join("");
+  }
+
+  /* ---------- Beacons list ---------- */
+
+  function listBeacons(){
+    const hits=[];
+    for(let y=0;y<24;y++){
+      for(let x=0;x<24;x++){
+        const cell = materializeCell(x,y);
+        if(cell.beacon){
+          hits.push({x,y,cell,b:parseBeacon(cell.payload_text)});
+        }
+      }
+    }
+    hits.sort((a,b)=> (a.y-b.y) || (a.x-b.x));
+    const lines=[];
+    lines.push(`BEACONS total=${hits.length}`);
+    lines.push("");
+    for(const h of hits){
+      const b = h.b;
+      if(b){
+        lines.push(`(${h.x},${h.y}) §B panel=${b.panel_id} type=${b.type} label=${b.label} crc=${b.crc}`);
+      } else {
+        lines.push(`(${h.x},${h.y}) beacon payload="${(h.cell.payload_text||"").slice(0,80)}"`);
+      }
+    }
+    showModal("Beacon List", lines.join("\n"));
+  }
+
+  /* ---------- Rules explain ---------- */
+
+  function showRules(){
+    const lines=[];
+    lines.push("RETRIEVAL RULESET (runtime)");
+    lines.push("");
+    lines.push("Beacon detection:");
+    lines.push("  beacon := cell.beacon OR payload_text.startsWith('§')");
+    lines.push("  beacon grammar: §B|<panel_id>|<type>|<label>|<crc>");
+    lines.push("");
+    lines.push("Panel lock:");
+    lines.push("  On LOCK beacon: lockEnabled=true; activePanel=<panel_id>");
+    lines.push("  While lockEnabled + activePanel:");
+    lines.push("    - raycast scoring penalizes leaving activePanel (+10 lock_break)");
+    lines.push("    - UI shades other panels (optional)");
+    lines.push("");
+    lines.push("Seek cost metric (score):");
+    lines.push("  score = |dx_wrap| + 2*|dy| + 6*(panel_switch) + 10*(lock_break) + role/beacon biases");
+    lines.push("  role bias: core -3, echo -2, glue -1");
+    lines.push("  beacon bonus: -2");
+    lines.push("");
+    lines.push("Geometry:");
+    lines.push("  x wraps (urn frieze). y does not wrap.");
+    lines.push("  spine x=0 high reliability; seam x=23 resync markers.");
+    showModal("Rules", lines.join("\n"));
+  }
+
+  /* ---------- Modal ---------- */
+
+  function showModal(title, body){
+    modalTitle.textContent = title;
+    modalBody.textContent = body;
+    modal.classList.add("show");
+  }
+  function closeModal(){
+    modal.classList.remove("show");
+  }
+
+  /* ---------- Auto-scale grid cells to screen ---------- */
+
+  function autoscaleCellSize(){
+    // Fit 24 columns into viewport width (with some padding), but don't go too tiny.
+    const vp = document.getElementById("gridViewport");
+    const w = vp.clientWidth;
+    const padding = 40; // safe
+    const available = Math.max(260, w - padding);
+    const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gap")) || 2;
+    const raw = Math.floor((available - (23*gap) - 16) / 24);
+    const cell = clamp(raw, 12, 28);
+    document.documentElement.style.setProperty("--cell", `${cell}px`);
+  }
+
+  /* ---------- Events ---------- */
+
+  togRoleColors.addEventListener("change", ()=>{ state.showRoleColors = togRoleColors.checked; renderGrid(); });
+  togShowBeacons.addEventListener("change", ()=>{ state.showBeacons = togShowBeacons.checked; renderGrid(); });
+  togPanelShade.addEventListener("change", ()=>{ state.shadeLocked = togPanelShade.checked; renderGrid(); });
+  togWrapHint.addEventListener("change", ()=>{ state.wrapHint = togWrapHint.checked; renderGrid(); });
+
+  btnLockToggle.addEventListener("click", toggleLock);
+  btnRaycast.addEventListener("click", raycast);
+  btnExport.addEventListener("click", ()=>{
+    const s = exportStream();
+    showModal("Export Stream (beam order w/ seams)", s);
+  });
+  btnReset.addEventListener("click", ()=>{
+    state.cursor = {x:1,y:3};
+    state.activePanel = null;
+    state.lockEnabled = false;
+    state.lastRaycast = null;
+    renderGrid();
+    centerCursor();
+  });
+
+  btnPrev.addEventListener("click", ()=>move(-1,0));
+  btnNext.addEventListener("click", ()=>move(1,0));
+  btnUp.addEventListener("click", ()=>move(0,-1));
+  btnDown.addEventListener("click", ()=>move(0,1));
+  btnJumpPrimary.addEventListener("click", jumpPrimary);
+  btnJumpSpine.addEventListener("click", jumpSpine);
+
+  selPanel.addEventListener("change", ()=>gotoPanel(selPanel.value));
+  btnFind.addEventListener("click", ()=>find(inpSearch.value));
+  inpSearch.addEventListener("keydown", (e)=>{ if(e.key==="Enter") find(inpSearch.value); });
+
+  btnBeacons.addEventListener("click", listBeacons);
+  btnExplain.addEventListener("click", showRules);
+
+  btnClose.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e)=>{ if(e.target===modal) closeModal(); });
+  btnCopy.addEventListener("click", async ()=>{
+    try{
+      await navigator.clipboard.writeText(modalBody.textContent);
+      btnCopy.textContent = "Copied";
+      setTimeout(()=>btnCopy.textContent="Copy", 900);
+    }catch(err){
+      btnCopy.textContent = "No Clipboard";
+      setTimeout(()=>btnCopy.textContent="Copy", 900);
+    }
+  });
+
+  // Keyboard navigation
+  window.addEventListener("keydown", (e)=>{
+    if(modal.classList.contains("show")){
+      if(e.key==="Escape") closeModal();
+      return;
+    }
+    if(e.key==="ArrowLeft"){ e.preventDefault(); move(-1,0); }
+    if(e.key==="ArrowRight"){ e.preventDefault(); move(1,0); }
+    if(e.key==="ArrowUp"){ e.preventDefault(); move(0,-1); }
+    if(e.key==="ArrowDown"){ e.preventDefault(); move(0,1); }
+    if(e.key==="Enter"){ e.preventDefault(); onCellActivate(); }
+    if(e.key==="b" || e.key==="B"){ e.preventDefault(); listBeacons(); }
+    if(e.key==="l" || e.key==="L"){ e.preventDefault(); toggleLock(); }
+    if(e.key==="r" || e.key==="R"){ e.preventDefault(); raycast(); }
+    if(e.key==="e" || e.key==="E"){ e.preventDefault(); showModal("Export Stream (beam order w/ seams)", exportStream()); }
+    if(e.key==="/" ){ e.preventDefault(); inpSearch.focus(); inpSearch.select(); }
+  });
+
+  // Resize
+  window.addEventListener("resize", ()=>{
+    autoscaleCellSize();
+    renderGrid();
+  });
+
+  /* ---------- Init ---------- */
+
+  function init(){
+    autoscaleCellSize();
+    buildGridDOM();
+    renderPanelList();
+    renderGrid();
+    // center initial cursor
+    setTimeout(centerCursor, 0);
+  }
+
+  init();
+
+})();
+</script>
+</body>
+</html>
