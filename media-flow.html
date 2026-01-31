@@ -39,8 +39,8 @@
   --purple:#a78bfa;      /* Echo */
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow-x:auto;overflow-y:hidden}
-body{font-family:var(--sans);background:var(--bg);color:var(--fg);display:flex;align-items:center;justify-content:center;padding:20px;gap:20px}
+html,body{height:100%;overflow-x:auto;overflow-y:auto}
+body{font-family:var(--sans);background:var(--bg);color:var(--fg);display:flex;align-items:flex-start;justify-content:center;padding:10px;gap:16px;min-height:100vh}
 
 /* Tooltips */
 [data-tip]{position:relative}
@@ -104,12 +104,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--fg);display:flex;a
 ::-webkit-scrollbar-thumb:hover{background:var(--dim)}
 
 /* Calculator Container */
-.calc-container{display:flex;gap:16px;height:100%;max-height:700px;align-items:stretch}
+.calc-container{display:flex;gap:16px;align-items:flex-start}
 
 /* Single Calculator Unit - CYAN border = calculator level */
 .calculator{
   width:340px;
   min-width:340px;
+  max-height:calc(100vh - 20px);
+  height:auto;
   background:var(--chassis);
   border-radius:24px;
   border:2px solid var(--calc-dim);
@@ -129,13 +131,15 @@ body{font-family:var(--sans);background:var(--bg);color:var(--fg);display:flex;a
 .lcd{
   background:var(--screen);
   margin:12px;
+  margin-bottom:0;
   border-radius:16px;
   border:3px solid #09090b;
   box-shadow:inset 0 0 40px rgba(0,0,0,.8);
   display:flex;
   flex-direction:column;
   flex:1;
-  min-height:180px;
+  min-height:120px;
+  max-height:300px;
   overflow:hidden;
   position:relative;
 }
@@ -287,8 +291,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--fg);display:flex;a
 .op-slot.target{background:var(--green);color:#fff;border-color:var(--green)}
 .op-arrow{color:var(--dim);font-size:10px}
 
-/* Control Panel */
-.controls{padding:10px;display:flex;flex-direction:column;gap:6px}
+/* Control Panel - Always visible */
+.controls{
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  flex-shrink:0;
+}
 
 /* Source/Target Selection - Two explicit zones */
 .media-zones{display:flex;gap:6px}
