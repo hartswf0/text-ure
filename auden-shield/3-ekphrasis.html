@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Auden Shield — Operative Ekphrasis</title>
+<style>
+:root {
+  --bg: #f6f2e8;
+  --paper: #fbf8f0;
+  --ink: #111;
+  --muted: rgba(17,17,17,.65);
+  --hair: rgba(17,17,17,.14);
+  --accent: #1b4b7a;
+  --accent2: #8a3d1e;
+  --cell: 26px;
+  --radius: 18px;
+  --shadow: 0 10px 30px rgba(0,0,0,.08);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; background: radial-gradient(1200px 800px at 30% -10%, #fff 0%, var(--bg) 60%, #efe8d7 100%); color: var(--ink); margin: 0; font-family: var(--sans); }
+.app { min-height: 100%; display: grid; grid-template-rows: auto 1fr auto; gap: 12px; padding: 12px; }
+header { background: linear-gradient(to bottom, rgba(251,248,240,.96), rgba(251,248,240,.78)); border: 1px solid var(--hair); border-radius: var(--radius); padding: 16px; backdrop-filter: blur(10px); box-shadow: var(--shadow); }
+.title { font-weight: 700; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
+.subtitle { color: var(--muted); font-size: 12px; margin-top: 6px; }
+.theory { margin-top: 12px; padding: 12px; background: rgba(27,75,122,.06); border: 1px solid rgba(27,75,122,.15); border-radius: 10px; font-size: 11px; color: var(--accent); line-height: 1.5; }
+main { display: grid; grid-template-columns: 1fr 300px; gap: 12px; min-height: 0; }
+.grid-wrap { overflow: auto; padding: 16px; display: flex; justify-content: center; align-items: flex-start; background: var(--paper); border: 1px solid var(--hair); border-radius: var(--radius); }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(24, var(--cell));
+  grid-auto-rows: var(--cell);
+  gap: 1px;
+  background: var(--hair);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  overflow: hidden;
+  width: calc(24 * var(--cell) + 23px);
+  height: calc(24 * var(--cell) + 23px);
+  box-shadow: var(--shadow);
+}
+.cell {
+  background: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 9px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.cell:hover { background: rgba(27,75,122,.15); }
+.cell.outside { background: transparent; pointer-events: none; }
+
+.z-RIM { background: rgba(138,61,30,.1); color: #5a3a28; }
+.z-FRIEZE_THETIS { background: rgba(27,75,122,.08); color: #2a4a6a; }
+.z-FRIEZE_SCENE { background: rgba(80,80,90,.08); color: #4a4a54; }
+.z-HANDLES { background: rgba(27,75,122,.12); color: var(--accent); font-weight: 700; }
+.z-CENTER { background: rgba(60,60,70,.1); color: #5a5a64; }
+
+.sidebar { background: var(--paper); border: 1px solid var(--hair); border-radius: var(--radius); padding: 16px; overflow: auto; box-shadow: var(--shadow); }
+.sidebar h3 { margin: 0 0 12px 0; font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; }
+.zone-list { font-size: 11px; }
+.zone-item { padding: 8px; margin: 6px 0; border: 1px solid var(--line); border-radius: 8px; }
+.zone-item .name { font-weight: 700; margin-bottom: 4px; }
+.zone-item .desc { color: var(--muted); font-size: 10px; }
+
+.reverse-index { margin-top: 16px; font-size: 10px; max-height: 200px; overflow: auto; }
+.reverse-index div { padding: 3px 0; border-bottom: 1px solid var(--line); }
+
+footer { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 11px; display: flex; gap: 20px; justify-content: center; }
+.stat { text-align: center; }
+.stat .val { font-size: 18px; font-weight: 800; color: var(--accent); }
+.stat .lbl { color: var(--muted); margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title">Auden Shield — Operative Ekphrasis Mapper</div>
+    <div class="subtitle">CODE-TEXT → SURFACE-TEXT · "The poem is the OPERATOR that produces space"</div>
+    <div class="theory">
+      <strong>Bajohr Principles:</strong> 
+      (1) Ekphrasis as performance — text and layout in causal relation.
+      (2) Two texts: operative (rules) + surface (visible).
+      (3) Artificial semantics — meaning from grid correlations.
+    </div>
+  </header>
+  
+  <main>
+    <div class="grid-wrap">
+      <div class="grid" id="grid"></div>
+    </div>
+    <div class="sidebar">
+      <h3>URN TOPOLOGY ZONES</h3>
+      <div class="zone-list">
+        <div class="zone-item z-RIM">
+          <div class="name">Z0 RIM</div>
+          <div class="desc">Inscription band — Thetis refrains, short declarative lines</div>
+        </div>
+        <div class="zone-item z-FRIEZE_THETIS">
+          <div class="name">Z1 FRIEZE (Thetis)</div>
+          <div class="desc">What she looked for — vines, cities, ritual</div>
+        </div>
+        <div class="zone-item z-FRIEZE_SCENE">
+          <div class="name">Z2 FRIEZE (Scene)</div>
+          <div class="desc">What Hephaestos made — wilderness, multitude, camp</div>
+        </div>
+        <div class="zone-item z-HANDLES">
+          <div class="name">Z3 HANDLES</div>
+          <div class="desc">Pivot passages — "But there on the shining metal"</div>
+        </div>
+        <div class="zone-item z-CENTER">
+          <div class="name">Z4 CENTER</div>
+          <div class="desc">Coda — Hephaestos hobbles, Achilles' fate</div>
+        </div>
+      </div>
+      
+      <div class="reverse-index" id="reverseIndex">
+        <h3 style="font-size:11px;color:var(--accent);margin:0 0 8px 0;">REVERSE INDEX</h3>
+      </div>
+    </div>
+  </main>
+  
+  <footer>
+    <div class="stat"><div class="val" id="cellCount">0</div><div class="lbl">Cells</div></div>
+    <div class="stat"><div class="val" id="lineCount">0</div><div class="lbl">Lines</div></div>
+    <div class="stat"><div class="val" id="zoneCount">5</div><div class="lbl">Zones</div></div>
+    <div class="stat"><div class="val" id="coverage">0%</div><div class="lbl">Coverage</div></div>
+  </footer>
+</div>
+
+<script>
+const LINES = [
+  { id: "L01", text: "She looked over his shoulder", type: "thetis" },
+  { id: "L02", text: "For vines and olive trees,", type: "thetis" },
+  { id: "L03", text: "Marble well-governed cities", type: "thetis" },
+  { id: "L04", text: "And ships upon untamed seas,", type: "thetis" },
+  { id: "L05", text: "But there on the shining metal", type: "pivot" },
+  { id: "L06", text: "His hands had put instead", type: "pivot" },
+  { id: "L07", text: "An artificial wilderness", type: "scene" },
+  { id: "L08", text: "And a sky like lead.", type: "scene" },
+  { id: "L09", text: "A plain without a feature, bare and brown,", type: "scene" },
+  { id: "L10", text: "No blade of grass, no sign of neighborhood,", type: "scene" },
+  { id: "L11", text: "Nothing to eat and nowhere to sit down,", type: "scene" },
+  { id: "L12", text: "Yet, congregated on its blankness, stood", type: "scene" },
+  { id: "L13", text: "An unintelligible multitude,", type: "scene" },
+  { id: "L14", text: "A million eyes, a million boots in line,", type: "scene" },
+  { id: "L15", text: "Without expression, waiting for a sign.", type: "scene" },
+  { id: "L16", text: "Out of the air a voice without a face", type: "scene" },
+  { id: "L17", text: "Proved by statistics that some cause was just", type: "scene" },
+  { id: "L18", text: "In tones as dry and level as the place:", type: "scene" },
+  { id: "L19", text: "No one was cheered and nothing was discussed;", type: "scene" },
+  { id: "L20", text: "Column by column in a cloud of dust", type: "scene" },
+  { id: "L21", text: "They marched away enduring a belief", type: "scene" },
+  { id: "L22", text: "Whose logic brought them, somewhere else, to grief.", type: "scene" },
+  { id: "L23", text: "She looked over his shoulder", type: "thetis" },
+  { id: "L24", text: "For ritual pieties,", type: "thetis" },
+  { id: "L25", text: "White flower-garlanded heifers,", type: "thetis" },
+  { id: "L26", text: "Libation and sacrifice,", type: "thetis" },
+  { id: "L27", text: "But there on the shining metal", type: "pivot" },
+  { id: "L28", text: "Where the altar should have been,", type: "pivot" },
+  { id: "L29", text: "She saw by his flickering forge-light", type: "scene" },
+  { id: "L30", text: "Quite another scene.", type: "scene" },
+  { id: "L31", text: "Barbed wire enclosed an arbitrary spot", type: "scene" },
+  { id: "L32", text: "Where bored officials lounged (one cracked a joke)", type: "scene" },
+  { id: "L33", text: "And sentries sweated for the day was hot:", type: "scene" },
+  { id: "L34", text: "A crowd of ordinary decent folk", type: "scene" },
+  { id: "L35", text: "Watched from without and neither moved nor spoke", type: "scene" },
+  { id: "L36", text: "As three pale figures were led forth and bound", type: "scene" },
+  { id: "L37", text: "To three posts driven upright in the ground.", type: "scene" },
+  { id: "L38", text: "The mass and majesty of this world, all", type: "scene" },
+  { id: "L39", text: "That carries weight and always weighs the same", type: "scene" },
+  { id: "L40", text: "Lay in the hands of others; they were small", type: "scene" },
+  { id: "L41", text: "And could not hope for help and no help came:", type: "scene" },
+  { id: "L42", text: "What their foes liked to do was done, their shame", type: "scene" },
+  { id: "L43", text: "Was all the worst could wish; they lost their pride", type: "scene" },
+  { id: "L44", text: "And died as men before their bodies died.", type: "scene" },
+  { id: "L45", text: "She looked over his shoulder", type: "thetis" },
+  { id: "L46", text: "For athletes at their games,", type: "thetis" },
+  { id: "L47", text: "Men and women in a dance", type: "thetis" },
+  { id: "L48", text: "Moving their sweet limbs", type: "thetis" },
+  { id: "L49", text: "Quick, quick, to music,", type: "thetis" },
+  { id: "L50", text: "But there on the shining shield", type: "pivot" },
+  { id: "L51", text: "His hands had set no dancing-floor", type: "pivot" },
+  { id: "L52", text: "But a weed-choked field.", type: "scene" },
+  { id: "L53", text: "A ragged urchin, aimless and alone,", type: "scene" },
+  { id: "L54", text: "Loitered about that vacancy; a bird", type: "scene" },
+  { id: "L55", text: "Flew up to safety from his well-aimed stone:", type: "scene" },
+  { id: "L56", text: "That girls are raped, that two boys knife a third,", type: "scene" },
+  { id: "L57", text: "Were axioms to him, who'd never heard", type: "scene" },
+  { id: "L58", text: "Of any world where promises were kept,", type: "scene" },
+  { id: "L59", text: "Or one could weep because another wept.", type: "scene" },
+  { id: "L60", text: "The thin-lipped armorer,", type: "coda" },
+  { id: "L61", text: "Hephaestos, hobbled away,", type: "coda" },
+  { id: "L62", text: "Thetis of the shining breasts", type: "coda" },
+  { id: "L63", text: "Cried out in dismay", type: "coda" },
+  { id: "L64", text: "At what the god had wrought", type: "coda" },
+  { id: "L65", text: "To please her son, the strong", type: "coda" },
+  { id: "L66", text: "Iron-hearted man-slaying Achilles", type: "coda" },
+  { id: "L67", text: "Who would not live long.", type: "coda" }
+];
+
+const W = 24, H = 24;
+let cells = [];
+let reverseIndex = {};
+
+function inCircle(x, y, cx, cy, r) {
+  const dx = x - cx, dy = y - cy;
+  return Math.sqrt(dx*dx + dy*dy) <= r;
+}
+
+function getZone(x, y) {
+  const cx = 11.5, cy = 11.5;
+  const r = Math.sqrt((x-cx)*(x-cx) + (y-cy)*(y-cy));
+  
+  if (r > 11) return 'outside';
+  if (r > 10) return 'RIM';
+  if (r > 7) {
+    if (x < 4 || x > 19) return 'HANDLES';
+    return y < 12 ? 'FRIEZE_THETIS' : 'FRIEZE_SCENE';
+  }
+  return 'CENTER';
+}
+
+function buildGrid() {
+  cells = [];
+  reverseIndex = {};
+  
+  let lineIdx = 0;
+  const lineQueue = [...LINES];
+  
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const zone = getZone(x, y);
+      
+      const cell = {
+        x, y,
+        zone,
+        lineId: null,
+        text: ''
+      };
+      
+      if (zone !== 'outside' && lineQueue.length > 0) {
+        const line = lineQueue[0];
+        const charIdx = lineIdx % line.text.length;
+        cell.text = line.text[charIdx];
+        cell.lineId = line.id;
+        
+        if (!reverseIndex[line.id]) reverseIndex[line.id] = [];
+        reverseIndex[line.id].push(`(${x},${y})`);
+        
+        lineIdx++;
+        if (lineIdx % line.text.length === 0) {
+          lineQueue.shift();
+          lineIdx = 0;
+        }
+      }
+      
+      cells.push(cell);
+    }
+  }
+}
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  
+  let filledCells = 0;
+  
+  for (const c of cells) {
+    const el = document.createElement('div');
+    el.className = 'cell';
+    if (c.zone === 'outside') {
+      el.classList.add('outside');
+    } else {
+      el.classList.add('z-' + c.zone);
+      if (c.text) filledCells++;
+    }
+    el.textContent = c.text;
+    el.title = c.lineId ? `${c.lineId}: ${c.text}` : '';
+    grid.appendChild(el);
+  }
+  
+  document.getElementById('cellCount').textContent = cells.filter(c => c.zone !== 'outside').length;
+  document.getElementById('lineCount').textContent = LINES.length;
+  document.getElementById('coverage').textContent = Math.round(filledCells / cells.filter(c => c.zone !== 'outside').length * 100) + '%';
+  
+  const revEl = document.getElementById('reverseIndex');
+  revEl.innerHTML = '<h3 style="font-size:11px;color:var(--accent);margin:0 0 8px 0;">REVERSE INDEX</h3>';
+  for (const [id, coords] of Object.entries(reverseIndex).slice(0, 12)) {
+    revEl.innerHTML += `<div><strong>${id}</strong>: ${coords.slice(0,4).join(', ')}${coords.length > 4 ? '...' : ''}</div>`;
+  }
+}
+
+buildGrid();
+render();
+</script>
+</body>
+</html>

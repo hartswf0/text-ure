@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Media Traversal Theory — Periodic Table of Media Elements</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #f6f2e8;
+  --paper: #fbf8f0;
+  --ink: #111;
+  --muted: rgba(17,17,17,.65);
+  --hair: rgba(17,17,17,.14);
+  --trace: #8b2500;
+  --grid: #1a5f7a;
+  --pulse: #6b3fa0;
+  --loop: #2d5a27;
+  --slack: #b5651d;
+  --vibe: #c41e3a;
+  --archive: #8b4513;
+  --stream: #2e8b57;
+  --model: #4a0080;
+  --radius: 6px;
+  --shadow: 0 2px 8px rgba(0,0,0,.08);
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(145deg, #fff 0%, var(--bg) 40%, #efe8d7 100%);
+  color: var(--ink);
+  font-family: var(--sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Navigation */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--paper);
+  border-bottom: 1px solid var(--hair);
+  padding: 10px 20px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  box-shadow: var(--shadow);
+}
+
+nav a {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-decoration: none;
+  color: var(--muted);
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  transition: all .15s;
+}
+
+nav a:hover {
+  color: var(--ink);
+  border-color: var(--hair);
+  background: #fff;
+}
+
+nav .title {
+  font-weight: 600;
+  color: var(--ink);
+  margin-right: auto;
+}
+
+/* Main */
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px 20px 60px;
+}
+
+/* Sections */
+section {
+  margin-bottom: 50px;
+}
+
+h1 {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+h1::before {
+  content: '///';
+  color: var(--trace);
+  font-weight: 400;
+}
+
+h2 {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--ink);
+}
+
+h2 code {
+  color: var(--grid);
+}
+
+h3 {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* Thesis Box */
+.thesis-box {
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 24px;
+  margin-bottom: 30px;
+}
+
+.thesis-box p {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.thesis-box .highlight {
+  background: rgba(26,95,122,.15);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.thesis-box .bracket {
+  color: var(--grid);
+  font-weight: 500;
+}
+
+.thesis-box .angle {
+  color: var(--trace);
+}
+
+/* Primitives Grid */
+.primitives-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.primitive-card {
+  background: var(--paper);
+  border: 1px solid var(--hair);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: all .15s;
+}
+
+.primitive-card:hover {
+  border-color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.primitive-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.primitive-symbol {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  color: #fff;
+}
+
+.primitive-card.trace .primitive-symbol { background: var(--trace); }
+.primitive-card.grid .primitive-symbol { background: var(--grid); }
+.primitive-card.pulse .primitive-symbol { background: var(--pulse); }
+.primitive-card.loop .primitive-symbol { background: var(--loop); }
+.primitive-card.slack .primitive-symbol { background: var(--slack); }
+.primitive-card.vibe .primitive-symbol { background: var(--vibe); }
+
+.primitive-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.primitive-def {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--hair);
+}
+
+.primitive-props {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.primitive-props dt {
+  font-family: var(--mono);
+  font-weight: 500;
+  color: var(--muted);
+  display: inline;
+}
+
+.primitive-props dd {
+  display: inline;
+  margin-left: 4px;
+}
+
+.primitive-props .failure {
+  color: var(--trace);
+  font-weight: 500;
+}
+
+.primitive-props .valence {
+  color: var(--grid);
+}
+
+/* Periodic Table */
+.periodic-table-container {
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.periodic-table {
+  display: grid;
+  grid-template-columns: 60px repeat(4, 1fr);
+  gap: 2px;
+  background: var(--ink);
+  border: 2px solid var(--ink);
+  min-width: 700px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.pt-header {
+  background: var(--paper);
+  padding: 10px 8px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.pt-header.corner {
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 10px;
+}
+
+.pt-header.archive { border-bottom: 3px solid var(--archive); }
+.pt-header.stream { border-bottom: 3px solid var(--stream); }
+.pt-header.loop { border-bottom: 3px solid var(--loop); }
+.pt-header.model { border-bottom: 3px solid var(--model); }
+
+.pt-header small {
+  display: block;
+  font-weight: 400;
+  font-size: 9px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.pt-row-label {
+  background: var(--paper);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-weight: 600;
+}
+
+.pt-row-label .dim {
+  font-size: 14px;
+}
+
+.pt-row-label .desc {
+  font-size: 8px;
+  color: var(--muted);
+}
+
+.pt-cell {
+  background: var(--paper);
+  padding: 10px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .12s;
+}
+
+.pt-cell:hover {
+  background: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  z-index: 10;
+  position: relative;
+}
+
+.pt-cell .symbol {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.pt-cell.archive .symbol { color: var(--archive); }
+.pt-cell.stream .symbol { color: var(--stream); }
+.pt-cell.loop .symbol { color: var(--loop); }
+.pt-cell.model .symbol { color: var(--model); }
+
+.pt-cell .name {
+  font-size: 8px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Element Properties */
+.element-props {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.element-prop {
+  background: #fff;
+  border: 1px solid var(--hair);
+  border-radius: var(--radius);
+  padding: 12px;
+  font-size: 12px;
+}
+
+.element-prop .el-name {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.element-prop .bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.element-prop .bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.element-prop .bar-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  width: 90px;
+  color: var(--muted);
+}
+
+.element-prop .bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--hair);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.element-prop .bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width .3s;
+}
+
+.element-prop .bar-fill.indexical { background: var(--trace); }
+.element-prop .bar-fill.addressable { background: var(--grid); }
+.element-prop .bar-fill.slack { background: var(--slack); }
+
+.element-prop .bar-value {
+  font-family: var(--mono);
+  font-size: 10px;
+  width: 20px;
+  text-align: right;
+}
+
+/* Bonds */
+.bonds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+.bond-card {
+  background: var(--paper);
+  border: 1px solid var(--hair);
+  border-radius: var(--radius);
+  padding: 14px;
+  transition: all .15s;
+}
+
+.bond-card:hover {
+  border-color: var(--ink);
+}
+
+.bond-name {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--grid);
+  margin-bottom: 6px;
+}
+
+.bond-formula {
+  font-family: var(--mono);
+  font-size: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bond-formula .reactant {
+  background: rgba(26,95,122,.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.bond-formula .arrow {
+  color: var(--muted);
+}
+
+.bond-formula .product {
+  color: var(--trace);
+  font-weight: 500;
+}
+
+.bond-desc {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Reaction Template */
+.reaction-template {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.reaction-template h4 {
+  font-family: var(--mono);
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: #fff;
+}
+
+.reaction-template dl {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 8px 12px;
+  font-size: 13px;
+}
+
+.reaction-template dt {
+  font-family: var(--mono);
+  color: rgba(255,255,255,.6);
+}
+
+.reaction-template dd {
+  color: #fff;
+}
+
+.reaction-template code {
+  background: rgba(255,255,255,.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* World Models Section */
+.worldmodel-box {
+  background: linear-gradient(135deg, var(--paper) 0%, #fff 100%);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.worldmodel-box p {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.worldmodel-box .concept {
+  font-weight: 600;
+}
+
+.worldmodel-box .concept.attention { color: var(--loop); }
+.worldmodel-box .concept.hallucination { color: var(--trace); }
+.worldmodel-box .concept.synthetic { color: var(--model); }
+
+/* Kittler Mapping */
+.kittler-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kittler-list li {
+  background: var(--paper);
+  border-left: 4px solid var(--grid);
+  padding: 12px 16px;
+  font-size: 13px;
+}
+
+.kittler-list .era {
+  font-family: var(--mono);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.kittler-list code {
+  background: rgba(26,95,122,.1);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+/* Prompt Engineering */
+.prompt-tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.prompt-tool {
+  background: #fff;
+  border: 1px solid var(--hair);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.prompt-tool h4 {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--loop);
+}
+
+.prompt-tool p {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.prompt-tool .template {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--ink);
+  color: #fff;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+/* Sitemap Tree */
+.sitemap-tree {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 20px;
+  border-radius: var(--radius);
+  overflow-x: auto;
+  white-space: pre;
+  line-height: 1.8;
+}
+
+.sitemap-tree .root { color: #fff; font-weight: 600; }
+.sitemap-tree .branch { color: rgba(255,255,255,.5); }
+.sitemap-tree .element { color: #6ecf6e; }
+.sitemap-tree .action { color: #6eb5cf; }
+.sitemap-tree .failure { color: #cf6e6e; }
+.sitemap-tree .link { color: #cfb86e; }
+
+/* Dreaming Extensions */
+.extensions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.extension-card {
+  background: linear-gradient(135deg, rgba(107,63,160,.05) 0%, rgba(196,30,58,.05) 100%);
+  border: 1px dashed var(--pulse);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.extension-card h4 {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--vibe);
+}
+
+.extension-card p {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.extension-card code {
+  background: rgba(107,63,160,.1);
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 30px 20px;
+  font-size: 11px;
+  color: var(--muted);
+  border-top: 1px solid var(--hair);
+}
+
+footer a {
+  color: var(--ink);
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+  h1 { font-size: 20px; }
+  h2 { font-size: 15px; }
+  .primitives-grid { grid-template-columns: 1fr; }
+  .periodic-table { font-size: 10px; }
+  nav { padding: 8px 12px; }
+  nav a { font-size: 10px; padding: 3px 6px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="../text-ure-nexus.html" class="title">&larr; tex-ure</a>
+  <a href="#thesis">Thesis</a>
+  <a href="#primitives">Primitives</a>
+  <a href="#table">Table</a>
+  <a href="#bonds">Bonds</a>
+  <a href="#worldmodels">World Models</a>
+  <a href="#kittler">Kittler</a>
+  <a href="#prompts">Prompts</a>
+  <a href="#sitemap">Sitemap</a>
+</nav>
+
+<main>
+
+<!-- THESIS -->
+<section id="thesis">
+  <h1>Media Traversal Theory</h1>
+  <div class="thesis-box">
+    <p>
+      Media <span class="highlight">are not neutral containers for content but specific {cost functions}</span> over a semantic manifold. 
+      Humans <span class="bracket">[elementalize]</span> media into primitives that define the <span class="bracket">[navigation]</span> of meaning; 
+      therefore, <span class="angle">&lt;meaning&gt;</span> is a <span class="angle">&lt;trajectory&gt;</span> through a <span class="angle">&lt;cultural topology&gt;</span> 
+      rather than a static payload. The "message is the medium" is translated into the measurable friction of 
+      <span class="angle">&lt;slack range&gt;</span>, <span class="angle">&lt;addressability&gt;</span>, and <span class="angle">&lt;indexical pressure&gt;</span>.
+    </p>
+    <p style="margin-top:12px">
+      Generative AI acts as a <span class="bracket">[universal transducer]</span>, allowing us to <span class="bracket">[brachiate]</span> 
+      across these media elements by using the <span class="angle">&lt;latent space&gt;</span> as a shared manifold, 
+      turning every historical medium into a <span class="bracket">[steering operator]</span> for probabilistic continuations.
+    </p>
+  </div>
+</section>
+
+<!-- PRIMITIVES -->
+<section id="primitives">
+  <h2><code>&lt;Primitive Set&gt;</code></h2>
+  <p style="margin-bottom:16px;color:var(--muted);font-size:13px;">
+    A minimal set of 6 media primitives that define the constraints on traversal:
+  </p>
+  
+  <div class="primitives-grid">
+    <div class="primitive-card trace">
+      <div class="primitive-header">
+        <span class="primitive-symbol">&lt;Trace&gt;</span>
+        <span class="primitive-name">Indexical Residue</span>
+      </div>
+      <div class="primitive-def">The indexical residue of physical presence.</div>
+      <dl class="primitive-props">
+        <div><dt>Signature:</dt><dd>Makes sensory continuity cheap; makes symbolic search expensive.</dd></div>
+        <div><dt>Valence:</dt><dd class="valence">Tends to bind with &lt;Mass&gt;.</dd></div>
+        <div><dt>Failure:</dt><dd class="failure">&lt;Rupture&gt; (Physical erosion/decay).</dd></div>
+      </dl>
+    </div>
+    
+    <div class="primitive-card grid">
+      <div class="primitive-header">
+        <span class="primitive-symbol">&lt;Grid&gt;</span>
+        <span class="primitive-name">Symbolic Lattice</span>
+      </div>
+      <div class="primitive-def">The symbolic lattice of addressable points.</div>
+      <dl class="primitive-props">
+        <div><dt>Signature:</dt><dd>Makes metadata/sorting cheap; makes nuance expensive.</dd></div>
+        <div><dt>Valence:</dt><dd class="valence">Binds with &lt;Text&gt;.</dd></div>
+        <div><dt>Failure:</dt><dd class="failure">&lt;Collapse&gt; (Ossification/Semantic rigidity).</dd></div>
+      </dl>
+    </div>
+    
+    <div class="primitive-card pulse">
+      <div class="primitive-header">
+        <span class="primitive-symbol">&lt;Pulse&gt;</span>
+        <span class="primitive-name">Temporal Rhythm</span>
+      </div>
+      <div class="primitive-def">The temporal rhythm of transmission.</div>
+      <dl class="primitive-props">
+        <div><dt>Signature:</dt><dd>Makes synchronization cheap; makes asynchronous access expensive.</dd></div>
+        <div><dt>Valence:</dt><dd class="valence">Binds with &lt;Audio/Stream&gt;.</dd></div>
+        <div><dt>Failure:</dt><dd class="failure">&lt;Rupture&gt; (Desync/Signal loss).</dd></div>
+      </dl>
+    </div>
+    
+    <div class="primitive-card loop">
+      <div class="primitive-header">
+        <span class="primitive-symbol">&lt;Loop&gt;</span>
+        <span class="primitive-name">Cybernetic Agency</span>
+      </div>
+      <div class="primitive-def">The feedback mechanism of cybernetic agency.</div>
+      <dl class="primitive-props">
+        <div><dt>Signature:</dt><dd>Makes user agency cheap; makes system exit expensive.</dd></div>
+        <div><dt>Valence:</dt><dd class="valence">Binds with &lt;Interactive/Game&gt;.</dd></div>
+        <div><dt>Failure:</dt><dd class="failure">&lt;Collapse&gt; (Addiction/Entrapment).</dd></div>
+      </dl>
+    </div>
+    
+    <div class="primitive-card slack">
+      <div class="primitive-header">
+        <span class="primitive-symbol">&lt;Slack&gt;</span>
+        <span class="primitive-name">Polysemic Range</span>
+      </div>
+      <div class="primitive-def">The interpretative distance / polysemic range.</div>
+      <dl class="primitive-props">
+        <div><dt>Signature:</dt><dd>Makes poetic "depth" cheap; makes precision expensive.</dd></div>
+        <div><dt>Valence:</dt><dd class="valence">Binds with &lt;Image/Poetry&gt;.</dd></div>
+        <div><dt>Failure:</dt><dd class="failure">&lt;Rupture&gt; (Interpretation drift/Nonsense).</dd></div>
+      </dl>
+    </div>
+    
+    <div class="primitive-card vibe">
+      <div class="primitive-header">
+        <span class="primitive-symbol">&lt;Vibe&gt;</span>
+        <span class="primitive-name">Latent Attractor</span>
+      </div>
+      <div class="primitive-def">The latent attractor / emergent gestalt.</div>
+      <dl class="primitive-props">
+        <div><dt>Signature:</dt><dd>Makes holistic navigation cheap; makes explicit articulation expensive.</dd></div>
+        <div><dt>Valence:</dt><dd class="valence">Binds with &lt;Model/Embedding&gt;.</dd></div>
+        <div><dt>Failure:</dt><dd class="failure">&lt;Collapse&gt; (Mode collapse/Flattening).</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- PERIODIC TABLE -->
+<section id="table">
+  <h2><code>&lt;Periodic Table&gt;</code></h2>
+  <p style="margin-bottom:16px;color:var(--muted);font-size:13px;">
+    Groups correspond to sign/action coupling. Periods correspond to time/agency levels.
+  </p>
+  
+  <div class="periodic-table-container">
+    <div class="periodic-table">
+      <div class="pt-header corner">DIM</div>
+      <div class="pt-header archive">[ARCHIVE]<small>Scanning</small></div>
+      <div class="pt-header stream">[STREAM]<small>Syncing</small></div>
+      <div class="pt-header loop">[LOOP]<small>Feedback</small></div>
+      <div class="pt-header model">[MODEL]<small>Steering</small></div>
+      
+      <div class="pt-row-label"><span class="dim">1D</span><span class="desc">Linear</span></div>
+      <div class="pt-cell archive"><span class="symbol">&lt;Txt&gt;</span><span class="name">Text</span></div>
+      <div class="pt-cell stream"><span class="symbol">&lt;Vce&gt;</span><span class="name">Voice</span></div>
+      <div class="pt-cell loop"><span class="symbol">&lt;Cmd&gt;</span><span class="name">Command</span></div>
+      <div class="pt-cell model"><span class="symbol">&lt;Prm&gt;</span><span class="name">Prompt</span></div>
+      
+      <div class="pt-row-label"><span class="dim">2D</span><span class="desc">Planar</span></div>
+      <div class="pt-cell archive"><span class="symbol">&lt;Img&gt;</span><span class="name">Image</span></div>
+      <div class="pt-cell stream"><span class="symbol">&lt;Vid&gt;</span><span class="name">Video</span></div>
+      <div class="pt-cell loop"><span class="symbol">&lt;Gui&gt;</span><span class="name">Interface</span></div>
+      <div class="pt-cell model"><span class="symbol">&lt;Gen&gt;</span><span class="name">Generator</span></div>
+      
+      <div class="pt-row-label"><span class="dim">3D</span><span class="desc">Spatial</span></div>
+      <div class="pt-cell archive"><span class="symbol">&lt;Obj&gt;</span><span class="name">Object</span></div>
+      <div class="pt-cell stream"><span class="symbol">&lt;Act&gt;</span><span class="name">Action</span></div>
+      <div class="pt-cell loop"><span class="symbol">&lt;Gam&gt;</span><span class="name">Game</span></div>
+      <div class="pt-cell model"><span class="symbol">&lt;Bot&gt;</span><span class="name">Agent</span></div>
+      
+      <div class="pt-row-label"><span class="dim">nD</span><span class="desc">Latent</span></div>
+      <div class="pt-cell archive"><span class="symbol">&lt;Db&gt;</span><span class="name">Database</span></div>
+      <div class="pt-cell stream"><span class="symbol">&lt;Net&gt;</span><span class="name">Network</span></div>
+      <div class="pt-cell loop"><span class="symbol">&lt;Plt&gt;</span><span class="name">Platform</span></div>
+      <div class="pt-cell model"><span class="symbol">&lt;Mod&gt;</span><span class="name">World Model</span></div>
+    </div>
+  </div>
+  
+  <h3>Element Properties (Scale 0-5)</h3>
+  <div class="element-props">
+    <div class="element-prop">
+      <div class="el-name">&lt;Txt&gt; Text</div>
+      <div class="bars">
+        <div class="bar-row">
+          <span class="bar-label">Indexical</span>
+          <div class="bar-track"><div class="bar-fill indexical" style="width:20%"></div></div>
+          <span class="bar-value">1</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Addressability</span>
+          <div class="bar-track"><div class="bar-fill addressable" style="width:100%"></div></div>
+          <span class="bar-value">5</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Slack Range</span>
+          <div class="bar-track"><div class="bar-fill slack" style="width:20%"></div></div>
+          <span class="bar-value">1</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="element-prop">
+      <div class="el-name">&lt;Vid&gt; Video</div>
+      <div class="bars">
+        <div class="bar-row">
+          <span class="bar-label">Indexical</span>
+          <div class="bar-track"><div class="bar-fill indexical" style="width:100%"></div></div>
+          <span class="bar-value">5</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Addressability</span>
+          <div class="bar-track"><div class="bar-fill addressable" style="width:20%"></div></div>
+          <span class="bar-value">1</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Slack Range</span>
+          <div class="bar-track"><div class="bar-fill slack" style="width:20%"></div></div>
+          <span class="bar-value">1</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="element-prop">
+      <div class="el-name">&lt;Img&gt; Image</div>
+      <div class="bars">
+        <div class="bar-row">
+          <span class="bar-label">Indexical</span>
+          <div class="bar-track"><div class="bar-fill indexical" style="width:80%"></div></div>
+          <span class="bar-value">4</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Addressability</span>
+          <div class="bar-track"><div class="bar-fill addressable" style="width:40%"></div></div>
+          <span class="bar-value">2</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Slack Range</span>
+          <div class="bar-track"><div class="bar-fill slack" style="width:80%"></div></div>
+          <span class="bar-value">4</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="element-prop">
+      <div class="el-name">&lt;Mod&gt; World Model</div>
+      <div class="bars">
+        <div class="bar-row">
+          <span class="bar-label">Indexical</span>
+          <div class="bar-track"><div class="bar-fill indexical" style="width:0%"></div></div>
+          <span class="bar-value">0</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Addressability</span>
+          <div class="bar-track"><div class="bar-fill addressable" style="width:80%"></div></div>
+          <span class="bar-value">4</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Slack Range</span>
+          <div class="bar-track"><div class="bar-fill slack" style="width:100%"></div></div>
+          <span class="bar-value">5</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BONDS -->
+<section id="bonds">
+  <h2><code>&lt;Bond Types and Reactions&gt;</code></h2>
+  
+  <div class="bonds-grid">
+    <div class="bond-card">
+      <div class="bond-name">[Anchorage]</div>
+      <div class="bond-formula">
+        <span class="reactant">&lt;Txt&gt;</span> + <span class="reactant">&lt;Img&gt;</span>
+        <span class="arrow">&rarr;</span>
+        <span class="product">Reduces &lt;Slack&gt;</span>
+      </div>
+      <div class="bond-desc">Captions/Memes — Text anchors the polysemic range of images.</div>
+    </div>
+    
+    <div class="bond-card">
+      <div class="bond-name">[Relay]</div>
+      <div class="bond-formula">
+        <span class="reactant">&lt;Txt&gt;</span> + <span class="reactant">&lt;Txt&gt;</span>
+        <span class="arrow">&rarr;</span>
+        <span class="product">Bridges &lt;Grid&gt; gaps</span>
+      </div>
+      <div class="bond-desc">Logic/Reasoning — Chain of text units creates inferential bridges.</div>
+    </div>
+    
+    <div class="bond-card">
+      <div class="bond-name">[Transduction]</div>
+      <div class="bond-formula">
+        <span class="reactant">&lt;Vce&gt;</span> + <span class="reactant">&lt;Txt&gt;</span>
+        <span class="arrow">&rarr;</span>
+        <span class="product">Pulse-to-Grid shift</span>
+      </div>
+      <div class="bond-desc">Transcription — Temporal stream converted to addressable archive.</div>
+    </div>
+    
+    <div class="bond-card">
+      <div class="bond-name">[Suture]</div>
+      <div class="bond-formula">
+        <span class="reactant">&lt;Vid&gt;</span> + <span class="reactant">&lt;Vid&gt;</span>
+        <span class="arrow">&rarr;</span>
+        <span class="product">Hides the &lt;Rupture&gt;</span>
+      </div>
+      <div class="bond-desc">Cinematic Edit — Continuity editing creates seamless flow from fragments.</div>
+    </div>
+    
+    <div class="bond-card">
+      <div class="bond-name">[Portalization]</div>
+      <div class="bond-formula">
+        <span class="reactant">&lt;Gui&gt;</span> + <span class="reactant">&lt;Mod&gt;</span>
+        <span class="arrow">&rarr;</span>
+        <span class="product">Topology &rarr; Address</span>
+      </div>
+      <div class="bond-desc">AI Interface — Turning latent topology into navigable addresses.</div>
+    </div>
+    
+    <div class="bond-card">
+      <div class="bond-name">[Synthetic Indexicality]</div>
+      <div class="bond-formula">
+        <span class="reactant">&lt;Gen&gt;</span> + <span class="reactant">&lt;Mod&gt;</span>
+        <span class="arrow">&rarr;</span>
+        <span class="product">"Real-feeling" traces</span>
+      </div>
+      <div class="bond-desc">The production of indexical sensations via high-dimensional alignment.</div>
+    </div>
+  </div>
+  
+  <div class="reaction-template">
+    <h4>Reaction Template: [Brachiation Prompt]</h4>
+    <dl>
+      <dt>Inputs:</dt>
+      <dd><code>&lt;Txt&gt;</code> + <code>&lt;Prm&gt;</code></dd>
+      <dt>Bond:</dt>
+      <dd><code>[Anchorage]</code></dd>
+      <dt>Product:</dt>
+      <dd>A specific steering vector.</dd>
+      <dt>Use:</dt>
+      <dd>Using symbolic logic to swing into latent polysemy.</dd>
+      <dt>Failure:</dt>
+      <dd><code>&lt;Collapse&gt;</code> (Boilerplate output).</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- WORLD MODELS -->
+<section id="worldmodels">
+  <h2><code>&lt;World Models and GenAI&gt;</code></h2>
+  
+  <div class="worldmodel-box">
+    <p>
+      "World models" arise as emergent constraints of traversal under compression. When a model predicts the next token, 
+      it is <span class="bracket">[navigating]</span> the <span class="angle">&lt;latent space&gt;</span> manifold.
+    </p>
+    <p>
+      <span class="concept attention">Attention</span> is the <span class="bracket">[routing]</span> operator that moves semantic packets across the topology.
+    </p>
+    <p>
+      <span class="concept hallucination">Hallucination</span> occurs when there is a <span class="angle">&lt;rupture&gt;</span> between the model's chart and the cultural topology.
+    </p>
+    <p>
+      <span class="concept synthetic">Synthetic Indexicality</span> is the core of GenAI: it produces the "feeling" of a physical 
+      <span class="angle">&lt;trace&gt;</span> without a causal physical origin.
+    </p>
+  </div>
+</section>
+
+<!-- KITTLER -->
+<section id="kittler">
+  <h2><code>&lt;Kittler-Compatible Mapping&gt;</code></h2>
+  
+  <ul class="kittler-list">
+    <li>
+      <span class="era">Writing Monopoly (1800)</span>
+      <code>&lt;Grid&gt;</code> + <code>&lt;Trace&gt;</code> &rarr; The Scroll/Book. 
+      All sensory data compressed into symbolic lattice via hallucination.
+    </li>
+    <li>
+      <span class="era">Differentiation (1900)</span>
+      <code>&lt;Trace&gt;</code> splits into <code>&lt;Gramophone&gt;</code> (Audio) and <code>&lt;Film&gt;</code> (Optical), 
+      while <code>&lt;Grid&gt;</code> becomes the <code>&lt;Typewriter&gt;</code>.
+    </li>
+    <li>
+      <span class="era">Digital Convergence (2000)</span>
+      Everything becomes <code>&lt;Cmd&gt;</code> ([Loop]) and finally <code>&lt;Latent Manifold&gt;</code> ([Steering]), 
+      where all differentiation is merely a different [address] in a single n-dimensional manifold.
+    </li>
+  </ul>
+</section>
+
+<!-- PROMPTS -->
+<section id="prompts">
+  <h2><code>&lt;Pragmatic Prompt + Context Engineering OS&gt;</code></h2>
+  
+  <div class="prompt-tools">
+    <div class="prompt-tool">
+      <h4>The Slack Dial</h4>
+      <p>Increase <code>&lt;Slack&gt;</code> by adding poetic/image-based descriptors to a <code>&lt;Txt&gt;</code> query to broaden output range.</p>
+      <div class="template">[Precise Query] + "evoke the feeling of..." + [Metaphor]</div>
+    </div>
+    
+    <div class="prompt-tool">
+      <h4>Brachiation Prompt</h4>
+      <p>Swing between media modes using anchor points.</p>
+      <div class="template">[Anchor: Fact] + [Swing: Metaphor]</div>
+    </div>
+    
+    <div class="prompt-tool">
+      <h4>Hinge Template</h4>
+      <p>Prevent <code>&lt;collapse&gt;</code> by requiring the AI to view the same prompt as both <code>&lt;Grid&gt;</code> (logic) and <code>&lt;Trace&gt;</code> (feeling).</p>
+      <div class="template">"First analyze structurally, then describe how it feels"</div>
+    </div>
+  </div>
+</section>
+
+<!-- DREAMING -->
+<section id="dreaming">
+  <h2><code>&lt;Dreaming Extensions&gt;</code></h2>
+  
+  <div class="extensions-grid">
+    <div class="extension-card">
+      <h4>The Ritual Agent</h4>
+      <p>Combine <code>&lt;Act&gt;</code> (Ritual) + <code>&lt;Bot&gt;</code> (Robot) + <code>&lt;Mod&gt;</code> (Model) to create an autonomous performance that learns from its audience.</p>
+    </div>
+    
+    <div class="extension-card">
+      <h4>Linguistic Vision</h4>
+      <p>Use <code>&lt;Cmd&gt;</code> (Code) to [traverse] an <code>&lt;Img&gt;</code> (Image) to translate visuals into executable logic.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SITEMAP -->
+<section id="sitemap">
+  <h2><code>&lt;Sitemap&gt;</code></h2>
+  
+  <div class="sitemap-tree"><span class="root">&lt;Media Traversal Theory&gt;</span>
+<span class="branch">├──</span> <span class="action">[ELEMENTS]</span>
+<span class="branch">│   ├──</span> <span class="element">&lt;Trace&gt;</span> ---- [INDEX] ----> <span class="link">&lt;Mass&gt;</span>
+<span class="branch">│   ├──</span> <span class="element">&lt;Grid&gt;</span> ----- [SYMBOL] ---> <span class="link">&lt;Text&gt;</span>
+<span class="branch">│   ├──</span> <span class="element">&lt;Pulse&gt;</span> ---- [TIME] -----> <span class="link">&lt;Stream&gt;</span>
+<span class="branch">│   ├──</span> <span class="element">&lt;Loop&gt;</span> ----- [FEEDBACK] --> <span class="link">&lt;Agency&gt;</span>
+<span class="branch">│   ├──</span> <span class="element">&lt;Slack&gt;</span> ---- [POLYSEMY] --> <span class="link">&lt;Poetry&gt;</span>
+<span class="branch">│   └──</span> <span class="element">&lt;Vibe&gt;</span> ----- [LATENT] ----> <span class="link">&lt;Model&gt;</span>
+<span class="branch">├──</span> <span class="action">[ACTIONS]</span>
+<span class="branch">│   ├──</span> <span class="action">[Brachiation]</span> (Grasp-Test-Release)
+<span class="branch">│   ├──</span> <span class="action">[Transduction]</span> (Medium Shift)
+<span class="branch">│   └──</span> <span class="action">[Steering]</span> (Latent Navigation)
+<span class="branch">└──</span> <span class="failure">[FAILURES]</span>
+<span class="branch">    ├──</span> <span class="failure">&lt;Rupture&gt;</span> (Broken Handoff)
+<span class="branch">    └──</span> <span class="failure">&lt;Collapse&gt;</span> (Loss of Degrees of Freedom)</div>
+</section>
+
+</main>
+
+<footer>
+  <p>Media Traversal Theory · Part of <a href="../text-ure-nexus.html">tex-ure</a> · After Kittler</p>
+</footer>
+
+</body>
+</html>

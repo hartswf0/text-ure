@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Auden Shield — Carey Ritual Cartography</title>
+<style>
+:root {
+  --bg: #f6f2e8;
+  --paper: #fbf8f0;
+  --ink: #111;
+  --muted: rgba(17,17,17,.65);
+  --hair: rgba(17,17,17,.14);
+  --accent: #1b4b7a;
+  --accent2: #8a3d1e;
+  --radius: 18px;
+  --shadow: 0 10px 30px rgba(0,0,0,.08);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; background: radial-gradient(1200px 800px at 30% -10%, #fff 0%, var(--bg) 60%, #efe8d7 100%); color: var(--ink); margin: 0; font-family: var(--sans); }
+.app { min-height: 100%; padding: 20px; }
+header { text-align: center; margin-bottom: 24px; background: linear-gradient(to bottom, rgba(251,248,240,.96), rgba(251,248,240,.78)); border: 1px solid var(--hair); border-radius: var(--radius); padding: 20px; backdrop-filter: blur(10px); box-shadow: var(--shadow); max-width: 900px; margin: 0 auto 24px; }
+.title { font-size: 14px; font-weight: 700; letter-spacing: .08em; color: var(--ink); text-transform: uppercase; }
+.subtitle { color: var(--muted); font-size: 12px; margin-top: 8px; font-style: italic; }
+.principles { max-width: 700px; margin: 20px auto; padding: 16px; background: rgba(27,75,122,.06); border: 1px solid rgba(27,75,122,.15); border-radius: 12px; font-size: 12px; line-height: 1.6; }
+.principles strong { color: var(--accent); }
+
+.chapels { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; max-width: 1400px; margin: 0 auto; }
+.chapel { background: var(--paper); border: 1px solid var(--hair); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.chapel-header { padding: 14px 16px; background: linear-gradient(to bottom, rgba(255,255,255,.8), rgba(255,255,255,.4)); border-bottom: 1px solid var(--hair); }
+.chapel-header h3 { margin: 0; font-size: 12px; color: var(--accent); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.chapel-header .type { font-size: 10px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .04em; }
+.chapel-body { padding: 16px; }
+.rite-line { margin: 10px 0; padding: 12px; border: 1px solid var(--hair); border-radius: 10px; background: #fff; }
+.rite-line .text { font-size: 13px; line-height: 1.5; margin-bottom: 8px; }
+.rite-line .meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: 10px; }
+.rite-line .tag { padding: 4px 8px; border-radius: 999px; background: rgba(17,17,17,.05); color: var(--muted); }
+.rite-line .tag.fn-PRODUCE { background: rgba(25,106,42,.12); color: #196a2a; }
+.rite-line .tag.fn-MAINTAIN { background: rgba(27,75,122,.12); color: #1b4b7a; }
+.rite-line .tag.fn-REPAIR { background: rgba(138,61,30,.12); color: #8a3d1e; }
+.rite-line .tag.fn-TRANSFORM { background: rgba(100,60,120,.12); color: #644078; }
+.rite-line .tag.role { background: rgba(27,75,122,.1); color: var(--accent); }
+.rite-line .tag.altar { background: rgba(138,30,30,.1); color: #8a1e1e; }
+
+.ceremony-diagram { margin-top: 12px; padding: 12px; background: rgba(27,75,122,.04); border: 1px solid rgba(27,75,122,.1); border-radius: 8px; font-size: 11px; color: var(--muted); }
+.ceremony-diagram strong { color: var(--accent); }
+
+.altars-section { max-width: 1400px; margin: 30px auto; background: var(--paper); border: 1px solid var(--hair); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+.altars-section h2 { color: var(--accent); font-size: 12px; font-weight: 700; margin-bottom: 16px; text-align: center; text-transform: uppercase; letter-spacing: .08em; }
+.altars-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.altar { padding: 10px 16px; background: #fff; border: 1px solid var(--hair); border-radius: 10px; text-align: center; }
+.altar .name { font-size: 11px; font-weight: 700; color: var(--accent2); }
+.altar .desc { font-size: 10px; color: var(--muted); margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title">AUDEN SHIELD — RITUAL CARTOGRAPHY</div>
+    <div class="subtitle">After James W. Carey · "Communication is a symbolic process whereby reality is produced, maintained, repaired, and transformed"</div>
+  </header>
+  
+  <div class="principles">
+    <strong>FP1:</strong> Texts are ceremonies: reading is attending a mass.<br>
+    <strong>FP2:</strong> The shield is not an object; it is a staging device for communion.<br>
+    <strong>FP3:</strong> A map is not a copy; it configures experience. The map changes the world it "describes."<br>
+    <strong>FP4:</strong> What Thetis expected vs. what Hephaestos made = the ritual break that transforms the reader.
+  </div>
+  
+  <div class="altars-section">
+    <h2>⛩ ALTARS (Motif Nodes)</h2>
+    <div class="altars-grid">
+      <div class="altar"><div class="name">A_EXPECTATION</div><div class="desc">What Thetis looked for</div></div>
+      <div class="altar"><div class="name">A_BETRAYAL</div><div class="desc">What was made instead</div></div>
+      <div class="altar"><div class="name">A_MULTITUDE</div><div class="desc">Mass/crowd/anonymity</div></div>
+      <div class="altar"><div class="name">A_VIOLENCE</div><div class="desc">Execution/rape/knifing</div></div>
+      <div class="altar"><div class="name">A_SILENCE</div><div class="desc">Without expression/neither moved nor spoke</div></div>
+      <div class="altar"><div class="name">A_FATE</div><div class="desc">Who would not live long</div></div>
+    </div>
+  </div>
+  
+  <div class="chapels" id="chapels"></div>
+</div>
+
+<script>
+const CHAPELS = [
+  {
+    id: "C1",
+    name: "Expectation I: Pastoral",
+    type: "THETIS REFRAIN",
+    ceremony: "ENTRY: Thetis looks → CHANT: vines, cities, ships → TURN: 'But there' → SEAL: wilderness/lead",
+    lines: [
+      { id: "L01", text: "She looked over his shoulder", fn: "PRODUCE", role: "Witness", altars: ["A_EXPECTATION"] },
+      { id: "L02", text: "For vines and olive trees,", fn: "MAINTAIN", role: "Pilgrim", altars: ["A_EXPECTATION"] },
+      { id: "L03", text: "Marble well-governed cities", fn: "MAINTAIN", role: "Citizen", altars: ["A_EXPECTATION"] },
+      { id: "L04", text: "And ships upon untamed seas,", fn: "MAINTAIN", role: "Pilgrim", altars: ["A_EXPECTATION"] },
+      { id: "L05", text: "But there on the shining metal", fn: "TRANSFORM", role: "Witness", altars: ["A_BETRAYAL"] },
+      { id: "L06", text: "His hands had put instead", fn: "TRANSFORM", role: "Judge", altars: ["A_BETRAYAL"] },
+      { id: "L07", text: "An artificial wilderness", fn: "PRODUCE", role: "Observer", altars: ["A_BETRAYAL"] },
+      { id: "L08", text: "And a sky like lead.", fn: "REPAIR", role: "Witness", altars: ["A_BETRAYAL", "A_SILENCE"] }
+    ]
+  },
+  {
+    id: "C2",
+    name: "Scene I: The Plain",
+    type: "EKPHRASIS",
+    ceremony: "ENTRY: bare plain → CHANT: multitude gathers → TURN: million eyes → SEAL: waiting for a sign",
+    lines: [
+      { id: "L09", text: "A plain without a feature, bare and brown,", fn: "PRODUCE", role: "Observer", altars: ["A_BETRAYAL"] },
+      { id: "L10", text: "No blade of grass, no sign of neighborhood,", fn: "MAINTAIN", role: "Witness", altars: ["A_SILENCE"] },
+      { id: "L11", text: "Nothing to eat and nowhere to sit down,", fn: "MAINTAIN", role: "Congregant", altars: ["A_SILENCE"] },
+      { id: "L12", text: "Yet, congregated on its blankness, stood", fn: "PRODUCE", role: "Herald", altars: ["A_MULTITUDE"] },
+      { id: "L13", text: "An unintelligible multitude,", fn: "PRODUCE", role: "Observer", altars: ["A_MULTITUDE"] },
+      { id: "L14", text: "A million eyes, a million boots in line,", fn: "MAINTAIN", role: "Witness", altars: ["A_MULTITUDE"] },
+      { id: "L15", text: "Without expression, waiting for a sign.", fn: "REPAIR", role: "Congregant", altars: ["A_SILENCE", "A_MULTITUDE"] }
+    ]
+  },
+  {
+    id: "C3",
+    name: "Scene II: The Voice",
+    type: "EKPHRASIS",
+    ceremony: "ENTRY: disembodied voice → CHANT: statistics/belief → TURN: marched away → SEAL: grief",
+    lines: [
+      { id: "L16", text: "Out of the air a voice without a face", fn: "PRODUCE", role: "Herald", altars: ["A_SILENCE"] },
+      { id: "L17", text: "Proved by statistics that some cause was just", fn: "TRANSFORM", role: "Judge", altars: ["A_BETRAYAL"] },
+      { id: "L18", text: "In tones as dry and level as the place:", fn: "MAINTAIN", role: "Witness", altars: ["A_SILENCE"] },
+      { id: "L19", text: "No one was cheered and nothing was discussed;", fn: "MAINTAIN", role: "Congregant", altars: ["A_SILENCE"] },
+      { id: "L20", text: "Column by column in a cloud of dust", fn: "PRODUCE", role: "Observer", altars: ["A_MULTITUDE"] },
+      { id: "L21", text: "They marched away enduring a belief", fn: "TRANSFORM", role: "Pilgrim", altars: ["A_MULTITUDE"] },
+      { id: "L22", text: "Whose logic brought them, somewhere else, to grief.", fn: "REPAIR", role: "Witness", altars: ["A_FATE"] }
+    ]
+  },
+  {
+    id: "C4",
+    name: "Expectation II: Sacrifice",
+    type: "THETIS REFRAIN",
+    ceremony: "ENTRY: Thetis looks again → CHANT: ritual pieties → TURN: 'But there' → SEAL: another scene",
+    lines: [
+      { id: "L23", text: "She looked over his shoulder", fn: "PRODUCE", role: "Witness", altars: ["A_EXPECTATION"] },
+      { id: "L24", text: "For ritual pieties,", fn: "MAINTAIN", role: "Pilgrim", altars: ["A_EXPECTATION"] },
+      { id: "L25", text: "White flower-garlanded heifers,", fn: "MAINTAIN", role: "Observer", altars: ["A_EXPECTATION"] },
+      { id: "L26", text: "Libation and sacrifice,", fn: "MAINTAIN", role: "Congregant", altars: ["A_EXPECTATION"] },
+      { id: "L27", text: "But there on the shining metal", fn: "TRANSFORM", role: "Witness", altars: ["A_BETRAYAL"] },
+      { id: "L28", text: "Where the altar should have been,", fn: "TRANSFORM", role: "Judge", altars: ["A_BETRAYAL"] },
+      { id: "L29", text: "She saw by his flickering forge-light", fn: "PRODUCE", role: "Observer", altars: ["A_BETRAYAL"] },
+      { id: "L30", text: "Quite another scene.", fn: "REPAIR", role: "Witness", altars: ["A_BETRAYAL"] }
+    ]
+  },
+  {
+    id: "C5",
+    name: "Scene III: The Camp",
+    type: "EKPHRASIS",
+    ceremony: "ENTRY: barbed wire → CHANT: officials/folk → TURN: three figures bound → SEAL: in the ground",
+    lines: [
+      { id: "L31", text: "Barbed wire enclosed an arbitrary spot", fn: "PRODUCE", role: "Observer", altars: ["A_VIOLENCE"] },
+      { id: "L32", text: "Where bored officials lounged (one cracked a joke)", fn: "MAINTAIN", role: "Witness", altars: ["A_SILENCE"] },
+      { id: "L33", text: "And sentries sweated for the day was hot:", fn: "MAINTAIN", role: "Observer", altars: ["A_SILENCE"] },
+      { id: "L34", text: "A crowd of ordinary decent folk", fn: "PRODUCE", role: "Congregant", altars: ["A_MULTITUDE"] },
+      { id: "L35", text: "Watched from without and neither moved nor spoke", fn: "MAINTAIN", role: "Witness", altars: ["A_SILENCE", "A_MULTITUDE"] },
+      { id: "L36", text: "As three pale figures were led forth and bound", fn: "TRANSFORM", role: "Observer", altars: ["A_VIOLENCE"] },
+      { id: "L37", text: "To three posts driven upright in the ground.", fn: "REPAIR", role: "Witness", altars: ["A_VIOLENCE", "A_FATE"] }
+    ]
+  },
+  {
+    id: "C6",
+    name: "Scene IV: The Execution",
+    type: "EKPHRASIS",
+    ceremony: "ENTRY: mass/majesty → CHANT: weight/same → TURN: no help came → SEAL: died before they died",
+    lines: [
+      { id: "L38", text: "The mass and majesty of this world, all", fn: "PRODUCE", role: "Herald", altars: ["A_MULTITUDE"] },
+      { id: "L39", text: "That carries weight and always weighs the same", fn: "MAINTAIN", role: "Judge", altars: ["A_FATE"] },
+      { id: "L40", text: "Lay in the hands of others; they were small", fn: "TRANSFORM", role: "Witness", altars: ["A_VIOLENCE"] },
+      { id: "L41", text: "And could not hope for help and no help came:", fn: "MAINTAIN", role: "Congregant", altars: ["A_SILENCE", "A_VIOLENCE"] },
+      { id: "L42", text: "What their foes liked to do was done, their shame", fn: "TRANSFORM", role: "Observer", altars: ["A_VIOLENCE"] },
+      { id: "L43", text: "Was all the worst could wish; they lost their pride", fn: "TRANSFORM", role: "Witness", altars: ["A_VIOLENCE"] },
+      { id: "L44", text: "And died as men before their bodies died.", fn: "REPAIR", role: "Judge", altars: ["A_FATE", "A_VIOLENCE"] }
+    ]
+  },
+  {
+    id: "C7",
+    name: "Expectation III: Dance",
+    type: "THETIS REFRAIN",
+    ceremony: "ENTRY: Thetis looks → CHANT: athletes/dance → TURN: 'But there' → SEAL: weed-choked field",
+    lines: [
+      { id: "L45", text: "She looked over his shoulder", fn: "PRODUCE", role: "Witness", altars: ["A_EXPECTATION"] },
+      { id: "L46", text: "For athletes at their games,", fn: "MAINTAIN", role: "Pilgrim", altars: ["A_EXPECTATION"] },
+      { id: "L47", text: "Men and women in a dance", fn: "MAINTAIN", role: "Congregant", altars: ["A_EXPECTATION"] },
+      { id: "L48", text: "Moving their sweet limbs", fn: "MAINTAIN", role: "Observer", altars: ["A_EXPECTATION"] },
+      { id: "L49", text: "Quick, quick, to music,", fn: "MAINTAIN", role: "Pilgrim", altars: ["A_EXPECTATION"] },
+      { id: "L50", text: "But there on the shining shield", fn: "TRANSFORM", role: "Witness", altars: ["A_BETRAYAL"] },
+      { id: "L51", text: "His hands had set no dancing-floor", fn: "TRANSFORM", role: "Judge", altars: ["A_BETRAYAL"] },
+      { id: "L52", text: "But a weed-choked field.", fn: "REPAIR", role: "Witness", altars: ["A_BETRAYAL"] }
+    ]
+  },
+  {
+    id: "C8",
+    name: "Scene V: The Urchin",
+    type: "EKPHRASIS",
+    ceremony: "ENTRY: ragged urchin → CHANT: vacancy/stone → TURN: axioms of violence → SEAL: never heard/wept",
+    lines: [
+      { id: "L53", text: "A ragged urchin, aimless and alone,", fn: "PRODUCE", role: "Observer", altars: ["A_SILENCE"] },
+      { id: "L54", text: "Loitered about that vacancy; a bird", fn: "MAINTAIN", role: "Witness", altars: ["A_SILENCE"] },
+      { id: "L55", text: "Flew up to safety from his well-aimed stone:", fn: "TRANSFORM", role: "Observer", altars: ["A_VIOLENCE"] },
+      { id: "L56", text: "That girls are raped, that two boys knife a third,", fn: "PRODUCE", role: "Herald", altars: ["A_VIOLENCE"] },
+      { id: "L57", text: "Were axioms to him, who'd never heard", fn: "MAINTAIN", role: "Witness", altars: ["A_VIOLENCE", "A_SILENCE"] },
+      { id: "L58", text: "Of any world where promises were kept,", fn: "TRANSFORM", role: "Judge", altars: ["A_BETRAYAL"] },
+      { id: "L59", text: "Or one could weep because another wept.", fn: "REPAIR", role: "Congregant", altars: ["A_SILENCE", "A_FATE"] }
+    ]
+  },
+  {
+    id: "C9",
+    name: "Coda: The Armorer",
+    type: "CODA",
+    ceremony: "ENTRY: thin-lipped armorer → CHANT: hobbled/dismay → TURN: what god had wrought → SEAL: not live long",
+    lines: [
+      { id: "L60", text: "The thin-lipped armorer,", fn: "PRODUCE", role: "Observer", altars: ["A_BETRAYAL"] },
+      { id: "L61", text: "Hephaestos, hobbled away,", fn: "TRANSFORM", role: "Witness", altars: ["A_SILENCE"] },
+      { id: "L62", text: "Thetis of the shining breasts", fn: "PRODUCE", role: "Herald", altars: ["A_EXPECTATION"] },
+      { id: "L63", text: "Cried out in dismay", fn: "TRANSFORM", role: "Witness", altars: ["A_BETRAYAL"] },
+      { id: "L64", text: "At what the god had wrought", fn: "MAINTAIN", role: "Judge", altars: ["A_BETRAYAL"] },
+      { id: "L65", text: "To please her son, the strong", fn: "MAINTAIN", role: "Observer", altars: ["A_FATE"] },
+      { id: "L66", text: "Iron-hearted man-slaying Achilles", fn: "PRODUCE", role: "Herald", altars: ["A_VIOLENCE", "A_FATE"] },
+      { id: "L67", text: "Who would not live long.", fn: "REPAIR", role: "Judge", altars: ["A_FATE"] }
+    ]
+  }
+];
+
+function render() {
+  const container = document.getElementById('chapels');
+  container.innerHTML = '';
+  
+  for (const chapel of CHAPELS) {
+    const el = document.createElement('div');
+    el.className = 'chapel';
+    
+    let linesHtml = '';
+    for (const line of chapel.lines) {
+      const altarTags = line.altars.map(a => `<span class="tag altar">${a}</span>`).join('');
+      linesHtml += `
+        <div class="rite-line">
+          <div class="text">${line.text}</div>
+          <div class="meta">
+            <span class="tag fn-${line.fn}">${line.fn}</span>
+            <span class="tag role">${line.role}</span>
+            ${altarTags}
+          </div>
+        </div>
+      `;
+    }
+    
+    el.innerHTML = `
+      <div class="chapel-header">
+        <h3>${chapel.id}: ${chapel.name}</h3>
+        <div class="type">${chapel.type}</div>
+      </div>
+      <div class="chapel-body">
+        <div class="ceremony-diagram">
+          <strong>Ceremony:</strong> ${chapel.ceremony}
+        </div>
+        ${linesHtml}
+      </div>
+    `;
+    
+    container.appendChild(el);
+  }
+}
+
+render();
+</script>
+</body>
+</html>

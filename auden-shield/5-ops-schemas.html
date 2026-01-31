@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Auden Shield — OPS-SCHEMAS Grid</title>
+<style>
+:root {
+  --bg: #f6f2e8;
+  --paper: #fbf8f0;
+  --ink: #111;
+  --muted: rgba(17,17,17,.65);
+  --hair: rgba(17,17,17,.14);
+  --accent: #1b4b7a;
+  --active: #196a2a;
+  --sealed: #8a6a10;
+  --broken: #8a1e1e;
+  --cell: 28px;
+  --radius: 18px;
+  --shadow: 0 10px 30px rgba(0,0,0,.08);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; background: radial-gradient(1200px 800px at 30% -10%, #fff 0%, var(--bg) 60%, #efe8d7 100%); color: var(--ink); margin: 0; font-family: var(--mono); font-size: 11px; }
+.app { min-height: 100%; display: grid; grid-template-columns: 1fr 340px; gap: 12px; padding: 12px; }
+.left { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+header { background: linear-gradient(to bottom, rgba(251,248,240,.96), rgba(251,248,240,.78)); border: 1px solid var(--hair); border-radius: var(--radius); padding: 14px; backdrop-filter: blur(10px); box-shadow: var(--shadow); }
+.title { font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.subtitle { color: var(--muted); margin-top: 6px; font-size: 12px; }
+.axioms { margin-top: 12px; padding: 12px; background: rgba(25,106,42,.06); border: 1px solid rgba(25,106,42,.15); border-radius: 10px; font-size: 10px; }
+.axioms div { margin: 4px 0; }
+.axioms strong { color: var(--active); }
+
+.grid-container { flex: 1; overflow: auto; display: flex; justify-content: center; align-items: flex-start; padding: 12px; background: var(--paper); border: 1px solid var(--hair); border-radius: var(--radius); }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(24, var(--cell));
+  grid-auto-rows: var(--cell);
+  gap: 1px;
+  background: var(--hair);
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.cell {
+  background: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  cursor: pointer;
+  position: relative;
+  transition: all .1s;
+}
+.cell:hover { z-index: 2; transform: scale(1.15); background: rgba(27,75,122,.1); }
+
+.cell.s-DORMANT { background: rgba(17,17,17,.06); color: #808080; }
+.cell.s-ACTIVE { background: rgba(25,106,42,.1); color: var(--active); }
+.cell.s-SEALED { background: rgba(138,106,16,.1); color: var(--sealed); }
+.cell.s-BROKEN { background: rgba(138,30,30,.1); color: var(--broken); }
+.cell.s-QUARANTINED { background: rgba(100,60,120,.1); color: #644078; }
+
+.cell.z-EXPECTATION { border-top: 2px solid rgba(27,75,122,.4); }
+.cell.z-SCENE { border-top: 2px solid rgba(180,100,100,.4); }
+.cell.z-PIVOT { border-top: 2px solid rgba(220,180,100,.4); }
+.cell.z-CODA { border-top: 2px solid rgba(160,100,220,.4); }
+
+.cell .glyph { font-size: 10px; }
+
+.sidebar { background: var(--paper); border: 1px solid var(--hair); border-radius: var(--radius); overflow: auto; display: flex; flex-direction: column; box-shadow: var(--shadow); }
+.sidebar-section { padding: 14px; border-bottom: 1px solid var(--hair); }
+.sidebar-section h3 { margin: 0 0 10px 0; font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; }
+.enum-list { font-size: 10px; }
+.enum-item { margin: 6px 0; padding: 8px; background: #fff; border: 1px solid var(--hair); border-radius: 8px; }
+.enum-item .name { color: var(--active); font-weight: 700; }
+.enum-item .vals { color: var(--muted); margin-top: 4px; }
+
+.zone-list { font-size: 10px; }
+.zone-item { margin: 6px 0; padding: 10px; border: 1px solid var(--hair); border-radius: 8px; background: #fff; }
+.zone-item .name { font-weight: 700; color: var(--accent); }
+.zone-item .meta { color: var(--muted); margin-top: 4px; }
+
+.cell-info { padding: 14px; flex: 1; overflow: auto; }
+.cell-info h3 { margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+.cell-info pre { font-size: 9px; color: var(--muted); white-space: pre-wrap; background: #fff; border: 1px solid var(--hair); padding: 10px; border-radius: 8px; }
+
+.controls { display: flex; gap: 8px; margin-top: 12px; }
+button {
+  appearance: none;
+  border: 1px solid var(--hair);
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(0,0,0,.03);
+  transition: all .12s;
+}
+button:hover { border-color: #bbb; box-shadow: 0 6px 16px rgba(0,0,0,.06); }
+.stats { display: flex; gap: 16px; margin-top: 12px; font-size: 10px; color: var(--muted); }
+.stats .val { color: var(--ink); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="left">
+    <header>
+      <div class="title">AUDEN SHIELD — OPS-SCHEMAS GRID</div>
+      <div class="subtitle">Machine-parseable cell/zone/traversal schemas · "The grid remains a ritual world"</div>
+      <div class="axioms">
+        <div><strong>G1:</strong> world_not_page = true</div>
+        <div><strong>G2:</strong> position_performs_meaning = true</div>
+        <div><strong>G3:</strong> cells_stage_acts_not_store = true</div>
+        <div><strong>G4:</strong> traversal_produces_understanding = true</div>
+        <div><strong>G5:</strong> repetition_manufactures_reality = true</div>
+      </div>
+      <div class="controls">
+        <button id="activateBtn">▶ Activate All</button>
+        <button id="sealBtn">⬛ Seal Zone</button>
+        <button id="traverseBtn">↯ Traverse</button>
+      </div>
+      <div class="stats">
+        <div>ACTIVE: <span class="val" id="activeCount">0</span></div>
+        <div>SEALED: <span class="val" id="sealedCount">0</span></div>
+        <div>BROKEN: <span class="val" id="brokenCount">0</span></div>
+        <div>SILENCE: <span class="val" id="silenceCount">0</span></div>
+      </div>
+    </header>
+    <div class="grid-container">
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+  
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <h3>TYPE SYSTEM</h3>
+      <div class="enum-list">
+        <div class="enum-item">
+          <div class="name">WorldOp</div>
+          <div class="vals">PRODUCE | MAINTAIN | REPAIR | TRANSFORM</div>
+        </div>
+        <div class="enum-item">
+          <div class="name">RitualAct</div>
+          <div class="vals">INVOCATION | CHANT | WITNESS | QUESTION | SEAL</div>
+        </div>
+        <div class="enum-item">
+          <div class="name">CellState</div>
+          <div class="vals">DORMANT | ACTIVE | SEALED | BROKEN | QUARANTINED</div>
+        </div>
+        <div class="enum-item">
+          <div class="name">SilenceKind</div>
+          <div class="vals">BREATH | GAP | VEIL | REDACTION | VOID</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <h3>ZONES</h3>
+      <div class="zone-list" id="zoneList"></div>
+    </div>
+    
+    <div class="cell-info" id="cellInfo">
+      <h3>CELL INSPECTOR</h3>
+      <pre>Click a cell to inspect...</pre>
+    </div>
+  </div>
+</div>
+
+<script>
+const ZONES = [
+  { id: "EXPECTATION", name: "Thetis Expectation", bounds: { y_min: 0, y_max: 5 }, world_op: "MAINTAIN", acts: ["INVOCATION", "CHANT"], glyphs: "👁🌿🏛⛵" },
+  { id: "PIVOT", name: "Pivot/Turn", bounds: { y_min: 6, y_max: 7 }, world_op: "TRANSFORM", acts: ["WITNESS", "SEAL"], glyphs: "⚡🔨" },
+  { id: "SCENE", name: "Hephaestos Scene", bounds: { y_min: 8, y_max: 18 }, world_op: "PRODUCE", acts: ["WITNESS", "QUESTION"], glyphs: "👥🔇⛓💀" },
+  { id: "CODA", name: "Coda/Fate", bounds: { y_min: 19, y_max: 23 }, world_op: "REPAIR", acts: ["SEAL"], glyphs: "🔥⚔💔" }
+];
+
+const LINES = [
+  "She looked over his shoulder",
+  "For vines and olive trees,",
+  "Marble well-governed cities",
+  "And ships upon untamed seas,",
+  "But there on the shining metal",
+  "His hands had put instead",
+  "An artificial wilderness",
+  "And a sky like lead.",
+  "A plain without a feature, bare and brown,",
+  "No blade of grass, no sign of neighborhood,",
+  "Nothing to eat and nowhere to sit down,",
+  "Yet, congregated on its blankness, stood",
+  "An unintelligible multitude,",
+  "A million eyes, a million boots in line,",
+  "Without expression, waiting for a sign.",
+  "Out of the air a voice without a face",
+  "Proved by statistics that some cause was just",
+  "In tones as dry and level as the place:",
+  "No one was cheered and nothing was discussed;",
+  "Column by column in a cloud of dust",
+  "They marched away enduring a belief",
+  "Whose logic brought them, somewhere else, to grief.",
+  "She looked over his shoulder",
+  "For ritual pieties,",
+  "White flower-garlanded heifers,",
+  "Libation and sacrifice,",
+  "But there on the shining metal",
+  "Where the altar should have been,",
+  "She saw by his flickering forge-light",
+  "Quite another scene.",
+  "Barbed wire enclosed an arbitrary spot",
+  "Where bored officials lounged (one cracked a joke)",
+  "And sentries sweated for the day was hot:",
+  "A crowd of ordinary decent folk",
+  "Watched from without and neither moved nor spoke",
+  "As three pale figures were led forth and bound",
+  "To three posts driven upright in the ground.",
+  "The mass and majesty of this world, all",
+  "That carries weight and always weighs the same",
+  "Lay in the hands of others; they were small",
+  "And could not hope for help and no help came:",
+  "What their foes liked to do was done, their shame",
+  "Was all the worst could wish; they lost their pride",
+  "And died as men before their bodies died.",
+  "She looked over his shoulder",
+  "For athletes at their games,",
+  "Men and women in a dance",
+  "Moving their sweet limbs",
+  "Quick, quick, to music,",
+  "But there on the shining shield",
+  "His hands had set no dancing-floor",
+  "But a weed-choked field.",
+  "A ragged urchin, aimless and alone,",
+  "Loitered about that vacancy; a bird",
+  "Flew up to safety from his well-aimed stone:",
+  "That girls are raped, that two boys knife a third,",
+  "Were axioms to him, who'd never heard",
+  "Of any world where promises were kept,",
+  "Or one could weep because another wept.",
+  "The thin-lipped armorer,",
+  "Hephaestos, hobbled away,",
+  "Thetis of the shining breasts",
+  "Cried out in dismay",
+  "At what the god had wrought",
+  "To please her son, the strong",
+  "Iron-hearted man-slaying Achilles",
+  "Who would not live long."
+];
+
+const W = 24, H = 24;
+let cells = [];
+
+function getZone(y) {
+  for (const z of ZONES) {
+    if (y >= z.bounds.y_min && y <= z.bounds.y_max) return z;
+  }
+  return ZONES[0];
+}
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function() {
+    a += 0x6D2B79F5;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function buildGrid() {
+  const rand = mulberry32(0x5A1E1D);
+  cells = [];
+  
+  let allChars = LINES.join(' ⁂ ').split('');
+  let charIdx = 0;
+  
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const zone = getZone(y);
+      const isSilence = Math.random() < 0.1;
+      
+      let state = 'DORMANT';
+      if (isSilence) {
+        state = 'QUARANTINED';
+      } else if (charIdx < allChars.length) {
+        state = 'ACTIVE';
+      }
+      
+      const silenceKind = isSilence ? ['BREATH', 'GAP', 'VEIL', 'REDACTION', 'VOID'][Math.floor(Math.random() * 5)] : null;
+      
+      let glyph = '';
+      if (!isSilence && charIdx < allChars.length) {
+        glyph = allChars[charIdx++];
+      }
+      
+      cells.push({
+        x, y,
+        addr: y * W + x,
+        zone_id: zone.id,
+        state,
+        glyph,
+        world_op: zone.world_op,
+        ritual_act: zone.acts[Math.floor(Math.random() * zone.acts.length)],
+        silence_kind: silenceKind,
+        evidence_level: isSilence ? 'NONE' : 'QUOTE'
+      });
+    }
+  }
+}
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  
+  for (const c of cells) {
+    const el = document.createElement('div');
+    el.className = `cell s-${c.state} z-${c.zone_id}`;
+    el.innerHTML = `<span class="glyph">${c.glyph}</span>`;
+    el.addEventListener('click', () => showCellInfo(c));
+    grid.appendChild(el);
+  }
+  
+  updateStats();
+  renderZones();
+}
+
+function showCellInfo(c) {
+  const info = document.getElementById('cellInfo');
+  info.innerHTML = `
+    <h3>CELL (${c.x}, ${c.y})</h3>
+    <pre>${JSON.stringify(c, null, 2)}</pre>
+  `;
+}
+
+function renderZones() {
+  const list = document.getElementById('zoneList');
+  list.innerHTML = '';
+  for (const z of ZONES) {
+    list.innerHTML += `
+      <div class="zone-item">
+        <div class="name">${z.id}: ${z.name}</div>
+        <div class="meta">y: ${z.bounds.y_min}-${z.bounds.y_max} | ${z.world_op} | ${z.glyphs}</div>
+      </div>
+    `;
+  }
+}
+
+function updateStats() {
+  document.getElementById('activeCount').textContent = cells.filter(c => c.state === 'ACTIVE').length;
+  document.getElementById('sealedCount').textContent = cells.filter(c => c.state === 'SEALED').length;
+  document.getElementById('brokenCount').textContent = cells.filter(c => c.state === 'BROKEN').length;
+  document.getElementById('silenceCount').textContent = cells.filter(c => c.state === 'QUARANTINED').length;
+}
+
+document.getElementById('activateBtn').addEventListener('click', () => {
+  cells.forEach(c => {
+    if (c.state === 'DORMANT') c.state = 'ACTIVE';
+  });
+  render();
+});
+
+document.getElementById('sealBtn').addEventListener('click', () => {
+  const codaCells = cells.filter(c => c.zone_id === 'CODA');
+  codaCells.forEach(c => c.state = 'SEALED');
+  render();
+});
+
+let traversing = false;
+document.getElementById('traverseBtn').addEventListener('click', async () => {
+  if (traversing) return;
+  traversing = true;
+  
+  const cellEls = document.querySelectorAll('.cell');
+  for (let i = 0; i < cells.length; i++) {
+    if (cells[i].state === 'ACTIVE') {
+      cellEls[i].style.transform = 'scale(1.3)';
+      cellEls[i].style.zIndex = '10';
+      await new Promise(r => setTimeout(r, 12));
+      cellEls[i].style.transform = '';
+      cellEls[i].style.zIndex = '';
+    }
+  }
+  
+  traversing = false;
+});
+
+buildGrid();
+render();
+</script>
+</body>
+</html>

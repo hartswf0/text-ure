@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Kittler Zettelkasten</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --paper: #f4f1e8;
+  --paper-dark: #e8e4d8;
+  --ink: #2c2416;
+  --ink-light: #5c5446;
+  --storage: #8b2500;
+  --transmission: #1a5f7a;
+  --processing: #2d5a27;
+  --shadow: 0 2px 8px rgba(0,0,0,.12);
+  --typewriter: 'Special Elite', 'Courier New', monospace;
+  --mono: 'IBM Plex Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  min-height: 100dvh;
+  background: linear-gradient(145deg, #d4cfc2 0%, var(--paper) 50%, #cdc8ba 100%);
+  font-family: var(--mono);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--paper);
+  border-bottom: 2px solid var(--ink);
+  padding: 10px 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.1);
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+h1 {
+  font-family: var(--typewriter);
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+h1 span { color: var(--storage); }
+
+.view-toggle {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.view-btn {
+  background: none;
+  border: 1px solid var(--ink);
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 4px 7px;
+  cursor: pointer;
+  transition: all .12s;
+}
+
+.view-btn:hover { background: var(--paper-dark); }
+.view-btn.active { background: var(--ink); color: var(--paper); }
+
+.toolbar {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 120px;
+  position: relative;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 5px 8px 5px 18px;
+  border: 1px solid var(--ink);
+  background: #fff;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.search-box::before {
+  content: '>';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 9px;
+  color: var(--ink-light);
+}
+
+.legend {
+  display: flex;
+  gap: 8px;
+  font-size: 9px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.stats {
+  font-size: 8px;
+  color: var(--ink-light);
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px dashed var(--ink-light);
+}
+
+main {
+  padding: 12px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* ===== TABLE VIEW ===== */
+.table-view { display: none; }
+.table-view.active { display: block; }
+
+.periodic-table {
+  display: grid;
+  grid-template-columns: 70px repeat(3, 1fr);
+  grid-template-rows: auto repeat(3, minmax(100px, auto));
+  gap: 2px;
+  background: var(--ink);
+  border: 2px solid var(--ink);
+  font-size: 10px;
+}
+
+.table-header {
+  background: var(--paper-dark);
+  padding: 8px;
+  font-weight: 600;
+  text-align: center;
+  font-size: 10px;
+}
+
+.table-header.corner { background: var(--ink); color: var(--paper); font-size: 8px; }
+.table-header.storage { border-bottom: 3px solid var(--storage); }
+.table-header.transmission { border-bottom: 3px solid var(--transmission); }
+.table-header.processing { border-bottom: 3px solid var(--processing); }
+
+.epoch-label {
+  background: var(--paper-dark);
+  padding: 6px;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.epoch-label .year { font-size: 13px; }
+.epoch-label .name { font-size: 8px; color: var(--ink-light); margin-top: 3px; }
+
+.table-cell {
+  background: var(--paper);
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  max-height: 180px;
+}
+
+.table-cell.empty {
+  background: repeating-linear-gradient(45deg, var(--paper), var(--paper) 5px, var(--paper-dark) 5px, var(--paper-dark) 10px);
+}
+
+.element {
+  background: #fff;
+  border: 1px solid var(--ink);
+  padding: 5px;
+  cursor: pointer;
+  transition: all .1s;
+}
+
+.element:hover {
+  transform: scale(1.02);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.element.gap { border-style: dashed; opacity: 0.6; }
+
+.element-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.element-symbol {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.element.storage .element-symbol { color: var(--storage); }
+.element.transmission .element-symbol { color: var(--transmission); }
+.element.processing .element-symbol { color: var(--processing); }
+
+.element-id { font-size: 7px; color: var(--ink-light); }
+
+.element-thesis {
+  font-size: 7px;
+  line-height: 1.2;
+  margin-top: 3px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ===== GRID VIEW ===== */
+.grid-view {
+  display: none;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.grid-view.active { display: grid; }
+
+.zettel-card {
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  padding: 10px;
+  cursor: pointer;
+  transition: all .1s;
+}
+
+.zettel-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.zettel-card.gap { border-style: dashed; opacity: 0.7; }
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.card-symbol {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.zettel-card.storage .card-symbol { color: var(--storage); }
+.zettel-card.transmission .card-symbol { color: var(--transmission); }
+.zettel-card.processing .card-symbol { color: var(--processing); }
+
+.card-meta { text-align: right; font-size: 8px; }
+.card-id { font-weight: 600; }
+.card-epoch { color: var(--ink-light); }
+
+.card-thesis {
+  font-family: var(--typewriter);
+  font-size: 11px;
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+
+.card-quote {
+  font-size: 9px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding-left: 6px;
+  border-left: 2px solid var(--ink-light);
+  margin-bottom: 6px;
+}
+
+.card-connections { font-size: 8px; color: var(--ink-light); }
+
+/* ===== LIST VIEW ===== */
+.list-view {
+  display: none;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+}
+
+.list-view.active { display: flex; }
+
+.list-header {
+  display: grid;
+  grid-template-columns: 45px 35px 1fr 70px 80px 50px;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--paper-dark);
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.list-item {
+  display: grid;
+  grid-template-columns: 45px 35px 1fr 70px 80px 50px;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--paper);
+  cursor: pointer;
+  align-items: center;
+  font-size: 10px;
+}
+
+.list-item:hover { background: var(--paper-dark); }
+.list-item.gap { opacity: 0.6; font-style: italic; }
+
+.list-symbol { font-weight: 600; font-size: 12px; }
+.list-item.storage .list-symbol { color: var(--storage); }
+.list-item.transmission .list-symbol { color: var(--transmission); }
+.list-item.processing .list-symbol { color: var(--processing); }
+
+.list-thesis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== GRAPH VIEW ===== */
+.graph-view {
+  display: none;
+  height: calc(100dvh - 140px);
+  min-height: 400px;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  position: relative;
+  overflow: hidden;
+}
+
+.graph-view.active { display: block; }
+
+.graph-svg { width: 100%; height: 100%; }
+
+.graph-node { cursor: pointer; }
+
+.graph-node circle {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  transition: all .15s;
+}
+
+.graph-node:hover circle { stroke-width: 3; }
+
+.graph-node.storage circle { fill: var(--storage); }
+.graph-node.transmission circle { fill: var(--transmission); }
+.graph-node.processing circle { fill: var(--processing); }
+.graph-node.gap circle { stroke-dasharray: 3,2; opacity: 0.5; }
+
+.graph-node text {
+  font-family: var(--mono);
+  font-size: 8px;
+  fill: #fff;
+  pointer-events: none;
+}
+
+.graph-link {
+  stroke: var(--ink-light);
+  stroke-opacity: 0.3;
+  fill: none;
+}
+
+.graph-link.highlighted {
+  stroke: var(--ink);
+  stroke-opacity: 1;
+  stroke-width: 2;
+}
+
+.graph-controls {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  display: flex;
+  gap: 4px;
+}
+
+.graph-controls button {
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  padding: 4px 8px;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 200;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.modal-overlay.active { display: flex; justify-content: center; align-items: flex-start; }
+
+.modal {
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+  max-width: 600px;
+  width: 100%;
+  margin: 16px auto;
+}
+
+.modal-header {
+  padding: 12px 14px;
+  border-bottom: 2px solid var(--ink);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-symbol {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.modal.storage .modal-symbol { color: var(--storage); }
+.modal.transmission .modal-symbol { color: var(--transmission); }
+.modal.processing .modal-symbol { color: var(--processing); }
+
+.modal-title { flex: 1; }
+.modal-id { font-size: 10px; color: var(--ink-light); }
+
+.modal-thesis {
+  font-family: var(--typewriter);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.modal-close {
+  background: none;
+  border: 1px solid var(--ink);
+  width: 26px;
+  height: 26px;
+  font-size: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.modal-body { padding: 14px; }
+
+.modal-section { margin-bottom: 14px; }
+
+.modal-section h4 {
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-light);
+  margin-bottom: 6px;
+  padding-bottom: 3px;
+  border-bottom: 1px dashed var(--ink-light);
+}
+
+.modal-quote {
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 10px;
+  background: #fff;
+  border-left: 3px solid var(--ink-light);
+  font-style: italic;
+}
+
+.modal-points { list-style: none; }
+
+.modal-points li {
+  font-size: 11px;
+  line-height: 1.3;
+  padding: 5px 0 5px 12px;
+  border-bottom: 1px dotted var(--ink-light);
+  position: relative;
+}
+
+.modal-points li::before {
+  content: '>';
+  position: absolute;
+  left: 0;
+  color: var(--storage);
+}
+
+.modal-connections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.connection-link {
+  font-size: 9px;
+  padding: 3px 7px;
+  background: var(--paper-dark);
+  border: 1px solid var(--ink);
+  cursor: pointer;
+  color: var(--ink);
+  transition: all .1s;
+}
+
+.connection-link:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+@media (max-width: 600px) {
+  .periodic-table { grid-template-columns: 50px repeat(3, 1fr); }
+  .element-thesis { display: none; }
+  .grid-view { grid-template-columns: 1fr; }
+  .list-header, .list-item { grid-template-columns: 40px 30px 1fr 50px; }
+  .list-header > *:nth-child(n+5), .list-item > *:nth-child(n+5) { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-row">
+    <h1><span>///</span> KITTLER ZETTELKASTEN</h1>
+    <div class="view-toggle">
+      <button class="view-btn active" data-view="table">TABLE</button>
+      <button class="view-btn" data-view="grid">CARDS</button>
+      <button class="view-btn" data-view="list">LIST</button>
+      <button class="view-btn" data-view="graph">GRAPH</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="search-box">
+      <input type="text" id="search" placeholder="search...">
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--storage)"></div>Storage</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--transmission)"></div>Transmission</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--processing)"></div>Processing</div>
+    </div>
+  </div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<main>
+  <div class="table-view active" id="tableView"></div>
+  <div class="grid-view" id="gridView"></div>
+  <div class="list-view" id="listView"></div>
+  <div class="graph-view" id="graphView">
+    <svg class="graph-svg" id="graphSvg"></svg>
+    <div class="graph-controls">
+      <button onclick="resetGraph()">Reset</button>
+    </div>
+  </div>
+</main>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal" id="modalContent">
+    <div class="modal-header">
+      <div class="modal-symbol" id="modalSymbol"></div>
+      <div class="modal-title">
+        <div class="modal-id" id="modalId"></div>
+        <div class="modal-thesis" id="modalThesis"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <h4>Transcription</h4>
+        <div class="modal-quote" id="modalQuote"></div>
+      </div>
+      <div class="modal-section">
+        <h4>Key Points</h4>
+        <ul class="modal-points" id="modalPoints"></ul>
+      </div>
+      <div class="modal-section">
+        <h4>Connections</h4>
+        <div class="modal-connections" id="modalConnections"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let DATA = null;
+let currentView = 'table';
+let graphSimulation = null;
+
+async function loadData() {
+  try {
+    const resp = await fetch('kittler.json');
+    DATA = await resp.json();
+    renderAll();
+  } catch (e) {
+    console.error('Failed to load:', e);
+    document.querySelector('main').innerHTML = '<p style="padding:20px;color:var(--storage)">Failed to load kittler.json: ' + e.message + '</p>';
+  }
+}
+
+function getFiltered() {
+  const q = document.getElementById('search').value.toLowerCase();
+  if (!q) return DATA.zettel;
+  return DATA.zettel.filter(z =>
+    z.thesis.toLowerCase().includes(q) ||
+    z.transcription.toLowerCase().includes(q) ||
+    z.id.toLowerCase().includes(q) ||
+    z.symbol.toLowerCase().includes(q) ||
+    z.tags.some(t => t.includes(q))
+  );
+}
+
+function renderStats() {
+  const filtered = getFiltered();
+  const gaps = DATA.zettel.filter(z => z.gap).length;
+  const conns = DATA.zettel.reduce((s, z) => s + (z.connections?.length || 0), 0);
+  document.getElementById('stats').textContent =
+    `${filtered.length}/${DATA.zettel.length} zettel | ${gaps} gaps | ${conns} connections | Epochs: 1800/1900/2000`;
+}
+
+function renderTableView() {
+  const container = document.getElementById('tableView');
+  const epochs = ['1800', '1900', '2000'];
+  const funcs = ['storage', 'transmission', 'processing'];
+  const filtered = getFiltered();
+  const filteredIds = new Set(filtered.map(z => z.id));
+
+  let html = `
+    <div class="periodic-table">
+      <div class="table-header corner">EPOCH</div>
+      <div class="table-header storage">STORAGE<br><small>Memory</small></div>
+      <div class="table-header transmission">TRANSMISSION<br><small>Channel</small></div>
+      <div class="table-header processing">PROCESSING<br><small>Logic</small></div>
+  `;
+
+  epochs.forEach(epoch => {
+    const info = DATA.epochs[epoch];
+    html += `<div class="epoch-label"><span class="year">${epoch}</span><span class="name">${info.name}</span></div>`;
+
+    funcs.forEach(func => {
+      const cells = DATA.zettel.filter(z => z.epoch === epoch && z.function === func);
+      const isEmpty = cells.length === 0;
+      html += `<div class="table-cell${isEmpty ? ' empty' : ''}">`;
+
+      cells.forEach(z => {
+        const hidden = !filteredIds.has(z.id);
+        html += `
+          <div class="element ${z.function}${z.gap ? ' gap' : ''}" data-id="${z.id}" style="${hidden ? 'opacity:0.3' : ''}">
+            <div class="element-top">
+              <span class="element-symbol">${z.symbol}</span>
+              <span class="element-id">${z.id}</span>
+            </div>
+            <div class="element-thesis">${z.thesis}</div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+    });
+  });
+
+  html += `</div>`;
+  container.innerHTML = html;
+
+  container.querySelectorAll('.element').forEach(el => {
+    el.onclick = () => openModal(el.dataset.id);
+  });
+}
+
+function renderGridView() {
+  const container = document.getElementById('gridView');
+  const filtered = getFiltered();
+
+  container.innerHTML = filtered.map(z => `
+    <div class="zettel-card ${z.function}${z.gap ? ' gap' : ''}" data-id="${z.id}">
+      <div class="card-header">
+        <span class="card-symbol">${z.symbol}</span>
+        <div class="card-meta">
+          <div class="card-id">${z.id}</div>
+          <div class="card-epoch">${z.epoch} ${DATA.epochs[z.epoch]?.name || ''}</div>
+        </div>
+      </div>
+      <div class="card-thesis">${z.thesis}</div>
+      <div class="card-quote">${z.transcription}</div>
+      <div class="card-connections">${z.connections?.length || 0} connections</div>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.zettel-card').forEach(card => {
+    card.onclick = () => openModal(card.dataset.id);
+  });
+}
+
+function renderListView() {
+  const container = document.getElementById('listView');
+  const filtered = getFiltered();
+
+  let html = `
+    <div class="list-header">
+      <div>ID</div>
+      <div>SYM</div>
+      <div>THESIS</div>
+      <div>EPOCH</div>
+      <div>FUNCTION</div>
+      <div>LINKS</div>
+    </div>
+  `;
+
+  html += filtered.map(z => `
+    <div class="list-item ${z.function}${z.gap ? ' gap' : ''}" data-id="${z.id}">
+      <div>${z.id}</div>
+      <div class="list-symbol">${z.symbol}</div>
+      <div class="list-thesis">${z.thesis}</div>
+      <div>${z.epoch}</div>
+      <div>${z.function}</div>
+      <div>${z.connections?.length || 0}</div>
+    </div>
+  `).join('');
+
+  container.innerHTML = html;
+
+  container.querySelectorAll('.list-item').forEach(item => {
+    item.onclick = () => openModal(item.dataset.id);
+  });
+}
+
+function renderGraphView() {
+  const svg = document.getElementById('graphSvg');
+  const rect = svg.parentElement.getBoundingClientRect();
+  const width = rect.width;
+  const height = rect.height;
+
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.innerHTML = '';
+
+  const filtered = getFiltered();
+  const filteredIds = new Set(filtered.map(z => z.id));
+
+  const nodes = DATA.zettel.map(z => ({
+    id: z.id,
+    symbol: z.symbol,
+    function: z.function,
+    gap: z.gap,
+    filtered: filteredIds.has(z.id),
+    x: width / 2 + (Math.random() - 0.5) * 300,
+    y: height / 2 + (Math.random() - 0.5) * 300,
+    vx: 0,
+    vy: 0
+  }));
+
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
+
+  const links = [];
+  DATA.zettel.forEach(z => {
+    (z.connections || []).forEach(targetId => {
+      if (nodeMap.has(targetId)) {
+        links.push({ source: nodeMap.get(z.id), target: nodeMap.get(targetId) });
+      }
+    });
+  });
+
+  const linkGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  links.forEach(link => {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.classList.add('graph-link');
+    line.dataset.source = link.source.id;
+    line.dataset.target = link.target.id;
+    linkGroup.appendChild(line);
+  });
+  svg.appendChild(linkGroup);
+
+  const nodeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  nodes.forEach(node => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.classList.add('graph-node', node.function);
+    if (node.gap) g.classList.add('gap');
+    g.dataset.id = node.id;
+    g.style.opacity = node.filtered ? 1 : 0.3;
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('r', node.filtered ? 16 : 12);
+
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dy', '0.35em');
+    text.textContent = node.symbol;
+
+    g.appendChild(circle);
+    g.appendChild(text);
+    nodeGroup.appendChild(g);
+
+    g.onclick = () => openModal(node.id);
+    g.onmouseenter = () => highlightConnections(node.id, true);
+    g.onmouseleave = () => highlightConnections(node.id, false);
+  });
+  svg.appendChild(nodeGroup);
+
+  function simulate() {
+    const k = 0.008, repulsion = 2500, linkStrength = 0.04;
+
+    nodes.forEach(n => {
+      n.vx += (width / 2 - n.x) * k;
+      n.vy += (height / 2 - n.y) * k;
+    });
+
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[j].x - nodes[i].x;
+        const dy = nodes[j].y - nodes[i].y;
+        const d = Math.sqrt(dx * dx + dy * dy) || 1;
+        const f = repulsion / (d * d);
+        nodes[i].vx -= dx / d * f;
+        nodes[i].vy -= dy / d * f;
+        nodes[j].vx += dx / d * f;
+        nodes[j].vy += dy / d * f;
+      }
+    }
+
+    links.forEach(link => {
+      const dx = link.target.x - link.source.x;
+      const dy = link.target.y - link.source.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const f = (d - 80) * linkStrength;
+      link.source.vx += dx / d * f;
+      link.source.vy += dy / d * f;
+      link.target.vx -= dx / d * f;
+      link.target.vy -= dy / d * f;
+    });
+
+    nodes.forEach(n => {
+      n.vx *= 0.85;
+      n.vy *= 0.85;
+      n.x += n.vx;
+      n.y += n.vy;
+      n.x = Math.max(30, Math.min(width - 30, n.x));
+      n.y = Math.max(30, Math.min(height - 30, n.y));
+    });
+
+    nodeGroup.querySelectorAll('.graph-node').forEach((g, i) => {
+      g.setAttribute('transform', `translate(${nodes[i].x},${nodes[i].y})`);
+    });
+
+    linkGroup.querySelectorAll('.graph-link').forEach(line => {
+      const s = nodeMap.get(line.dataset.source);
+      const t = nodeMap.get(line.dataset.target);
+      line.setAttribute('x1', s.x);
+      line.setAttribute('y1', s.y);
+      line.setAttribute('x2', t.x);
+      line.setAttribute('y2', t.y);
+    });
+  }
+
+  let iterations = 0;
+  function tick() {
+    simulate();
+    iterations++;
+    if (iterations < 300) {
+      graphSimulation = requestAnimationFrame(tick);
+    }
+  }
+  tick();
+}
+
+function highlightConnections(id, highlight) {
+  document.querySelectorAll('.graph-link').forEach(line => {
+    const isConnected = line.dataset.source === id || line.dataset.target === id;
+    line.classList.toggle('highlighted', highlight && isConnected);
+  });
+}
+
+function resetGraph() {
+  if (graphSimulation) cancelAnimationFrame(graphSimulation);
+  renderGraphView();
+}
+
+function renderAll() {
+  renderStats();
+  renderTableView();
+  renderGridView();
+  renderListView();
+  if (currentView === 'graph') renderGraphView();
+}
+
+function openModal(id) {
+  const z = DATA.zettel.find(x => x.id === id);
+  if (!z) return;
+
+  const modal = document.getElementById('modalContent');
+  modal.className = 'modal ' + z.function;
+
+  document.getElementById('modalSymbol').textContent = z.symbol;
+  document.getElementById('modalId').textContent = `${z.id} · ${z.function.toUpperCase()} · ${z.epoch} ${DATA.epochs[z.epoch]?.name || ''}`;
+  document.getElementById('modalThesis').textContent = z.thesis;
+  document.getElementById('modalQuote').textContent = z.transcription;
+
+  document.getElementById('modalPoints').innerHTML =
+    z.key_points.map(p => `<li>${p}</li>`).join('');
+
+  document.getElementById('modalConnections').innerHTML =
+    (z.connections || []).map(c => {
+      const target = DATA.zettel.find(x => x.id === c);
+      return `<span class="connection-link" data-id="${c}">${c} ${target ? target.symbol : ''}</span>`;
+    }).join('');
+
+  document.getElementById('modal').classList.add('active');
+
+  document.querySelectorAll('.connection-link').forEach(link => {
+    link.onclick = (e) => {
+      e.stopPropagation();
+      openModal(link.dataset.id);
+    };
+  });
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+}
+
+document.querySelectorAll('.view-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    currentView = btn.dataset.view;
+    document.getElementById('tableView').classList.toggle('active', currentView === 'table');
+    document.getElementById('gridView').classList.toggle('active', currentView === 'grid');
+    document.getElementById('listView').classList.toggle('active', currentView === 'list');
+    document.getElementById('graphView').classList.toggle('active', currentView === 'graph');
+
+    if (currentView === 'graph') {
+      setTimeout(renderGraphView, 100);
+    }
+  };
+});
+
+document.getElementById('search').addEventListener('input', renderAll);
+
+document.getElementById('modal').onclick = (e) => {
+  if (e.target.id === 'modal') closeModal();
+};
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+});
+
+loadData();
+</script>
+
+</body>
+</html>

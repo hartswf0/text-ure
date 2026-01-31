@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Media Traversal Compiler v3.2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #0c0c0e;
+            --bg-device: #18181b;
+            --screen-on: #050605;
+            --lcd-green: #4ade80;
+            --lcd-amber: #f59e0b;
+            --lcd-red: #f43f5e;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--bg-body);
+            color: #f4f4f5;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* --- CHASSIS --- */
+        .device-frame {
+            background: var(--bg-device);
+            box-shadow: 0 50px 100px -20px rgba(0,0,0,1), inset 0 1px 1px rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        /* --- TACTILE KEYS --- */
+        .key-btn {
+            background: #27272a;
+            box-shadow: 0 4px 0 #09090b, 0 8px 20px rgba(0,0,0,0.6);
+            transition: all 0.05s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(0);
+        }
+        .key-btn:active, .key-btn.pressed {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #000;
+        }
+        .key-btn.op-source { background: var(--lcd-amber); color: #000; box-shadow: 0 4px 0 #92400e; }
+        .key-btn.op-target { background: var(--lcd-green); color: #000; box-shadow: 0 4px 0 #166534; }
+        .key-btn.op-reset { background: #3f3f46; color: #f43f5e; box-shadow: 0 4px 0 #18181b; }
+
+        /* --- THE CRT DISPLAY --- */
+        .lcd-display {
+            background: var(--screen-on);
+            box-shadow: inset 0 0 60px rgba(0,0,0,1);
+            color: var(--lcd-green);
+            position: relative;
+        }
+        .lcd-display::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Purge Animation */
+        @keyframes purge {
+            0% { filter: brightness(5) contrast(2); transform: scaleY(0.01); opacity: 1; }
+            50% { filter: brightness(10) blur(10px); transform: scaleY(1); opacity: 0.5; }
+            100% { filter: brightness(1); transform: scaleY(1); opacity: 1; }
+        }
+        .purging { animation: purge 0.4s ease-out forwards; }
+
+        .terminal-text {
+            scrollbar-width: none;
+            text-shadow: 0 0 12px rgba(74, 222, 128, 0.4);
+        }
+        .terminal-text::-webkit-scrollbar { display: none; }
+
+        /* Transitions */
+        .transition-soft { transition: all 0.4s cubic-bezier(0.2, 1, 0.2, 1); }
+        .slide-up { transform: translateY(0); }
+        .slide-down { transform: translateY(100%); }
+
+        .blink { animation: blinker 1s step-end infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
+    </style>
+</head>
+<body class="h-screen w-screen flex items-center justify-center p-4">
+
+    <!-- UNIT FRAME -->
+    <div class="device-frame w-full max-w-md h-full md:h-[95vh] rounded-[3.5rem] flex flex-col p-6 md:p-8 gap-6 relative">
+        
+        <!-- DISPLAY SECTION -->
+        <div id="screen-bezel" class="h-[42%] w-full rounded-3xl overflow-hidden lcd-display border-[6px] border-[#09090b] flex flex-col p-5 font-mono">
+            
+            <div class="flex justify-between text-[10px] uppercase tracking-widest opacity-30 mb-2 border-b border-white/5 pb-1 font-bold">
+                <span id="sys-status">MEM: IDLE</span>
+                <span id="clock">00:00:00</span>
+            </div>
+
+            <!-- Terminal Area -->
+            <div id="terminal" class="flex-1 overflow-y-auto terminal-text text-[11px] md:text-xs leading-relaxed space-y-2 py-1">
+                <div class="text-amber-500">>> MEDIA COMPILER v3.2</div>
+                <div class="opacity-30">>> ENGINE STANDBY.</div>
+            </div>
+
+            <!-- EQ Visualizer -->
+            <div class="h-8 flex items-end gap-1 opacity-20 border-t border-white/5 pt-2" id="metrics-bar"></div>
+        </div>
+
+        <!-- CONTROL DECK -->
+        <div class="grid grid-cols-4 gap-3 h-14">
+            <button onclick="openDeck()" class="key-btn rounded-xl font-black text-[10px] tracking-widest uppercase text-slate-400">Input</button>
+            <button onclick="copyToClipboard()" id="copy-btn" class="key-btn rounded-xl font-black text-[10px] tracking-widest uppercase opacity-20 pointer-events-none bg-blue-600 text-white">Copy</button>
+            <button onclick="masterReset()" class="key-btn op-reset rounded-xl font-black text-[10px] tracking-widest uppercase">Reset</button>
+            <button onclick="compile()" class="key-btn rounded-xl bg-red-600 font-black text-[10px] tracking-widest uppercase text-white shadow-[0_4px_0_#7f1d1d]">Exec</button>
+        </div>
+
+        <!-- OPERATOR MATRIX -->
+        <div class="flex-1 bg-black/60 rounded-3xl p-3 relative shadow-inner border border-white/5">
+            <div id="keypad" class="grid grid-cols-4 grid-rows-4 gap-2 h-full">
+                <!-- Operators injected via JS -->
+            </div>
+            <div class="absolute -top-5 left-0 right-0 flex justify-between px-3 text-[9px] font-bold text-slate-700 uppercase tracking-[0.3em]">
+                <span>Source</span>
+                <span>Target</span>
+            </div>
+        </div>
+        
+        <!-- Physical Detail -->
+        <div class="flex justify-center gap-12 opacity-20">
+            <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
+        </div>
+
+    </div>
+
+    <!-- INPUT DECK -->
+    <div id="input-deck" class="fixed inset-x-0 bottom-0 h-[65vh] bg-[#08080a] rounded-t-[3rem] border-t border-white/10 z-50 p-8 transition-soft slide-down flex flex-col shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-black text-amber-500 tracking-[0.4em] uppercase text-xs">Semantic Buffer</h3>
+            <button onclick="closeDeck()" class="text-slate-700 hover:text-white transition-colors"><i data-lucide="x"></i></button>
+        </div>
+        <textarea id="raw-input" class="flex-1 bg-black/50 border border-white/5 rounded-2xl p-6 font-mono text-green-400 text-sm focus:outline-none focus:border-amber-500/30 resize-none leading-relaxed" placeholder="Awaiting packet data..."></textarea>
+        <button onclick="closeDeck()" class="mt-6 w-full bg-amber-500 text-black font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all text-xs tracking-widest uppercase">Mount Payload</button>
+    </div>
+
+    <textarea id="copy-buffer" class="absolute -left-[9999px]" aria-hidden="true"></textarea>
+
+    <script>
+        // --- SONIC ENGINE ---
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        function playSound(freq, type, dur, vol = 0.08) {
+            if (ctx.state === 'suspended') ctx.resume();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            gain.gain.setValueAtTime(vol, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(); osc.stop(ctx.currentTime + dur);
+        }
+
+        // --- DATA ---
+        const PRIMITIVES = [
+            { id: 'txt', s: 'TXT', n: 'Structural Script' }, { id: 'vce', s: 'VCE', n: 'Vocal Stream' },
+            { id: 'cmd', s: 'CMD', n: 'Logic Code' }, { id: 'prm', s: 'PRM', n: 'Latent Prompt' },
+            { id: 'img', s: 'IMG', n: 'Static Iconic' }, { id: 'flm', s: 'FLM', n: 'Cinema Suture' },
+            { id: 'gui', s: 'GUI', n: 'Meta Interface' }, { id: 'gen', s: 'GEN', n: 'Synth Surface' },
+            { id: 'obj', s: 'OBJ', n: 'Physical Mass' }, { id: 'act', s: 'ACT', n: 'Embodied Ritual' },
+            { id: 'gam', s: 'GAM', n: 'Feedback Loop' }, { id: 'bot', s: 'BOT', n: 'Agentic Body' },
+            { id: 'db',  s: 'DB',  n: 'Relational Data' }, { id: 'net', s: 'NET', n: 'Topology' },
+            { id: 'plt', s: 'PLT', n: 'Platform Feeds' }, { id: 'mod', s: 'MOD', n: 'Latent Manifold' }
+        ];
+
+        let state = { source: null, target: null, text: "", currentPrompt: "" };
+
+        // --- APP ENGINE ---
+        function init() {
+            const grid = document.getElementById('keypad');
+            grid.innerHTML = PRIMITIVES.map(p => `
+                <button onclick="handleKey('${p.id}')" id="k-${p.id}" class="key-btn rounded-xl flex flex-col items-center justify-center p-1">
+                    <span class="text-xs font-black tracking-tighter">${p.s}</span>
+                </button>
+            `).join('');
+            
+            setInterval(() => {
+                document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB');
+            }, 1000);
+            
+            lucide.createIcons();
+            initVisualizer();
+        }
+
+        function handleKey(id) {
+            playSound(600, 'sine', 0.05);
+            if (state.source === id) {
+                state.source = null;
+            } else if (state.target === id) {
+                state.target = null;
+            } else if (!state.source) {
+                state.source = id;
+            } else if (!state.target) {
+                state.target = id;
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            document.querySelectorAll('.key-btn').forEach(b => b.classList.remove('op-source', 'op-target'));
+            if (state.source) document.getElementById(`k-${state.source}`).classList.add('op-source');
+            if (state.target) document.getElementById(`k-${state.target}`).classList.add('op-target');
+
+            const status = document.getElementById('sys-status');
+            if (!state.source) {
+                status.innerText = "MEM: IDLE";
+            } else if (!state.target) {
+                status.innerText = "SRC: " + state.source.toUpperCase();
+                log(`>> SOURCE: ${PRIMITIVES.find(p => p.id === state.source).n}`, "text-amber-500");
+            } else {
+                status.innerText = "LOCKED";
+                log(`>> TARGET: ${PRIMITIVES.find(p => p.id === state.target).n}`, "text-green-500");
+            }
+        }
+
+        function log(msg, cls = "") {
+            const t = document.getElementById('terminal');
+            const d = document.createElement('div');
+            d.className = cls;
+            d.innerText = msg;
+            t.appendChild(d);
+            t.scrollTop = t.scrollHeight;
+        }
+
+        // --- THE "BETTER" CLEAR: MASTER RESET ---
+        function masterReset() {
+            // 1. Sonic Feedback (Deep thud)
+            playSound(60, 'triangle', 0.4, 0.2);
+            playSound(120, 'square', 0.1, 0.05);
+            
+            // 2. Visual Wipe
+            const bezel = document.getElementById('screen-bezel');
+            bezel.classList.remove('purging');
+            void bezel.offsetWidth; // Trigger reflow
+            bezel.classList.add('purging');
+            
+            // 3. State Purge
+            state.source = null; 
+            state.target = null; 
+            state.text = ""; 
+            state.currentPrompt = "";
+            document.getElementById('raw-input').value = "";
+            
+            // 4. UI Reset
+            document.getElementById('terminal').innerHTML = `<div class="text-red-500 font-bold">>> SYSTEM PURGED.</div><div class="opacity-30">>> CACHE CLEARED.</div>`;
+            document.getElementById('copy-btn').classList.add('opacity-20', 'pointer-events-none');
+            updateUI();
+        }
+
+        function compile() {
+            if (!state.source || !state.target) {
+                playSound(150, 'sawtooth', 0.2);
+                log("!! ERROR: INCOMPLETE PATH", "text-red-500");
+                return;
+            }
+            
+            playSound(800, 'sine', 0.05);
+            setTimeout(() => playSound(1200, 'sine', 0.1), 50);
+            
+            const s = PRIMITIVES.find(p => p.id === state.source);
+            const t = PRIMITIVES.find(p => p.id === state.target);
+            const input = state.text || "[EMPTY_BUFFER]";
+
+            const metaPrompt = `Act as a Media Compiler.
+BRIDGE: [${s.s}] -> [${t.s}]
+PACKET: "${input}"
+CONSTRAINTS: Render the semantic core of this packet using the structural logic and media affordances of [${t.n}]. Maintain invariants. Output artifact only.`;
+
+            state.currentPrompt = metaPrompt;
+            document.getElementById('terminal').innerHTML = `
+                <div class="text-white font-bold bg-green-500/10 p-2 border-l-2 border-green-500 mb-2">COMPILATION SUCCESS</div>
+                <div class="text-[10px] text-green-400 p-2 bg-black/40 rounded border border-white/5 select-all">
+                    ${metaPrompt}
+                </div>
+            `;
+            document.getElementById('copy-btn').classList.remove('opacity-20', 'pointer-events-none');
+            log(`>> ARTIFACT MOUNTED.`, "text-white blink mt-2");
+        }
+
+        function copyToClipboard() {
+            if (!state.currentPrompt) return;
+            const buffer = document.getElementById('copy-buffer');
+            buffer.value = state.currentPrompt;
+            buffer.select();
+            document.execCommand('copy');
+            playSound(1000, 'sine', 0.1);
+            log(">> BUFFER COPIED.", "text-blue-400 font-bold");
+        }
+
+        function openDeck() { playSound(400, 'sine', 0.1); document.getElementById('input-deck').classList.replace('slide-down', 'slide-up'); }
+        function closeDeck() { playSound(300, 'sine', 0.1); state.text = document.getElementById('raw-input').value; document.getElementById('input-deck').classList.replace('slide-up', 'slide-down'); log(">> PAYLOAD MOUNTED.", "text-blue-400"); }
+
+        function initVisualizer() {
+            const bar = document.getElementById('metrics-bar');
+            for(let i=0; i<20; i++){
+                const d = document.createElement('div');
+                d.className = "flex-1 bg-green-500/20 rounded-t h-1";
+                bar.appendChild(d);
+                setInterval(() => {
+                    d.style.height = (state.source ? Math.random() * 100 : Math.random() * 5) + "%";
+                }, 100 + (Math.random() * 100));
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html> 

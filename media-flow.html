@@ -1,0 +1,2392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Media Flow — Traversal Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Core palette */
+  --bg:#0c0c0e;
+  --chassis:#18181b;
+  --screen:#0a0a0c;
+  --fg:#f4f4f5;
+  --dim:#71717a;
+  --muted:#3f3f46;
+  --border:#27272a;
+  --pressed:inset 0 2px 4px rgba(0,0,0,.4);
+  --shadow:0 4px 0 #09090b;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Space Grotesk',system-ui,sans-serif;
+  
+  /* Two-layer color system */
+  /* CALCULATORS = Cyan/Teal family */
+  --calc:#22d3ee;        /* Cyan - calculator identity */
+  --calc-dim:#0891b2;    /* Darker cyan */
+  --calc-bg:rgba(34,211,238,.1);
+  
+  /* CHANNELS = Amber/Orange family */
+  --ch:#f59e0b;          /* Amber - channel identity */
+  --ch-dim:#d97706;      /* Darker amber */
+  --ch-bg:rgba(245,158,11,.1);
+  
+  /* Message types */
+  --green:#4ade80;       /* Compile/success */
+  --amber:#f59e0b;       /* Payload */
+  --red:#f43f5e;         /* Actions/danger */
+  --blue:#38bdf8;        /* System/copy */
+  --purple:#a78bfa;      /* Echo */
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow-x:auto;overflow-y:hidden}
+body{font-family:var(--sans);background:var(--bg);color:var(--fg);display:flex;align-items:center;justify-content:center;padding:20px;gap:20px}
+
+/* Tooltips */
+[data-tip]{position:relative}
+[data-tip]:hover::after{
+  content:attr(data-tip);
+  position:absolute;
+  bottom:100%;
+  left:50%;
+  transform:translateX(-50%);
+  padding:4px 8px;
+  background:#000;
+  color:var(--fg);
+  font-family:var(--mono);
+  font-size:8px;
+  white-space:nowrap;
+  border-radius:4px;
+  z-index:100;
+  pointer-events:none;
+  margin-bottom:4px;
+}
+[data-tip]:hover::before{
+  content:'';
+  position:absolute;
+  bottom:100%;
+  left:50%;
+  transform:translateX(-50%);
+  border:4px solid transparent;
+  border-top-color:#000;
+  margin-bottom:-4px;
+  z-index:100;
+}
+
+/* First-use hints */
+.hint{
+  position:absolute;
+  background:var(--calc);
+  color:#000;
+  font-family:var(--mono);
+  font-size:8px;
+  font-weight:600;
+  padding:4px 8px;
+  border-radius:4px;
+  z-index:50;
+  animation:hint-pulse 2s ease-in-out infinite;
+}
+@keyframes hint-pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.hint::after{
+  content:'';
+  position:absolute;
+  border:5px solid transparent;
+}
+.hint.hint-bottom{top:100%;margin-top:6px}
+.hint.hint-bottom::after{bottom:100%;left:50%;transform:translateX(-50%);border-bottom-color:var(--calc)}
+.hint.hint-right{left:100%;margin-left:6px;top:50%;transform:translateY(-50%)}
+.hint.hint-right::after{right:100%;top:50%;transform:translateY(-50%);border-right-color:var(--calc)}
+
+/* Global Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--screen)}
+::-webkit-scrollbar-thumb{background:var(--muted);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--dim)}
+
+/* Calculator Container */
+.calc-container{display:flex;gap:16px;height:100%;max-height:700px;align-items:stretch}
+
+/* Single Calculator Unit - CYAN border = calculator level */
+.calculator{
+  width:340px;
+  min-width:340px;
+  background:var(--chassis);
+  border-radius:24px;
+  border:2px solid var(--calc-dim);
+  box-shadow:0 20px 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.03),0 0 0 1px var(--calc-dim);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  transition:all .15s;
+}
+.calculator:hover{border-color:var(--calc)}
+.calculator.minimized{width:80px;min-width:80px}
+.calculator.minimized .lcd{display:none}
+.calculator.minimized .controls{display:none}
+.calculator.minimized .mini-bar{display:flex}
+
+/* Display Area */
+.lcd{
+  background:var(--screen);
+  margin:12px;
+  border-radius:16px;
+  border:3px solid #09090b;
+  box-shadow:inset 0 0 40px rgba(0,0,0,.8);
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  min-height:180px;
+  overflow:hidden;
+  position:relative;
+}
+
+/* Status Bar */
+.status-bar{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 10px;
+  font-family:var(--mono);
+  font-size:9px;
+  color:var(--dim);
+  border-bottom:1px solid var(--border);
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+.status-mode{color:var(--green);font-weight:700;text-shadow:0 0 10px rgba(74,222,128,.4)}
+.status-mode.waiting{color:var(--amber);text-shadow:0 0 10px rgba(245,158,11,.4)}
+.status-mode.error{color:var(--red);text-shadow:0 0 10px rgba(244,63,94,.4)}
+
+/* Channel Info */
+.channel-bar{
+  display:flex;
+  align-items:center;
+  padding:6px 12px;
+  gap:6px;
+  border-bottom:1px solid var(--muted);
+  font-family:var(--mono);
+  font-size:10px;
+}
+.ch-arrows{display:flex;gap:2px}
+.ch-arrow{
+  width:24px;height:24px;
+  background:var(--muted);
+  border:none;
+  color:var(--dim);
+  cursor:pointer;
+  font-size:10px;
+  display:flex;align-items:center;justify-content:center;
+}
+.ch-arrow:active{background:var(--green);color:#000}
+.ch-arrow:disabled{opacity:.3}
+.ch-dots{display:flex;gap:3px;margin:0 8px}
+.ch-dot{width:6px;height:6px;background:var(--muted);cursor:pointer;transition:all .15s}
+.ch-dot.active{background:var(--ch);transform:scale(1.3)}
+.ch-dot.has-data{background:var(--ch-dim)}
+.ch-dot.linked{box-shadow:0 0 0 2px var(--green)}
+.ch-dot:hover{transform:scale(1.5)}
+.ch-id{color:var(--calc);font-weight:700;margin-left:auto}
+.ch-reset{width:20px;height:20px;background:var(--red);border:none;color:#fff;font-size:8px;cursor:pointer;margin-left:4px;opacity:.5}
+.ch-reset:hover{opacity:1}
+
+/* Mini bar for minimized state */
+.mini-bar{
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:16px 8px;
+  gap:8px;
+  height:100%;
+  cursor:pointer;
+}
+.mini-bar:hover{background:rgba(255,255,255,.03)}
+.mini-id{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--calc)}
+.mini-stats{font-family:var(--mono);font-size:8px;color:var(--dim)}
+.mini-chain{display:flex;flex-direction:column;gap:2px;margin-top:8px}
+.mini-node{font-size:7px;padding:2px 4px;background:var(--muted);color:var(--dim);text-align:center}
+
+/* Message Log */
+.log{
+  flex:1;
+  overflow-y:auto;
+  padding:8px;
+  font-family:var(--mono);
+  font-size:10px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  color:var(--green);
+  text-shadow:0 0 8px rgba(74,222,128,.2);
+}
+
+.log-entry{
+  padding:6px 8px;
+  background:rgba(255,255,255,.02);
+  border-left:2px solid var(--muted);
+  cursor:pointer;
+  line-height:1.4;
+}
+.log-entry:hover{background:rgba(255,255,255,.05)}
+.log-entry.selected{border-color:var(--green);background:rgba(74,222,128,.1)}
+.log-entry.payload{border-color:var(--amber)}
+.log-entry.echo{border-color:var(--purple)}
+.log-entry.compile{border-color:var(--green);text-align:center;font-weight:600}
+.log-entry.system{border-color:var(--blue);opacity:.7;text-align:center;font-size:9px}
+.log-entry.linked{position:relative}
+.log-entry.linked::after{content:'';position:absolute;left:-6px;top:50%;width:4px;height:4px;background:var(--green);border-radius:50%}
+
+.log-head{display:flex;gap:6px;margin-bottom:2px;font-size:8px;color:var(--dim)}
+.log-type{font-weight:700}
+.log-entry.payload .log-type{color:var(--amber)}
+.log-entry.echo .log-type{color:var(--purple)}
+.log-entry.compile .log-type{color:var(--green)}
+.log-entry.system .log-type{color:var(--blue)}
+.log-body{color:var(--fg);word-break:break-word}
+.log-body.truncate{max-height:40px;overflow:hidden}
+
+.log-empty{color:var(--dim);text-align:center;padding:30px 10px;font-size:9px;text-shadow:none}
+
+/* Tags for detected structure */
+.log-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.tag{font-size:7px;padding:2px 4px;background:var(--muted);cursor:pointer}
+.tag:hover{background:var(--dim)}
+.tag.bridge{background:rgba(74,222,128,.2);color:var(--green)}
+.tag.media{background:rgba(96,165,250,.2);color:var(--blue)}
+.tag.nested{background:rgba(245,158,11,.2);color:var(--amber)}
+.tag.code{background:rgba(167,139,250,.2);color:var(--purple)}
+
+/* Flow visualization */
+.flow-chain{margin-top:6px;padding:4px;background:rgba(0,0,0,.3);font-size:8px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.flow-node{padding:2px 5px;background:var(--muted)}
+.flow-node.src{background:rgba(245,158,11,.3);color:var(--amber)}
+.flow-node.tgt{background:rgba(74,222,128,.3);color:var(--green)}
+.flow-arrow{color:var(--dim)}
+
+/* Operator Display - Clear bridge indicator */
+.op-display{
+  padding:8px 10px;
+  background:var(--bg);
+  border-top:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  font-size:12px;
+  font-weight:600;
+}
+.op-slot{
+  min-width:44px;
+  padding:5px 10px;
+  text-align:center;
+  background:var(--screen);
+  border:1px solid var(--border);
+  color:var(--dim);
+  border-radius:2px;
+}
+.op-slot.source{background:var(--amber);color:#fff;border-color:var(--amber)}
+.op-slot.target{background:var(--green);color:#fff;border-color:var(--green)}
+.op-arrow{color:var(--dim);font-size:10px}
+
+/* Control Panel */
+.controls{padding:10px;display:flex;flex-direction:column;gap:6px}
+
+/* Source/Target Selection - Two explicit zones */
+.media-zones{display:flex;gap:6px}
+.media-zone{flex:1;display:flex;flex-direction:column;gap:3px}
+.zone-label{font-size:9px;font-weight:600;text-align:center;padding:4px;border-radius:2px}
+.zone-label.src{background:var(--amber);color:#fff}
+.zone-label.tgt{background:var(--green);color:#fff}
+.zone-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
+
+/* Media Grid - Fallback single grid */
+.media-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:3px;
+}
+.m-btn{
+  aspect-ratio:1.3;
+  background:var(--muted);
+  border:none;
+  color:var(--fg);
+  font-family:var(--mono);
+  font-size:10px;
+  font-weight:700;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:1px;
+  transition:all .05s;
+  border-radius:8px;
+  box-shadow:var(--shadow),0 8px 16px rgba(0,0,0,.3);
+  transform:translateY(0);
+}
+.m-btn:active{transform:translateY(4px);box-shadow:none}
+.m-btn.source{background:var(--amber);color:#000;box-shadow:0 4px 0 #92400e}
+.m-btn.source:active{box-shadow:none;transform:translateY(4px)}
+.m-btn.target{background:var(--green);color:#000;box-shadow:0 4px 0 #166534}
+.m-btn.target:active{box-shadow:none;transform:translateY(4px)}
+.m-btn .sym{font-size:10px}
+.m-btn .lbl{font-size:5px;color:var(--dim);text-transform:uppercase}
+.m-btn.source .lbl,.m-btn.target .lbl{color:rgba(0,0,0,.5)}
+
+/* Input Row - Compact */
+.input-row{
+  display:flex;
+  gap:3px;
+}
+.input-row textarea{
+  flex:1;
+  height:40px;
+  background:var(--screen);
+  border:1px solid var(--border);
+  padding:6px 8px;
+  font-size:10px;
+  color:var(--fg);
+  resize:none;
+  border-radius:2px;
+}
+.input-row textarea:focus{outline:none;border-color:var(--dim)}
+.input-row textarea.mode-payload{border-left:3px solid var(--amber)}
+.input-row textarea.mode-echo{border-left:3px solid var(--purple)}
+.input-mode{font-size:8px;padding:4px 6px;background:var(--bg);color:var(--dim);display:flex;flex-direction:column;justify-content:center;gap:2px;border-radius:2px}
+.input-mode span{cursor:pointer;padding:2px 4px;border-radius:2px}
+.input-mode span:hover{background:var(--muted)}
+.input-mode span.active-p{background:var(--amber);color:#fff;font-weight:600}
+.input-mode span.active-e{background:var(--purple);color:#fff;font-weight:600}
+
+/* Action Buttons - Tactile */
+.action-row{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.act-btn{
+  padding:12px 6px;
+  background:var(--muted);
+  border:none;
+  color:var(--fg);
+  font-family:var(--mono);
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.03em;
+  cursor:pointer;
+  text-align:center;
+  border-radius:8px;
+  box-shadow:var(--shadow),0 6px 12px rgba(0,0,0,.2);
+  transform:translateY(0);
+  transition:all .05s;
+}
+.act-btn:active{transform:translateY(4px);box-shadow:none}
+.act-btn.payload{background:var(--amber);color:#000;box-shadow:0 4px 0 #92400e}
+.act-btn.echo{background:var(--purple);color:#000;box-shadow:0 4px 0 #5b21b6}
+.act-btn.copy{background:var(--blue);color:#000;box-shadow:0 4px 0 #0369a1}
+.act-btn.compile{background:var(--red);color:#fff;box-shadow:0 4px 0 #7f1d1d}
+
+/* Bottom Row */
+.bottom-row{display:flex;gap:4px}
+.bottom-btn{
+  flex:1;
+  padding:10px;
+  background:var(--muted);
+  border:none;
+  color:var(--dim);
+  font-family:var(--mono);
+  font-size:8px;
+  font-weight:600;
+  cursor:pointer;
+  border-radius:8px;
+  box-shadow:var(--shadow);
+  transition:all .05s;
+}
+.bottom-btn:active{transform:translateY(4px);box-shadow:none}
+.bottom-btn.new-calc{background:var(--green);color:#000;box-shadow:0 4px 0 #166534}
+.bottom-btn.danger{background:var(--red);color:#fff;box-shadow:0 4px 0 #7f1d1d}
+
+/* Context Menu */
+.ctx-menu{
+  position:fixed;
+  background:var(--screen);
+  border:1px solid var(--border);
+  box-shadow:0 4px 20px rgba(0,0,0,.15);
+  z-index:150;
+  min-width:140px;
+  display:none;
+  flex-direction:column;
+  font-size:10px;
+  border-radius:4px;
+}
+.ctx-menu.open{display:flex}
+.ctx-item{
+  padding:8px 12px;
+  cursor:pointer;
+  border:none;
+  background:none;
+  color:var(--fg);
+  text-align:left;
+  font-size:10px;
+}
+.ctx-item:hover{background:var(--bg)}
+.ctx-item.danger{color:var(--red)}
+.ctx-sep{height:1px;background:var(--border);margin:2px 0}
+
+/* Tangle View - Management Center */
+.tangle-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(12,12,14,.98);
+  z-index:90;
+  display:none;
+  flex-direction:column;
+  padding:16px;
+}
+.tangle-overlay.open{display:flex}
+.tangle-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:12px;
+}
+.tangle-head h3{font-family:var(--mono);font-size:11px;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.1em;text-shadow:0 0 10px rgba(74,222,128,.3)}
+.tangle-legend{display:flex;gap:12px;align-items:center;flex:1;margin-left:16px}
+.tangle-leg-item{font-family:var(--mono);font-size:9px;color:var(--dim);display:flex;align-items:center;gap:4px}
+.tangle-leg-box{width:12px;height:12px;border:2px solid;border-radius:3px;background:var(--chassis)}
+.tangle-leg-line{width:12px;height:3px;border-radius:1px}
+.tangle-actions{display:flex;gap:6px}
+.tangle-btn{
+  padding:6px 12px;
+  background:var(--muted);
+  border:none;
+  color:var(--fg);
+  font-family:var(--mono);
+  font-size:9px;
+  font-weight:600;
+  cursor:pointer;
+  border-radius:4px;
+}
+.tangle-btn:hover{background:var(--dim)}
+.tangle-btn.danger{color:var(--red)}
+.tangle-btn.primary{background:var(--green);color:#000}
+.tangle-body{
+  flex:1;
+  overflow:auto;
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  align-content:flex-start;
+}
+/* Calculator cards = CYAN border */
+.tangle-calc{
+  background:var(--chassis);
+  border:2px solid var(--calc-dim);
+  border-radius:12px;
+  padding:10px;
+  min-width:180px;
+  max-width:220px;
+}
+.tangle-calc:hover{border-color:var(--calc)}
+.tangle-calc-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-family:var(--mono);
+  font-size:10px;
+  color:var(--calc);
+  margin-bottom:8px;
+  font-weight:700;
+  text-shadow:0 0 8px rgba(34,211,238,.3);
+}
+.tangle-calc-actions{display:flex;gap:4px}
+.tangle-calc-btn{
+  width:18px;height:18px;
+  background:var(--muted);
+  border:none;
+  color:var(--dim);
+  font-size:10px;
+  cursor:pointer;
+  border-radius:3px;
+  display:flex;align-items:center;justify-content:center;
+}
+.tangle-calc-btn:hover{background:var(--dim);color:var(--fg)}
+.tangle-calc-btn.danger:hover{background:var(--red);color:#fff}
+/* Channel items = AMBER left border */
+.tangle-ch{
+  margin-bottom:6px;
+  padding:6px;
+  padding-left:8px;
+  background:var(--screen);
+  border-radius:4px;
+  border-left:3px solid var(--ch-dim);
+  position:relative;
+  cursor:pointer;
+}
+.tangle-ch:hover{background:var(--ch-bg);border-left-color:var(--ch)}
+.tangle-ch.active{border-left-color:var(--ch);background:var(--ch-bg)}
+.tangle-ch-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-size:8px;
+  color:var(--dim);
+  margin-bottom:4px;
+}
+.tangle-ch-name{font-weight:600;color:var(--ch)}
+.tangle-ch-actions{display:flex;gap:2px}
+.tangle-ch-btn{
+  width:14px;height:14px;
+  background:transparent;
+  border:none;
+  color:var(--dim);
+  font-size:8px;
+  cursor:pointer;
+  border-radius:2px;
+}
+.tangle-ch-btn:hover{background:var(--muted);color:var(--fg)}
+.tangle-ch-btn.danger:hover{color:var(--red)}
+.tangle-chain{
+  display:flex;
+  flex-wrap:wrap;
+  gap:2px;
+  align-items:center;
+}
+.tangle-node{font-size:7px;padding:2px 4px;font-family:var(--mono);border-radius:2px}
+.tangle-node.p{background:rgba(245,158,11,.2);color:var(--amber)}
+.tangle-node.e{background:rgba(167,139,250,.2);color:var(--purple)}
+.tangle-node.c{background:rgba(74,222,128,.2);color:var(--green)}
+.tangle-node.s{background:rgba(56,189,248,.2);color:var(--blue)}
+.tangle-arr{color:var(--dim);font-size:7px}
+.tangle-empty{font-size:8px;color:var(--dim);font-style:italic}
+
+/* Help/Operator Guide */
+.help-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(12,12,14,.98);
+  z-index:200;
+  display:none;
+  flex-direction:column;
+  padding:20px;
+  overflow:auto;
+}
+.help-overlay.open{display:flex}
+.help-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:16px;
+}
+.help-head h3{font-family:var(--mono);font-size:12px;color:var(--green);flex:1;font-weight:700;text-transform:uppercase;letter-spacing:.1em;text-shadow:0 0 10px rgba(74,222,128,.3)}
+.help-close{width:28px;height:28px;background:var(--muted);border:none;color:var(--dim);font-size:14px;cursor:pointer;border-radius:4px}
+.help-close:hover{background:var(--dim);color:var(--fg)}
+.help-body{display:flex;flex-direction:column;gap:12px;max-width:500px;margin:0 auto}
+.help-section{background:var(--chassis);border:1px solid var(--border);padding:14px;border-radius:8px}
+.help-section h4{font-family:var(--mono);font-size:10px;color:var(--amber);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.help-section p{font-size:10px;color:var(--dim);line-height:1.5;margin-bottom:6px}
+.help-step{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start}
+.help-num{width:18px;height:18px;background:var(--green);color:#000;font-family:var(--mono);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:4px}
+.help-txt{font-family:var(--mono);font-size:9px;color:var(--fg);line-height:1.5}
+.help-key{display:inline-block;padding:2px 6px;background:var(--muted);font-family:var(--mono);font-size:8px;margin:0 2px;border-radius:3px}
+.help-color{display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:middle;border-radius:2px}
+.help-color.amber{background:var(--amber)}
+.help-color.purple{background:var(--purple)}
+.help-color.green{background:var(--green)}
+.help-color.blue{background:var(--blue)}
+
+/* Channel Flow Map - AMBER = channel level */
+.ch-flow-bar{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:6px 10px;
+  background:rgba(0,0,0,.3);
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;
+  min-height:32px;
+}
+.ch-flow-node{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:4px 8px;
+  background:var(--muted);
+  border:1px solid transparent;
+  font-family:var(--mono);
+  font-size:8px;
+  cursor:pointer;
+  transition:all .1s;
+  position:relative;
+  border-radius:4px;
+}
+.ch-flow-node:hover{background:var(--ch-bg);border-color:var(--ch-dim)}
+.ch-flow-node.active{background:var(--ch);color:#000;border-color:var(--ch)}
+.ch-flow-node.has-data::after{content:'';position:absolute;top:-2px;right:-2px;width:5px;height:5px;background:var(--green);border-radius:50%}
+.ch-flow-node.linked{box-shadow:inset 0 -2px 0 var(--green)}
+.ch-flow-node .ch-name{font-weight:700;font-size:9px}
+.ch-flow-node .ch-count{font-size:6px;color:var(--dim)}
+.ch-flow-node.active .ch-count{color:rgba(0,0,0,.5)}
+.ch-flow-arrow{
+  color:var(--dim);
+  font-size:10px;
+  flex-shrink:0;
+}
+.ch-flow-arrow.linked{color:var(--green);font-weight:700}
+.ch-flow-add{
+  width:24px;
+  height:24px;
+  background:transparent;
+  border:1px dashed var(--muted);
+  color:var(--dim);
+  font-size:12px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.ch-flow-add:hover{border-color:var(--green);color:var(--green)}
+
+/* Channel transition animation */
+@keyframes ch-pulse{
+  0%{box-shadow:0 0 0 0 rgba(74,222,128,.4)}
+  100%{box-shadow:0 0 0 8px rgba(74,222,128,0)}
+}
+.ch-flow-node.transitioning{animation:ch-pulse .4s ease-out}
+
+/* Preview Overlay */
+.preview-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.95);
+  z-index:110;
+  display:none;
+  flex-direction:column;
+  padding:20px;
+}
+.preview-overlay.open{display:flex}
+.preview-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:12px;
+}
+.preview-head h3{font-family:var(--mono);font-size:14px;flex:1}
+.preview-head h3.payload-title{color:var(--amber)}
+.preview-head h3.echo-title{color:var(--purple)}
+.preview-body{
+  flex:1;
+  overflow-y:auto;
+  background:var(--screen);
+  border:2px solid var(--border);
+  padding:16px;
+  font-family:var(--mono);
+  font-size:12px;
+  line-height:1.6;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.preview-body.payload-border{border-color:var(--amber)}
+.preview-body.echo-border{border-color:var(--purple)}
+.preview-stats{
+  padding:8px 0;
+  font-family:var(--mono);
+  font-size:9px;
+  color:var(--dim);
+  display:flex;
+  gap:16px;
+}
+.preview-actions{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+.preview-btn{
+  padding:14px 24px;
+  background:var(--chassis);
+  border:2px solid var(--border);
+  color:var(--fg);
+  font-family:var(--mono);
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+}
+.preview-btn:hover{border-color:var(--dim)}
+.preview-btn.confirm-payload{background:var(--amber);border-color:var(--amber);color:#000}
+.preview-btn.confirm-echo{background:var(--purple);border-color:var(--purple);color:#000}
+.preview-btn.cancel{color:var(--dim)}
+
+/* Clipboard Bar */
+.clipboard-bar{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:var(--chassis);
+  border-top:2px solid var(--border);
+  padding:8px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-family:var(--mono);
+  font-size:9px;
+  z-index:80;
+  transform:translateY(100%);
+  transition:transform .2s;
+}
+.clipboard-bar.visible{transform:translateY(0)}
+.clipboard-bar.copied{border-color:var(--blue)}
+.clipboard-bar.pasted{border-color:var(--green)}
+.clip-label{color:var(--dim);min-width:50px}
+.clip-label.copied{color:var(--blue)}
+.clip-label.pasted{color:var(--green)}
+.clip-preview{
+  flex:1;
+  background:var(--screen);
+  padding:6px 10px;
+  max-height:60px;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  cursor:pointer;
+}
+.clip-preview:hover{background:var(--muted)}
+.clip-actions{display:flex;gap:4px}
+.clip-btn{
+  padding:6px 10px;
+  background:var(--muted);
+  border:1px solid var(--border);
+  color:var(--fg);
+  font-family:var(--mono);
+  font-size:8px;
+  cursor:pointer;
+}
+.clip-btn:hover{border-color:var(--green)}
+.clip-close{padding:6px 8px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:12px}
+
+/* Selection highlight */
+.log-entry::selection,.log-body::selection,.preview-body::selection,.inspector-body::selection{background:var(--amber);color:#000}
+
+/* Transfer indicator */
+.transfer-indicator{
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  background:var(--chassis);
+  border:2px solid var(--green);
+  padding:16px 24px;
+  font-family:var(--mono);
+  font-size:11px;
+  z-index:200;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+}
+.transfer-indicator.visible{display:flex}
+.transfer-arrow{font-size:18px;color:var(--green)}
+.transfer-from,.transfer-to{color:var(--dim)}
+.transfer-to{color:var(--green)}
+
+/* Channel Selector Modal */
+.ch-selector{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.95);
+  z-index:120;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.ch-selector.open{display:flex}
+.ch-selector-box{
+  background:var(--chassis);
+  border:2px solid var(--border);
+  padding:20px;
+  max-width:400px;
+  width:100%;
+}
+.ch-selector-title{
+  font-family:var(--mono);
+  font-size:12px;
+  color:var(--green);
+  margin-bottom:16px;
+  text-align:center;
+}
+.ch-selector-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-bottom:16px;
+}
+.ch-sel-btn{
+  padding:16px 8px;
+  background:var(--screen);
+  border:2px solid var(--border);
+  color:var(--fg);
+  font-family:var(--mono);
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+  text-align:center;
+}
+.ch-sel-btn:hover{border-color:var(--dim)}
+.ch-sel-btn.current{border-color:var(--amber);color:var(--amber)}
+.ch-sel-btn.has-data{background:rgba(74,222,128,.1)}
+.ch-sel-btn.new{border-color:var(--green);color:var(--green)}
+.ch-selector-cancel{
+  width:100%;
+  padding:12px;
+  background:var(--muted);
+  border:none;
+  color:var(--dim);
+  font-family:var(--mono);
+  font-size:10px;
+  cursor:pointer;
+}
+.ch-selector-cancel:hover{color:var(--fg)}
+
+/* Inspector Overlay */
+.inspector{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.9);
+  z-index:100;
+  display:none;
+  flex-direction:column;
+  padding:20px;
+}
+.inspector.open{display:flex}
+.inspector-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:12px;
+}
+.inspector-head h3{font-family:var(--mono);font-size:12px;color:var(--green);flex:1}
+.inspector-close{
+  width:32px;height:32px;
+  background:var(--chassis);
+  border:1px solid var(--border);
+  color:var(--dim);
+  cursor:pointer;
+  font-size:16px;
+}
+.inspector-body{
+  flex:1;
+  overflow-y:auto;
+  background:var(--screen);
+  border:1px solid var(--border);
+  padding:16px;
+  font-family:var(--mono);
+  font-size:11px;
+  line-height:1.6;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.inspector-render{
+  margin-top:12px;
+  background:#fff;
+  padding:12px;
+  max-height:200px;
+  overflow:auto;
+}
+.inspector-render iframe{width:100%;height:180px;border:none}
+.inspector-actions{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+  flex-wrap:wrap;
+}
+.insp-btn{
+  padding:10px 16px;
+  background:var(--chassis);
+  border:1px solid var(--border);
+  color:var(--fg);
+  font-family:var(--mono);
+  font-size:10px;
+  cursor:pointer;
+}
+.insp-btn:hover{border-color:var(--green);color:var(--green)}
+
+/* Toast */
+.toast{
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(.9);
+  background:var(--chassis);
+  border:2px solid var(--green);
+  padding:12px 20px;
+  font-family:var(--mono);
+  font-size:11px;
+  z-index:200;
+  opacity:0;
+  pointer-events:none;
+  transition:all .15s;
+}
+.toast.visible{transform:translate(-50%,-50%) scale(1);opacity:1}
+
+/* Mobile */
+@media(max-width:420px){
+  body{padding:10px}
+  .calculator{width:100%;min-width:100%;border-radius:16px}
+  .lcd{margin:10px}
+  .m-btn .sym{font-size:10px}
+  .act-btn{padding:12px 6px;font-size:8px}
+}
+</style>
+</head>
+<body>
+
+<div class="calc-container" id="calc-container">
+  <!-- Calculators injected here -->
+</div>
+
+<div class="inspector" id="inspector">
+  <div class="inspector-head">
+    <h3 id="insp-title">INSPECT</h3>
+    <button class="inspector-close" onclick="closeInspector()">X</button>
+  </div>
+  <div class="inspector-body" id="insp-body"></div>
+  <div class="inspector-render" id="insp-render" style="display:none"></div>
+  <div class="inspector-actions" id="insp-actions"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="ctx-menu" id="ctx-menu"></div>
+
+<div class="tangle-overlay" id="tangle-overlay">
+  <div class="tangle-head">
+    <h3>TANGLE VIEW - ALL CHANNELS</h3>
+    <button class="inspector-close" onclick="closeTangle()">X</button>
+  </div>
+  <div class="tangle-body" id="tangle-body"></div>
+</div>
+
+<div class="preview-overlay" id="preview-overlay">
+  <div class="preview-head">
+    <h3 id="preview-title">PREVIEW</h3>
+    <button class="inspector-close" onclick="closePreview()">X</button>
+  </div>
+  <div class="preview-body" id="preview-body"></div>
+  <div class="preview-stats" id="preview-stats"></div>
+  <div class="preview-actions" id="preview-actions"></div>
+</div>
+
+<div class="clipboard-bar" id="clipboard-bar">
+  <span class="clip-label" id="clip-label">CLIPBOARD</span>
+  <div class="clip-preview" id="clip-preview" onclick="expandClipboard()"></div>
+  <div class="clip-actions">
+    <button class="clip-btn" onclick="useClipAsPayload()">AS PAYLOAD</button>
+    <button class="clip-btn" onclick="useClipAsEcho()">AS ECHO</button>
+  </div>
+  <button class="clip-close" onclick="hideClipboard()">X</button>
+</div>
+
+<div class="transfer-indicator" id="transfer-indicator">
+  <span class="transfer-from" id="transfer-from">CH1</span>
+  <span class="transfer-arrow">v</span>
+  <span class="transfer-to" id="transfer-to">CH2</span>
+</div>
+
+<div class="ch-selector" id="ch-selector">
+  <div class="ch-selector-box">
+    <div class="ch-selector-title" id="ch-selector-title">SEND TO CHANNEL</div>
+    <div class="ch-selector-grid" id="ch-selector-grid"></div>
+    <button class="ch-selector-cancel" onclick="closeChSelector()">CANCEL</button>
+  </div>
+</div>
+
+<div class="help-overlay" id="help-overlay">
+  <div class="help-head">
+    <h3>OPERATOR GUIDE</h3>
+    <button class="help-close" onclick="closeHelp()">X</button>
+  </div>
+  <div class="help-body">
+    <div class="help-section">
+      <h4>BASIC OPERATION</h4>
+      <div class="help-step">
+        <div class="help-num">1</div>
+        <div class="help-txt">Select <span class="help-key">SOURCE</span> media type (first click = <span class="help-color amber"></span>amber)</div>
+      </div>
+      <div class="help-step">
+        <div class="help-num">2</div>
+        <div class="help-txt">Select <span class="help-key">TARGET</span> media type (second click = <span class="help-color green"></span>green)</div>
+      </div>
+      <div class="help-step">
+        <div class="help-num">3</div>
+        <div class="help-txt">Enter text in input field, press <span class="help-key">PAYLOAD</span> to add</div>
+      </div>
+      <div class="help-step">
+        <div class="help-num">4</div>
+        <div class="help-txt">Press <span class="help-key">COMPILE</span> to generate prompt (auto-copied)</div>
+      </div>
+      <div class="help-step">
+        <div class="help-num">5</div>
+        <div class="help-txt">Paste into AI, get response, paste back and press <span class="help-key">ECHO</span></div>
+      </div>
+    </div>
+    <div class="help-section">
+      <h4>CHANNELS</h4>
+      <p>Each calculator has multiple <strong>channels</strong> - separate message streams you can switch between.</p>
+      <p><span class="help-color amber"></span><strong>Amber dot</strong> = channel has data</p>
+      <p><span class="help-color green"></span><strong>Green dot</strong> = currently active channel</p>
+      <p><span class="help-color green"></span><strong>Green ring</strong> = channel has received data from another channel</p>
+      <p>Use the <strong>channel flow bar</strong> to see all channels and their connections. Click to switch, arrows show transfer direction.</p>
+    </div>
+    <div class="help-section">
+      <h4>MESSAGE TYPES</h4>
+      <p><span class="help-color amber"></span><strong>PAYLOAD</strong> - Your input text to be transformed</p>
+      <p><span class="help-color purple"></span><strong>ECHO</strong> - AI response pasted back</p>
+      <p><span class="help-color green"></span><strong>COMPILE</strong> - Generated traversal prompt</p>
+      <p><span class="help-color blue"></span><strong>SYSTEM</strong> - Status messages and notifications</p>
+    </div>
+    <div class="help-section">
+      <h4>ACTIONS</h4>
+      <p><span class="help-key">+CH</span> Compile and create new channel with payload</p>
+      <p><span class="help-key">BRANCH</span> Fork message to new channel</p>
+      <p><span class="help-key">SEND TO CH</span> Copy message to another channel</p>
+      <p><span class="help-key">TANGLE</span> View all channels across calculators</p>
+      <p><span class="help-key">RESET</span> Clear all channels in calculator</p>
+    </div>
+    <div class="help-section">
+      <h4>FLOW CONCEPT</h4>
+      <p>The Media Traversal Compiler transforms content across media boundaries. Think of it like <strong>crochet</strong> - each compile is a stitch linking source to target.</p>
+      <p>Channels let you maintain parallel threads. Branch to explore variations. The <strong>tangle view</strong> shows how everything connects.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const MEDIA = [
+  {id:'txt',s:'TXT',n:'TEXT'},{id:'vce',s:'VCE',n:'VOICE'},
+  {id:'cmd',s:'CMD',n:'CODE'},{id:'prm',s:'PRM',n:'PROMPT'},
+  {id:'img',s:'IMG',n:'IMAGE'},{id:'vid',s:'VID',n:'VIDEO'},
+  {id:'gui',s:'GUI',n:'UI'},{id:'gen',s:'GEN',n:'GENAI'},
+  {id:'obj',s:'OBJ',n:'OBJECT'},{id:'act',s:'ACT',n:'ACTION'},
+  {id:'gam',s:'GAM',n:'GAME'},{id:'bot',s:'BOT',n:'AGENT'},
+  {id:'db',s:'DB',n:'DATA'},{id:'net',s:'NET',n:'NETWORK'},
+  {id:'plt',s:'PLT',n:'PLATFORM'},{id:'mod',s:'MOD',n:'MODEL'}
+];
+
+let calculators = [];
+let activeCalcId = 0;
+
+function createCalculator(id) {
+  return {
+    id,
+    source: null,
+    target: null,
+    channels: [{ id: 1, messages: [] }],
+    currentChannel: 0,
+    mode: 'IDLE',
+    selectedMsg: null,
+    minimized: false,
+    inputMode: 'payload'
+  };
+}
+
+let isFirstUse = false;
+
+function load() {
+  const s = localStorage.getItem('media_flow_calc');
+  isFirstUse = !s;
+  if (s) {
+    try {
+      calculators = JSON.parse(s);
+      if (!calculators.length) calculators = [createCalculator(0)];
+    } catch(e) {
+      calculators = [createCalculator(0)];
+    }
+  } else {
+    calculators = [createCalculator(0)];
+  }
+}
+
+function save() {
+  localStorage.setItem('media_flow_calc', JSON.stringify(calculators));
+}
+
+let lastClipboard = '';
+let clipboardType = 'idle';
+let chSelectorCallback = null;
+let chSelectorCalcIdx = 0;
+
+// Audio context for sounds
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playSound(type) {
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    if (type === 'click') {
+      osc.frequency.value = 800;
+      gain.gain.value = 0.05;
+      osc.start();
+      osc.stop(ctx.currentTime + 0.05);
+    } else if (type === 'success') {
+      osc.frequency.value = 523;
+      gain.gain.value = 0.08;
+      osc.start();
+      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
+      osc.stop(ctx.currentTime + 0.2);
+    } else if (type === 'error') {
+      osc.frequency.value = 200;
+      gain.gain.value = 0.1;
+      osc.start();
+      osc.stop(ctx.currentTime + 0.15);
+    } else if (type === 'send') {
+      osc.frequency.value = 440;
+      gain.gain.value = 0.06;
+      osc.start();
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+      osc.stop(ctx.currentTime + 0.15);
+    }
+  } catch(e) {}
+}
+
+function haptic() {
+  if (navigator.vibrate) navigator.vibrate(10);
+}
+
+function feedback(type) {
+  playSound(type);
+  haptic();
+}
+
+function init() {
+  load();
+  renderAllCalculators();
+  document.addEventListener('click', hideCtx);
+  
+  // Monitor paste events
+  document.addEventListener('paste', handlePaste);
+  
+  // Monitor copy events
+  document.addEventListener('copy', handleCopy);
+  
+  // Show help on first use
+  if (isFirstUse) {
+    setTimeout(() => {
+      showHelp();
+      toast('WELCOME! Read the guide to get started');
+    }, 500);
+  }
+}
+
+function handlePaste(e) {
+  const text = e.clipboardData?.getData('text') || '';
+  if (text) {
+    lastClipboard = text;
+    clipboardType = 'pasted';
+    showClipboardBar(text, 'pasted');
+  }
+}
+
+function handleCopy(e) {
+  setTimeout(() => {
+    navigator.clipboard.readText().then(text => {
+      if (text) {
+        lastClipboard = text;
+        clipboardType = 'copied';
+        showClipboardBar(text, 'copied');
+      }
+    }).catch(() => {});
+  }, 100);
+}
+
+function showClipboardBar(text, type) {
+  const bar = document.getElementById('clipboard-bar');
+  const label = document.getElementById('clip-label');
+  const preview = document.getElementById('clip-preview');
+  
+  bar.className = 'clipboard-bar visible ' + type;
+  label.className = 'clip-label ' + type;
+  label.textContent = type === 'copied' ? 'COPIED' : 'PASTED';
+  preview.textContent = text.length > 200 ? text.slice(0, 200) + '...' : text;
+  
+  // Auto-hide after 10s
+  clearTimeout(window.clipTimer);
+  window.clipTimer = setTimeout(hideClipboard, 10000);
+}
+
+function hideClipboard() {
+  document.getElementById('clipboard-bar').classList.remove('visible');
+}
+
+function expandClipboard() {
+  if (!lastClipboard) return;
+  showPreview(clipboardType === 'copied' ? 'payload' : 'echo', lastClipboard, activeCalcId);
+}
+
+function useClipAsPayload() {
+  if (!lastClipboard) return;
+  showPreview('payload', lastClipboard, activeCalcId);
+  hideClipboard();
+}
+
+function useClipAsEcho() {
+  if (!lastClipboard) return;
+  showPreview('echo', lastClipboard, activeCalcId);
+  hideClipboard();
+}
+
+function buildCalcChainPreview(calc) {
+  const compiles = [];
+  calc.channels.forEach(ch => {
+    ch.messages.forEach(m => {
+      if (m.type === 'compile') compiles.push(`${m.source}->${m.target}`);
+    });
+  });
+  if (!compiles.length) return '';
+  const unique = [...new Set(compiles)].slice(0,4);
+  return unique.map(c => `<span class="mini-node">${c.toUpperCase()}</span>`).join('');
+}
+
+// Build channel flow connections map
+function getChannelConnections(calc) {
+  const connections = {}; // fromCh -> [toCh, ...]
+  calc.channels.forEach((ch, chIdx) => {
+    ch.messages.forEach(m => {
+      if (m.fromChannel) {
+        const fromIdx = m.fromChannel - 1;
+        if (!connections[fromIdx]) connections[fromIdx] = [];
+        if (!connections[fromIdx].includes(chIdx)) connections[fromIdx].push(chIdx);
+      }
+    });
+  });
+  return connections;
+}
+
+function buildChannelFlowBar(calc, calcIdx) {
+  const connections = getChannelConnections(calc);
+  let html = '';
+  
+  calc.channels.forEach((ch, i) => {
+    const isActive = i === calc.currentChannel;
+    const hasData = ch.messages.length > 0;
+    const hasLinked = ch.messages.some(m => m.fromChannel);
+    
+    // Check if there's a connection TO this channel from previous
+    const hasIncoming = Object.values(connections).some(arr => arr.includes(i));
+    
+    // Show arrow before if there's connection from previous channel
+    if (i > 0) {
+      const prevConnects = connections[i-1] && connections[i-1].includes(i);
+      const anyConnects = hasIncoming;
+      html += `<span class="ch-flow-arrow ${prevConnects || anyConnects ? 'linked' : ''}">${prevConnects ? '>' : '-'}</span>`;
+    }
+    
+    html += `<div class="ch-flow-node ${isActive?'active':''} ${hasData?'has-data':''} ${hasLinked?'linked':''}" onclick="goChAnimated(${calcIdx},${i})" data-ch="${i}">
+      <span class="ch-name">CH${i+1}</span>
+      <span class="ch-count">${ch.messages.length}</span>
+    </div>`;
+  });
+  
+  // Add new channel button
+  html += `<button class="ch-flow-add" onclick="addCh(${calcIdx})">+</button>`;
+  
+  return html;
+}
+
+function goChAnimated(calcIdx, chIdx) {
+  const oldIdx = calculators[calcIdx].currentChannel;
+  if (oldIdx === chIdx) return;
+  
+  // Add transitioning class to target node before switch
+  const flowBar = document.getElementById(`ch-flow-${calcIdx}`);
+  if (flowBar) {
+    const nodes = flowBar.querySelectorAll('.ch-flow-node');
+    nodes.forEach(n => n.classList.remove('transitioning'));
+    if (nodes[chIdx]) nodes[chIdx].classList.add('transitioning');
+  }
+  
+  feedback('click');
+  goCh(calcIdx, chIdx);
+}
+
+function renderAllCalculators() {
+  const container = document.getElementById('calc-container');
+  container.innerHTML = calculators.map((c, i) => renderCalculatorHTML(c, i)).join('');
+}
+
+function renderCalculatorHTML(calc, idx) {
+  const ch = calc.channels[calc.currentChannel];
+  const modeClass = calc.mode === 'WAITING' ? 'waiting' : (calc.mode === 'ERROR' ? 'error' : '');
+  
+  // Clearer mode text
+  let modeText = calc.mode;
+  if (calc.mode === 'IDLE') modeText = 'Select FROM';
+  else if (calc.mode === 'SELECT TGT') modeText = 'Select TO';
+  else if (calc.mode === 'READY') modeText = 'Ready';
+  
+  const chainPreview = buildCalcChainPreview(calc);
+  
+  return `
+    <div class="calculator ${calc.minimized?'minimized':''}" data-calc="${idx}" oncontextmenu="showCtx(event,${idx})">
+      <div class="mini-bar" onclick="toggleMin(${idx})">
+        <span class="mini-id">C${idx+1}</span>
+        <span class="mini-stats">${calc.channels.length}CH</span>
+        <span class="mini-stats">${calc.channels.reduce((a,c)=>a+c.messages.length,0)}MSG</span>
+        <div class="mini-chain">${chainPreview}</div>
+      </div>
+      <div class="lcd">
+        <div class="status-bar">
+          <span>CH${calc.currentChannel + 1} | L${ch.messages.filter(m=>m.type==='compile').length}</span>
+          <span class="status-mode ${modeClass}">${modeText}</span>
+          <span>${ch.messages.length} MSG</span>
+        </div>
+        <div class="ch-flow-bar" id="ch-flow-${idx}">
+          ${buildChannelFlowBar(calc, idx)}
+        </div>
+        <div class="log" id="log-${idx}">
+          ${ch.messages.length === 0 ? 
+            '<div class="log-empty">Empty channel<br><small>Add payload or compile a traversal</small></div>' :
+            ch.messages.map((m, i) => renderLogEntry(m, i, idx)).join('')
+          }
+        </div>
+        <div class="op-display">
+          <div class="op-slot ${calc.source ? 'source' : ''}" onclick="clearSrc(${idx})">${calc.source ? calc.source.toUpperCase() : 'FROM'}</div>
+          <span class="op-arrow">→</span>
+          <div class="op-slot ${calc.target ? 'target' : ''}" onclick="clearTgt(${idx})">${calc.target ? calc.target.toUpperCase() : 'TO'}</div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="media-grid">
+          ${MEDIA.map(m => `
+            <button class="m-btn ${calc.source===m.id?'source':''} ${calc.target===m.id?'target':''}" onclick="selMedia(${idx},'${m.id}')">
+              <span class="sym">${m.s}</span>
+              <span class="lbl">${m.n}</span>
+            </button>
+          `).join('')}
+        </div>
+        <div class="input-row">
+          <div class="input-mode">
+            <span class="${calc.inputMode==='payload'?'active-p':''}" onclick="setInputMode(${idx},'payload')" data-tip="Payload mode">P</span>
+            <span class="${calc.inputMode==='echo'?'active-e':''}" onclick="setInputMode(${idx},'echo')" data-tip="Echo mode">E</span>
+          </div>
+          <textarea id="input-${idx}" class="mode-${calc.inputMode}" placeholder="${calc.inputMode==='payload'?'ENTER PAYLOAD...':'PASTE ECHO...'}" onkeydown="inputKey(event,${idx})"></textarea>
+        </div>
+        <div class="action-row">
+          <button class="act-btn payload" onclick="addPayload(${idx})" data-tip="Add input text as payload">PAYLOAD</button>
+          <button class="act-btn echo" onclick="addEcho(${idx})" data-tip="Paste AI response as echo">ECHO</button>
+          <button class="act-btn copy" onclick="copyLast(${idx})" data-tip="Copy last message">COPY</button>
+          <button class="act-btn compile" onclick="compile(${idx})" data-tip="Generate traversal prompt">COMPILE</button>
+        </div>
+        <div class="bottom-row">
+          <button class="bottom-btn" onclick="showHelp()" data-tip="Help guide">?</button>
+          <button class="bottom-btn" onclick="showTangle()" data-tip="View all calculators & channels">TANGLE</button>
+          <button class="bottom-btn new-calc" onclick="compileToNew(${idx})" data-tip="Compile to new channel">+CH</button>
+          <button class="bottom-btn new-calc" onclick="addCalculator()" data-tip="Add new calculator">+CALC</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderLogEntry(m, idx, calcIdx) {
+  const calc = calculators[calcIdx];
+  const selected = calc.selectedMsg === idx ? 'selected' : '';
+  const text = m.type === 'compile' ? m.prompt : m.text;
+  const tags = detectTags(text);
+  const hasNested = tags.bridges.length > 0 || tags.media.length > 0;
+  
+  let body = m.type === 'compile' ? `${m.source.toUpperCase()} -> ${m.target.toUpperCase()}` : 
+             (m.text.length > 60 ? m.text.slice(0,60) + '...' : m.text);
+  
+  let tagsHtml = '';
+  if (tags.bridges.length || tags.media.length || tags.code) {
+    tagsHtml = '<div class="log-tags">';
+    tags.bridges.forEach((b,i) => {
+      tagsHtml += `<span class="tag bridge" onclick="event.stopPropagation();branchBridge(${calcIdx},${idx},${i})">${b.src}->${b.tgt}</span>`;
+    });
+    tags.media.forEach(med => {
+      tagsHtml += `<span class="tag media" onclick="event.stopPropagation();setMediaFromTag(${calcIdx},'${med}')">${med.toUpperCase()}</span>`;
+    });
+    if (tags.code) tagsHtml += `<span class="tag code">${tags.code.toUpperCase()}</span>`;
+    if (tags.nested) tagsHtml += `<span class="tag nested">NESTED</span>`;
+    tagsHtml += '</div>';
+  }
+  
+  let flowHtml = '';
+  if (tags.bridges.length > 1) {
+    flowHtml = '<div class="flow-chain">';
+    const chain = buildChain(tags.bridges);
+    chain.forEach((node, i) => {
+      flowHtml += `<span class="flow-node ${i===0?'src':i===chain.length-1?'tgt':''}">${node}</span>`;
+      if (i < chain.length - 1) flowHtml += '<span class="flow-arrow">-></span>';
+    });
+    flowHtml += '</div>';
+  }
+  
+  const linked = m.fromChannel ? 'linked' : '';
+  const isSystem = m.type === 'system';
+  
+  if (isSystem) {
+    return `
+      <div class="log-entry system">
+        <div class="log-head"><span class="log-type">SYSTEM</span></div>
+        <div class="log-body">${esc(m.text)}</div>
+      </div>
+    `;
+  }
+  
+  // Show media type badge if known
+  const mediaTypeBadge = m.mediaType ? 
+    `<span class="log-media-type" style="background:var(--calc);color:#000;padding:1px 4px;border-radius:2px;font-size:7px;font-weight:700">${m.mediaType.toUpperCase()}</span>` : '';
+  
+  return `
+    <div class="log-entry ${m.type} ${selected} ${hasNested?'has-nested':''} ${linked}" onclick="inspect(${calcIdx},${idx})">
+      <div class="log-head">
+        <span class="log-type">${m.type.toUpperCase()}</span>
+        ${mediaTypeBadge}
+        <span>L${m.level || 0}</span>
+        ${tags.bridges.length ? `<span style="color:var(--amber)">D${tags.bridges.length}</span>` : ''}
+      </div>
+      <div class="log-body ${m.text && m.text.length > 60 ? 'truncate' : ''}">${esc(body)}</div>
+      ${tagsHtml}
+      ${flowHtml}
+    </div>
+  `;
+}
+
+// Input Mode
+function setInputMode(idx, mode) {
+  calculators[idx].inputMode = mode;
+  save();
+  renderAllCalculators();
+}
+
+function inputKey(e, idx) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    const c = calculators[idx];
+    if (c.inputMode === 'payload') addPayload(idx);
+    else addEcho(idx);
+  }
+}
+
+function toggleMin(idx) {
+  calculators[idx].minimized = !calculators[idx].minimized;
+  save();
+  renderAllCalculators();
+}
+
+// Context Menu
+function showCtx(e, idx) {
+  e.preventDefault();
+  const menu = document.getElementById('ctx-menu');
+  menu.innerHTML = `
+    <button class="ctx-item" onclick="hideCtx();showHelp()">HELP / GUIDE</button>
+    <button class="ctx-item" onclick="hideCtx();exportCalc(${idx})">EXPORT CALC</button>
+    <button class="ctx-item" onclick="hideCtx();exportAllChannels(${idx})">EXPORT ALL CH</button>
+    <button class="ctx-item" onclick="hideCtx();showTangle()">VIEW TANGLE</button>
+    <div class="ctx-sep"></div>
+    <button class="ctx-item" onclick="hideCtx();toggleMin(${idx})">${calculators[idx].minimized?'EXPAND':'MINIMIZE'}</button>
+    <button class="ctx-item" onclick="hideCtx();duplicateCalc(${idx})">DUPLICATE</button>
+    <div class="ctx-sep"></div>
+    <button class="ctx-item" onclick="hideCtx();clearCalc(${idx})">CLEAR CHANNEL</button>
+    <button class="ctx-item danger" onclick="hideCtx();resetAll(${idx})">RESET ALL CH</button>
+    <button class="ctx-item danger" onclick="hideCtx();removeCalc(${idx})">DELETE CALC</button>
+  `;
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+  menu.classList.add('open');
+}
+
+function hideCtx() {
+  document.getElementById('ctx-menu').classList.remove('open');
+}
+
+// Calculator Actions
+function selMedia(calcIdx, id) {
+  const c = calculators[calcIdx];
+  if (c.source === id) c.source = null;
+  else if (c.target === id) c.target = null;
+  else if (!c.source) c.source = id;
+  else if (!c.target) c.target = id;
+  
+  c.mode = c.source && c.target ? 'READY' : (c.source ? 'SELECT TGT' : 'IDLE');
+  save();
+  renderAllCalculators();
+}
+
+function clearSrc(idx) { calculators[idx].source = null; updateMode(idx); save(); renderAllCalculators(); }
+function clearTgt(idx) { calculators[idx].target = null; updateMode(idx); save(); renderAllCalculators(); }
+
+function updateMode(idx) {
+  const c = calculators[idx];
+  c.mode = c.source && c.target ? 'READY' : (c.source ? 'SELECT TGT' : 'IDLE');
+}
+
+function addPayload(idx) {
+  const c = calculators[idx];
+  const text = document.getElementById(`input-${idx}`).value.trim();
+  if (!text) { toast('ENTER TEXT'); return; }
+  
+  showPreview('payload', text, idx);
+}
+
+function confirmPayload(idx, text) {
+  const c = calculators[idx];
+  const tags = detectTags(text);
+  const ch = c.channels[c.currentChannel];
+  ch.messages.push({
+    type: 'payload',
+    text,
+    tags,
+    time: Date.now(),
+    level: ch.messages.filter(m => m.type === 'compile').length
+  });
+  
+  document.getElementById(`input-${idx}`).value = '';
+  c.mode = 'PAYLOAD OK';
+  feedback('click');
+  setTimeout(() => { updateMode(idx); renderAllCalculators(); }, 1000);
+  save();
+  renderAllCalculators();
+  scrollLog(idx);
+  closePreview();
+  toast('PAYLOAD ADDED');
+}
+
+function addEcho(idx) {
+  const c = calculators[idx];
+  const text = document.getElementById(`input-${idx}`).value.trim();
+  if (!text) { toast('PASTE ECHO'); return; }
+  
+  showPreview('echo', text, idx);
+}
+
+function confirmEcho(idx, text) {
+  const c = calculators[idx];
+  const tags = detectTags(text);
+  const ch = c.channels[c.currentChannel];
+  ch.messages.push({
+    type: 'echo',
+    text,
+    tags,
+    codeType: detectCode(text),
+    time: Date.now(),
+    level: ch.messages.filter(m => m.type === 'compile').length
+  });
+  
+  document.getElementById(`input-${idx}`).value = '';
+  c.mode = 'ECHO OK';
+  feedback('click');
+  setTimeout(() => { updateMode(idx); renderAllCalculators(); }, 1000);
+  save();
+  renderAllCalculators();
+  scrollLog(idx);
+  closePreview();
+  toast('ECHO RECORDED');
+}
+
+function compile(idx, toNewChannel = false) {
+  const c = calculators[idx];
+  if (!c.source || !c.target) { toast('SELECT SRC + TGT'); return; }
+  
+  const ch = c.channels[c.currentChannel];
+  const lastPayload = [...ch.messages].reverse().find(m => m.type === 'payload');
+  const input = lastPayload ? lastPayload.text : '[NO PAYLOAD]';
+  
+  const s = MEDIA.find(x => x.id === c.source);
+  const t = MEDIA.find(x => x.id === c.target);
+  
+  const prompt = `Act as a Media Traversal Compiler.
+
+BRIDGE: [${s.s}] -> [${t.s}]
+SOURCE: ${s.n} | TARGET: ${t.n}
+
+PAYLOAD:
+"""
+${input}
+"""
+
+Transform from [${s.n}] affordances into [${t.n}] structure. Output artifact only.`;
+
+  const compileMsg = {
+    type: 'compile',
+    source: c.source,
+    target: c.target,
+    mediaType: c.target,  // Output "becomes" the target type
+    prompt,
+    time: Date.now(),
+    level: ch.messages.filter(m => m.type === 'compile').length
+  };
+  
+  // Add system message for compile success
+  const sysMsg = {
+    type: 'system',
+    text: `COMPILED: ${s.s} -> ${t.s} | PROMPT COPIED TO CLIPBOARD`,
+    time: Date.now()
+  };
+  
+  if (toNewChannel) {
+    // New channel starts with compiled payload - mediaType is the target
+    c.channels.push({ 
+      id: c.channels.length + 1, 
+      messages: [
+        { type: 'payload', text: input, mediaType: c.source, time: Date.now(), level: 0 },
+        compileMsg,
+        sysMsg
+      ]
+    });
+    c.currentChannel = c.channels.length - 1;
+    // Auto-set source to target type for next operation (loopback)
+    c.source = c.target;
+    c.target = null;
+    feedback('success');
+    toast(`COMPILED TO NEW CH | NOW: ${c.source.toUpperCase()}`);
+  } else {
+    ch.messages.push(compileMsg);
+    ch.messages.push(sysMsg);
+    feedback('success');
+    toast('COMPILED + COPIED');
+  }
+  
+  navigator.clipboard.writeText(prompt);
+  
+  // Only reset source/target if NOT compiling to new channel (loopback keeps source)
+  if (!toNewChannel) {
+    c.source = null;
+    c.target = null;
+  }
+  c.mode = toNewChannel ? 'SELECT TGT' : 'WAITING';
+  save();
+  renderAllCalculators();
+  scrollLog(idx);
+}
+
+function compileToNew(idx) {
+  compile(idx, true);
+}
+
+function copyLast(idx) {
+  const c = calculators[idx];
+  const ch = c.channels[c.currentChannel];
+  const last = ch.messages[ch.messages.length - 1];
+  if (!last) { toast('NO MSG'); return; }
+  
+  const text = last.type === 'compile' ? last.prompt : last.text;
+  navigator.clipboard.writeText(text);
+  toast('COPIED');
+}
+
+// Channel Navigation
+function goCh(calcIdx, chIdx) {
+  calculators[calcIdx].currentChannel = chIdx;
+  calculators[calcIdx].selectedMsg = null;
+  updateMode(calcIdx);
+  save();
+  renderAllCalculators();
+}
+function prevCh(idx) { if (calculators[idx].currentChannel > 0) goChAnimated(idx, calculators[idx].currentChannel - 1); }
+function nextCh(idx) { const c = calculators[idx]; if (c.currentChannel < c.channels.length - 1) goChAnimated(idx, c.currentChannel + 1); }
+function addCh(idx) {
+  const c = calculators[idx];
+  c.channels.push({ id: c.channels.length + 1, messages: [] });
+  c.currentChannel = c.channels.length - 1;
+  feedback('click');
+  save();
+  renderAllCalculators();
+  toast('NEW CHANNEL');
+}
+
+// Help Overlay
+function showHelp() {
+  document.getElementById('help-overlay').classList.add('open');
+}
+
+function closeHelp() {
+  document.getElementById('help-overlay').classList.remove('open');
+}
+
+// Calculator Management
+function addCalculator() {
+  calculators.push(createCalculator(calculators.length));
+  save();
+  renderAllCalculators();
+  toast('NEW CALC');
+}
+
+function removeCalc(idx) {
+  if (calculators.length <= 1) return;
+  calculators.splice(idx, 1);
+  calculators.forEach((c, i) => c.id = i);
+  save();
+  renderAllCalculators();
+  toast('CALC REMOVED');
+}
+
+function clearCalc(idx) {
+  if (!confirm('CLEAR ALL DATA?')) return;
+  calculators[idx] = createCalculator(idx);
+  feedback('click');
+  save();
+  renderAllCalculators();
+  toast('CLEARED');
+}
+
+function resetAll(idx) {
+  if (!confirm('RESET ALL CHANNELS? This cannot be undone.')) return;
+  const c = calculators[idx];
+  c.channels = [{ id: 1, messages: [] }];
+  c.currentChannel = 0;
+  c.source = null;
+  c.target = null;
+  c.mode = 'IDLE';
+  c.selectedMsg = null;
+  feedback('click');
+  save();
+  renderAllCalculators();
+  toast('ALL CHANNELS RESET');
+}
+
+function exportCalc(idx) {
+  const c = calculators[idx];
+  const blob = new Blob([JSON.stringify(c, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `calc-${idx + 1}-${Date.now()}.json`;
+  a.click();
+  toast('EXPORTED');
+}
+
+function exportAllChannels(idx) {
+  const c = calculators[idx];
+  const data = {
+    calcId: idx + 1,
+    exportTime: new Date().toISOString(),
+    channels: c.channels.map((ch, i) => ({
+      channelId: i + 1,
+      messageCount: ch.messages.length,
+      chain: buildChannelChain(ch),
+      messages: ch.messages
+    }))
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `calc-${idx + 1}-all-channels-${Date.now()}.json`;
+  a.click();
+  toast('ALL CHANNELS EXPORTED');
+}
+
+function exportAllCalcs() {
+  const data = {
+    exportTime: new Date().toISOString(),
+    calculators: calculators.map((c, i) => ({
+      calcId: i + 1,
+      channels: c.channels.map((ch, j) => ({
+        channelId: j + 1,
+        chain: buildChannelChain(ch),
+        messages: ch.messages
+      }))
+    }))
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `all-calcs-${Date.now()}.json`;
+  a.click();
+  toast('ALL CALCS EXPORTED');
+}
+
+function duplicateCalc(idx) {
+  const copy = JSON.parse(JSON.stringify(calculators[idx]));
+  copy.id = calculators.length;
+  calculators.push(copy);
+  save();
+  renderAllCalculators();
+  toast('DUPLICATED');
+}
+
+function buildChannelChain(ch) {
+  return ch.messages.map(m => {
+    if (m.type === 'payload') return { type: 'P', preview: m.text.slice(0,30) };
+    if (m.type === 'echo') return { type: 'E', preview: m.text.slice(0,30) };
+    if (m.type === 'compile') return { type: 'C', op: `${m.source}->${m.target}` };
+  });
+}
+
+// Inspector
+function inspect(calcIdx, msgIdx) {
+  const c = calculators[calcIdx];
+  const ch = c.channels[c.currentChannel];
+  const m = ch.messages[msgIdx];
+  if (!m) return;
+  
+  c.selectedMsg = msgIdx;
+  activeCalcId = calcIdx;
+  renderAllCalculators();
+  
+  const text = m.type === 'compile' ? m.prompt : m.text;
+  document.getElementById('insp-title').textContent = `${m.type.toUpperCase()} | L${m.level || 0}`;
+  document.getElementById('insp-body').textContent = text;
+  
+  const render = document.getElementById('insp-render');
+  if (m.codeType === 'svg') {
+    render.style.display = 'block';
+    const match = text.match(/<svg[\s\S]*<\/svg>/i);
+    render.innerHTML = match ? match[0] : '';
+  } else if (m.codeType === 'html') {
+    render.style.display = 'block';
+    const blob = new Blob([text], { type: 'text/html' });
+    render.innerHTML = `<iframe src="${URL.createObjectURL(blob)}" sandbox="allow-scripts"></iframe>`;
+  } else {
+    render.style.display = 'none';
+  }
+  
+  let btns = `
+    <button class="insp-btn" onclick="copyInsp()">COPY</button>
+    <button class="insp-btn" onclick="useAsPayload()">AS PAYLOAD</button>
+    <button class="insp-btn" onclick="useAsEcho()">AS ECHO</button>
+    <button class="insp-btn" onclick="sendToChannel()">SEND TO CH</button>
+    <button class="insp-btn" onclick="branch()">BRANCH</button>
+  `;
+  if (m.type === 'compile') {
+    btns += `<button class="insp-btn" onclick="reverse()">REVERSE OP</button>`;
+  }
+  btns += `<button class="insp-btn" onclick="deleteMsg()">DELETE</button>`;
+  document.getElementById('insp-actions').innerHTML = btns;
+  
+  document.getElementById('inspector').classList.add('open');
+}
+
+function closeInspector() {
+  document.getElementById('inspector').classList.remove('open');
+  calculators[activeCalcId].selectedMsg = null;
+  renderAllCalculators();
+}
+
+function copyInsp() {
+  const text = document.getElementById('insp-body').textContent;
+  navigator.clipboard.writeText(text);
+  lastClipboard = text;
+  clipboardType = 'copied';
+  showClipboardBar(text, 'copied');
+  toast('COPIED');
+}
+
+function useAsEcho() {
+  const text = document.getElementById('insp-body').textContent;
+  closeInspector();
+  showPreview('echo', text, activeCalcId);
+}
+
+function sendToChannel() {
+  showChSelector(activeCalcId, 'SEND TO CHANNEL', (chIdx) => {
+    const c = calculators[activeCalcId];
+    const m = c.channels[c.currentChannel].messages[c.selectedMsg];
+    const text = m.type === 'compile' ? m.prompt : m.text;
+    const fromCh = c.currentChannel;
+    
+    // Get the media type - compile output "is" the target type
+    const mediaType = m.mediaType || (m.type === 'compile' ? m.target : null);
+    
+    if (chIdx >= c.channels.length) {
+      c.channels.push({ id: c.channels.length + 1, messages: [] });
+    }
+    
+    c.channels[chIdx].messages.push({
+      type: 'payload',
+      text,
+      mediaType,  // Track what type this content "is"
+      tags: detectTags(text),
+      time: Date.now(),
+      level: c.channels[chIdx].messages.filter(m => m.type === 'compile').length,
+      fromChannel: fromCh + 1
+    });
+    
+    // Add system message about the transfer
+    const typeLabel = mediaType ? mediaType.toUpperCase() : 'DATA';
+    c.channels[chIdx].messages.push({
+      type: 'system',
+      text: `RECEIVED ${typeLabel} FROM CH${fromCh + 1}`,
+      time: Date.now()
+    });
+    
+    // Auto-set source to the media type if known (loopback)
+    if (mediaType) {
+      c.source = mediaType;
+      c.target = null;
+      c.mode = 'SELECT TGT';
+    }
+    
+    feedback('send');
+    showTransfer(fromCh, chIdx);
+    
+    closeInspector();
+    c.currentChannel = chIdx;  // Switch to destination channel
+    save();
+    renderAllCalculators();
+    toast(mediaType ? `SENT ${typeLabel} TO CH${chIdx + 1} | NOW: ${typeLabel}` : `SENT TO CH${chIdx + 1}`);
+  });
+}
+
+// Channel Selector Modal
+function showChSelector(calcIdx, title, callback) {
+  chSelectorCalcIdx = calcIdx;
+  chSelectorCallback = callback;
+  
+  const c = calculators[calcIdx];
+  document.getElementById('ch-selector-title').textContent = title;
+  
+  let grid = '';
+  c.channels.forEach((ch, i) => {
+    const isCurrent = i === c.currentChannel;
+    const hasData = ch.messages.length > 0;
+    grid += `<button class="ch-sel-btn ${isCurrent?'current':''} ${hasData?'has-data':''}" onclick="selectChannel(${i})">
+      CH${i + 1}<br><span style="font-size:8px;color:var(--dim)">${ch.messages.length} msg</span>
+    </button>`;
+  });
+  grid += `<button class="ch-sel-btn new" onclick="selectChannel(${c.channels.length})">+ NEW</button>`;
+  
+  document.getElementById('ch-selector-grid').innerHTML = grid;
+  document.getElementById('ch-selector').classList.add('open');
+}
+
+function selectChannel(idx) {
+  closeChSelector();
+  if (chSelectorCallback) {
+    chSelectorCallback(idx);
+    chSelectorCallback = null;
+  }
+}
+
+function closeChSelector() {
+  document.getElementById('ch-selector').classList.remove('open');
+}
+
+function useAsPayload() {
+  const text = document.getElementById('insp-body').textContent;
+  closeInspector();
+  showPreview('payload', text, activeCalcId);
+}
+
+function branch() {
+  const c = calculators[activeCalcId];
+  const fromCh = c.currentChannel;
+  const m = c.channels[fromCh].messages[c.selectedMsg];
+  const text = m.type === 'compile' ? '' : m.text;
+  
+  // Get media type - compile output "is" the target type
+  const mediaType = m.mediaType || (m.type === 'compile' ? m.target : null);
+  
+  const msgs = [];
+  if (text) {
+    msgs.push({ type: 'payload', text, mediaType, time: Date.now(), level: 0, fromChannel: fromCh + 1 });
+    const typeLabel = mediaType ? mediaType.toUpperCase() : 'DATA';
+    msgs.push({ type: 'system', text: `BRANCHED ${typeLabel} FROM CH${fromCh + 1}`, time: Date.now() });
+  }
+  
+  c.channels.push({ id: c.channels.length + 1, messages: msgs });
+  const toCh = c.channels.length - 1;
+  c.currentChannel = toCh;
+  
+  // Auto-set source to media type for loopback
+  if (mediaType) {
+    c.source = mediaType;
+    c.target = null;
+    c.mode = 'SELECT TGT';
+  }
+  
+  feedback('send');
+  showTransfer(fromCh, toCh);
+  
+  closeInspector();
+  save();
+  renderAllCalculators();
+  toast(mediaType ? `BRANCHED | NOW: ${mediaType.toUpperCase()}` : 'BRANCHED');
+}
+
+function showTransfer(from, to) {
+  const ind = document.getElementById('transfer-indicator');
+  document.getElementById('transfer-from').textContent = `CH${from + 1}`;
+  document.getElementById('transfer-to').textContent = `CH${to + 1}`;
+  ind.classList.add('visible');
+  setTimeout(() => ind.classList.remove('visible'), 1500);
+}
+
+function reverse() {
+  const c = calculators[activeCalcId];
+  const m = c.channels[c.currentChannel].messages[c.selectedMsg];
+  if (m.type !== 'compile') return;
+  
+  c.source = m.target;
+  c.target = m.source;
+  c.mode = 'READY';
+  closeInspector();
+  save();
+  renderAllCalculators();
+  toast('REVERSED');
+}
+
+function deleteMsg() {
+  if (!confirm('DELETE?')) return;
+  const c = calculators[activeCalcId];
+  c.channels[c.currentChannel].messages.splice(c.selectedMsg, 1);
+  closeInspector();
+  save();
+  renderAllCalculators();
+  toast('DELETED');
+}
+
+// Utils
+function detectCode(t) {
+  if (!t) return null;
+  if (t.includes('<svg')) return 'svg';
+  if (t.startsWith('<!DOCTYPE') || t.startsWith('<html') || t.includes('<body')) return 'html';
+  return null;
+}
+
+function detectTags(text) {
+  if (!text) return { bridges: [], media: [], code: null, nested: false };
+  
+  const bridges = [];
+  const media = new Set();
+  let code = detectCode(text);
+  
+  // Detect BRIDGE patterns: [SRC] -> [TGT] or SRC->TGT
+  const bridgeRe = /BRIDGE:\s*\[?(\w+)\]?\s*->\s*\[?(\w+)\]?/gi;
+  let match;
+  while ((match = bridgeRe.exec(text)) !== null) {
+    bridges.push({ src: match[1].toLowerCase(), tgt: match[2].toLowerCase() });
+  }
+  
+  // Also detect inline arrows like TXT->IMG
+  const arrowRe = /\b(TXT|VCE|CMD|PRM|IMG|VID|GUI|GEN|OBJ|ACT|GAM|BOT|DB|NET|PLT|MOD)\s*->\s*(TXT|VCE|CMD|PRM|IMG|VID|GUI|GEN|OBJ|ACT|GAM|BOT|DB|NET|PLT|MOD)\b/gi;
+  while ((match = arrowRe.exec(text)) !== null) {
+    const src = match[1].toLowerCase();
+    const tgt = match[2].toLowerCase();
+    if (!bridges.some(b => b.src === src && b.tgt === tgt)) {
+      bridges.push({ src, tgt });
+    }
+  }
+  
+  // Detect media type mentions
+  const mediaRe = /\b(TEXT|VOICE|CODE|PROMPT|IMAGE|VIDEO|UI|GENAI|OBJECT|ACTION|GAME|AGENT|DATA|NETWORK|PLATFORM|MODEL)\b/gi;
+  while ((match = mediaRe.exec(text)) !== null) {
+    const m = match[1].toLowerCase();
+    const id = MEDIA.find(x => x.n.toLowerCase() === m)?.id;
+    if (id) media.add(id);
+  }
+  
+  // Detect if nested (contains PAYLOAD or output markers)
+  const nested = text.includes('PAYLOAD:') || text.includes('"""') || bridges.length > 0;
+  
+  return { bridges, media: [...media], code, nested };
+}
+
+function buildChain(bridges) {
+  if (!bridges.length) return [];
+  const chain = [bridges[0].src, bridges[0].tgt];
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const b of bridges) {
+      if (chain[chain.length - 1] === b.src && !chain.includes(b.tgt)) {
+        chain.push(b.tgt);
+        changed = true;
+      } else if (chain[0] === b.tgt && !chain.includes(b.src)) {
+        chain.unshift(b.src);
+        changed = true;
+      }
+    }
+  }
+  return chain.map(id => MEDIA.find(m => m.id === id)?.s || id.toUpperCase());
+}
+
+function branchBridge(calcIdx, msgIdx, bridgeIdx) {
+  const c = calculators[calcIdx];
+  const m = c.channels[c.currentChannel].messages[msgIdx];
+  const text = m.type === 'compile' ? m.prompt : m.text;
+  const tags = detectTags(text);
+  const bridge = tags.bridges[bridgeIdx];
+  if (!bridge) return;
+  
+  c.channels.push({ id: c.channels.length + 1, messages: [] });
+  c.currentChannel = c.channels.length - 1;
+  c.source = bridge.src;
+  c.target = bridge.tgt;
+  c.mode = 'READY';
+  
+  save();
+  renderAllCalculators();
+  toast(`BRANCH: ${bridge.src.toUpperCase()}->${bridge.tgt.toUpperCase()}`);
+}
+
+function setMediaFromTag(calcIdx, mediaId) {
+  const c = calculators[calcIdx];
+  if (!c.source) c.source = mediaId;
+  else if (!c.target && c.source !== mediaId) c.target = mediaId;
+  c.mode = c.source && c.target ? 'READY' : (c.source ? 'SELECT TGT' : 'IDLE');
+  save();
+  renderAllCalculators();
+  toast(`SET: ${mediaId.toUpperCase()}`);
+}
+
+// Tangle View - Management Center
+function showTangle() {
+  const body = document.getElementById('tangle-body');
+  let html = '';
+  
+  // Stats summary
+  const totalCh = calculators.reduce((a, c) => a + c.channels.length, 0);
+  const totalMsg = calculators.reduce((a, c) => a + c.channels.reduce((b, ch) => b + ch.messages.length, 0), 0);
+  
+  calculators.forEach((calc, ci) => {
+    const calcMsgs = calc.channels.reduce((a, ch) => a + ch.messages.length, 0);
+    
+    html += `<div class="tangle-calc" data-calc="${ci}">`;
+    html += `<div class="tangle-calc-head">
+      <span>CALC-${ci+1}</span>
+      <div class="tangle-calc-actions">
+        <button class="tangle-calc-btn" onclick="tangleGoCalc(${ci})" title="Focus">◎</button>
+        <button class="tangle-calc-btn" onclick="tangleAddCh(${ci})" title="Add Channel">+</button>
+        <button class="tangle-calc-btn" onclick="tangleExportCalc(${ci})" title="Export">↓</button>
+        ${calculators.length > 1 ? `<button class="tangle-calc-btn danger" onclick="tangleDelCalc(${ci})" title="Delete">×</button>` : ''}
+      </div>
+    </div>`;
+    
+    calc.channels.forEach((ch, chi) => {
+      const hasLinked = ch.messages.some(m => m.fromChannel);
+      html += `<div class="tangle-ch ${chi === calc.currentChannel ? 'active' : ''}" onclick="tangleGoCh(${ci},${chi})">`;
+      html += `<div class="tangle-ch-head">
+        <span class="tangle-ch-name">CH${chi+1} ${hasLinked ? '⟵' : ''}</span>
+        <div class="tangle-ch-actions">
+          <span style="color:var(--dim)">${ch.messages.length} msg</span>
+          <button class="tangle-ch-btn" onclick="event.stopPropagation();tangleClearCh(${ci},${chi})" title="Clear channel">⌀</button>
+          ${calc.channels.length > 1 ? `<button class="tangle-ch-btn danger" onclick="event.stopPropagation();tangleDelCh(${ci},${chi})" title="Delete channel">×</button>` : ''}
+        </div>
+      </div>`;
+      
+      if (ch.messages.length) {
+        html += `<div class="tangle-chain">`;
+        ch.messages.slice(0, 12).forEach((m, mi) => {
+          if (m.type === 'payload') {
+            html += `<span class="tangle-node p">P</span>`;
+          } else if (m.type === 'echo') {
+            html += `<span class="tangle-node e">E</span>`;
+          } else if (m.type === 'compile') {
+            html += `<span class="tangle-node c">${m.source?.toUpperCase() || '?'}->${m.target?.toUpperCase() || '?'}</span>`;
+          } else if (m.type === 'system') {
+            html += `<span class="tangle-node s">S</span>`;
+          }
+          if (mi < Math.min(ch.messages.length, 12) - 1) html += `<span class="tangle-arr">·</span>`;
+        });
+        if (ch.messages.length > 12) html += `<span class="tangle-arr">+${ch.messages.length - 12}</span>`;
+        html += `</div>`;
+      } else {
+        html += `<div class="tangle-empty">empty</div>`;
+      }
+      
+      html += `</div>`;
+    });
+    
+    html += `</div>`;
+  });
+  
+  body.innerHTML = html;
+  
+  // Update header with stats, legend, and actions
+  const head = document.querySelector('.tangle-head');
+  head.innerHTML = `
+    <h3>TANGLE</h3>
+    <div class="tangle-legend">
+      <span class="tangle-leg-item"><span class="tangle-leg-box" style="border-color:var(--calc)"></span>CALC (cyan)</span>
+      <span class="tangle-leg-item"><span class="tangle-leg-line" style="background:var(--ch)"></span>CH (amber)</span>
+      <span class="tangle-leg-item">${calculators.length} calc · ${totalCh} ch · ${totalMsg} msg</span>
+    </div>
+    <div class="tangle-actions">
+      <button class="tangle-btn" onclick="tangleAddCalc()" data-tip="Add new calculator">+ CALC</button>
+      <button class="tangle-btn" onclick="tangleClearEmpty()" data-tip="Remove empty channels">CLEAR EMPTY</button>
+      <button class="tangle-btn primary" onclick="exportAllCalcs()" data-tip="Download all data">EXPORT</button>
+      <button class="tangle-btn" onclick="closeTangle()">×</button>
+    </div>
+  `;
+  
+  document.getElementById('tangle-overlay').classList.add('open');
+}
+
+function closeTangle() {
+  document.getElementById('tangle-overlay').classList.remove('open');
+}
+
+// Tangle management functions
+function tangleGoCalc(ci) {
+  activeCalcId = ci;
+  closeTangle();
+  renderAllCalculators();
+  toast(`FOCUS: CALC-${ci+1}`);
+}
+
+function tangleGoCh(ci, chi) {
+  calculators[ci].currentChannel = chi;
+  activeCalcId = ci;
+  closeTangle();
+  save();
+  renderAllCalculators();
+  toast(`GO: CALC-${ci+1} CH${chi+1}`);
+}
+
+function tangleAddCh(ci) {
+  calculators[ci].channels.push({ id: calculators[ci].channels.length + 1, messages: [] });
+  save();
+  showTangle(); // Refresh
+  toast('CHANNEL ADDED');
+}
+
+function tangleClearCh(ci, chi) {
+  if (calculators[ci].channels[chi].messages.length === 0) return;
+  if (!confirm(`Clear all messages in CH${chi+1}?`)) return;
+  calculators[ci].channels[chi].messages = [];
+  save();
+  showTangle();
+  renderAllCalculators();
+  toast('CHANNEL CLEARED');
+}
+
+function tangleDelCh(ci, chi) {
+  if (calculators[ci].channels.length <= 1) return;
+  if (!confirm(`Delete CH${chi+1}?`)) return;
+  calculators[ci].channels.splice(chi, 1);
+  if (calculators[ci].currentChannel >= calculators[ci].channels.length) {
+    calculators[ci].currentChannel = calculators[ci].channels.length - 1;
+  }
+  save();
+  showTangle();
+  renderAllCalculators();
+  toast('CHANNEL DELETED');
+}
+
+function tangleAddCalc() {
+  calculators.push(createCalculator(calculators.length));
+  save();
+  showTangle();
+  renderAllCalculators();
+  toast('CALCULATOR ADDED');
+}
+
+function tangleDelCalc(ci) {
+  if (calculators.length <= 1) return;
+  if (!confirm(`Delete CALC-${ci+1}?`)) return;
+  calculators.splice(ci, 1);
+  calculators.forEach((c, i) => c.id = i);
+  if (activeCalcId >= calculators.length) activeCalcId = calculators.length - 1;
+  save();
+  showTangle();
+  renderAllCalculators();
+  toast('CALCULATOR DELETED');
+}
+
+function tangleExportCalc(ci) {
+  exportCalc(ci);
+}
+
+function tangleClearEmpty() {
+  let cleared = 0;
+  calculators.forEach(calc => {
+    const before = calc.channels.length;
+    calc.channels = calc.channels.filter(ch => ch.messages.length > 0);
+    if (calc.channels.length === 0) {
+      calc.channels = [{ id: 1, messages: [] }];
+    }
+    calc.currentChannel = Math.min(calc.currentChannel, calc.channels.length - 1);
+    cleared += before - calc.channels.length;
+  });
+  save();
+  showTangle();
+  renderAllCalculators();
+  toast(`CLEARED ${cleared} EMPTY CHANNELS`);
+}
+
+// Preview
+let previewData = { type: null, text: '', calcIdx: 0 };
+
+function showPreview(type, text, calcIdx) {
+  previewData = { type, text, calcIdx };
+  
+  const title = document.getElementById('preview-title');
+  const body = document.getElementById('preview-body');
+  const stats = document.getElementById('preview-stats');
+  const actions = document.getElementById('preview-actions');
+  
+  title.textContent = type === 'payload' ? 'PREVIEW PAYLOAD' : 'PREVIEW ECHO';
+  title.className = type === 'payload' ? 'payload-title' : 'echo-title';
+  
+  body.textContent = text;
+  body.className = 'preview-body ' + (type === 'payload' ? 'payload-border' : 'echo-border');
+  
+  const chars = text.length;
+  const words = text.split(/\s+/).filter(w => w).length;
+  const lines = text.split('\n').length;
+  const tags = detectTags(text);
+  
+  let statsHtml = `${chars} CHARS | ${words} WORDS | ${lines} LINES`;
+  if (tags.bridges.length) statsHtml += ` | ${tags.bridges.length} BRIDGES`;
+  if (tags.code) statsHtml += ` | ${tags.code.toUpperCase()}`;
+  if (tags.nested) statsHtml += ' | NESTED';
+  stats.innerHTML = statsHtml;
+  
+  const confirmClass = type === 'payload' ? 'confirm-payload' : 'confirm-echo';
+  const confirmLabel = type === 'payload' ? 'ADD PAYLOAD' : 'ADD ECHO';
+  const confirmFn = type === 'payload' ? 'confirmPayload' : 'confirmEcho';
+  
+  actions.innerHTML = `
+    <button class="preview-btn cancel" onclick="closePreview()">CANCEL</button>
+    <button class="preview-btn" onclick="copyPreviewText()">COPY</button>
+    <button class="preview-btn ${confirmClass}" onclick="${confirmFn}(${calcIdx}, previewData.text)">${confirmLabel}</button>
+  `;
+  
+  document.getElementById('preview-overlay').classList.add('open');
+}
+
+function closePreview() {
+  document.getElementById('preview-overlay').classList.remove('open');
+  previewData = { type: null, text: '', calcIdx: 0 };
+}
+
+function copyPreviewText() {
+  navigator.clipboard.writeText(previewData.text);
+  toast('COPIED');
+}
+
+function scrollLog(idx) {
+  setTimeout(() => {
+    const log = document.getElementById(`log-${idx}`);
+    if (log) log.scrollTop = log.scrollHeight;
+  }, 50);
+}
+
+function esc(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,' ');
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 1200);
+}
+
+window.onload = init;
+</script>
+</body>
+</html>

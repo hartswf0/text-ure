@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Auden Shield — Kittler Media-Archaeology</title>
+<style>
+:root {
+  --bg: #f6f2e8;
+  --paper: #fbf8f0;
+  --ink: #111;
+  --muted: rgba(17,17,17,.65);
+  --hair: rgba(17,17,17,.14);
+  --accent: #1b4b7a;
+  --good: #196a2a;
+  --cell: 24px;
+  --radius: 18px;
+  --shadow: 0 10px 30px rgba(0,0,0,.08);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; background: radial-gradient(1200px 800px at 30% -10%, #fff 0%, var(--bg) 60%, #efe8d7 100%); color: var(--ink); margin: 0; font-family: var(--mono); }
+.app { min-height: 100%; display: grid; grid-template-rows: auto 1fr; gap: 12px; padding: 12px; }
+header {
+  background: linear-gradient(to bottom, rgba(251,248,240,.96), rgba(251,248,240,.78));
+  border: 1px solid var(--hair);
+  border-radius: var(--radius);
+  padding: 14px;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+}
+.title { font-weight: 700; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; }
+.subtitle { color: var(--muted); margin-top: 6px; font-size: 12px; }
+.controls { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+button {
+  appearance: none;
+  border: 1px solid var(--hair);
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(0,0,0,.03);
+  transition: all .12s;
+}
+button:hover { border-color: #bbb; box-shadow: 0 6px 16px rgba(0,0,0,.06); }
+.pill { padding: 7px 10px; border: 1px solid var(--hair); color: var(--muted); font-size: 11px; background: #fff; border-radius: 999px; }
+main { display: flex; gap: 12px; overflow: hidden; }
+.left { flex: 1; overflow: auto; padding: 12px; background: var(--paper); border: 1px solid var(--hair); border-radius: var(--radius); }
+.right { width: 320px; background: var(--paper); border: 1px solid var(--hair); border-radius: var(--radius); overflow: auto; padding: 14px; font-size: 11px; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(24, var(--cell));
+  grid-auto-rows: var(--cell);
+  gap: 1px;
+  background: var(--hair);
+  border: 1px solid var(--hair);
+  border-radius: 14px;
+  width: max-content;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.cell {
+  background: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.cell:hover { background: rgba(27,75,122,.1); }
+.cell.t-TEXT { border-left: 2px solid rgba(27,75,122,.5); }
+.cell.t-CACHE { border-left: 2px solid rgba(180,120,40,.5); }
+.cell.t-INDEX { border-left: 2px solid rgba(100,60,140,.5); }
+.cell.t-ARCHIVE { border-left: 2px solid rgba(25,106,42,.5); }
+.cell.t-NOISE { border-left: 2px solid rgba(138,30,30,.5); background: rgba(138,30,30,.06); }
+.cell .addr { position: absolute; top: 1px; left: 2px; font-size: 6px; color: var(--muted); opacity: .5; }
+.cell .crc { position: absolute; bottom: 1px; right: 2px; font-size: 5px; color: var(--good); }
+.highlight { outline: 2px solid var(--accent); z-index: 2; }
+.block-info { margin-bottom: 12px; padding: 10px; border: 1px solid var(--hair); border-radius: 10px; background: #fff; }
+.block-info h4 { margin: 0 0 6px 0; color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+.block-info pre { margin: 0; font-size: 10px; color: var(--muted); white-space: pre-wrap; }
+.legend { margin-top: 16px; }
+.legend div { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 10px; }
+.legend .swatch { width: 14px; height: 14px; border: 1px solid var(--hair); border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title">AUDEN SHIELD — KITTLER INSCRIPTION PROTOCOL</div>
+    <div class="subtitle">Storage · Channel · Addressing · Scanning — "The medium is the mapping"</div>
+    <div class="controls">
+      <button id="scanBtn">► SCAN</button>
+      <button id="redundBtn">SHOW REDUNDANCY</button>
+      <span class="pill">BLOCKS: <span id="blockCount">0</span></span>
+      <span class="pill">NOISE: <span id="noiseCount">0</span></span>
+    </div>
+  </header>
+  <main>
+    <div class="left">
+      <div class="grid" id="grid"></div>
+    </div>
+    <div class="right" id="info">
+      <div class="legend">
+        <div><span class="swatch" style="border-color:rgba(100,200,255,.6)"></span> TEXT_CELL — primary block</div>
+        <div><span class="swatch" style="border-color:rgba(255,200,100,.6)"></span> CACHE_CELL — redundancy</div>
+        <div><span class="swatch" style="border-color:rgba(200,100,255,.6)"></span> INDEX_CELL — routing</div>
+        <div><span class="swatch" style="border-color:rgba(100,255,100,.6)"></span> ARCHIVE_CELL — dense</div>
+        <div><span class="swatch" style="border-color:rgba(255,100,100,.6)"></span> NOISE_CELL — overflow/glitch</div>
+      </div>
+      <div id="blockList" style="margin-top:16px;"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+const POEM_LINES = [
+  "She looked over his shoulder",
+  "For vines and olive trees,",
+  "Marble well-governed cities",
+  "And ships upon untamed seas,",
+  "But there on the shining metal",
+  "His hands had put instead",
+  "An artificial wilderness",
+  "And a sky like lead.",
+  "A plain without a feature, bare and brown,",
+  "No blade of grass, no sign of neighborhood,",
+  "Nothing to eat and nowhere to sit down,",
+  "Yet, congregated on its blankness, stood",
+  "An unintelligible multitude,",
+  "A million eyes, a million boots in line,",
+  "Without expression, waiting for a sign.",
+  "Out of the air a voice without a face",
+  "Proved by statistics that some cause was just",
+  "In tones as dry and level as the place:",
+  "No one was cheered and nothing was discussed;",
+  "Column by column in a cloud of dust",
+  "They marched away enduring a belief",
+  "Whose logic brought them, somewhere else, to grief.",
+  "She looked over his shoulder",
+  "For ritual pieties,",
+  "White flower-garlanded heifers,",
+  "Libation and sacrifice,",
+  "But there on the shining metal",
+  "Where the altar should have been,",
+  "She saw by his flickering forge-light",
+  "Quite another scene.",
+  "Barbed wire enclosed an arbitrary spot",
+  "Where bored officials lounged (one cracked a joke)",
+  "And sentries sweated for the day was hot:",
+  "A crowd of ordinary decent folk",
+  "Watched from without and neither moved nor spoke",
+  "As three pale figures were led forth and bound",
+  "To three posts driven upright in the ground.",
+  "The mass and majesty of this world, all",
+  "That carries weight and always weighs the same",
+  "Lay in the hands of others; they were small",
+  "And could not hope for help and no help came:",
+  "What their foes liked to do was done, their shame",
+  "Was all the worst could wish; they lost their pride",
+  "And died as men before their bodies died.",
+  "She looked over his shoulder",
+  "For athletes at their games,",
+  "Men and women in a dance",
+  "Moving their sweet limbs",
+  "Quick, quick, to music,",
+  "But there on the shining shield",
+  "His hands had set no dancing-floor",
+  "But a weed-choked field.",
+  "A ragged urchin, aimless and alone,",
+  "Loitered about that vacancy; a bird",
+  "Flew up to safety from his well-aimed stone:",
+  "That girls are raped, that two boys knife a third,",
+  "Were axioms to him, who'd never heard",
+  "Of any world where promises were kept,",
+  "Or one could weep because another wept.",
+  "The thin-lipped armorer,",
+  "Hephaestos, hobbled away,",
+  "Thetis of the shining breasts",
+  "Cried out in dismay",
+  "At what the god had wrought",
+  "To please her son, the strong",
+  "Iron-hearted man-slaying Achilles",
+  "Who would not live long."
+];
+
+const W = 24, H = 24;
+let cells = [];
+let blocks = [];
+
+function crc8(str) {
+  let crc = 0;
+  for (let i = 0; i < str.length; i++) {
+    crc = (crc + str.charCodeAt(i)) & 0xFF;
+  }
+  return crc.toString(16).padStart(2, '0').toUpperCase();
+}
+
+function createBlocks() {
+  blocks = [];
+  let stanzaNum = 1;
+  for (let i = 0; i < POEM_LINES.length; i++) {
+    const line = POEM_LINES[i];
+    const isShort = line.length < 30;
+    
+    if (i === 0 || (i > 0 && POEM_LINES[i-1].length < 30 !== isShort)) {
+      stanzaNum = Math.floor(i / 8) + 1;
+    }
+    
+    const strips = [];
+    for (let j = 0; j < line.length; j += 12) {
+      strips.push(line.slice(j, j + 12).toUpperCase());
+    }
+    
+    blocks.push({
+      id: `AUD-B${String(i+1).padStart(3,'0')}`,
+      header: `⟦SHIELD|S${stanzaNum}⟧`,
+      sourceLines: [i],
+      strips,
+      bytes: line.length,
+      crc: crc8(line),
+      replication: Math.max(1, Math.floor(line.length / 20))
+    });
+  }
+  return blocks;
+}
+
+function allocateBlocks() {
+  cells = [];
+  const totalCells = W * H;
+  
+  for (let i = 0; i < totalCells; i++) {
+    cells.push({
+      addr: i,
+      x: i % W,
+      y: Math.floor(i / W),
+      type: 'ARCHIVE',
+      payload: [],
+      blocks: [],
+      tags: [],
+      crc: '00'
+    });
+  }
+  
+  const indexAddrs = [0, 1, 2, 23, 24, 47, 48, 71, 552, 553, 554, 575];
+  indexAddrs.forEach(a => {
+    if (cells[a]) cells[a].type = 'INDEX';
+  });
+  
+  let textAddr = 72;
+  for (const block of blocks) {
+    if (textAddr >= 540) break;
+    
+    cells[textAddr].type = 'TEXT';
+    cells[textAddr].blocks.push(block.id);
+    cells[textAddr].payload = block.strips.slice(0, 2);
+    cells[textAddr].tags.push(block.header);
+    cells[textAddr].crc = block.crc;
+    
+    for (let r = 1; r < block.replication && textAddr + r * 24 < 540; r++) {
+      const cacheAddr = textAddr + r * 24;
+      cells[cacheAddr].type = 'CACHE';
+      cells[cacheAddr].blocks.push(block.id);
+      cells[cacheAddr].payload = block.strips.slice(0, 1);
+      cells[cacheAddr].crc = block.crc;
+    }
+    
+    textAddr++;
+    if (textAddr % 24 > 20) textAddr += 4;
+  }
+  
+  const noiseAddrs = [119, 143, 287, 311, 407, 455, 503];
+  noiseAddrs.forEach(a => {
+    if (cells[a] && cells[a].type === 'ARCHIVE') {
+      cells[a].type = 'NOISE';
+      cells[a].payload = ['[OVERFLOW]'];
+    }
+  });
+}
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  
+  for (const c of cells) {
+    const el = document.createElement('div');
+    el.className = `cell t-${c.type}`;
+    el.innerHTML = `<span class="addr">${c.addr}</span>${c.payload[0] ? c.payload[0].slice(0,3) : ''}<span class="crc">${c.crc}</span>`;
+    el.addEventListener('click', () => showCellInfo(c));
+    grid.appendChild(el);
+  }
+  
+  document.getElementById('blockCount').textContent = blocks.length;
+  document.getElementById('noiseCount').textContent = cells.filter(c => c.type === 'NOISE').length;
+  
+  renderBlockList();
+}
+
+function showCellInfo(c) {
+  const info = document.getElementById('info');
+  info.innerHTML = `
+    <div class="block-info">
+      <h4>CELL ${c.addr} (${c.x},${c.y})</h4>
+      <pre>TYPE: ${c.type}
+BLOCKS: ${c.blocks.join(', ') || 'none'}
+PAYLOAD: ${c.payload.join(' / ') || 'empty'}
+CRC: ${c.crc}
+TAGS: ${c.tags.join(', ') || 'none'}</pre>
+    </div>
+  `;
+  
+  document.querySelectorAll('.cell').forEach(el => el.classList.remove('highlight'));
+  document.querySelector(`.cell:nth-child(${c.addr + 1})`).classList.add('highlight');
+}
+
+function renderBlockList() {
+  const list = document.getElementById('blockList');
+  list.innerHTML = '<h4 style="color:#a0f0a0;margin:0 0 8px 0;">BLOCKS</h4>';
+  for (const b of blocks.slice(0, 15)) {
+    list.innerHTML += `<div style="margin:4px 0;font-size:9px;color:var(--muted);">${b.id} → ${b.strips[0] || ''}</div>`;
+  }
+  if (blocks.length > 15) {
+    list.innerHTML += `<div style="color:var(--muted);font-size:9px;">...and ${blocks.length - 15} more</div>`;
+  }
+}
+
+let scanning = false;
+document.getElementById('scanBtn').addEventListener('click', async () => {
+  if (scanning) return;
+  scanning = true;
+  
+  const cellEls = document.querySelectorAll('.cell');
+  for (let i = 0; i < cells.length; i++) {
+    cellEls[i].classList.add('highlight');
+    await new Promise(r => setTimeout(r, 8));
+    cellEls[i].classList.remove('highlight');
+  }
+  
+  scanning = false;
+});
+
+document.getElementById('redundBtn').addEventListener('click', () => {
+  const cacheCells = document.querySelectorAll('.cell.t-CACHE');
+  cacheCells.forEach(el => {
+    el.style.background = 'rgba(255,200,100,.2)';
+    setTimeout(() => el.style.background = '', 1500);
+  });
+});
+
+createBlocks();
+allocateBlocks();
+render();
+</script>
+</body>
+</html>
